@@ -2,6 +2,6 @@
 branch_name=$(git symbolic-ref HEAD | sed 's!refs/heads/!!')
 
 if [ "$branch_name" = "main" ] || [ "$branch_name" = "master" ] || [ "$branch_name" = "dev" ]; then
-  echo "You are trying to push to the $branch_name branch, which is not allowed."
+  echo "You are trying to push to the '$branch_name' branch directly, which is not allowed."
   exit 1
 fi

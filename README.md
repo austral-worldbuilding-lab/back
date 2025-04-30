@@ -40,6 +40,7 @@ $ docker-compose up -d
 Una vez que la base de datos esté en funcionamiento, ejecuta las migraciones de Prisma para asegurar que el esquema de la base de datos esté actualizado:
 
 ```bash
+$ npx prisma generate
 $ npx prisma migrate dev --name init
 ```
 
