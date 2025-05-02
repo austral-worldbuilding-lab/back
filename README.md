@@ -28,6 +28,11 @@ $ npm install
 
 ### 4. Configurar las Variables de Entorno
 Creá el archivo `.env` en la raíz del proyecto y configurá las variables de entorno necesarias. 
+Podés hacerlo copiando el template `.env.template` y agregando los valores correspondientes:
+
+```bash
+$ cp .env.template .env
+```
 
 ### 5. Iniciar la Base de Datos con Docker Compose
 Para iniciar la base de datos, ejecutá el siguiente comando:
