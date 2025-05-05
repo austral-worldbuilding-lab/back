@@ -10,7 +10,9 @@ export class UserService {
   async create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: {
-        name: createUserDto.name,
+        username: createUserDto.username,
+        first_name: createUserDto.first_name,
+        last_name: createUserDto.last_name,
         email: createUserDto.email,
       },
     });
@@ -19,7 +21,7 @@ export class UserService {
   async findAll() {
     return this.prisma.user.findMany({
       where: {
-        isActive: true,
+        is_active: true,
       },
     });
   }
@@ -29,7 +31,11 @@ export class UserService {
       where: { id },
       select: {
         id: true,
+        username: true,
+        first_name: true,
+        last_name: true,
         email: true,
+        is_active: true,
       },
     });
 
@@ -62,7 +68,7 @@ export class UserService {
     }
     return this.prisma.user.update({
       where: { id: targetUserId },
-      data: { isActive: false },
+      data: { is_active: false },
     });
   }
 }
