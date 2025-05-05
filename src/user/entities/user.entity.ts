@@ -1,6 +1,8 @@
 export class User {
   id!: number;
-  uid!: string;
-  name!: string;
+  username!: string;
+  first_name!: string;
+  last_name!: string;
   email!: string;
+  is_active!: boolean;
 }
