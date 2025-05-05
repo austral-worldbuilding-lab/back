@@ -9,7 +9,14 @@ datasource db {
 
 // Define your models here
 model User {
-  id    Int    @id @default(autoincrement())
+  id    String @id @default(uuid())
   name  String
   email String @unique
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  createdAt   DateTime @default(now())
+  createdById String
 }
