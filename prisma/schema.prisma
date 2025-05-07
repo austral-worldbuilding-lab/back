@@ -14,13 +14,13 @@ model User {
   last_name  String
   email      String @unique
   is_active Boolean @default(true)
-
-
+  createdProjects Project[]
 }
 
 model Project {
   id          String   @id @default(uuid())
   name        String
   createdAt   DateTime @default(now())
+  createdBy   User     @relation(fields: [createdById], references: [id])
   createdById String
 }
