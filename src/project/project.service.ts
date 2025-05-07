@@ -11,12 +11,37 @@ export class ProjectService {
   constructor(private prisma: PrismaService) {}
 
   async create(createProjectDto: CreateProjectDto) {
-    return this.prisma.project.create({
+    const project = await this.prisma.project.create({
       data: {
         name: createProjectDto.name,
         createdById: createProjectDto.createdById,
       },
     });
+
+    let ownerRole = await this.prisma.role.findFirst({
+      where: { name: 'owner' },
+    });
+
+    if (!ownerRole) {
+      ownerRole = await this.prisma.role.create({
+        data: {
+          name: 'owner',
+        },
+      });
+    }
+
+    await this.prisma.roles.create({
+      data: {
+        userId: createProjectDto.createdById,
+        projectId: project.id,
+        roleId: ownerRole.id,
+      },
+    });
+
+    return {
+      message: 'Project created successfully',
+      data: project,
+    };
   }
 
   async findAll() {
@@ -33,6 +58,7 @@ export class ProjectService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: { createdBy: true },
       }),
       this.prisma.project.count(),
     ]);
@@ -56,16 +82,31 @@ export class ProjectService {
     return project;
   }
 
-  async remove(id: string, userId: string) {
-    const project = await this.prisma.project.findUnique({ where: { id } });
+  async remove(projectId: string, userId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
     if (!project) {
       throw new NotFoundException('Project not found');
     }
 
-    if (project.createdById !== userId) {
-      throw new ForbiddenException('You cannot delete this project');
+    const ownerRole = await this.prisma.role.findFirst({
+      where: { name: 'owner' },
+    });
+
+    const assignment = await this.prisma.roles.findFirst({
+      where: {
+        projectId,
+        userId,
+        roleId: ownerRole?.id,
+      },
+    });
+
+    if (!assignment) {
+      throw new ForbiddenException('Only the project owner can delete it');
     }
 
-    return this.prisma.project.delete({ where: { id } });
+    return this.prisma.project.delete({ where: { id: projectId } });
   }
 }

@@ -15,6 +15,7 @@ model User {
   email      String @unique
   is_active Boolean @default(true)
   createdProjects Project[]
+  roleAssignments  Roles[]
 }
 
 model Project {
@@ -23,4 +24,21 @@ model Project {
   createdAt   DateTime @default(now())
   createdBy   User     @relation(fields: [createdById], references: [id])
   createdById String
+  roleAssignments Roles[]
+}
+
+model Role {
+  id    String  @id @default(uuid())
+  name  String  @unique
+  assignments Roles[]
+}
+
+model Roles {
+  id        String  @id @default(uuid())
+  userId    String
+  projectId String
+  roleId    String
+  user      User    @relation(fields: [userId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id])
+  role      Role    @relation(fields: [roleId], references: [id])
 }
