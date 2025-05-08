@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { MandalaService } from './mandala.service';
@@ -27,8 +28,8 @@ export class MandalaController {
 
   @Get()
   @UseGuards(ProjectParticipantGuard)
-  findAll() {
-    return this.mandalaService.findAll();
+  findAll(@Query('projectId') projectId: string) {
+    return this.mandalaService.findAll(projectId);
   }
 
   @Get(':id')

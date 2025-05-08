@@ -8,17 +8,31 @@ export class MandalaService {
   constructor(private prisma: PrismaService) {}
 
   async create(createMandalaDto: CreateMandalaDto) {
-    return this.prisma.mandala.create({
-      data: createMandalaDto,
+    const mandala = await this.prisma.mandala.create({
+      data: {
+        name: createMandalaDto.name,
+        projectId: createMandalaDto.projectId,
+      },
     });
+
+    return {
+      message: 'Mandala created successfully',
+      data: mandala,
+    };
   }
 
-  async findAll() {
-    return this.prisma.mandala.findMany();
+  async findAll(projectId: string) {
+    const mandalas = await this.prisma.mandala.findMany({
+      where: { projectId },
+    });
+
+    return {
+      data: mandalas,
+    };
   }
 
   async findOne(id: string) {
-    const mandala = await this.prisma.mandala.findUnique({
+    const mandala = await this.prisma.mandala.findFirst({
       where: { id },
     });
 
@@ -26,27 +40,32 @@ export class MandalaService {
       throw new NotFoundException(`Mandala with ID ${id} not found`);
     }
 
-    return mandala;
+    return {
+      data: mandala,
+    };
   }
 
   async update(id: string, updateMandalaDto: UpdateMandalaDto) {
-    try {
-      return await this.prisma.mandala.update({
-        where: { id },
-        data: updateMandalaDto,
-      });
-    } catch (_error) {
-      throw new NotFoundException(`Mandala with ID ${id} not found`);
-    }
+    const mandala = await this.prisma.mandala.update({
+      where: { id },
+      data: {
+        name: updateMandalaDto.name,
+      },
+    });
+
+    return {
+      message: 'Mandala updated successfully',
+      data: mandala,
+    };
   }
 
   async remove(id: string) {
-    try {
-      return await this.prisma.mandala.delete({
-        where: { id },
-      });
-    } catch (_error) {
-      throw new NotFoundException(`Mandala with ID ${id} not found`);
-    }
+    await this.prisma.mandala.delete({
+      where: { id },
+    });
+
+    return {
+      message: 'Mandala deleted successfully',
+    };
   }
 }
