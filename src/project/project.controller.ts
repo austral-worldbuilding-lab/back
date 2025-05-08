@@ -19,7 +19,10 @@ export class ProjectController {
 
   @Post()
   create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectService.create(createProjectDto);
+    return this.projectService.create(
+      createProjectDto,
+      createProjectDto.userId,
+    );
   }
 
   @Get()

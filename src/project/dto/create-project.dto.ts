@@ -7,5 +7,5 @@ export class CreateProjectDto {
 
   @IsString()
   @IsNotEmpty()
-  createdById!: string;
+  userId!: string;
 }

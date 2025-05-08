@@ -10,29 +10,20 @@ import { CreateProjectDto } from './dto/create-project.dto';
 export class ProjectService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createProjectDto: CreateProjectDto) {
+  async create(createProjectDto: CreateProjectDto, userId: string) {
     const project = await this.prisma.project.create({
       data: {
         name: createProjectDto.name,
-        createdById: createProjectDto.createdById,
       },
     });
 
-    let ownerRole = await this.prisma.role.findFirst({
+    const ownerRole = await this.prisma.role.findFirstOrThrow({
       where: { name: 'owner' },
     });
 
-    if (!ownerRole) {
-      ownerRole = await this.prisma.role.create({
-        data: {
-          name: 'owner',
-        },
-      });
-    }
-
-    await this.prisma.roles.create({
+    await this.prisma.userProjectRole.create({
       data: {
-        userId: createProjectDto.createdById,
+        userId: userId,
         projectId: project.id,
         roleId: ownerRole.id,
       },
@@ -58,7 +49,6 @@ export class ProjectService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: { createdBy: true },
       }),
       this.prisma.project.count(),
     ]);
@@ -91,19 +81,19 @@ export class ProjectService {
       throw new NotFoundException('Project not found');
     }
 
-    const ownerRole = await this.prisma.role.findFirst({
+    const ownerRole = await this.prisma.role.findFirstOrThrow({
       where: { name: 'owner' },
     });
 
-    const assignment = await this.prisma.roles.findFirst({
+    const userIsOwner = await this.prisma.userProjectRole.findFirst({
       where: {
         projectId,
         userId,
-        roleId: ownerRole?.id,
+        roleId: ownerRole.id,
       },
     });
 
-    if (!assignment) {
+    if (!userIsOwner) {
       throw new ForbiddenException('Only the project owner can delete it');
     }
 
