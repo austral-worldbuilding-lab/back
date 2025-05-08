@@ -17,9 +17,16 @@ export class ProjectService {
       },
     });
 
-    const ownerRole = await this.prisma.role.findFirstOrThrow({
+    // Find or create owner role
+    let ownerRole = await this.prisma.role.findFirst({
       where: { name: 'owner' },
     });
+
+    if (!ownerRole) {
+      ownerRole = await this.prisma.role.create({
+        data: { name: 'owner' },
+      });
+    }
 
     await this.prisma.userProjectRole.create({
       data: {
@@ -81,9 +88,16 @@ export class ProjectService {
       throw new NotFoundException('Project not found');
     }
 
-    const ownerRole = await this.prisma.role.findFirstOrThrow({
+    // Find or create owner role
+    let ownerRole = await this.prisma.role.findFirst({
       where: { name: 'owner' },
     });
+
+    if (!ownerRole) {
+      ownerRole = await this.prisma.role.create({
+        data: { name: 'owner' },
+      });
+    }
 
     const userIsOwner = await this.prisma.userProjectRole.findFirst({
       where: {

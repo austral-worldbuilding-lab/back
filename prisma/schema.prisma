@@ -40,7 +40,7 @@ model UserProjectRole {
   role           Role       @relation(fields: [roleId], references: [id])
   roleId         String
 
-  @@unique([userId, projectId])
+  @@unique([userId, projectId]) // This allows for a user to have multiple roles in project
 }
 
 model Mandala {
