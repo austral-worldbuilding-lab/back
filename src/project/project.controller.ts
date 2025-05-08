@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { MinValuePipe } from '../pipes/min-value-validate.pipe';
+import { MinValuePipe } from '../pipes/min-value.pipe';
 
 @Controller('project')
 export class ProjectController {
