@@ -20,14 +20,22 @@ export class ProjectRoleGuard implements CanActivate {
     private reflector: Reflector,
   ) {}
 
+  private extractProjectId(request: Request): string | undefined {
+    const body = request.body as Record<string, unknown>;
+    const params = request.params as Record<string, unknown>;
+    const query = request.query as Record<string, unknown>;
+
+    return (
+      (body.projectId as string) ||
+      (params.projectId as string) ||
+      (query.projectId as string)
+    );
+  }
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-
     const userId = request.headers['x-user-id'] as string | undefined;
-    const projectId =
-      (request.body?.projectId as string | undefined) ||
-      (request.params?.projectId as string | undefined) ||
-      (request.query?.projectId as string | undefined);
+    const projectId = this.extractProjectId(request);
 
     const allowedRoles =
       this.reflector.get<string[]>(ALLOWED_ROLES_KEY, context.getHandler()) ??
