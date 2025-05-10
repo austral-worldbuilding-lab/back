@@ -22,6 +22,7 @@ model Project {
   name           String
   createdAt      DateTime   @default(now())
   userRoles      UserProjectRole[]
+  mandalas       Mandala[]
 }
 
 model Role {
@@ -39,5 +40,14 @@ model UserProjectRole {
   role           Role       @relation(fields: [roleId], references: [id])
   roleId         String
 
-  @@unique([userId, projectId])
+  @@unique([userId, projectId]) // This allows for a user to have multiple roles in project
+}
+
+model Mandala {
+  id        String   @id @default(uuid())
+  name      String
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
