@@ -51,4 +51,11 @@ export class MandalaController {
   remove(@Param('id') id: string) {
     return this.mandalaService.remove(id);
   }
+
+  @Post('generate')
+  @UseGuards(ProjectRoleGuard)
+  @AllowedRoles('owner', 'member')
+  generate() {
+    return this.mandalaService.generate();
+  }
 }

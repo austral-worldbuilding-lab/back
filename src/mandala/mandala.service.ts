@@ -68,4 +68,11 @@ export class MandalaService {
       message: 'Mandala deleted successfully',
     };
   }
+
+  generate() {
+    //por ahora se simula que creamos la mandala
+    return {
+      message: 'Mandala generated successfully',
+    };
+  }
 }
