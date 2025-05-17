@@ -10,7 +10,14 @@ import { MandalaModule } from './mandala/mandala.module';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, ProjectModule, UserModule, InvitationModule, MandalaModule, AuthModule],
+  imports: [
+    PrismaModule,
+    ProjectModule,
+    UserModule,
+    InvitationModule,
+    MandalaModule,
+    AuthModule,
+  ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

@@ -12,9 +12,11 @@ export class FirebaseService {
 
   async verifyToken(token: string): Promise<admin.auth.DecodedIdToken> {
     try {
-      const decodedToken = await this.firebaseConfig.getAuth().verifyIdToken(token);
+      const decodedToken = await this.firebaseConfig
+        .getAuth()
+        .verifyIdToken(token);
       return decodedToken;
-    } catch (error) {
+    } catch (_error) {
       throw new UnauthorizedException('Invalid token');
     }
   }
@@ -22,8 +24,8 @@ export class FirebaseService {
   async getUser(uid: string): Promise<admin.auth.UserRecord> {
     try {
       return await this.firebaseConfig.getAuth().getUser(uid);
-    } catch (error) {
+    } catch (_error) {
       throw new UnauthorizedException('User not found');
     }
   }
-} 
+}
