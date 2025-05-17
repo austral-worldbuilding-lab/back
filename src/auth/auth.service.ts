@@ -12,7 +12,7 @@ export class AuthService {
   async validateUser(token: string) {
     const decodedToken = await this.firebaseService.verifyToken(token);
     const firebaseUser = await this.firebaseService.getUser(decodedToken.uid);
-    
+
     if (!firebaseUser.email) {
       throw new UnauthorizedException('Firebase user has no email');
     }
@@ -38,4 +38,4 @@ export class AuthService {
       },
     });
   }
-} 
+}
