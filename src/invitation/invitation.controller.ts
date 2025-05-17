@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { InvitationService } from './invitation.service';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { Invitation, InvitationStatus } from './entities/invitation.entity';
+import { FirebaseAuthGuard } from '../auth/firebase/firebase.guard';
 
 @Controller('invitations')
+@UseGuards(FirebaseAuthGuard)
 export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
@@ -30,7 +32,7 @@ export class InvitationController {
   @Post(':id/status')
   updateStatus(
     @Param('id') id: string,
-    @Body('status') status: InvitationStatus
+    @Body('status') status: InvitationStatus,
   ): Promise<Invitation> {
     if (status === InvitationStatus.ACCEPTED) {
       return this.invitationService.accept(id);

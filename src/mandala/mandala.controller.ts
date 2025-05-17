@@ -14,8 +14,10 @@ import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { ProjectRoleGuard, AllowedRoles } from './guards/project-role.guard';
 import { ProjectParticipantGuard } from './guards/project-participant.guard';
+import { FirebaseAuthGuard } from '../auth/firebase/firebase.guard';
 
 @Controller('mandala')
+@UseGuards(FirebaseAuthGuard)
 export class MandalaController {
   constructor(private readonly mandalaService: MandalaService) {}
 

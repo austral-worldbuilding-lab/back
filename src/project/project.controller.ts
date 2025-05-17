@@ -7,13 +7,15 @@ import {
   Delete,
   Query,
   DefaultValuePipe,
-  ParseIntPipe,
+  ParseIntPipe, UseGuards,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { MinValuePipe } from '../pipes/min-value.pipe';
+import { FirebaseAuthGuard } from '../auth/firebase/firebase.guard';
 
 @Controller('project')
+@UseGuards(FirebaseAuthGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
