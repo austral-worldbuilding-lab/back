@@ -9,6 +9,7 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  Request,
 } from '@nestjs/common';
 import { InvitationService } from './invitation.service';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
@@ -21,8 +22,9 @@ import {
   PaginatedResponse,
   DataResponse,
 } from '../common/types/responses';
+import { RequestWithUser } from '../auth/types/auth.types';
 
-@Controller('invitations')
+@Controller('invitation')
 @UseGuards(FirebaseAuthGuard)
 export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
@@ -72,22 +74,12 @@ export class InvitationController {
     return { data: invitation };
   }
 
-  @Post(':id/resend')
-  async resend(
-    @Param('id') id: string,
-  ): Promise<MessageResponse<InvitationDto>> {
-    const invitation = await this.invitationService.resend(id);
-    return {
-      message: 'Invitation resent successfully',
-      data: invitation,
-    };
-  }
-
   @Post(':id/accept')
   async accept(
     @Param('id') id: string,
+    @Request() req: RequestWithUser,
   ): Promise<MessageResponse<InvitationDto>> {
-    const invitation = await this.invitationService.accept(id);
+    const invitation = await this.invitationService.accept(id, req.user.id);
     return {
       message: 'Invitation accepted successfully',
       data: invitation,

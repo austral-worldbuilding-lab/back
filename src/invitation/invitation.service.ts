@@ -99,33 +99,27 @@ export class InvitationService {
     return this.mapToInvitationDto(invitation);
   }
 
-  async resend(id: string): Promise<InvitationDto> {
-    const invitation = await this.findOne(id);
-
-    if (invitation.status !== InvitationStatus.PENDING) {
-      throw new BadRequestException('Can only resend pending invitations');
-    }
-
-    // Here you would typically trigger the email sending logic
-    return invitation;
-  }
-
   async remove(id: string): Promise<void> {
     const invitation = await this.findOne(id);
     await this.invitationRepository.delete(invitation.id);
   }
 
-  async accept(id: string): Promise<InvitationDto> {
+  async accept(id: string, userId: string): Promise<InvitationDto> {
     const invitation = await this.findOne(id);
 
     if (invitation.status !== InvitationStatus.PENDING) {
       throw new BadRequestException('Can only accept pending invitations');
     }
 
-    const updatedInvitation = await this.invitationRepository.update(
-      id,
-      InvitationStatus.ACCEPTED,
-    );
+    const memberRole =
+      await this.invitationRepository.findOrCreateRole('member');
+
+    const updatedInvitation =
+      await this.invitationRepository.acceptInvitationAndAddUser(
+        id,
+        userId,
+        memberRole.id,
+      );
 
     if (!updatedInvitation) {
       throw new NotFoundException('Failed to update invitation');
