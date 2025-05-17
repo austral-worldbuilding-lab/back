@@ -4,16 +4,12 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { FirebaseService } from './firebase.service';
-import { UserService } from '../../user/user.service';
+import { AuthService } from '../auth.service';
 import { RequestWithUser } from '../types/auth.types';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
-  constructor(
-    private readonly firebaseService: FirebaseService,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
@@ -27,17 +23,7 @@ export class FirebaseAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid token format');
     }
 
-    const decodedToken = await this.firebaseService.verifyToken(token);
-    const firebaseUser = await this.firebaseService.getUser(decodedToken.uid);
-    if (!firebaseUser.email) {
-      throw new UnauthorizedException('Firebase user has no email');
-    }
-
-    const user = await this.userService.findByEmail(firebaseUser.email);
-    if (!user || !user.is_active) {
-      throw new UnauthorizedException('User not found or inactive');
-    }
-
+    const user = await this.authService.validateUser(token);
     request.user = user;
     return true;
   }

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { FirebaseService } from './firebase/firebase.service';
-import { FirebaseAuthGuard } from './firebase/firebase.guard';
-import { UserModule } from '../user/user.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { AuthService } from './auth.service';
 
 @Module({
-  imports: [UserModule],
-  providers: [FirebaseService, FirebaseAuthGuard],
-  exports: [FirebaseService],
+  imports: [PrismaModule],
+  providers: [FirebaseService, AuthService],
+  exports: [FirebaseService, AuthService],
 })
 export class AuthModule {}
