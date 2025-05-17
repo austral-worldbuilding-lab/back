@@ -7,7 +7,8 @@ import {
   Delete,
   Query,
   DefaultValuePipe,
-  ParseIntPipe, UseGuards,
+  ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';

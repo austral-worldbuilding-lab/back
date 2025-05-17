@@ -1,25 +1,32 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Invitation, InvitationStatus } from './entities/invitation.entity';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { InvitationRepository } from './invitation.repository';
 
 @Injectable()
 export class InvitationService {
-  constructor(
-    private invitationRepository: InvitationRepository,
-  ) {}
+  constructor(private invitationRepository: InvitationRepository) {}
 
   async create(createInvitationDto: CreateInvitationDto): Promise<Invitation> {
-    const existingInvitation = await this.invitationRepository.findByEmail(createInvitationDto.email);
+    const existingInvitation = await this.invitationRepository.findByEmail(
+      createInvitationDto.email,
+    );
 
     if (existingInvitation) {
-      throw new ConflictException('An invitation for this email already exists');
+      throw new ConflictException(
+        'An invitation for this email already exists',
+      );
     }
 
     return this.invitationRepository.create(
       createInvitationDto.email,
       createInvitationDto.projectId,
-      createInvitationDto.invitedById
+      createInvitationDto.invitedById,
     );
   }
 
@@ -59,7 +66,10 @@ export class InvitationService {
       throw new BadRequestException('Can only accept pending invitations');
     }
 
-    const updatedInvitation = await this.invitationRepository.update(id, InvitationStatus.ACCEPTED);
+    const updatedInvitation = await this.invitationRepository.update(
+      id,
+      InvitationStatus.ACCEPTED,
+    );
     if (!updatedInvitation) {
       throw new NotFoundException('Failed to update invitation');
     }
@@ -73,7 +83,10 @@ export class InvitationService {
       throw new BadRequestException('Can only reject pending invitations');
     }
 
-    const updatedInvitation = await this.invitationRepository.update(id, InvitationStatus.REJECTED);
+    const updatedInvitation = await this.invitationRepository.update(
+      id,
+      InvitationStatus.REJECTED,
+    );
     if (!updatedInvitation) {
       throw new NotFoundException('Failed to update invitation');
     }

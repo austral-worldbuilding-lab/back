@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Request } from 'express';
+import { RequestWithUser } from '../../auth/types/auth.types';
 
 export const ALLOWED_ROLES_KEY = 'allowedRoles';
 export const AllowedRoles = (...roles: string[]) =>
@@ -21,9 +21,9 @@ export class ProjectRoleGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
 
-    const userId = request.headers['x-user-id'] as string | undefined;
+    const userId = request.user.id;
     const projectId =
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (request.body?.projectId as string | undefined) ||
