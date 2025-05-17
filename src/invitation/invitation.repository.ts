@@ -10,7 +10,8 @@ export class InvitationRepository {
   private mapToEntity(prismaInvitation: any): Invitation {
     const invitation = new Invitation(prismaInvitation.email);
     invitation.id = prismaInvitation.id;
-    invitation.status = prismaInvitation.status.toLowerCase() as InvitationStatus;
+    invitation.status =
+      prismaInvitation.status.toLowerCase() as InvitationStatus;
     invitation.created_at = prismaInvitation.createdAt;
     invitation.updated_at = prismaInvitation.updatedAt;
     return invitation;
@@ -20,12 +21,16 @@ export class InvitationRepository {
     return status.toUpperCase() as PrismaInvitationStatus;
   }
 
-  async create(email: string, projectId: string, invitedById: string): Promise<Invitation> {
+  async create(
+    email: string,
+    projectId: string,
+    invitedById: string,
+  ): Promise<Invitation> {
     // Validar que el proyecto existe
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
     });
-  
+
     if (!project) {
       throw new Error(`Project with ID ${projectId} does not exist.`);
     }
@@ -33,11 +38,11 @@ export class InvitationRepository {
     const inviter = await this.prisma.user.findUnique({
       where: { id: invitedById },
     });
-  
+
     if (!inviter) {
       throw new Error(`User with ID ${invitedById} does not exist.`);
     }
-  
+
     try {
       const prismaInvitation = await this.prisma.invitation.create({
         data: {
@@ -47,17 +52,16 @@ export class InvitationRepository {
           token: crypto.randomUUID(),
         },
       });
-  
+
       return this.mapToEntity(prismaInvitation);
     } catch (error) {
       throw error;
     }
   }
-  
 
   async findAll(): Promise<Invitation[]> {
     const prismaInvitations = await this.prisma.invitation.findMany();
-    return prismaInvitations.map(inv => this.mapToEntity(inv));
+    return prismaInvitations.map((inv) => this.mapToEntity(inv));
   }
 
   async findById(id: string): Promise<Invitation | null> {
@@ -74,7 +78,10 @@ export class InvitationRepository {
     return prismaInvitation ? this.mapToEntity(prismaInvitation) : null;
   }
 
-  async update(id: string, status: InvitationStatus): Promise<Invitation | null> {
+  async update(
+    id: string,
+    status: InvitationStatus,
+  ): Promise<Invitation | null> {
     const prismaInvitation = await this.prisma.invitation.update({
       where: { id },
       data: { status: this.mapToPrismaStatus(status) },
@@ -92,4 +99,4 @@ export class InvitationRepository {
       return false;
     }
   }
-} 
+}

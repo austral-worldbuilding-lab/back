@@ -7,9 +7,10 @@ import { ProjectModule } from './project/project.module';
 import { UserModule } from './user/user.module';
 import { InvitationModule } from './invitation/invitation.module';
 import { MandalaModule } from './mandala/mandala.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, ProjectModule, UserModule, InvitationModule, MandalaModule],
+  imports: [PrismaModule, ProjectModule, UserModule, InvitationModule, MandalaModule, AuthModule],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
