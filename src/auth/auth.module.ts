@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
 import { FirebaseService } from './firebase/firebase.service';
-import { FirebaseStrategy } from './firebase/firebase.strategy';
+import { FirebaseAuthGuard } from './firebase/firebase.guard';
 import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [PassportModule, UserModule],
-  providers: [FirebaseService, FirebaseStrategy],
+  imports: [UserModule],
+  providers: [FirebaseService, FirebaseAuthGuard],
   exports: [FirebaseService],
 })
 export class AuthModule {}
