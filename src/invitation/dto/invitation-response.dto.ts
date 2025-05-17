@@ -15,4 +15,4 @@ export class InvitationResponseDto {
     this.created_at = invitation.created_at;
     this.updated_at = invitation.updated_at;
   }
-} 
+}

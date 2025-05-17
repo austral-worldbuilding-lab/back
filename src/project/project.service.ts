@@ -111,6 +111,8 @@ export class ProjectService {
       throw new ForbiddenException('Only the project owner can delete it');
     }
 
-    return this.prisma.project.delete({ where: { id: projectId } });
+    return this.prisma.project.delete({
+      where: { id: projectId },
+    });
   }
 }
