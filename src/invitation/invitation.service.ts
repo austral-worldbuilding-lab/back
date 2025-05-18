@@ -29,7 +29,7 @@ export class InvitationService {
       existingInvitation.status === InvitationStatus.ACCEPTED;
     if (alreadyPending || alreadyAccepted) {
       throw new ConflictException(
-        'An invitation for this email already exists in this project',
+        'An invitation for this email already exists in this project, or the user has already accepted it.',
       );
     }
 
