@@ -1,57 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { PrismaService } from '../prisma/prisma.service';
+import { UserRepository } from './user.repository';
+import { UserDto } from './dto/user.dto';
+import { PaginatedResponse } from '../common/types/responses';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private userRepository: UserRepository) {}
 
-  async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        username: true,
-        first_name: true,
-        last_name: true,
-        email: true,
-        is_active: true,
-      },
-    });
+  async create(createUserDto: CreateUserDto): Promise<UserDto> {
+    return this.userRepository.create(createUserDto);
   }
 
-  async create(createUserDto: CreateUserDto) {
-    return this.prisma.user.create({
-      data: {
-        username: createUserDto.username,
-        first_name: createUserDto.first_name,
-        last_name: createUserDto.last_name,
-        email: createUserDto.email,
+  async findAllPaginated(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<UserDto>> {
+    const skip = (page - 1) * limit;
+    const [users, total] = await this.userRepository.findAllPaginated(
+      skip,
+      limit,
+    );
+
+    return {
+      data: users,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+    };
   }
 
-  async findAll() {
-    return this.prisma.user.findMany({
-      where: {
-        is_active: true,
-      },
-    });
-  }
-
-  async findOne(id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        username: true,
-        first_name: true,
-        last_name: true,
-        email: true,
-        is_active: true,
-      },
-    });
+  async findOne(id: string): Promise<UserDto> {
+    const user = await this.userRepository.findOne(id);
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -60,23 +44,15 @@ export class UserService {
     return user;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    return this.prisma.user.update({
-      where: { id },
-      data: updateUserDto,
-    });
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDto> {
+    return this.userRepository.update(id, updateUserDto);
   }
 
-  async deactivateUser(targetUserId: string) {
-    const targetUser = await this.prisma.user.findUnique({
-      where: { id: targetUserId },
-    });
+  async deactivateUser(targetUserId: string): Promise<UserDto> {
+    const targetUser = await this.userRepository.findOne(targetUserId);
     if (!targetUser) {
       throw new NotFoundException('Usuario no encontrado');
     }
-    return this.prisma.user.update({
-      where: { id: targetUserId },
-      data: { is_active: false },
-    });
+    return this.userRepository.deactivateUser(targetUserId);
   }
 }
