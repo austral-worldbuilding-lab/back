@@ -3,19 +3,13 @@ import { IsEmail, IsNotEmpty, IsUUID } from 'class-validator';
 export class CreateInvitationDto {
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @IsUUID()
   @IsNotEmpty()
-  projectId: string;
+  projectId!: string;
 
   @IsUUID()
   @IsNotEmpty()
-  invitedById: string;
-
-  constructor(email: string, projectId: string, invitedById: string) {
-    this.email = email;
-    this.projectId = projectId;
-    this.invitedById = invitedById;
-  }
+  invitedById!: string;
 }

@@ -28,19 +28,19 @@ model Project {
 }
 
 model Role {
-  id             String     @id @default(uuid())
-  name           String     @unique
-  userRoles      UserProjectRole[]
+  id        String            @id @default(uuid())
+  name      String            @unique
+  userRoles UserProjectRole[]
 }
 
 model UserProjectRole {
-  id             String     @id @default(uuid())
-  user           User       @relation(fields: [userId], references: [id])
-  userId         String
-  project        Project    @relation("ProjectToUserRoles", fields: [projectId], references: [id], onDelete: Cascade)
-  projectId      String
-  role           Role       @relation(fields: [roleId], references: [id])
-  roleId         String
+  id        String  @id @default(uuid())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  project   Project @relation("ProjectToUserRoles", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  role      Role    @relation(fields: [roleId], references: [id])
+  roleId    String
 
   @@unique([userId, projectId]) // This allows for a user to have multiple roles in project
 }
@@ -58,7 +58,6 @@ model Invitation {
   id        String           @id @default(uuid())
   email     String
   status    InvitationStatus @default(PENDING)
-  token     String           @unique
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
@@ -76,4 +75,3 @@ enum InvitationStatus {
   ACCEPTED
   REJECTED
 }
-

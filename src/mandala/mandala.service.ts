@@ -1,71 +1,57 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
+import { MandalaRepository } from './mandala.repository';
+import { MandalaDto } from './dto/mandala.dto';
+import { PaginatedResponse } from '../common/types/responses';
 
 @Injectable()
 export class MandalaService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private mandalaRepository: MandalaRepository) {}
 
-  async create(createMandalaDto: CreateMandalaDto) {
-    const mandala = await this.prisma.mandala.create({
-      data: {
-        name: createMandalaDto.name,
-        projectId: createMandalaDto.projectId,
-      },
-    });
-
-    return {
-      message: 'Mandala created successfully',
-      data: mandala,
-    };
+  async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
+    return this.mandalaRepository.create(createMandalaDto);
   }
 
-  async findAll(projectId: string) {
-    const mandalas = await this.prisma.mandala.findMany({
-      where: { projectId },
-    });
+  async findAllPaginated(
+    projectId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<MandalaDto>> {
+    const skip = (page - 1) * limit;
+    const [mandalas, total] = await this.mandalaRepository.findAllPaginated(
+      projectId,
+      skip,
+      limit,
+    );
 
     return {
       data: mandalas,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
-  async findOne(id: string) {
-    const mandala = await this.prisma.mandala.findFirst({
-      where: { id },
-    });
-
+  async findOne(id: string): Promise<MandalaDto> {
+    const mandala = await this.mandalaRepository.findOne(id);
     if (!mandala) {
       throw new NotFoundException(`Mandala with ID ${id} not found`);
     }
-
-    return {
-      data: mandala,
-    };
+    return mandala;
   }
 
-  async update(id: string, updateMandalaDto: UpdateMandalaDto) {
-    const mandala = await this.prisma.mandala.update({
-      where: { id },
-      data: {
-        name: updateMandalaDto.name,
-      },
-    });
-
-    return {
-      message: 'Mandala updated successfully',
-      data: mandala,
-    };
+  async update(
+    id: string,
+    updateMandalaDto: UpdateMandalaDto,
+  ): Promise<MandalaDto> {
+    return this.mandalaRepository.update(id, updateMandalaDto);
   }
 
-  async remove(id: string) {
-    await this.prisma.mandala.delete({
-      where: { id },
-    });
-
-    return {
-      message: 'Mandala deleted successfully',
-    };
+  async remove(id: string): Promise<MandalaDto> {
+    return this.mandalaRepository.remove(id);
   }
 }
