@@ -21,8 +21,13 @@ export class InvitationService {
       createInvitationDto.email,
       createInvitationDto.projectId,
     );
-
-    if (existingInvitation) {
+    const alreadyPending =
+      existingInvitation &&
+      existingInvitation.status === InvitationStatus.PENDING;
+    const alreadyAccepted =
+      existingInvitation &&
+      existingInvitation.status === InvitationStatus.ACCEPTED;
+    if (alreadyPending || alreadyAccepted) {
       throw new ConflictException(
         'An invitation for this email already exists in this project',
       );
