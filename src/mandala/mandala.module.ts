@@ -3,9 +3,10 @@ import { MandalaService } from './mandala.service';
 import { MandalaController } from './mandala.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { MandalaRepository } from './mandala.repository';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuthModule],
   controllers: [MandalaController],
   providers: [MandalaService, MandalaRepository],
   exports: [MandalaService],
