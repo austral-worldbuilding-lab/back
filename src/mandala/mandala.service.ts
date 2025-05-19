@@ -54,4 +54,11 @@ export class MandalaService {
   async remove(id: string): Promise<MandalaDto> {
     return this.mandalaRepository.remove(id);
   }
+
+  generate() {
+    //por ahora se simula que creamos la mandala
+    return {
+      message: 'Mandala generated successfully',
+    };
+  }
 }
