@@ -88,4 +88,11 @@ export class MandalaController {
       data: mandala,
     };
   }
+
+  @Post('generate')
+  @UseGuards(ProjectRoleGuard)
+  @AllowedRoles('owner', 'member')
+  generate() {
+    return this.mandalaService.generate();
+  }
 }
