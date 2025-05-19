@@ -1,95 +1,135 @@
 import { Injectable } from '@nestjs/common';
-import { Invitation, InvitationStatus } from './entities/invitation.entity';
+import { Invitation } from './entities/invitation.entity';
 import { PrismaService } from '../prisma/prisma.service';
-import { InvitationStatus as PrismaInvitationStatus } from '@prisma/client';
+import { InvitationStatus, Project, User, Role } from '@prisma/client';
 
 @Injectable()
 export class InvitationRepository {
   constructor(private prisma: PrismaService) {}
 
-  private mapToEntity(prismaInvitation: any): Invitation {
-    const invitation = new Invitation(prismaInvitation.email);
-    invitation.id = prismaInvitation.id;
-    invitation.status = prismaInvitation.status.toLowerCase() as InvitationStatus;
-    invitation.created_at = prismaInvitation.createdAt;
-    invitation.updated_at = prismaInvitation.updatedAt;
-    return invitation;
-  }
-
-  private mapToPrismaStatus(status: InvitationStatus): PrismaInvitationStatus {
-    return status.toUpperCase() as PrismaInvitationStatus;
-  }
-
-  async create(email: string, projectId: string, invitedById: string): Promise<Invitation> {
-    // Validar que el proyecto existe
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
+  async findProjectById(id: string): Promise<Project | null> {
+    return this.prisma.project.findUnique({
+      where: { id },
     });
-  
-    if (!project) {
-      throw new Error(`Project with ID ${projectId} does not exist.`);
-    }
-
-    const inviter = await this.prisma.user.findUnique({
-      where: { id: invitedById },
-    });
-  
-    if (!inviter) {
-      throw new Error(`User with ID ${invitedById} does not exist.`);
-    }
-  
-    try {
-      const prismaInvitation = await this.prisma.invitation.create({
-        data: {
-          email,
-          projectId,
-          invitedById,
-          token: crypto.randomUUID(),
-        },
-      });
-  
-      return this.mapToEntity(prismaInvitation);
-    } catch (error) {
-      throw error;
-    }
   }
-  
 
-  async findAll(): Promise<Invitation[]> {
-    const prismaInvitations = await this.prisma.invitation.findMany();
-    return prismaInvitations.map(inv => this.mapToEntity(inv));
+  async findUserById(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  async create(
+    email: string,
+    projectId: string,
+    invitedById: string,
+  ): Promise<Invitation> {
+    return this.prisma.invitation.create({
+      data: {
+        email,
+        projectId,
+        invitedById,
+      },
+    });
+  }
+
+  async findAllPaginated(
+    skip: number,
+    take: number,
+    projectId?: string,
+    status?: InvitationStatus,
+  ): Promise<[Invitation[], number]> {
+    const where = {
+      ...(projectId && { projectId }),
+      ...(status && { status }),
+    };
+
+    const [invitations, total] = await this.prisma.$transaction([
+      this.prisma.invitation.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.invitation.count({ where }),
+    ]);
+
+    return [invitations, total];
   }
 
   async findById(id: string): Promise<Invitation | null> {
-    const prismaInvitation = await this.prisma.invitation.findUnique({
+    return this.prisma.invitation.findUnique({
       where: { id },
     });
-    return prismaInvitation ? this.mapToEntity(prismaInvitation) : null;
   }
 
-  async findByEmail(email: string): Promise<Invitation | null> {
-    const prismaInvitation = await this.prisma.invitation.findFirst({
-      where: { email },
+  async findByEmail(
+    email: string,
+    projectId: string,
+  ): Promise<Invitation | null> {
+    return this.prisma.invitation.findFirst({
+      where: { email, projectId },
     });
-    return prismaInvitation ? this.mapToEntity(prismaInvitation) : null;
   }
 
-  async update(id: string, status: InvitationStatus): Promise<Invitation | null> {
-    const prismaInvitation = await this.prisma.invitation.update({
+  async update(
+    id: string,
+    status: InvitationStatus,
+  ): Promise<Invitation | null> {
+    return this.prisma.invitation.update({
       where: { id },
-      data: { status: this.mapToPrismaStatus(status) },
+      data: { status },
     });
-    return this.mapToEntity(prismaInvitation);
   }
 
-  async delete(id: string): Promise<boolean> {
-    try {
-      await this.prisma.invitation.delete({
-        where: { id },
-      });
-      return true;
-    } catch (error) {
-      return false;
+  async delete(id: string): Promise<Invitation> {
+    return this.prisma.invitation.delete({
+      where: { id },
+    });
+  }
+
+  async findRoleByName(name: string): Promise<Role | null> {
+    return this.prisma.role.findUnique({
+      where: { name },
+    });
+  }
+
+  async createRole(name: string): Promise<Role> {
+    return this.prisma.role.create({
+      data: { name },
+    });
+  }
+
+  async findOrCreateRole(name: string): Promise<Role> {
+    const role = await this.findRoleByName(name);
+    if (role) {
+      return role;
     }
+    return this.createRole(name);
   }
-} 
+
+  async acceptInvitationAndAddUser(
+    invitationId: string,
+    userId: string,
+    roleId: string,
+  ): Promise<Invitation> {
+    return this.prisma.$transaction(async (tx) => {
+      // Update invitation status
+      const invitation = await tx.invitation.update({
+        where: { id: invitationId },
+        data: { status: InvitationStatus.ACCEPTED },
+      });
+
+      // Add user to project
+      await tx.userProjectRole.create({
+        data: {
+          userId,
+          projectId: invitation.projectId,
+          roleId,
+        },
+      });
+
+      return invitation;
+    });
+  }
+}

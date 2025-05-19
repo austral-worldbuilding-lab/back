@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
 import { MandalaService } from './mandala.service';
 import { MandalaController } from './mandala.controller';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaModule } from '../prisma/prisma.module';
+import { MandalaRepository } from './mandala.repository';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
+  imports: [PrismaModule, AuthModule],
   controllers: [MandalaController],
-  providers: [MandalaService, PrismaService],
+  providers: [MandalaService, MandalaRepository],
+  exports: [MandalaService],
 })
 export class MandalaModule {}

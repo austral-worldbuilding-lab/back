@@ -8,21 +8,36 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { MinValuePipe } from '../pipes/min-value.pipe';
+import { FirebaseAuthGuard } from '../auth/firebase/firebase.guard';
+import { ProjectDto } from './dto/project.dto';
+import {
+  MessageResponse,
+  DataResponse,
+  PaginatedResponse,
+} from '../common/types/responses';
 
 @Controller('project')
+@UseGuards(FirebaseAuthGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectService.create(
+  async create(
+    @Body() createProjectDto: CreateProjectDto,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.create(
       createProjectDto,
       createProjectDto.userId,
     );
+    return {
+      message: 'Project created successfully',
+      data: project,
+    };
   }
 
   @Get()
@@ -31,20 +46,24 @@ export class ProjectController {
     page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1))
     limit: number,
-  ) {
-    if (page && limit) {
-      return this.projectService.findAllPaginated(page, limit);
-    }
-    return this.projectService.findAll();
+  ): Promise<PaginatedResponse<ProjectDto>> {
+    return await this.projectService.findAllPaginated(page, limit);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectService.findOne(id);
+  async findOne(@Param('id') id: string): Promise<DataResponse<ProjectDto>> {
+    const project = await this.projectService.findOne(id);
+    return {
+      data: project,
+    };
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Query('userId') userId: string) {
-    return this.projectService.remove(id, userId);
+  async remove(@Param('id') id: string): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.remove(id);
+    return {
+      message: 'Project deleted successfully',
+      data: project,
+    };
   }
 }

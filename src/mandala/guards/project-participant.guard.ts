@@ -5,15 +5,16 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Request } from 'express';
+import { RequestWithUser } from '../../auth/types/auth.types';
 
 @Injectable()
 export class ProjectParticipantGuard implements CanActivate {
   constructor(private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
-    const userId = request.headers['x-user-id'] as string | undefined; // Assuming token will be later passed
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
+
+    const userId = request.user.id;
     const projectId =
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (request.body?.projectId as string | undefined) ||

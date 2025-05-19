@@ -1,64 +1,29 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { ProjectRepository } from './project.repository';
+import { ProjectDto } from './dto/project.dto';
+import { PaginatedResponse } from '../common/types/responses';
 
 @Injectable()
 export class ProjectService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private projectRepository: ProjectRepository) {}
 
-  async create(createProjectDto: CreateProjectDto, userId: string) {
-    const project = await this.prisma.project.create({
-      data: {
-        name: createProjectDto.name,
-      },
-    });
-
-    // Find or create owner role
-    let ownerRole = await this.prisma.role.findFirst({
-      where: { name: 'owner' },
-    });
-
-    if (!ownerRole) {
-      ownerRole = await this.prisma.role.create({
-        data: { name: 'owner' },
-      });
-    }
-
-    await this.prisma.userProjectRole.create({
-      data: {
-        userId: userId,
-        projectId: project.id,
-        roleId: ownerRole.id,
-      },
-    });
-
-    return {
-      message: 'Project created successfully',
-      data: project,
-    };
+  async create(
+    createProjectDto: CreateProjectDto,
+    userId: string,
+  ): Promise<ProjectDto> {
+    return this.projectRepository.create(createProjectDto, userId);
   }
 
-  async findAll() {
-    return this.prisma.project.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async findAllPaginated(page: number, limit: number) {
+  async findAllPaginated(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<ProjectDto>> {
     const skip = (page - 1) * limit;
-
-    const [projects, total] = await this.prisma.$transaction([
-      this.prisma.project.findMany({
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.project.count(),
-    ]);
+    const [projects, total] = await this.projectRepository.findAllPaginated(
+      skip,
+      limit,
+    );
 
     return {
       data: projects,
@@ -71,46 +36,19 @@ export class ProjectService {
     };
   }
 
-  async findOne(id: string) {
-    const project = await this.prisma.project.findUnique({ where: { id } });
+  async findOne(id: string): Promise<ProjectDto> {
+    const project = await this.projectRepository.findOne(id);
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
     return project;
   }
 
-  async remove(projectId: string, userId: string) {
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
-    });
-
+  async remove(id: string): Promise<ProjectDto> {
+    const project = await this.projectRepository.findOne(id);
     if (!project) {
-      throw new NotFoundException('Project not found');
+      throw new NotFoundException(`Project with ID ${id} not found`);
     }
-
-    // Find or create owner role
-    let ownerRole = await this.prisma.role.findFirst({
-      where: { name: 'owner' },
-    });
-
-    if (!ownerRole) {
-      ownerRole = await this.prisma.role.create({
-        data: { name: 'owner' },
-      });
-    }
-
-    const userIsOwner = await this.prisma.userProjectRole.findFirst({
-      where: {
-        projectId,
-        userId,
-        roleId: ownerRole.id,
-      },
-    });
-
-    if (!userIsOwner) {
-      throw new ForbiddenException('Only the project owner can delete it');
-    }
-
-    return this.prisma.project.delete({ where: { id: projectId } });
+    return this.projectRepository.remove(id);
   }
 }
