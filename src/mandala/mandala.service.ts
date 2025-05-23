@@ -65,7 +65,9 @@ export class MandalaService {
     return this.mandalaRepository.remove(id);
   }
 
-  async generate(createMandalaDto: CreateMandalaDto): Promise<MandalaWithPostitsDto> {
+  async generate(
+    createMandalaDto: CreateMandalaDto,
+  ): Promise<MandalaWithPostitsDto> {
     // 1. Create in Postgres
     const mandala: MandalaDto = await this.create(createMandalaDto);
 
@@ -84,9 +86,9 @@ export class MandalaService {
     );
 
     // 4. Prepare Firestore data (add/transform fields as needed)
-    const firestoreData: MandalaWithPostitsDto = { 
-      mandala: mandala, 
-      postits: postitsWithCoordinates 
+    const firestoreData: MandalaWithPostitsDto = {
+      mandala: mandala,
+      postits: postitsWithCoordinates,
     };
 
     // 5. Create in Firestore with the same id
