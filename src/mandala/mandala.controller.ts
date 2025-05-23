@@ -24,6 +24,7 @@ import {
   PaginatedResponse,
 } from '../common/types/responses';
 import { MinValuePipe } from '../pipes/min-value.pipe';
+import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
 
 @Controller('mandala')
 @UseGuards(FirebaseAuthGuard)
@@ -92,7 +93,14 @@ export class MandalaController {
   @Post('generate')
   @UseGuards(ProjectRoleGuard)
   @AllowedRoles('owner', 'member')
-  generate() {
-    return this.mandalaService.generate();
+  async generate(
+    @Body() createMandalaDto: CreateMandalaDto,
+  ): Promise<MessageResponse<MandalaWithPostitsDto>> {
+    const mandalaWithPostits =
+      await this.mandalaService.generate(createMandalaDto);
+    return {
+      message: 'Mandala generated successfully with IA',
+      data: mandalaWithPostits,
+    };
   }
 }
