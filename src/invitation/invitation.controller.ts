@@ -58,7 +58,9 @@ export class InvitationController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Obtener todas las invitaciones con filtros opcionales' })
+  @ApiOperation({
+    summary: 'Obtener todas las invitaciones con filtros opcionales',
+  })
   @ApiQuery({
     name: 'page',
     description: 'Número de página',
@@ -139,7 +141,6 @@ export class InvitationController {
   @ApiParam({ name: 'id', description: 'ID de la invitación', type: String })
   @ApiResponse({
     status: 200,
-    description: 'Retorna la invitación con el ID especificado',
     type: InvitationDto,
   })
   @ApiResponse({ status: 404, description: 'Invitación no encontrada' })

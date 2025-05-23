@@ -4,21 +4,21 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateInvitationDto {
   @ApiProperty({
     description: 'Correo electrónico del usuario invitado',
-    example: 'usuario@example.com'
+    example: 'usuario@example.com',
   })
   @IsEmail()
   @IsNotEmpty()
   email!: string;
 
   @ApiProperty({
-    description: 'ID del proyecto al que se invita'
+    description: 'ID del proyecto al que se invita',
   })
   @IsUUID()
   @IsNotEmpty()
   projectId!: string;
 
   @ApiProperty({
-    description: 'ID del usuario que realiza la invitación'
+    description: 'ID del usuario que realiza la invitación',
   })
   @IsUUID()
   @IsNotEmpty()

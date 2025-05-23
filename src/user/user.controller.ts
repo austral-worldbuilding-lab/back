@@ -22,12 +22,28 @@ import {
   PaginatedResponse,
 } from '../common/types/responses';
 import { MinValuePipe } from '../pipes/min-value.pipe';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiParam,
+} from '@nestjs/swagger';
 
+@ApiTags('Users')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiResponse({
+    status: 201,
+    description: 'The user has been successfully created.',
+    type: UserDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad request.' })
   async create(
     @Body() createUserDto: CreateUserDto,
   ): Promise<MessageResponse<UserDto>> {
@@ -40,6 +56,26 @@ export class UserController {
 
   @Get()
   @UseGuards(FirebaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users with pagination' })
+  @ApiQuery({
+    name: 'page',
+    description: 'Page number',
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Items per page',
+    type: Number,
+    example: 10,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a paginated list of users',
+    type: [UserDto],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
@@ -51,6 +87,16 @@ export class UserController {
 
   @Get(':id')
   @UseGuards(FirebaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a user by ID' })
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the user with the specified ID',
+    type: UserDto,
+  })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async findOne(@Param('id') id: string): Promise<DataResponse<UserDto>> {
     const user = await this.userService.findOne(id);
     return {
@@ -60,6 +106,16 @@ export class UserController {
 
   @Patch(':id')
   @UseGuards(FirebaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a user' })
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'The user has been successfully updated.',
+    type: UserDto,
+  })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -73,6 +129,16 @@ export class UserController {
 
   @Delete(':id')
   @UseGuards(FirebaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Deactivate a user' })
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'The user has been successfully deactivated.',
+    type: UserDto,
+  })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async remove(@Param('id') id: string): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.deactivateUser(id);
     return {
