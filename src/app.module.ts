@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { InvitationModule } from './invitation/invitation.module';
 import { MandalaModule } from './mandala/mandala.module';
 import { AuthModule } from './auth/auth.module';
+import { FileModule } from './files/file.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuthModule } from './auth/auth.module';
     InvitationModule,
     MandalaModule,
     AuthModule,
+    FileModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
