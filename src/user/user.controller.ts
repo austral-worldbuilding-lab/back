@@ -37,10 +37,10 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new user' })
+  @ApiOperation({ summary: 'Crear un nuevo usuario' })
   @ApiResponse({
     status: 201,
-    description: 'The user has been successfully created.',
+    description: 'El usuario fue creado exitosamente.',
     type: UserDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request.' })
@@ -57,22 +57,22 @@ export class UserController {
   @Get()
   @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all users with pagination' })
+  @ApiOperation({ summary: 'Obtener todos los usuarios con paginación' })
   @ApiQuery({
-    name: 'page',
-    description: 'Page number',
+    name: 'pagina',
+    description: 'Numero de pagina',
     type: Number,
     example: 1,
   })
   @ApiQuery({
-    name: 'limit',
-    description: 'Items per page',
+    name: 'limite',
+    description: 'Items por pagina',
     type: Number,
     example: 10,
   })
   @ApiResponse({
     status: 200,
-    description: 'Returns a paginated list of users',
+    description: 'Devuelve una lista paginada de usuarios',
     type: [UserDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
@@ -88,11 +88,11 @@ export class UserController {
   @Get(':id')
   @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get a user by ID' })
+  @ApiOperation({ summary: 'Obtener un usuario por ID' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiResponse({
     status: 200,
-    description: 'Returns the user with the specified ID',
+    description: 'Devuelve el usuario con el ID especifico',
     type: UserDto,
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
@@ -107,15 +107,15 @@ export class UserController {
   @Patch(':id')
   @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update a user' })
+  @ApiOperation({ summary: 'Actualizar usuario' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiResponse({
     status: 200,
-    description: 'The user has been successfully updated.',
+    description: 'El usuario ha sido creado correctamente.',
     type: UserDto,
   })
-  @ApiResponse({ status: 404, description: 'User not found.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  @ApiResponse({ status: 401, description: 'Sin autorizacion.' })
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -130,11 +130,11 @@ export class UserController {
   @Delete(':id')
   @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Deactivate a user' })
+  @ApiOperation({ summary: 'Desactivar usuario' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiResponse({
     status: 200,
-    description: 'The user has been successfully deactivated.',
+    description: 'El usuario fue desactivado exitosamente',
     type: UserDto,
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
