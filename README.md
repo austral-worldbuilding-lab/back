@@ -82,3 +82,11 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+
+## Documentación API (Swagger)
+
+La documentación de la API está disponible a través de Swagger UI. Para acceder a ella:
+
+1. Asegúrate de que el servidor esté corriendo en modo desarrollo (`npm run start:dev`)
+2. Navega a `http://localhost:3000/api/docs` 
+
