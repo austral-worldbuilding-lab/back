@@ -18,7 +18,7 @@ import { FileModule } from './files/file.module';
     InvitationModule,
     MandalaModule,
     AuthModule,
-    FileModule
+    FileModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
