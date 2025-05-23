@@ -1,10 +1,8 @@
-export interface FileDescriptor {
-  file_name: string;
-  file_type: string;
-}
+import { CreateFileDto } from '../files/dto/create-file.dto';
+import { PresignedUrl } from '../common/types/presigned-url';
 
 export interface StorageService {
-  uploadFiles(files: FileDescriptor[], projectId: string): Promise<string[]>;
-  getFiles(projectId: string): Promise<FileDescriptor[]>;
+  uploadFiles(files: CreateFileDto[], projectId: string): Promise<PresignedUrl[]>;
+  getFiles(projectId: string): Promise<CreateFileDto[]>;
   readAllFilesAsBuffers(folder: string): Promise<Buffer[]>;
 }

@@ -1,19 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { AzureBlobStorageService } from '../storage/AzureBlobStorageService';
-import { FileDescriptor } from '../storage/StorageService';
+import { CreateFileDto } from './dto/create-file.dto';
+import { PresignedUrl } from '../common/types/presigned-url';
 
 @Injectable()
 export class FileService {
   private storageService = new AzureBlobStorageService();
 
   async uploadFiles(
-    files: FileDescriptor[],
+    files: CreateFileDto[],
     projectId: string,
-  ): Promise<string[]> {
+  ): Promise<PresignedUrl[]> {
     return this.storageService.uploadFiles(files, projectId);
   }
 
-  async getFiles(projectId: string): Promise<FileDescriptor[]> {
+  async getFiles(projectId: string): Promise<CreateFileDto[]> {
     return this.storageService.getFiles(projectId);
   }
 

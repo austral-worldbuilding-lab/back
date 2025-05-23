@@ -3,10 +3,12 @@ import {
   BlobServiceClient,
   StorageSharedKeyCredential,
 } from '@azure/storage-blob';
-import { StorageService, FileDescriptor } from './StorageService';
+import { StorageService } from './StorageService';
+import { CreateFileDto } from '../files/dto/create-file.dto';
+import { PresignedUrl } from '../common/types/presigned-url';
 
 export class AzureBlobStorageService implements StorageService {
-  private containerName = 'wbl';
+  private containerName = process.env.AZURE_STORAGE_CONTAINER_NAME!;
   private blobServiceClient: BlobServiceClient;
 
   constructor() {
@@ -23,13 +25,13 @@ export class AzureBlobStorageService implements StorageService {
   }
 
   async uploadFiles(
-    files: FileDescriptor[],
+    files: CreateFileDto[],
     projectId: string,
-  ): Promise<string[]> {
+  ): Promise<PresignedUrl[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const urls: string[] = [];
+    const urls: PresignedUrl[] = [];
 
     for (const file of files) {
       const blobName = `${projectId}/${file.file_name}`;
@@ -39,17 +41,17 @@ export class AzureBlobStorageService implements StorageService {
         permissions: BlobSASPermissions.parse('cw'),
         expiresOn,
       });
-      urls.push(sasUrl);
+      urls.push({ url: sasUrl });
     }
 
     return urls;
   }
 
-  async getFiles(projectId: string): Promise<FileDescriptor[]> {
+  async getFiles(projectId: string): Promise<CreateFileDto[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const descriptors: FileDescriptor[] = [];
+    const descriptors: CreateFileDto[] = [];
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: `${projectId}/`,

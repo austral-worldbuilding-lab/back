@@ -1,6 +1,9 @@
 import { Controller, Get, Post, Param, Body } from '@nestjs/common';
 import { FileService } from './file.service';
-import { FileDescriptor } from '../storage/StorageService';
+
+import { CreateFileDto } from './dto/create-file.dto';
+import { DataResponse } from '../common/types/responses';
+import { PresignedUrl } from '../common/types/presigned-url';
 
 @Controller('files')
 export class FileController {
@@ -9,22 +12,25 @@ export class FileController {
   @Get(':projectId')
   async getFiles(
     @Param('projectId') projectId: string,
-  ): Promise<FileDescriptor[]> {
-    return this.fileService.getFiles(projectId);
+  ): Promise<DataResponse<CreateFileDto[]>> {
+    const response = await this.fileService.getFiles(projectId);
+    return { data: response };
   }
 
   @Post(':projectId')
   async uploadFiles(
     @Param('projectId') projectId: string,
-    @Body() body: FileDescriptor[],
-  ): Promise<string[]> {
-    return this.fileService.uploadFiles(body, projectId);
+    @Body() body: CreateFileDto[],
+  ): Promise<DataResponse<PresignedUrl[]>> {
+    const response = await this.fileService.uploadFiles(body, projectId);
+    return { data: response };
   }
 
   @Get(':projectId/buffers')
   async getFileBuffers(
     @Param('projectId') projectId: string,
-  ): Promise<Buffer[]> {
-    return this.fileService.readAllFilesAsBuffers(projectId);
+  ): Promise<DataResponse<Buffer[]>> {
+    const response = await this.fileService.readAllFilesAsBuffers(projectId);
+    return { data: response };
   }
 }
