@@ -1,11 +1,6 @@
 import { CreateFileDto } from '../files/dto/create-file.dto';
 import { PresignedUrl } from '../common/types/presigned-url';
-
-export interface FileBuffer {
-  buffer: Buffer;
-  fileName: string;
-  mimeType: string;
-}
+import { FileBuffer } from '../files/types/file-buffer.interface';
 
 export interface StorageService {
   uploadFiles(

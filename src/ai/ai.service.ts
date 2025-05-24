@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import { ConfigService } from '@nestjs/config';
-import { PostitsResponse } from './resources/responses/responseSchema.js';
+import { PostitsResponse } from './resources/dto/generate-postits.dto.js';
 import { FileService } from '../files/file.service';
-import { FileBuffer } from '../storage/StorageService';
+import { FileBuffer } from '../files/types/file-buffer.interface';
 import * as fs from 'fs';
 
 @Injectable()
@@ -86,8 +86,7 @@ export class AiService {
       contents,
     });
 
-    this.logger.log('Received response from Gemini API');
-    this.logger.debug('Response details:', response.text);
+    this.logger.log('Generation completed successfully');
 
     return response.text;
   }

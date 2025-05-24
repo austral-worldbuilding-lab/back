@@ -3,7 +3,8 @@ import {
   BlobServiceClient,
   StorageSharedKeyCredential,
 } from '@azure/storage-blob';
-import { StorageService, FileBuffer } from './StorageService';
+import { StorageService } from './StorageService';
+import { FileBuffer } from '../files/types/file-buffer.interface';
 import { CreateFileDto } from '../files/dto/create-file.dto';
 import { PresignedUrl } from '../common/types/presigned-url';
 
