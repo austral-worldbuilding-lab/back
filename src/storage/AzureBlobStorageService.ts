@@ -4,6 +4,7 @@ import {
   StorageSharedKeyCredential,
 } from '@azure/storage-blob';
 import { StorageService } from './StorageService';
+import { FileBuffer } from '../files/types/file-buffer.interface';
 import { CreateFileDto } from '../files/dto/create-file.dto';
 import { PresignedUrl } from '../common/types/presigned-url';
 
@@ -87,5 +88,35 @@ export class AzureBlobStorageService implements StorageService {
     }
 
     return buffers;
+  }
+
+  async readAllFilesAsBuffersWithMetadata(
+    folder: string,
+  ): Promise<FileBuffer[]> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const fileBuffers: FileBuffer[] = [];
+
+    for await (const blob of containerClient.listBlobsFlat({
+      prefix: `${folder}/`,
+    })) {
+      const blobClient = containerClient.getBlobClient(blob.name);
+      const downloadResponse = await blobClient.download();
+
+      const chunks: Buffer[] = [];
+      for await (const chunk of downloadResponse.readableStreamBody!) {
+        chunks.push(Buffer.from(chunk));
+      }
+
+      const fullBuffer = Buffer.concat(chunks);
+      fileBuffers.push({
+        buffer: fullBuffer,
+        fileName: blob.name.split('/').pop() || '',
+        mimeType: blob.properties.contentType || 'application/octet-stream',
+      });
+    }
+
+    return fileBuffers;
   }
 }
