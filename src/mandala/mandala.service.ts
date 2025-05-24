@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
@@ -71,41 +75,58 @@ export class MandalaService {
     createMandalaDto: CreateMandalaDto,
   ): Promise<MandalaWithPostitsDto> {
     if (!createMandalaDto.projectId) {
-      throw new Error('Project ID is required to generate mandala');
+      throw new BadRequestException(
+        'Project ID is required to generate mandala',
+      );
     }
-    const mandala: MandalaDto = await this.create(createMandalaDto);
     const projectId = createMandalaDto.projectId;
 
-    const postitsResponse = await this.aiService.generatePostits(projectId);
-    if (!postitsResponse) {
-      throw new Error('No response received from AI service');
-    }
-    const postits = JSON.parse(postitsResponse) as Postit[];
-    const postitsWithCoordinates: PostitWithCoordinates[] = postits
-      .map((postit) => ({
-        ...postit,
-        coordinates: this.getRandomCoordinates(
-          postit.dimension,
-          postit.section,
-        ),
-      }))
-      .filter(
-        (postit): postit is PostitWithCoordinates =>
-          postit.coordinates !== null,
+    // Create mandala first
+    const mandala: MandalaDto = await this.create(createMandalaDto);
+
+    try {
+      // Generate postits using AI service
+      const postitsResponse = await this.aiService.generatePostits(projectId);
+      if (!postitsResponse) {
+        throw new Error('No response received from AI service');
+      }
+      const postits = JSON.parse(postitsResponse) as Postit[];
+      const postitsWithCoordinates: PostitWithCoordinates[] = postits
+        .map((postit) => ({
+          ...postit,
+          coordinates: this.getRandomCoordinates(
+            postit.dimension,
+            postit.section,
+          ),
+        }))
+        .filter(
+          (postit): postit is PostitWithCoordinates =>
+            postit.coordinates !== null,
+        );
+
+      // If no valid postits were generated, throw error
+      if (postitsWithCoordinates.length === 0) {
+        throw new Error('No valid postits were generated');
+      }
+
+      const firestoreData: MandalaWithPostitsDto = {
+        mandala: mandala,
+        postits: postitsWithCoordinates,
+      };
+
+      // Create in Firestore
+      await this.firebaseDataService.createDocument(
+        projectId,
+        firestoreData,
+        mandala.id,
       );
 
-    const firestoreData: MandalaWithPostitsDto = {
-      mandala: mandala,
-      postits: postitsWithCoordinates,
-    };
-
-    await this.firebaseDataService.createDocument(
-      projectId,
-      firestoreData,
-      mandala.id,
-    );
-
-    return firestoreData;
+      return firestoreData;
+    } catch (error) {
+      // If anything fails, delete the created mandala
+      await this.remove(mandala.id);
+      throw error;
+    }
   }
 
   getRandomCoordinates(
