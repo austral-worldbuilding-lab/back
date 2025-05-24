@@ -5,6 +5,7 @@ import { MandalaRepository } from './mandala.repository';
 import { MandalaDto } from './dto/mandala.dto';
 import { PaginatedResponse } from '../common/types/responses';
 import { FirebaseDataService } from '../firebase/firebase-data.service';
+import { AiService } from '../ai/ai.service';
 import {
   PostitCoordinates,
   Postit,
@@ -17,6 +18,7 @@ export class MandalaService {
   constructor(
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
+    private aiService: AiService,
   ) {}
 
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
@@ -68,13 +70,17 @@ export class MandalaService {
   async generate(
     createMandalaDto: CreateMandalaDto,
   ): Promise<MandalaWithPostitsDto> {
-    // 1. Create in Postgres
+    if (!createMandalaDto.projectId) {
+      throw new Error('Project ID is required to generate mandala');
+    }
     const mandala: MandalaDto = await this.create(createMandalaDto);
+    const projectId = createMandalaDto.projectId;
 
-    // 2. Generate mandala using ia module
-    const postits: Postit[] = this.mockIA();
-
-    // 3. Add coordinates to each postit
+    const postitsResponse = await this.aiService.generatePostits(projectId);
+    if (!postitsResponse) {
+      throw new Error('No response received from AI service');
+    }
+    const postits = JSON.parse(postitsResponse) as Postit[];
     const postitsWithCoordinates: PostitWithCoordinates[] = postits.map(
       (postit) => ({
         ...postit,
@@ -85,35 +91,18 @@ export class MandalaService {
       }),
     );
 
-    // 4. Prepare Firestore data (add/transform fields as needed)
     const firestoreData: MandalaWithPostitsDto = {
       mandala: mandala,
       postits: postitsWithCoordinates,
     };
 
-    // 5. Create in Firestore with the same id
     await this.firebaseDataService.createDocument(
-      createMandalaDto.projectId,
+      projectId,
       firestoreData,
       mandala.id,
     );
 
     return firestoreData;
-  }
-
-  mockIA(): Postit[] {
-    return [
-      {
-        content: 'Tradición de arrojar alimentos',
-        dimension: 'Cultura',
-        section: 'Comunidad',
-      },
-      {
-        content: 'Celebración fin de etapa',
-        dimension: 'Cultura',
-        section: 'Persona',
-      },
-    ];
   }
 
   getRandomCoordinates(
@@ -133,7 +122,7 @@ export class MandalaService {
     const secIndex = sections.indexOf(section);
 
     if (dimIndex === -1 || secIndex === -1)
-      throw new Error('Invalid dimension or section');
+      throw new Error(`Invalid dimension or section: ${dimension}, ${section}`);
 
     const anglePerDim = (2 * Math.PI) / dimensions.length;
     const startAngle = dimIndex * anglePerDim;
