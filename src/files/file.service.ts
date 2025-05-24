@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AzureBlobStorageService } from '../storage/AzureBlobStorageService';
 import { CreateFileDto } from './dto/create-file.dto';
 import { PresignedUrl } from '../common/types/presigned-url';
+import { FileBuffer } from '../storage/StorageService';
 
 @Injectable()
 export class FileService {
@@ -20,5 +21,9 @@ export class FileService {
 
   async readAllFilesAsBuffers(projectId: string): Promise<Buffer[]> {
     return this.storageService.readAllFilesAsBuffers(projectId);
+  }
+
+  async readAllFilesAsBuffersWithMetadata(projectId: string): Promise<FileBuffer[]> {
+    return this.storageService.readAllFilesAsBuffersWithMetadata(projectId);
   }
 }

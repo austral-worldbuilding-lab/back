@@ -1,15 +1,14 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Param } from '@nestjs/common';
 import { AiService } from './ai.service.js';
-import { GeneratePostitsDto } from './dto/generate-postit.dto.js';
 
 @Controller('ai')
 export class AiController {
     constructor(private readonly aiService: AiService) { }
 
-    @Post('generate-postits')
-    async generatePostits(@Body() dto: GeneratePostitsDto) {
+    @Post('generate-postits/:projectId')
+    async generatePostits(@Param('projectId') projectId: string) {
         return this.aiService.generatePostits(
-            dto.files
+            projectId
         );
     }
 }

@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import { ConfigService } from '@nestjs/config';
 import { PostitsResponse } from './resources/responses/responseSchema.js';
+import { FileService } from '../files/file.service';
+import { FileBuffer } from '../storage/StorageService';
 import * as fs from 'fs';
 
 @Injectable()
@@ -9,7 +11,10 @@ export class AiService {
     private ai: GoogleGenAI;
     private readonly logger = new Logger(AiService.name);
 
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        private fileService: FileService
+    ) {
         const apiKey = this.configService.get<string>('GEMINI_API_KEY');
         if (!apiKey) {
             throw new Error('GEMINI_API_KEY is not configured in environment variables');
@@ -18,21 +23,23 @@ export class AiService {
         this.logger.log('AI Service initialized with Gemini API');
     }
 
-    async generatePostits(
-        files: string[]) {
-        if (files.length === 0) {
-            throw new Error('No files provided');
+    async generatePostits(projectId: string) {
+        this.logger.log(`Processing files for project ${projectId} for postit generation`);
+
+        // Get buffers with metadata from file service
+        const fileBuffers = await this.fileService.readAllFilesAsBuffersWithMetadata(projectId);
+
+        if (fileBuffers.length === 0) {
+            throw new Error('No files found for project');
         }
-        
-        this.logger.log(`Processing ${files.length} files for postit generation`);
-        
-        const geminiFiles = await this.uploadFilesToGemini(this.ai, files)
+
+        const geminiFiles = await this.uploadFileBuffersToGemini(this.ai, fileBuffers)
         this.logger.log(`Successfully uploaded ${geminiFiles.length} files to Gemini`);
 
         const systemInstruction = fs.readFileSync(
             "./src/ai/resources/prompts/prompt_mandala_inicial.txt",
             "utf-8"
-          );
+        );
         this.logger.log('Loaded system instruction from prompt file');
 
         const model = this.configService.get<string>('GEMINI_MODEL');
@@ -60,7 +67,7 @@ export class AiService {
         }));
 
         this.logger.log('Sending request to Gemini API...');
-        
+
         const response = await this.ai.models.generateContent({
             model,
             config,
@@ -73,17 +80,25 @@ export class AiService {
         return response.text;
     }
 
-    async uploadFilesToGemini(ai: GoogleGenAI, files: string[]) {
-        this.logger.log(`Starting upload of ${files.length} files to Gemini`);
+    async uploadFileBuffersToGemini(ai: GoogleGenAI, fileBuffers: FileBuffer[]) {
+        this.logger.log(`Starting upload of ${fileBuffers.length} file buffers to Gemini`);
         const uploadedFiles = await Promise.all(
-          files.map(async (filePath) => {
-            this.logger.debug(`Uploading file: ${filePath}`);
-            return ai.files.upload({
-              file: filePath,
-            });
-          })
+            fileBuffers.map(async (fileBuffer, index) => {
+                this.logger.debug(`Uploading file ${fileBuffer.fileName} (${index + 1}/${fileBuffers.length})`);
+
+                // Convert Buffer to Blob for Gemini upload using the actual MIME type
+                const blob = new Blob([fileBuffer.buffer], { type: fileBuffer.mimeType });
+
+                return ai.files.upload({
+                    file: blob,
+                    config: {
+                        mimeType: fileBuffer.mimeType,
+                        displayName: fileBuffer.fileName
+                    },
+                });
+            })
         );
-        this.logger.log('All files uploaded successfully');
+        this.logger.log('All file buffers uploaded successfully');
         return uploadedFiles;
-      }
+    }
 }
