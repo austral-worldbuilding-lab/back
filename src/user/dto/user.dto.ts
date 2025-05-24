@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UserDto {
   @ApiProperty({
-    description: 'ID único del usuario'
+    description: 'ID único del usuario',
   })
   id!: string;
 
