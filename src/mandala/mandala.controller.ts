@@ -24,6 +24,7 @@ import {
   PaginatedResponse,
 } from '../common/types/responses';
 import { MinValuePipe } from '../pipes/min-value.pipe';
+import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -168,12 +169,24 @@ export class MandalaController {
   @Post('generate')
   @UseGuards(ProjectRoleGuard)
   @AllowedRoles('owner', 'member')
-  @ApiOperation({ summary: 'Generar un mandala automáticamente' })
-  @ApiResponse({
-    status: 200,
-    description: 'Se generó un nuevo mandala automáticamente',
+  @ApiOperation({
+    summary: 'Generar un mandala automáticamente con IA',
+    description:
+      'Crea un nuevo mandala con post-its generados automáticamente usando ia.',
   })
-  generate() {
-    return this.mandalaService.generate();
+  @ApiResponse({
+    status: 201,
+    description: 'Se generó un nuevo mandala automáticamente con sus post-its',
+    type: MandalaWithPostitsDto,
+  })
+  async generate(
+    @Body() createMandalaDto: CreateMandalaDto,
+  ): Promise<MessageResponse<MandalaWithPostitsDto>> {
+    const mandalaWithPostits =
+      await this.mandalaService.generate(createMandalaDto);
+    return {
+      message: 'Mandala generated successfully with IA',
+      data: mandalaWithPostits,
+    };
   }
 }

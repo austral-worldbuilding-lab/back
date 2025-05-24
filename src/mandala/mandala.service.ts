@@ -1,13 +1,30 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { MandalaDto } from './dto/mandala.dto';
 import { PaginatedResponse } from '../common/types/responses';
+import { FirebaseDataService } from '../firebase/firebase-data.service';
+import { AiService } from '../ai/ai.service';
+import {
+  PostitCoordinates,
+  Postit,
+  PostitWithCoordinates,
+} from './types/postits';
+import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
 
 @Injectable()
 export class MandalaService {
-  constructor(private mandalaRepository: MandalaRepository) {}
+  constructor(
+    private mandalaRepository: MandalaRepository,
+    private firebaseDataService: FirebaseDataService,
+    private aiService: AiService,
+  ) {}
 
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
     return this.mandalaRepository.create(createMandalaDto);
@@ -55,10 +72,104 @@ export class MandalaService {
     return this.mandalaRepository.remove(id);
   }
 
-  generate() {
-    //por ahora se simula que creamos la mandala
+  async generate(
+    createMandalaDto: CreateMandalaDto,
+  ): Promise<MandalaWithPostitsDto> {
+    if (!createMandalaDto.projectId) {
+      throw new BadRequestException(
+        'Project ID is required to generate mandala',
+      );
+    }
+    const projectId = createMandalaDto.projectId;
+
+    // Create mandala first
+    const mandala: MandalaDto = await this.create(createMandalaDto);
+
+    try {
+      // Generate postits using AI service
+      const postitsResponse = await this.aiService.generatePostits(projectId);
+      if (!postitsResponse) {
+        throw new InternalServerErrorException(
+          'No response received from AI service',
+        );
+      }
+      const postits = JSON.parse(postitsResponse) as Postit[];
+      const postitsWithCoordinates: PostitWithCoordinates[] = postits
+        .map((postit) => ({
+          ...postit,
+          coordinates: this.getRandomCoordinates(
+            postit.dimension,
+            postit.section,
+          ),
+        }))
+        .filter(
+          (postit): postit is PostitWithCoordinates =>
+            postit.coordinates !== null,
+        );
+
+      // If no valid postits were generated, throw error
+      if (postitsWithCoordinates.length === 0) {
+        throw new InternalServerErrorException(
+          'No valid postits were generated',
+        );
+      }
+
+      const firestoreData: MandalaWithPostitsDto = {
+        mandala: mandala,
+        postits: postitsWithCoordinates,
+      };
+
+      // Create in Firestore
+      await this.firebaseDataService.createDocument(
+        projectId,
+        firestoreData,
+        mandala.id,
+      );
+
+      return firestoreData;
+    } catch (error) {
+      // If anything fails, delete the created mandala
+      await this.remove(mandala.id);
+      throw error;
+    }
+  }
+
+  getRandomCoordinates(
+    dimension: string,
+    section: string,
+    dimensions: string[] = [
+      'Recursos',
+      'Cultura',
+      'Infraestructura',
+      'Economía',
+      'Gobierno',
+      'Ecología',
+    ],
+    sections: string[] = ['Persona', 'Comunidad', 'Institución'],
+  ): PostitCoordinates | null {
+    const dimIndex = dimensions.indexOf(dimension);
+    const secIndex = sections.indexOf(section);
+
+    // Filter out invalid dimensions or sections
+    if (dimIndex === -1 || secIndex === -1) return null;
+
+    const anglePerDim = (2 * Math.PI) / dimensions.length;
+    const startAngle = dimIndex * anglePerDim;
+    const angle = startAngle + Math.random() * anglePerDim;
+
+    const sectionRadiusMin = secIndex / sections.length;
+    const sectionRadiusMax = (secIndex + 1) / sections.length;
+    const percentileDistance =
+      sectionRadiusMin + Math.random() * (sectionRadiusMax - sectionRadiusMin);
+
+    const x = percentileDistance * Math.cos(angle);
+    const y = percentileDistance * Math.sin(angle);
+
     return {
-      message: 'Mandala generated successfully',
+      x, // percentile
+      y, // percentile
+      angle, // radians
+      percentileDistance, // between 0 and 1, distance from the center to exterior
     };
   }
 }

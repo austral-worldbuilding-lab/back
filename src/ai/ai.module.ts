@@ -8,5 +8,6 @@ import { FileModule } from '../files/file.module';
   providers: [AiService],
   controllers: [AiController],
   imports: [ConfigModule, FileModule],
+  exports: [AiService],
 })
 export class AiModule {}

@@ -88,6 +88,10 @@ export class AiService {
 
     this.logger.log('Generation completed successfully');
 
+    if (!response.text) {
+      throw new Error('No response text received from Gemini API');
+    }
+
     return response.text;
   }
 
