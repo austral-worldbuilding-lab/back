@@ -169,10 +169,14 @@ export class MandalaController {
   @Post('generate')
   @UseGuards(ProjectRoleGuard)
   @AllowedRoles('owner', 'member')
-  @ApiOperation({ summary: 'Generar un mandala automáticamente con IA' })
+  @ApiOperation({
+    summary: 'Generar un mandala automáticamente con IA',
+    description:
+      'Crea un nuevo mandala con post-its generados automáticamente usando ia.',
+  })
   @ApiResponse({
     status: 201,
-    description: 'Se generó un nuevo mandala automáticamente',
+    description: 'Se generó un nuevo mandala automáticamente con sus post-its',
     type: MandalaWithPostitsDto,
   })
   async generate(
