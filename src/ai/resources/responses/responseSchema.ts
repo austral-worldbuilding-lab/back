@@ -1,11 +1,11 @@
 export const PostitsResponse = {
-  type: "array",
+  type: 'array',
   items: {
-    type: "object",
+    type: 'object',
     properties: {
-      content: { type: "string" },
-      dimension: { type: "string" },
-      section: { type: "string" },
+      content: { type: 'string' },
+      dimension: { type: 'string' },
+      section: { type: 'string' },
     },
   },
 };

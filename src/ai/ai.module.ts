@@ -9,4 +9,4 @@ import { FileModule } from '../files/file.module';
   controllers: [AiController],
   imports: [ConfigModule, FileModule],
 })
-export class AiModule {} 
+export class AiModule {}

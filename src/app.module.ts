@@ -20,7 +20,7 @@ import { AiModule } from './ai/ai.module';
     MandalaModule,
     AuthModule,
     FileModule,
-    AiModule
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

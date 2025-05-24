@@ -23,7 +23,9 @@ export class FileService {
     return this.storageService.readAllFilesAsBuffers(projectId);
   }
 
-  async readAllFilesAsBuffersWithMetadata(projectId: string): Promise<FileBuffer[]> {
+  async readAllFilesAsBuffersWithMetadata(
+    projectId: string,
+  ): Promise<FileBuffer[]> {
     return this.storageService.readAllFilesAsBuffersWithMetadata(projectId);
   }
 }

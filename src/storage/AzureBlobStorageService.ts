@@ -89,7 +89,9 @@ export class AzureBlobStorageService implements StorageService {
     return buffers;
   }
 
-  async readAllFilesAsBuffersWithMetadata(folder: string): Promise<FileBuffer[]> {
+  async readAllFilesAsBuffersWithMetadata(
+    folder: string,
+  ): Promise<FileBuffer[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
