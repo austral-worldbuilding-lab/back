@@ -81,15 +81,18 @@ export class MandalaService {
       throw new Error('No response received from AI service');
     }
     const postits = JSON.parse(postitsResponse) as Postit[];
-    const postitsWithCoordinates: PostitWithCoordinates[] = postits.map(
-      (postit) => ({
+    const postitsWithCoordinates: PostitWithCoordinates[] = postits
+      .map((postit) => ({
         ...postit,
         coordinates: this.getRandomCoordinates(
           postit.dimension,
           postit.section,
         ),
-      }),
-    );
+      }))
+      .filter(
+        (postit): postit is PostitWithCoordinates =>
+          postit.coordinates !== null,
+      );
 
     const firestoreData: MandalaWithPostitsDto = {
       mandala: mandala,
@@ -117,12 +120,12 @@ export class MandalaService {
       'Ecología',
     ],
     sections: string[] = ['Persona', 'Comunidad', 'Institución'],
-  ): PostitCoordinates {
+  ): PostitCoordinates | null {
     const dimIndex = dimensions.indexOf(dimension);
     const secIndex = sections.indexOf(section);
 
-    if (dimIndex === -1 || secIndex === -1)
-      throw new Error(`Invalid dimension or section: ${dimension}, ${section}`);
+    // Filter out invalid dimensions or sections
+    if (dimIndex === -1 || secIndex === -1) return null;
 
     const anglePerDim = (2 * Math.PI) / dimensions.length;
     const startAngle = dimIndex * anglePerDim;
