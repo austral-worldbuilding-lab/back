@@ -27,7 +27,26 @@ export class MandalaService {
   ) {}
 
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
-    return this.mandalaRepository.create(createMandalaDto);
+    const mandala = await this.mandalaRepository.create(createMandalaDto);
+
+    try {
+      const firestoreData: MandalaWithPostitsDto = {
+        mandala,
+        postits: [],
+      };
+      await this.firebaseDataService.createDocument(
+        createMandalaDto.projectId,
+        firestoreData,
+        mandala.id,
+      );
+    } catch (_error) {
+      await this.remove(mandala.id);
+      throw new InternalServerErrorException(
+        'Error synchronizing the mandala with Firestore',
+      );
+    }
+
+    return mandala;
   }
 
   async findAllPaginated(
