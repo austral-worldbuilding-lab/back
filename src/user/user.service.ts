@@ -20,14 +20,41 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto) {
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         id: createUserDto.firebaseUid,
-        username: createUserDto.username,
         email: createUserDto.email,
+        username: createUserDto.username,
       },
     });
+
+    //esto esta asi para la demo, cada vez que se crea un usuario se lo hace member del project 12345
+    //asi aparecen las mandalas creadas dentro de ese proyecto desde el front
+    const demoProjectId = '12345';
+
+    let role = await this.prisma.role.findFirst({
+      where: { name: 'member' },
+    });
+
+    if (!role) {
+      role = await this.prisma.role.create({
+        data: {
+          name: 'member',
+        },
+      });
+    }
+
+    await this.prisma.userProjectRole.create({
+      data: {
+        userId: user.id,
+        projectId: demoProjectId,
+        roleId: role.id,
+      },
+    });
+
+    return user;
   }
+
 
   async findAll() {
     return this.prisma.user.findMany({
