@@ -2,13 +2,10 @@ import { IsNotEmpty, IsEmail, IsBoolean } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty()
+  firebaseUid!: string;
+
+  @IsNotEmpty()
   username!: string;
-
-  @IsNotEmpty()
-  first_name!: string;
-
-  @IsNotEmpty()
-  last_name!: string;
 
   @IsEmail()
   @IsNotEmpty()

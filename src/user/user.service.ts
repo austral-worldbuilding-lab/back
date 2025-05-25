@@ -13,8 +13,6 @@ export class UserService {
       select: {
         id: true,
         username: true,
-        first_name: true,
-        last_name: true,
         email: true,
         is_active: true,
       },
@@ -24,9 +22,8 @@ export class UserService {
   async create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: {
+        id: createUserDto.firebaseUid,
         username: createUserDto.username,
-        first_name: createUserDto.first_name,
-        last_name: createUserDto.last_name,
         email: createUserDto.email,
       },
     });
@@ -46,8 +43,6 @@ export class UserService {
       select: {
         id: true,
         username: true,
-        first_name: true,
-        last_name: true,
         email: true,
         is_active: true,
       },
