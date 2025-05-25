@@ -31,8 +31,6 @@ export class AuthService {
       select: {
         id: true,
         username: true,
-        first_name: true,
-        last_name: true,
         email: true,
         is_active: true,
       },

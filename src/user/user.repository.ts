@@ -9,14 +9,38 @@ export class UserRepository {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserDto> {
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
+        id: createUserDto.firebaseUid,
         username: createUserDto.username,
-        first_name: createUserDto.first_name,
-        last_name: createUserDto.last_name,
         email: createUserDto.email,
+        is_active: createUserDto.is_active,
       },
     });
+
+    //para la demo, hacemos que cada vez que se cree un usuario este sea miembro del proyecto,
+    //asi aparecen las mandalas creadas
+    const demoProjectId = 'e2e9e2d5-e3c7-47e4-9f12-4f6f40062eee';
+
+    let role = await this.prisma.role.findFirst({
+      where: { name: 'member' },
+    });
+
+    if (!role) {
+      role = await this.prisma.role.create({
+        data: { name: 'member' },
+      });
+    }
+
+    await this.prisma.userProjectRole.create({
+      data: {
+        userId: user.id,
+        projectId: demoProjectId,
+        roleId: role.id,
+      },
+    });
+
+    return user;
   }
 
   async findAllPaginated(
@@ -29,6 +53,12 @@ export class UserRepository {
         where,
         skip,
         take,
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          is_active: true,
+        },
       }),
       this.prisma.user.count({ where }),
     ]);
@@ -42,8 +72,6 @@ export class UserRepository {
       select: {
         id: true,
         username: true,
-        first_name: true,
-        last_name: true,
         email: true,
         is_active: true,
       },
@@ -54,6 +82,12 @@ export class UserRepository {
     return this.prisma.user.update({
       where: { id },
       data: updateUserDto,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        is_active: true,
+      },
     });
   }
 
@@ -61,6 +95,12 @@ export class UserRepository {
     return this.prisma.user.update({
       where: { id: targetUserId },
       data: { is_active: false },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        is_active: true,
+      },
     });
   }
 }

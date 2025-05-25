@@ -3,25 +3,17 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
   @ApiProperty({
+    description: 'ID único del usuario',
+  })
+  @IsNotEmpty()
+  firebaseUid!: string;
+
+  @ApiProperty({
     description: 'Nombre de usuario',
     example: 'johndoe',
   })
   @IsNotEmpty()
   username!: string;
-
-  @ApiProperty({
-    description: 'Nombre del usuario',
-    example: 'John',
-  })
-  @IsNotEmpty()
-  first_name!: string;
-
-  @ApiProperty({
-    description: 'Apellido del usuario',
-    example: 'Doe',
-  })
-  @IsNotEmpty()
-  last_name!: string;
 
   @ApiProperty({
     description: 'Correo electrónico del usuario',
