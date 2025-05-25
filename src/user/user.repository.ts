@@ -20,7 +20,7 @@ export class UserRepository {
 
     //para la demo, hacemos que cada vez que se cree un usuario este sea miembro del proyecto,
     //asi aparecen las mandalas creadas
-    const demoProjectId = '12345';
+    const demoProjectId = 'e2e9e2d5-e3c7-47e4-9f12-4f6f40062eee';
 
     let role = await this.prisma.role.findFirst({
       where: { name: 'member' },
