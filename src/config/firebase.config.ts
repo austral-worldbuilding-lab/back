@@ -36,4 +36,8 @@ export class FirebaseConfig {
   public getAuth(): admin.auth.Auth {
     return this.firebaseApp.auth();
   }
+
+  public getDB(): admin.firestore.Firestore {
+    return this.firebaseApp.firestore();
+  }
 }

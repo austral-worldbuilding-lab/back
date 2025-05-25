@@ -1,71 +1,194 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
+import { MandalaRepository } from './mandala.repository';
+import { MandalaDto } from './dto/mandala.dto';
+import { PaginatedResponse } from '../common/types/responses';
+import { FirebaseDataService } from '../firebase/firebase-data.service';
+import { AiService } from '../ai/ai.service';
+import {
+  PostitCoordinates,
+  Postit,
+  PostitWithCoordinates,
+} from './types/postits';
+import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
 
 @Injectable()
 export class MandalaService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private mandalaRepository: MandalaRepository,
+    private firebaseDataService: FirebaseDataService,
+    private aiService: AiService,
+  ) {}
 
-  async create(createMandalaDto: CreateMandalaDto) {
-    const mandala = await this.prisma.mandala.create({
-      data: {
-        name: createMandalaDto.name,
-        projectId: createMandalaDto.projectId,
-      },
-    });
+  async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
+    const mandala = await this.mandalaRepository.create(createMandalaDto);
 
-    return {
-      message: 'Mandala created successfully',
-      data: mandala,
-    };
+    try {
+      const firestoreData: MandalaWithPostitsDto = {
+        mandala,
+        postits: [],
+      };
+      await this.firebaseDataService.createDocument(
+        createMandalaDto.projectId,
+        firestoreData,
+        mandala.id,
+      );
+    } catch (_error) {
+      await this.remove(mandala.id);
+      throw new InternalServerErrorException(
+        'Error synchronizing the mandala with Firestore',
+      );
+    }
+
+    return mandala;
   }
 
-  async findAll(projectId: string) {
-    const mandalas = await this.prisma.mandala.findMany({
-      where: { projectId },
-    });
+  async findAllPaginated(
+    projectId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<MandalaDto>> {
+    const skip = (page - 1) * limit;
+    const [mandalas, total] = await this.mandalaRepository.findAllPaginated(
+      projectId,
+      skip,
+      limit,
+    );
 
     return {
       data: mandalas,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
-  async findOne(id: string) {
-    const mandala = await this.prisma.mandala.findFirst({
-      where: { id },
-    });
-
+  async findOne(id: string): Promise<MandalaDto> {
+    const mandala = await this.mandalaRepository.findOne(id);
     if (!mandala) {
       throw new NotFoundException(`Mandala with ID ${id} not found`);
     }
-
-    return {
-      data: mandala,
-    };
+    return mandala;
   }
 
-  async update(id: string, updateMandalaDto: UpdateMandalaDto) {
-    const mandala = await this.prisma.mandala.update({
-      where: { id },
-      data: {
-        name: updateMandalaDto.name,
-      },
-    });
-
-    return {
-      message: 'Mandala updated successfully',
-      data: mandala,
-    };
+  async update(
+    id: string,
+    updateMandalaDto: UpdateMandalaDto,
+  ): Promise<MandalaDto> {
+    return this.mandalaRepository.update(id, updateMandalaDto);
   }
 
-  async remove(id: string) {
-    await this.prisma.mandala.delete({
-      where: { id },
-    });
+  async remove(id: string): Promise<MandalaDto> {
+    return this.mandalaRepository.remove(id);
+  }
+
+  async generate(
+    createMandalaDto: CreateMandalaDto,
+  ): Promise<MandalaWithPostitsDto> {
+    if (!createMandalaDto.projectId) {
+      throw new BadRequestException(
+        'Project ID is required to generate mandala',
+      );
+    }
+    const projectId = createMandalaDto.projectId;
+
+    // Create mandala first
+    const mandala: MandalaDto = await this.create(createMandalaDto);
+
+    try {
+      // Generate postits using AI service
+      const postitsResponse = await this.aiService.generatePostits(projectId);
+      if (!postitsResponse) {
+        throw new InternalServerErrorException(
+          'No response received from AI service',
+        );
+      }
+      const postits = JSON.parse(postitsResponse) as Postit[];
+      const postitsWithCoordinates: PostitWithCoordinates[] = postits
+        .map((postit) => ({
+          ...postit,
+          coordinates: this.getRandomCoordinates(
+            postit.dimension,
+            postit.section,
+          ),
+        }))
+        .filter(
+          (postit): postit is PostitWithCoordinates =>
+            postit.coordinates !== null,
+        );
+
+      // If no valid postits were generated, throw error
+      if (postitsWithCoordinates.length === 0) {
+        throw new InternalServerErrorException(
+          'No valid postits were generated',
+        );
+      }
+
+      const firestoreData: MandalaWithPostitsDto = {
+        mandala: mandala,
+        postits: postitsWithCoordinates,
+      };
+
+      // Create in Firestore
+      await this.firebaseDataService.createDocument(
+        projectId,
+        firestoreData,
+        mandala.id,
+      );
+
+      return firestoreData;
+    } catch (error) {
+      // If anything fails, delete the created mandala
+      await this.remove(mandala.id);
+      throw error;
+    }
+  }
+
+  getRandomCoordinates(
+    dimension: string,
+    section: string,
+    dimensions: string[] = [
+      'Recursos',
+      'Cultura',
+      'Infraestructura',
+      'Economía',
+      'Gobierno',
+      'Ecología',
+    ],
+    sections: string[] = ['Persona', 'Comunidad', 'Institución'],
+  ): PostitCoordinates | null {
+    const dimIndex = dimensions.indexOf(dimension);
+    const secIndex = sections.indexOf(section);
+
+    // Filter out invalid dimensions or sections
+    if (dimIndex === -1 || secIndex === -1) return null;
+
+    const anglePerDim = (2 * Math.PI) / dimensions.length;
+    const startAngle = dimIndex * anglePerDim;
+    const angle = startAngle + Math.random() * anglePerDim;
+
+    const sectionRadiusMin = secIndex / sections.length;
+    const sectionRadiusMax = (secIndex + 1) / sections.length;
+    const percentileDistance =
+      sectionRadiusMin + Math.random() * (sectionRadiusMax - sectionRadiusMin);
+
+    const x = percentileDistance * Math.cos(angle);
+    const y = percentileDistance * Math.sin(angle);
 
     return {
-      message: 'Mandala deleted successfully',
+      x, // percentile
+      y, // percentile
+      angle, // radians
+      percentileDistance, // between 0 and 1, distance from the center to exterior
     };
   }
 }
