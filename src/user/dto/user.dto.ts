@@ -13,18 +13,6 @@ export class UserDto {
   username!: string;
 
   @ApiProperty({
-    description: 'Nombre del usuario',
-    example: 'John',
-  })
-  first_name!: string;
-
-  @ApiProperty({
-    description: 'Apellido del usuario',
-    example: 'Doe',
-  })
-  last_name!: string;
-
-  @ApiProperty({
     description: 'Correo electrónico del usuario',
     example: 'john.doe@example.com',
   })
