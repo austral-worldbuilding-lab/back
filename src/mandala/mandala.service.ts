@@ -1,9 +1,10 @@
+import { Injectable } from '@nestjs/common';
 import {
   BadRequestException,
-  Injectable,
-  NotFoundException,
+  ResourceNotFoundException,
   InternalServerErrorException,
-} from '@nestjs/common';
+  BusinessLogicException,
+} from '../common/exceptions/custom-exceptions';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
@@ -39,11 +40,15 @@ export class MandalaService {
         firestoreData,
         mandala.id,
       );
-    } catch (_error) {
+    } catch (error: unknown) {
       await this.remove(mandala.id);
-      throw new InternalServerErrorException(
-        'Error synchronizing the mandala with Firestore',
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException({
+        message: 'Error synchronizing the mandala with Firestore',
+        error: 'Firestore Sync Error',
+        details: { mandalaId: mandala.id, originalError: errorMessage },
+      });
     }
 
     return mandala;
@@ -75,7 +80,7 @@ export class MandalaService {
   async findOne(id: string): Promise<MandalaDto> {
     const mandala = await this.mandalaRepository.findOne(id);
     if (!mandala) {
-      throw new NotFoundException(`Mandala with ID ${id} not found`);
+      throw new ResourceNotFoundException('Mandala', id);
     }
     return mandala;
   }
@@ -108,8 +113,12 @@ export class MandalaService {
       // Generate postits using AI service
       const postitsResponse = await this.aiService.generatePostits(projectId);
       if (!postitsResponse) {
-        throw new InternalServerErrorException(
+        throw new BusinessLogicException(
           'No response received from AI service',
+          {
+            projectId,
+            mandalaId: mandala.id,
+          },
         );
       }
       const postits = JSON.parse(postitsResponse) as Postit[];
@@ -128,9 +137,11 @@ export class MandalaService {
 
       // If no valid postits were generated, throw error
       if (postitsWithCoordinates.length === 0) {
-        throw new InternalServerErrorException(
-          'No valid postits were generated',
-        );
+        throw new BusinessLogicException('No valid postits were generated', {
+          projectId,
+          mandalaId: mandala.id,
+          totalPostits: postits.length,
+        });
       }
 
       const firestoreData: MandalaWithPostitsDto = {

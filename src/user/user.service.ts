@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ResourceNotFoundException } from '../common/exceptions/custom-exceptions';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRepository } from './user.repository';
@@ -38,7 +39,7 @@ export class UserService {
     const user = await this.userRepository.findOne(id);
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new ResourceNotFoundException('User', id);
     }
 
     return user;
@@ -51,7 +52,7 @@ export class UserService {
   async deactivateUser(targetUserId: string): Promise<UserDto> {
     const targetUser = await this.userRepository.findOne(targetUserId);
     if (!targetUser) {
-      throw new NotFoundException('Usuario no encontrado');
+      throw new ResourceNotFoundException('User', targetUserId);
     }
     return this.userRepository.deactivateUser(targetUserId);
   }

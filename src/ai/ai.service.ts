@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ExternalServiceException, BusinessLogicException } from '../common/exceptions/custom-exceptions';
 import { GoogleGenAI } from '@google/genai';
 import { ConfigService } from '@nestjs/config';
 import { PostitsResponse } from './resources/dto/generate-postits.dto.js';
@@ -17,7 +18,8 @@ export class AiService {
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
-      throw new Error(
+      throw new ExternalServiceException(
+        'Configuration',
         'GEMINI_API_KEY is not configured in environment variables',
       );
     }
@@ -35,7 +37,10 @@ export class AiService {
       await this.fileService.readAllFilesAsBuffersWithMetadata(projectId);
 
     if (fileBuffers.length === 0) {
-      throw new Error('No files found for project');
+      throw new BusinessLogicException('No files found for project', {
+        projectId,
+        suggestion: 'Upload files to the project before generating postits'
+      });
     }
 
     const geminiFiles = await this.uploadFileBuffersToGemini(
@@ -54,7 +59,8 @@ export class AiService {
 
     const model = this.configService.get<string>('GEMINI_MODEL');
     if (!model) {
-      throw new Error(
+      throw new ExternalServiceException(
+        'Configuration',
         'GEMINI_MODEL is not configured in environment variables',
       );
     }
@@ -89,7 +95,10 @@ export class AiService {
     this.logger.log('Generation completed successfully');
 
     if (!response.text) {
-      throw new Error('No response text received from Gemini API');
+      throw new ExternalServiceException(
+        'Gemini API',
+        'No response text received from API'
+      );
     }
 
     return response.text;

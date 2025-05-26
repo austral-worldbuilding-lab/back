@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ExternalServiceException } from '../../common/exceptions/custom-exceptions';
 import { FirebaseConfig } from '../../config/firebase.config';
 import * as admin from 'firebase-admin';
 
@@ -16,16 +17,33 @@ export class FirebaseService {
         .getAuth()
         .verifyIdToken(token);
       return decodedToken;
-    } catch (_error) {
-      throw new UnauthorizedException('Invalid token');
+    } catch (error) {
+      const err = error as { code?: string; message?: string };
+      throw new ExternalServiceException(
+        'Firebase Auth',
+        'Token verification failed',
+        {
+          errorCode: err.code,
+          originalError: err.message,
+        },
+      );
     }
   }
 
   async getUser(uid: string): Promise<admin.auth.UserRecord> {
     try {
       return await this.firebaseConfig.getAuth().getUser(uid);
-    } catch (_error) {
-      throw new UnauthorizedException('User not found');
+    } catch (error) {
+      const err = error as { code?: string; message?: string };
+      throw new ExternalServiceException(
+        'Firebase Auth',
+        'User retrieval failed',
+        {
+          uid,
+          errorCode: err.code,
+          originalError: err.message,
+        },
+      );
     }
   }
 }
