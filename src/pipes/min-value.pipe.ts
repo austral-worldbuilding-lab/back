@@ -2,8 +2,8 @@ import {
   PipeTransform,
   Injectable,
   ArgumentMetadata,
-  BadRequestException,
 } from '@nestjs/common';
+import { BadRequestException } from '../common/exceptions/custom-exceptions';
 
 @Injectable()
 export class MinValuePipe implements PipeTransform<number, number> {

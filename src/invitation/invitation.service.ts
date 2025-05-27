@@ -1,9 +1,11 @@
+import { Injectable } from '@nestjs/common';
 import {
-  Injectable,
   ConflictException,
-  NotFoundException,
+  ResourceNotFoundException,
   BadRequestException,
-} from '@nestjs/common';
+  BusinessLogicException,
+  StateConflictException,
+} from '../common/exceptions/custom-exceptions';
 import { Invitation } from './entities/invitation.entity';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { InvitationRepository } from './invitation.repository';
@@ -39,8 +41,9 @@ export class InvitationService {
     );
 
     if (!project) {
-      throw new NotFoundException(
-        `Project with ID ${createInvitationDto.projectId} does not exist`,
+      throw new ResourceNotFoundException(
+        'Project',
+        createInvitationDto.projectId,
       );
     }
 
@@ -50,8 +53,9 @@ export class InvitationService {
     );
 
     if (!inviter) {
-      throw new NotFoundException(
-        `User with ID ${createInvitationDto.invitedById} does not exist`,
+      throw new ResourceNotFoundException(
+        'User',
+        createInvitationDto.invitedById,
       );
     }
 
@@ -98,7 +102,7 @@ export class InvitationService {
     const invitation = await this.invitationRepository.findById(id);
 
     if (!invitation) {
-      throw new NotFoundException('Invitation not found');
+      throw new ResourceNotFoundException('Invitation', id);
     }
 
     return this.mapToInvitationDto(invitation);
@@ -113,7 +117,11 @@ export class InvitationService {
     const invitation = await this.findOne(id);
 
     if (invitation.status !== InvitationStatus.PENDING) {
-      throw new BadRequestException('Can only accept pending invitations');
+      throw new StateConflictException(
+        invitation.status,
+        'accept invitation',
+        { validStates: ['PENDING'] }
+      );
     }
 
     const memberRole =
@@ -127,7 +135,10 @@ export class InvitationService {
       );
 
     if (!updatedInvitation) {
-      throw new NotFoundException('Failed to update invitation');
+      throw new BusinessLogicException('Failed to update invitation', {
+        invitationId: id,
+        operation: 'accept'
+      });
     }
 
     return this.mapToInvitationDto(updatedInvitation);
@@ -137,7 +148,11 @@ export class InvitationService {
     const invitation = await this.findOne(id);
 
     if (invitation.status !== InvitationStatus.PENDING) {
-      throw new BadRequestException('Can only reject pending invitations');
+      throw new StateConflictException(
+        invitation.status,
+        'reject invitation',
+        { validStates: ['PENDING'] }
+      );
     }
 
     const updatedInvitation = await this.invitationRepository.update(
@@ -146,7 +161,10 @@ export class InvitationService {
     );
 
     if (!updatedInvitation) {
-      throw new NotFoundException('Failed to update invitation');
+      throw new BusinessLogicException('Failed to update invitation', {
+        invitationId: id,
+        operation: 'reject'
+      });
     }
 
     return this.mapToInvitationDto(updatedInvitation);
