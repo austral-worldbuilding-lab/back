@@ -5,6 +5,7 @@ import { AiProvider } from '../interfaces/ai-provider.interface';
 import { PostitsResponse } from '../resources/dto/generate-postits.dto';
 import { FileService } from '../../files/file.service';
 import { FileBuffer } from '../../files/types/file-buffer.interface';
+import { Postit } from '../../mandala/types/postits';
 import * as fs from 'fs';
 
 @Injectable()
@@ -28,11 +29,10 @@ export class GeminiAdapter implements AiProvider {
 
   /**
    * Generates postits for a project using Gemini AI
-   * Gemini is configured to return a properly formatted JSON response
    * @param projectId - The ID of the project to generate postits for
-   * @returns A JSON string representing an array of PostitItem objects (pre-formatted by Gemini)
+   * @returns An array of Postit objects
    */
-  async generatePostits(projectId: string): Promise<string> {
+  async generatePostits(projectId: string): Promise<Postit[]> {
     this.logger.log(
       `Processing files for project ${projectId} for postit generation`,
     );
@@ -96,8 +96,14 @@ export class GeminiAdapter implements AiProvider {
       throw new Error('No response text received from Gemini API');
     }
 
-    // Return the pre-formatted JSON string from Gemini
-    return response.text;
+    try {
+      const postits = JSON.parse(response.text) as Postit[];
+      this.logger.log(`Successfully parsed ${postits.length} postits from AI response`);
+      return postits;
+    } catch (error) {
+      this.logger.error('Failed to parse AI response as JSON:', error);
+      throw new Error('Invalid JSON response from Gemini API');
+    }
   }
 
   async uploadFiles(fileBuffers: FileBuffer[]): Promise<any[]> {

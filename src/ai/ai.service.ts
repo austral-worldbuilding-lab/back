@@ -1,6 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { AiProvider } from './interfaces/ai-provider.interface';
 import { AI_PROVIDER } from './factories/ai-provider.factory';
+import { Postit } from '../mandala/types/postits';
 
 @Injectable()
 export class AiService {
@@ -13,9 +14,9 @@ export class AiService {
   /**
    * Generates postits for a project
    * @param projectId - The ID of the project to generate postits for
-   * @returns A pre-formatted JSON string representing an array of PostitItem objects
+   * @returns An array of Postit objects
    */
-  async generatePostits(projectId: string): Promise<string> {
+  async generatePostits(projectId: string): Promise<Postit[]> {
     this.logger.log(`Delegating postit generation to AI provider for project ${projectId}`);
     return this.aiProvider.generatePostits(projectId);
   }

@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   BadRequestException,
   ResourceNotFoundException,
-  InternalServerErrorException,
-  BusinessLogicException,
+  InternalServerErrorException
 } from '../common/exceptions/custom-exceptions';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
@@ -111,17 +110,12 @@ export class MandalaService {
 
     try {
       // Generate postits using AI service
-      const postitsResponse = await this.aiService.generatePostits(projectId);
-      if (!postitsResponse) {
-        throw new BusinessLogicException(
-          'No response received from AI service',
-          {
-            projectId,
-            mandalaId: mandala.id,
-          },
+      const postits = await this.aiService.generatePostits(projectId);
+      if (!postits || postits.length === 0) {
+        throw new InternalServerErrorException(
+          'No postits received from AI service',
         );
       }
-      const postits = JSON.parse(postitsResponse) as Postit[];
       const postitsWithCoordinates: PostitWithCoordinates[] = postits
         .map((postit) => ({
           ...postit,
@@ -137,11 +131,9 @@ export class MandalaService {
 
       // If no valid postits were generated, throw error
       if (postitsWithCoordinates.length === 0) {
-        throw new BusinessLogicException('No valid postits were generated', {
-          projectId,
-          mandalaId: mandala.id,
-          totalPostits: postits.length,
-        });
+        throw new InternalServerErrorException(
+          'No valid postits were generated',
+        );
       }
 
       const firestoreData: MandalaWithPostitsDto = {
