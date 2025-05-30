@@ -1,11 +1,20 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AiService } from './ai.service.js';
 import { AiController } from './ai.controller.js';
 import { FileModule } from '../files/file.module';
+import { FileService } from '../files/file.service';
+import { aiProviderFactory, AI_PROVIDER } from './factories/ai-provider.factory';
 
 @Module({
-  providers: [AiService],
+  providers: [
+    AiService,
+    {
+      provide: AI_PROVIDER,
+      useFactory: aiProviderFactory,
+      inject: [ConfigService, FileService],
+    },
+  ],
   controllers: [AiController],
   imports: [ConfigModule, FileModule],
   exports: [AiService],
