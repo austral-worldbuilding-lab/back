@@ -2,9 +2,9 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
   SetMetadata,
 } from '@nestjs/common';
+import { ForbiddenException } from '../../common/exceptions/custom-exceptions';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RequestWithUser } from '../../auth/types/auth.types';

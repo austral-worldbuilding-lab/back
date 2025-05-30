@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ResourceNotFoundException } from '../common/exceptions/custom-exceptions';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectRepository } from './project.repository';
 import { ProjectDto } from './dto/project.dto';
@@ -39,7 +40,7 @@ export class ProjectService {
   async findOne(id: string): Promise<ProjectDto> {
     const project = await this.projectRepository.findOne(id);
     if (!project) {
-      throw new NotFoundException(`Project with ID ${id} not found`);
+      throw new ResourceNotFoundException('Project', id);
     }
     return project;
   }
@@ -47,7 +48,7 @@ export class ProjectService {
   async remove(id: string): Promise<ProjectDto> {
     const project = await this.projectRepository.findOne(id);
     if (!project) {
-      throw new NotFoundException(`Project with ID ${id} not found`);
+      throw new ResourceNotFoundException('Project', id);
     }
     return this.projectRepository.remove(id);
   }
