@@ -1,4 +1,3 @@
-import { FileBuffer } from '../../files/types/file-buffer.interface';
 import { Postit } from '../../mandala/types/postits';
 
 export interface AiProvider {
@@ -8,11 +7,4 @@ export interface AiProvider {
    * @returns An array of Postit objects
    */
   generatePostits(projectId: string): Promise<Postit[]>;
-  
-  /**
-   * Uploads files to the AI provider
-   * @param fileBuffers - Array of file buffers to upload
-   * @returns Array of uploaded file references
-   */
-  uploadFiles(fileBuffers: FileBuffer[]): Promise<any[]>;
 }

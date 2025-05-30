@@ -27,11 +27,6 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log('Gemini Adapter initialized');
   }
 
-  /**
-   * Generates postits for a project using Gemini AI
-   * @param projectId - The ID of the project to generate postits for
-   * @returns An array of Postit objects
-   */
   async generatePostits(projectId: string): Promise<Postit[]> {
     this.logger.log(
       `Processing files for project ${projectId} for postit generation`,
@@ -98,7 +93,9 @@ export class GeminiAdapter implements AiProvider {
 
     try {
       const postits = JSON.parse(response.text) as Postit[];
-      this.logger.log(`Successfully parsed ${postits.length} postits from AI response`);
+      this.logger.log(
+        `Successfully parsed ${postits.length} postits from AI response`,
+      );
       return postits;
     } catch (error) {
       this.logger.error('Failed to parse AI response as JSON:', error);
@@ -133,4 +130,4 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log('All file buffers uploaded successfully');
     return uploadedFiles;
   }
-} 
+}
