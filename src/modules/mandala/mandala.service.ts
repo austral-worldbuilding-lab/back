@@ -3,7 +3,6 @@ import {
   BadRequestException,
   ResourceNotFoundException,
   InternalServerErrorException,
-  BusinessLogicException,
 } from '@common/exceptions/custom-exceptions';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
@@ -11,18 +10,15 @@ import { MandalaRepository } from './mandala.repository';
 import { MandalaDto } from './dto/mandala.dto';
 import { PaginatedResponse } from '@common/types/responses';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
-import { AiService } from '@modules/ai/ai.service';
-import { PostitWithCoordinates } from './types/postits';
 import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
-import { PostitPositioningService } from './services/postit-positioning.service';
+import { PostitService } from './services/postit.service';
 
 @Injectable()
 export class MandalaService {
   constructor(
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
-    private aiService: AiService,
-    private postitPositioningService: PostitPositioningService,
+    private postitService: PostitService,
   ) {}
 
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
@@ -108,42 +104,12 @@ export class MandalaService {
     const mandala: MandalaDto = await this.create(createMandalaDto);
 
     try {
-      // Generate postits using AI service
-      const postits = await this.aiService.generatePostits(projectId);
-      if (!postits || postits.length === 0) {
-        throw new BusinessLogicException(
-          'No postits received from AI service',
-          {
-            projectId,
-            mandalaId: mandala.id,
-          },
-        );
-      }
-      const postitsWithCoordinates: PostitWithCoordinates[] = postits
-        .map((postit) => ({
-          ...postit,
-          coordinates: this.postitPositioningService.getRandomCoordinates(
-            postit.dimension,
-            postit.section,
-          ),
-        }))
-        .filter(
-          (postit): postit is PostitWithCoordinates =>
-            postit.coordinates !== null,
-        );
-
-      // If no valid postits were generated, throw error
-      if (postitsWithCoordinates.length === 0) {
-        throw new BusinessLogicException('No valid postits were generated', {
-          projectId,
-          mandalaId: mandala.id,
-          totalPostits: postits.length,
-        });
-      }
+      // Generate postits using PostitService
+      const postits = await this.postitService.generatePostits(projectId);
 
       const firestoreData: MandalaWithPostitsDto = {
         mandala: mandala,
-        postits: postitsWithCoordinates,
+        postits: postits,
       };
 
       // Create in Firestore

@@ -6,12 +6,12 @@ import { MandalaRepository } from './mandala.repository';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FirebaseModule } from '@modules/firebase/firebase.module';
 import { AiModule } from '@modules/ai/ai.module';
-import { PostitPositioningService } from './services/postit-positioning.service';
+import { PostitService } from './services/postit.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, FirebaseModule, AiModule],
   controllers: [MandalaController],
-  providers: [MandalaService, MandalaRepository, PostitPositioningService],
+  providers: [MandalaService, MandalaRepository, PostitService],
   exports: [MandalaService],
 })
 export class MandalaModule {}
