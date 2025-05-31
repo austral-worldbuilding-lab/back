@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { MinValuePipe } from '../pipes/min-value.pipe';
+import { MinValuePipe } from '../common/pipes/min-value.pipe';
 import { FirebaseAuthGuard } from '../auth/firebase/firebase.guard';
 import { ProjectDto } from './dto/project.dto';
 import {

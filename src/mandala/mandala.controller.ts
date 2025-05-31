@@ -23,7 +23,7 @@ import {
   DataResponse,
   PaginatedResponse,
 } from '../common/types/responses';
-import { MinValuePipe } from '../pipes/min-value.pipe';
+import { MinValuePipe } from '../common/pipes/min-value.pipe';
 import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
 import {
   ApiTags,

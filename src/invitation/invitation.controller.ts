@@ -16,7 +16,7 @@ import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { InvitationDto } from './dto/invitation.dto';
 import { FirebaseAuthGuard } from '../auth/firebase/firebase.guard';
 import { InvitationStatus } from '@prisma/client';
-import { MinValuePipe } from '../pipes/min-value.pipe';
+import { MinValuePipe } from '../common/pipes/min-value.pipe';
 import {
   MessageResponse,
   PaginatedResponse,
