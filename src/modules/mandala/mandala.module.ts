@@ -11,11 +11,7 @@ import { PostitPositioningService } from './services/postit-positioning.service'
 @Module({
   imports: [PrismaModule, AuthModule, FirebaseModule, AiModule],
   controllers: [MandalaController],
-  providers: [
-    MandalaService,
-    MandalaRepository,
-    PostitPositioningService,
-  ],
+  providers: [MandalaService, MandalaRepository, PostitPositioningService],
   exports: [MandalaService],
 })
 export class MandalaModule {}
