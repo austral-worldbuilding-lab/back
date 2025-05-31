@@ -8,6 +8,11 @@ import { FileBuffer } from '../../files/types/file-buffer.interface';
 import { Postit } from '../../mandala/types/postits';
 import * as fs from 'fs';
 
+interface GeminiUploadedFile {
+  uri: string;
+  mimeType: string;
+}
+
 @Injectable()
 export class GeminiAdapter implements AiProvider {
   private ai: GoogleGenAI;
@@ -65,7 +70,7 @@ export class GeminiAdapter implements AiProvider {
       systemInstruction: systemInstruction,
     };
 
-    const contents = geminiFiles.map((file) => ({
+    const contents = geminiFiles.map((file: GeminiUploadedFile) => ({
       role: 'user',
       parts: [
         {
@@ -103,7 +108,7 @@ export class GeminiAdapter implements AiProvider {
     }
   }
 
-  async uploadFiles(fileBuffers: FileBuffer[]): Promise<any[]> {
+  async uploadFiles(fileBuffers: FileBuffer[]): Promise<GeminiUploadedFile[]> {
     this.logger.log(
       `Starting upload of ${fileBuffers.length} file buffers to Gemini`,
     );
@@ -118,13 +123,18 @@ export class GeminiAdapter implements AiProvider {
           type: fileBuffer.mimeType,
         });
 
-        return this.ai.files.upload({
+        const file = await this.ai.files.upload({
           file: blob,
           config: {
             mimeType: fileBuffer.mimeType,
             displayName: fileBuffer.fileName,
           },
         });
+        // Ensure the returned object matches GeminiUploadedFile
+        return {
+          uri: file.uri,
+          mimeType: file.mimeType,
+        } as GeminiUploadedFile;
       }),
     );
     this.logger.log('All file buffers uploaded successfully');
