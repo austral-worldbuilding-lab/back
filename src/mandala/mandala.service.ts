@@ -111,17 +111,16 @@ export class MandalaService {
 
     try {
       // Generate postits using AI service
-      const postitsResponse = await this.aiService.generatePostits(projectId);
-      if (!postitsResponse) {
+      const postits = await this.aiService.generatePostits(projectId);
+      if (!postits || postits.length === 0) {
         throw new BusinessLogicException(
-          'No response received from AI service',
+          'No postits received from AI service',
           {
             projectId,
             mandalaId: mandala.id,
           },
         );
       }
-      const postits = JSON.parse(postitsResponse) as Postit[];
       const postitsWithCoordinates: PostitWithCoordinates[] = postits
         .map((postit) => ({
           ...postit,
