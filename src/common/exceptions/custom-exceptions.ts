@@ -10,11 +10,11 @@ import {
 } from '@nestjs/common';
 
 /**
- * Excepción personalizada para recursos no encontrados en la db
- * Ejemplo: buscar un usuario por ID que no existe.
+ * Custom exception for resources not found in the database.
+ * Example: searching for a user by ID that does not exist.
  */
 export class ResourceNotFoundException extends NestNotFoundException {
-  constructor(resourceType: string, identifier: string, details?: any) {
+  constructor(resourceType: string, identifier: string, details?: unknown) {
     super({
       message: `${resourceType} with identifier '${identifier}' not found`,
       error: 'Resource Not Found',
@@ -26,12 +26,12 @@ export class ResourceNotFoundException extends NestNotFoundException {
 }
 
 /**
- * Excepción para errores de validación de negocio
- * Se usa cuando la solicitud es válida pero no puede procesarse debido a una regla interna.
- * Ejemplo: Un usuario no autorizado inteta crear un proyecto
+ * Exception for business logic validation errors.
+ * Used when the request is valid but cannot be processed due to an internal rule.
+ * Example: An unauthorized user tries to create a project.
  */
 export class BusinessLogicException extends HttpException {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(
       {
         message,
@@ -44,9 +44,9 @@ export class BusinessLogicException extends HttpException {
 }
 
 /**
- * Excepción para errores de validación de datos de entrada, indicando qué campo falló y por qué.
- * Se lanza cuando los datos no cumplen con los criterios requeridos.
- * Ejemplo: email con formato inválido o campo obligatorio faltante.
+ * Exception for input data validation errors, indicating which field failed and why.
+ * Thrown when data does not meet required criteria.
+ * Example: invalid email format or missing required field.
  */
 export class ValidationException extends NestBadRequestException {
   constructor(
@@ -66,9 +66,9 @@ export class ValidationException extends NestBadRequestException {
 }
 
 /**
- * Excepción que indica falta de permisos para realizar una acción específica sobre un recurso.
- *  Útil para controlar accesos y políticas de autorización.
- *  Ejemplo: un usuario intenta eliminar un recurso sin tener rol administrador.
+ * Exception indicating lack of permissions to perform a specific action on a resource.
+ * Useful for access control and authorization policies.
+ * Example: a user tries to delete a resource without admin role.
  */
 export class AuthorizationException extends NestUnauthorizedException {
   constructor(
@@ -87,9 +87,9 @@ export class AuthorizationException extends NestUnauthorizedException {
 }
 
 /**
- * Excepción para indicar que la operación solicitada no puede realizarse debido al estado actual del recurso.
- * Ayuda a prevenir cambios inconsistentes o inválidos.
- * Ejemplo: querer aceptar una invitación a proyecto cuando ya se ha aceptado.
+ * Exception to indicate that the requested operation cannot be performed due to the current state of the resource.
+ * Helps prevent inconsistent or invalid changes.
+ * Example: trying to accept a project invitation that has already been accepted.
  */
 export class StateConflictException extends NestConflictException {
   constructor(
@@ -108,10 +108,10 @@ export class StateConflictException extends NestConflictException {
 }
 
 /**
- * Excepción para errores de servicios externos
+ * Exception for external service errors.
  */
 export class ExternalServiceException extends NestInternalServerErrorException {
-  constructor(serviceName: string, error: string, details?: any) {
+  constructor(serviceName: string, error: string, details?: unknown) {
     super({
       message: `External service '${serviceName}' error: ${error}`,
       error: 'External Service Error',
@@ -122,7 +122,7 @@ export class ExternalServiceException extends NestInternalServerErrorException {
   }
 }
 
-// Re-exportar las excepciones estándar de NestJS para facilitar el uso
+// Re-export standard NestJS exceptions for convenience
 export {
   NestBadRequestException as BadRequestException,
   NestNotFoundException as NotFoundException,

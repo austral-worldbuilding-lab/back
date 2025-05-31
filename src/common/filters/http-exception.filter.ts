@@ -21,7 +21,18 @@ export interface ErrorResponse {
   method: string;
   message: string | string[];
   error: string;
-  details?: any;
+  details?: unknown;
+}
+
+// Type guard for exception response object
+function isExceptionResponseObject(
+  obj: unknown,
+): obj is ExceptionResponseObject {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    ('message' in obj || 'error' in obj || 'details' in obj)
+  );
 }
 
 @Catch()
@@ -42,13 +53,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        const responseObj = exceptionResponse as any;
-        message = responseObj.message || exception.message;
-        error = responseObj.error || exception.name;
-        details = responseObj.details;
+      if (isExceptionResponseObject(exceptionResponse)) {
+        message = exceptionResponse.message || exception.message;
+        error = exceptionResponse.error || exception.name;
+        details = exceptionResponse.details;
       } else {
-        message = exceptionResponse;
+        message = exceptionResponse as string;
         error = exception.name;
       }
     } else if (exception instanceof Error) {

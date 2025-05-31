@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import {
   ConflictException,
   ResourceNotFoundException,
-  BadRequestException,
   BusinessLogicException,
   StateConflictException,
 } from '../common/exceptions/custom-exceptions';

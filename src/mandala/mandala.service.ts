@@ -12,10 +12,7 @@ import { MandalaDto } from './dto/mandala.dto';
 import { PaginatedResponse } from '../common/types/responses';
 import { FirebaseDataService } from '../firebase/firebase-data.service';
 import { AiService } from '../ai/ai.service';
-import {
-  PostitCoordinates,
-  PostitWithCoordinates,
-} from './types/postits';
+import { PostitCoordinates, PostitWithCoordinates } from './types/postits';
 import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
 
 @Injectable()
