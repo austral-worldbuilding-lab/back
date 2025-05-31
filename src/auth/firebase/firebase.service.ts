@@ -13,10 +13,7 @@ export class FirebaseService {
 
   async verifyToken(token: string): Promise<admin.auth.DecodedIdToken> {
     try {
-      const decodedToken = await this.firebaseConfig
-        .getAuth()
-        .verifyIdToken(token);
-      return decodedToken;
+      return await this.firebaseConfig.getAuth().verifyIdToken(token);
     } catch (error) {
       const err = error as { code?: string; message?: string };
       throw new ExternalServiceException(

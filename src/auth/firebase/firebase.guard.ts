@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { UnauthorizedException } from '../../common/exceptions/custom-exceptions';
 import { AuthService } from '../auth.service';
 import { RequestWithUser } from '../types/auth.types';
@@ -19,8 +19,7 @@ export class FirebaseAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid token format');
     }
 
-    const user = await this.authService.validateUser(token);
-    request.user = user;
+    request.user = await this.authService.validateUser(token);
     return true;
   }
 }
