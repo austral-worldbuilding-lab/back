@@ -14,7 +14,6 @@ import { FirebaseDataService } from '../firebase/firebase-data.service';
 import { AiService } from '../ai/ai.service';
 import {
   PostitCoordinates,
-  Postit,
   PostitWithCoordinates,
 } from './types/postits';
 import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';

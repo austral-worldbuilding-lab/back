@@ -10,11 +10,13 @@ export function aiProviderFactory(
   fileService: FileService,
 ): AiProvider {
   const aiProvider = configService.get<string>('AI_PROVIDER', 'gemini');
-  
+
   switch (aiProvider.toLowerCase()) {
     case 'gemini':
       return new GeminiAdapter(configService, fileService);
     default:
-      throw new Error(`Unknown AI provider: ${aiProvider}. Supported: gemini. Check your .env file.`);
+      throw new Error(
+        `Unknown AI provider: ${aiProvider}. Supported: gemini. Check your .env file.`,
+      );
   }
-} 
+}

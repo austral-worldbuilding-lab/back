@@ -18,8 +18,13 @@ export class AiController {
     description: 'Successfully generated postits',
     type: [Object],
   })
-  @ApiParam({ name: 'projectId', description: 'Project ID to generate postits for' })
-  async generatePostits(@Param('projectId') projectId: string): Promise<Postit[]> {
+  @ApiParam({
+    name: 'projectId',
+    description: 'Project ID to generate postits for',
+  })
+  async generatePostits(
+    @Param('projectId') projectId: string,
+  ): Promise<Postit[]> {
     return this.aiService.generatePostits(projectId);
   }
 }

@@ -8,7 +8,9 @@ export class AiService {
   private readonly logger = new Logger(AiService.name);
 
   constructor(@Inject(AI_PROVIDER) private aiProvider: AiProvider) {
-    this.logger.log(`AI Service initialized with ${this.aiProvider.constructor.name}`);
+    this.logger.log(
+      `AI Service initialized with ${this.aiProvider.constructor.name}`,
+    );
   }
 
   /**
@@ -17,7 +19,9 @@ export class AiService {
    * @returns An array of Postit objects
    */
   async generatePostits(projectId: string): Promise<Postit[]> {
-    this.logger.log(`Delegating postit generation to AI provider for project ${projectId}`);
+    this.logger.log(
+      `Delegating postit generation to AI provider for project ${projectId}`,
+    );
     return this.aiProvider.generatePostits(projectId);
   }
 }

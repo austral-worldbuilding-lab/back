@@ -4,7 +4,10 @@ import { AiService } from './ai.service.js';
 import { AiController } from './ai.controller.js';
 import { FileModule } from '../files/file.module';
 import { FileService } from '../files/file.service';
-import { aiProviderFactory, AI_PROVIDER } from './factories/ai-provider.factory';
+import {
+  aiProviderFactory,
+  AI_PROVIDER,
+} from './factories/ai-provider.factory';
 
 @Module({
   providers: [

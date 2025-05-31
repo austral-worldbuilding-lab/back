@@ -43,7 +43,6 @@ export class BusinessLogicException extends HttpException {
   }
 }
 
-
 /**
  * Excepción para errores de validación de datos de entrada, indicando qué campo falló y por qué.
  * Se lanza cuando los datos no cumplen con los criterios requeridos.

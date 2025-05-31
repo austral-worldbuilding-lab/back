@@ -117,11 +117,9 @@ export class InvitationService {
     const invitation = await this.findOne(id);
 
     if (invitation.status !== InvitationStatus.PENDING) {
-      throw new StateConflictException(
-        invitation.status,
-        'accept invitation',
-        { validStates: ['PENDING'] }
-      );
+      throw new StateConflictException(invitation.status, 'accept invitation', {
+        validStates: ['PENDING'],
+      });
     }
 
     const memberRole =
@@ -137,7 +135,7 @@ export class InvitationService {
     if (!updatedInvitation) {
       throw new BusinessLogicException('Failed to update invitation', {
         invitationId: id,
-        operation: 'accept'
+        operation: 'accept',
       });
     }
 
@@ -148,11 +146,9 @@ export class InvitationService {
     const invitation = await this.findOne(id);
 
     if (invitation.status !== InvitationStatus.PENDING) {
-      throw new StateConflictException(
-        invitation.status,
-        'reject invitation',
-        { validStates: ['PENDING'] }
-      );
+      throw new StateConflictException(invitation.status, 'reject invitation', {
+        validStates: ['PENDING'],
+      });
     }
 
     const updatedInvitation = await this.invitationRepository.update(
@@ -163,7 +159,7 @@ export class InvitationService {
     if (!updatedInvitation) {
       throw new BusinessLogicException('Failed to update invitation', {
         invitationId: id,
-        operation: 'reject'
+        operation: 'reject',
       });
     }
 
