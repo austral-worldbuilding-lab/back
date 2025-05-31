@@ -51,7 +51,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const systemInstruction = fs.readFileSync(
-      './src/ai/resources/prompts/prompt_mandala_inicial.txt',
+      './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt',
       'utf-8',
     );
     this.logger.log('Loaded system instruction from prompt file');

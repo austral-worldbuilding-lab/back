@@ -12,8 +12,9 @@ import { MandalaDto } from './dto/mandala.dto';
 import { PaginatedResponse } from '@common/types/responses';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { AiService } from '@modules/ai/ai.service';
-import { PostitCoordinates, PostitWithCoordinates } from './types/postits';
+import { PostitWithCoordinates } from './types/postits';
 import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
+import { PostitPositioningService } from './services/postit-positioning.service';
 
 @Injectable()
 export class MandalaService {
@@ -21,6 +22,7 @@ export class MandalaService {
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
     private aiService: AiService,
+    private postitPositioningService: PostitPositioningService,
   ) {}
 
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
@@ -120,7 +122,7 @@ export class MandalaService {
       const postitsWithCoordinates: PostitWithCoordinates[] = postits
         .map((postit) => ({
           ...postit,
-          coordinates: this.getRandomCoordinates(
+          coordinates: this.postitPositioningService.getRandomCoordinates(
             postit.dimension,
             postit.section,
           ),
@@ -157,44 +159,5 @@ export class MandalaService {
       await this.remove(mandala.id);
       throw error;
     }
-  }
-
-  getRandomCoordinates(
-    dimension: string,
-    section: string,
-    dimensions: string[] = [
-      'Recursos',
-      'Cultura',
-      'Infraestructura',
-      'Economía',
-      'Gobierno',
-      'Ecología',
-    ],
-    sections: string[] = ['Persona', 'Comunidad', 'Institución'],
-  ): PostitCoordinates | null {
-    const dimIndex = dimensions.indexOf(dimension);
-    const secIndex = sections.indexOf(section);
-
-    // Filter out invalid dimensions or sections
-    if (dimIndex === -1 || secIndex === -1) return null;
-
-    const anglePerDim = (2 * Math.PI) / dimensions.length;
-    const startAngle = dimIndex * anglePerDim;
-    const angle = startAngle + Math.random() * anglePerDim;
-
-    const sectionRadiusMin = secIndex / sections.length;
-    const sectionRadiusMax = (secIndex + 1) / sections.length;
-    const percentileDistance =
-      sectionRadiusMin + Math.random() * (sectionRadiusMax - sectionRadiusMin);
-
-    const x = percentileDistance * Math.cos(angle);
-    const y = percentileDistance * Math.sin(angle);
-
-    return {
-      x, // percentile
-      y, // percentile
-      angle, // radians
-      percentileDistance, // between 0 and 1, distance from the center to exterior
-    };
   }
 }
