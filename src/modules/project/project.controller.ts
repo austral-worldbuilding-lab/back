@@ -9,12 +9,15 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { ProjectDto } from './dto/project.dto';
+import { TagDto } from './dto/tag.dto';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
 import {
   MessageResponse,
   DataResponse,
@@ -115,6 +118,24 @@ export class ProjectController {
     return {
       message: 'Project deleted successfully',
       data: project,
+    };
+  }
+
+  @Get(':id/tags')
+  @ApiOperation({ summary: 'Obtener tags de un proyecto específico' })
+  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna la lista de tags del proyecto',
+    type: [TagDto],
+  })
+  async getProjectTags(
+    @Param('id') id: string,
+    @Request() req: RequestWithUser,
+  ): Promise<DataResponse<TagDto[]>> {
+    const tags = await this.projectService.getProjectTags(id, req.user.id);
+    return {
+      data: tags,
     };
   }
 }

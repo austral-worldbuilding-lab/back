@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectDto } from './dto/project.dto';
+import { TagDto } from './dto/tag.dto';
 import { Role } from '@prisma/client';
 
 @Injectable()
@@ -82,5 +83,36 @@ export class ProjectRepository {
     return this.prisma.project.delete({
       where: { id },
     });
+  }
+
+  async getProjectTags(projectId: string, userId: string): Promise<TagDto[]> {
+    const userProject = await this.prisma.userProjectRole.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+    });
+
+    if (!userProject) {
+      return [];
+    }
+
+    const projectTags = await this.prisma.projectTag.findMany({
+      where: { projectId },
+      include: {
+        tag: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return projectTags.map((projectTag) => ({
+      name: projectTag.tag.name,
+      color: '#3B82F6',
+    }));
   }
 }

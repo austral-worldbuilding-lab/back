@@ -3,6 +3,7 @@ import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions'
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectRepository } from './project.repository';
 import { ProjectDto } from './dto/project.dto';
+import { TagDto } from './dto/tag.dto';
 import { PaginatedResponse } from '@common/types/responses';
 
 @Injectable()
@@ -51,5 +52,9 @@ export class ProjectService {
       throw new ResourceNotFoundException('Project', id);
     }
     return this.projectRepository.remove(id);
+  }
+
+  async getProjectTags(projectId: string, userId: string): Promise<TagDto[]> {
+    return this.projectRepository.getProjectTags(projectId, userId);
   }
 }
