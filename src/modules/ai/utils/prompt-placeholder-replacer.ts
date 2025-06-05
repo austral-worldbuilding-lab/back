@@ -1,0 +1,37 @@
+/**
+ * Reemplaza los placeholders dinámicos en el prompt de mandala inicial
+ * @returns El prompt con todos los placeholders reemplazados
+ */
+export function replacePromptPlaceholders(
+  promptTemplate: string,
+  dimensions: string[],
+  scales: string[],
+): string {
+  if (!promptTemplate) throw new Error('Prompt template is required');
+  if (!dimensions?.length)
+    throw new Error('At least one dimension must be provided');
+  if (!scales?.length) throw new Error('At least one scale must be provided');
+
+  dimensions.forEach((dim, i) => {
+    if (!dim?.trim())
+      throw new Error(`Dimension at index ${i} must be a valid string`);
+  });
+
+  scales.forEach((scale, i) => {
+    if (!scale?.trim())
+      throw new Error(`Scale at index ${i} must be a valid string`);
+  });
+
+  const processedPrompt = promptTemplate
+    .replace(/\$\{dimensions}/g, dimensions.join(', '))
+    .replace(/\$\{scales}/g, scales.join(', '));
+
+  const remainingPlaceholders = processedPrompt.match(/\$\{[^}]+}/g);
+  if (remainingPlaceholders?.length) {
+    throw new Error(
+      `Unreplaced placeholders found: ${remainingPlaceholders.join(', ')}`,
+    );
+  }
+
+  return processedPrompt;
+}

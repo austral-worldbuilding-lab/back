@@ -6,6 +6,7 @@ import { PostitsResponse } from '../resources/dto/generate-postits.dto';
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Postit } from '@modules/mandala/types/postits';
+import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
 import * as fs from 'fs';
 
 interface GeminiUploadedFile {
@@ -17,6 +18,16 @@ interface GeminiUploadedFile {
 export class GeminiAdapter implements AiProvider {
   private ai: GoogleGenAI;
   private readonly logger = new Logger(GeminiAdapter.name);
+
+  private readonly defaultDimensions = [
+    'Recursos',
+    'Cultura',
+    'Infraestructura',
+    'Economía',
+    'Gobierno',
+    'Ecología',
+  ];
+  private readonly defaultSections = ['Persona', 'Comunidad', 'Institución'];
 
   constructor(
     private configService: ConfigService,
@@ -50,11 +61,27 @@ export class GeminiAdapter implements AiProvider {
       `Successfully uploaded ${geminiFiles.length} files to Gemini`,
     );
 
-    const systemInstruction = fs.readFileSync(
+    const promptTemplate = fs.readFileSync(
       './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt',
       'utf-8',
     );
-    this.logger.log('Loaded system instruction from prompt file');
+    this.logger.log('Loaded prompt template from file');
+
+    // Reemplazar placeholders
+    let systemInstruction: string;
+    try {
+      systemInstruction = replacePromptPlaceholders(
+        promptTemplate,
+        this.defaultDimensions,
+        this.defaultSections,
+      );
+      this.logger.log('Successfully replaced placeholders in prompt');
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Failed to replace placeholders in prompt:', error);
+      throw new Error(`Prompt placeholder replacement failed: ${errorMessage}`);
+    }
 
     const model = this.configService.get<string>('GEMINI_MODEL');
     if (!model) {
