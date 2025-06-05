@@ -11,5 +11,20 @@ services:
       - '5432:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
+
+  awbl-app:
+    build:
+      context: .
+    image: ghcr.io/tu-usuario/awbl-back:latest
+    container_name: awbl-app
+    restart: always
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@awbl-db:5432/postgres
+    depends_on:
+      - awbl-db
 volumes:
   db-data:
