@@ -3,11 +3,11 @@ import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions'
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectRepository } from './project.repository';
 import { ProjectDto } from './dto/project.dto';
-import { TagDto } from './dto/tag.dto';
 import { PaginatedResponse } from '@common/types/responses';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { DimensionDto } from '@common/dto/dimension.dto';
+import { TagDto } from './dto/tag.dto';
 
 @Injectable()
 export class ProjectService {
@@ -84,7 +84,11 @@ export class ProjectService {
     return this.projectRepository.update(id, updateProjectDto);
   }
 
-  async getProjectTags(projectId: string, userId: string): Promise<TagDto[]> {
-    return this.projectRepository.getProjectTags(projectId, userId);
+  async getProjectTags(id: string): Promise<TagDto[]> {
+    const project = await this.projectRepository.findOne(id);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', id);
+    }
+    return this.projectRepository.getProjectTags(id);
   }
 }

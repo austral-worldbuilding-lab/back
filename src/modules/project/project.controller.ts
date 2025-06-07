@@ -9,7 +9,6 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   UseGuards,
-  Request,
   Patch,
   Req,
 } from '@nestjs/common';
@@ -18,8 +17,6 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { ProjectDto } from './dto/project.dto';
-import { TagDto } from './dto/tag.dto';
-import { RequestWithUser } from '@modules/auth/types/auth.types';
 import {
   MessageResponse,
   DataResponse,
@@ -35,6 +32,7 @@ import {
 } from '@nestjs/swagger';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { TagDto } from './dto/tag.dto';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -158,11 +156,15 @@ export class ProjectController {
     description: 'Retorna la lista de tags del proyecto',
     type: [TagDto],
   })
+  @ApiResponse({ status: 404, description: 'Proyecto no encontrado' })
+  @ApiResponse({
+    status: 403,
+    description: 'Prohibido - No pertenece al proyecto',
+  })
   async getProjectTags(
     @Param('id') id: string,
-    @Request() req: RequestWithUser,
   ): Promise<DataResponse<TagDto[]>> {
-    const tags = await this.projectService.getProjectTags(id, req.user.id);
+    const tags = await this.projectService.getProjectTags(id);
     return {
       data: tags,
     };
