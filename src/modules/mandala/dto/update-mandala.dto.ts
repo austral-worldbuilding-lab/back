@@ -1,4 +1,12 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateMandalaDto } from './create-mandala.dto';
+import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateMandalaDto extends PartialType(CreateMandalaDto) {}
+export class UpdateMandalaDto {
+  @ApiProperty({
+    description: 'Nombre del mandala',
+    example: 'Mandala del Sistema UA',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+}

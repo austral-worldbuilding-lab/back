@@ -2,11 +2,46 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectDto } from './dto/project.dto';
-import { Role } from '@prisma/client';
+import { Role, Prisma, Project } from '@prisma/client';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { ProjectConfiguration } from './types/project-configuration.type';
 
 @Injectable()
 export class ProjectRepository {
   constructor(private prisma: PrismaService) {}
+
+  private parseToProjectConfiguration(
+    config: Prisma.JsonValue,
+  ): ProjectConfiguration {
+    const parsedConfig = config as unknown as ProjectConfiguration;
+
+    return {
+      dimensions: parsedConfig.dimensions.map((dim) => ({
+        name: dim.name,
+        color: dim.color,
+      })),
+      scales: parsedConfig.scales,
+    };
+  }
+
+  private parseToJson(config: ProjectConfiguration): Prisma.InputJsonValue {
+    return {
+      dimensions: config.dimensions.map((dim) => ({
+        name: dim.name,
+        color: dim.color,
+      })),
+      scales: config.scales,
+    };
+  }
+
+  private parseToProjectDto(project: Project): ProjectDto {
+    return {
+      id: project.id,
+      name: project.name,
+      configuration: this.parseToProjectConfiguration(project.configuration),
+      createdAt: project.createdAt,
+    };
+  }
 
   async findRoleByName(name: string): Promise<Role | null> {
     return this.prisma.role.findUnique({
@@ -33,17 +68,18 @@ export class ProjectRepository {
     userId: string,
   ): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
-      // Create project
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
+          configuration: this.parseToJson({
+            dimensions: createProjectDto.dimensions!,
+            scales: createProjectDto.scales!,
+          }),
         },
       });
 
-      // Find or create owner role
-      const ownerRole = await this.findOrCreateRole('owner');
+      const ownerRole: Role = await this.findOrCreateRole('owner');
 
-      // Create user-project-role relation
       await tx.userProjectRole.create({
         data: {
           userId,
@@ -52,7 +88,7 @@ export class ProjectRepository {
         },
       });
 
-      return project;
+      return this.parseToProjectDto(project);
     });
   }
 
@@ -69,18 +105,44 @@ export class ProjectRepository {
       this.prisma.project.count(),
     ]);
 
-    return [projects, total];
+    return [projects.map((project) => this.parseToProjectDto(project)), total];
   }
 
   async findOne(id: string): Promise<ProjectDto | null> {
-    return this.prisma.project.findUnique({
+    const project = await this.prisma.project.findUnique({
       where: { id },
     });
+
+    if (!project) {
+      return null;
+    }
+
+    return this.parseToProjectDto(project);
   }
 
   async remove(id: string): Promise<ProjectDto> {
-    return this.prisma.project.delete({
+    const project = await this.prisma.project.delete({
       where: { id },
     });
+
+    return this.parseToProjectDto(project);
+  }
+
+  async update(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+  ): Promise<ProjectDto> {
+    const project = await this.prisma.project.update({
+      where: { id },
+      data: {
+        name: updateProjectDto.name,
+        configuration: this.parseToJson({
+          dimensions: updateProjectDto.dimensions!,
+          scales: updateProjectDto.scales!,
+        }),
+      },
+    });
+
+    return this.parseToProjectDto(project);
   }
 }
