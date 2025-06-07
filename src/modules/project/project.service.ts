@@ -5,16 +5,35 @@ import { ProjectRepository } from './project.repository';
 import { ProjectDto } from './dto/project.dto';
 import { TagDto } from './dto/tag.dto';
 import { PaginatedResponse } from '@common/types/responses';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
+import { DimensionDto } from '@common/dto/dimension.dto';
 
 @Injectable()
 export class ProjectService {
   constructor(private projectRepository: ProjectRepository) {}
 
+  private getDimensions(dimensions?: DimensionDto[]): DimensionDto[] {
+    return !dimensions || dimensions.length === 0
+      ? DEFAULT_DIMENSIONS
+      : dimensions;
+  }
+
+  private getScales(scales?: string[]): string[] {
+    return !scales || scales.length === 0 ? DEFAULT_SCALES : scales;
+  }
+
   async create(
     createProjectDto: CreateProjectDto,
     userId: string,
   ): Promise<ProjectDto> {
-    return this.projectRepository.create(createProjectDto, userId);
+    const dimensions = this.getDimensions(createProjectDto.dimensions);
+    const scales = this.getScales(createProjectDto.scales);
+
+    return this.projectRepository.create(
+      { ...createProjectDto, dimensions, scales } as CreateProjectDto,
+      userId,
+    );
   }
 
   async findAllPaginated(
@@ -52,6 +71,17 @@ export class ProjectService {
       throw new ResourceNotFoundException('Project', id);
     }
     return this.projectRepository.remove(id);
+  }
+
+  async update(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+  ): Promise<ProjectDto> {
+    const project = await this.projectRepository.findOne(id);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', id);
+    }
+    return this.projectRepository.update(id, updateProjectDto);
   }
 
   async getProjectTags(projectId: string, userId: string): Promise<TagDto[]> {

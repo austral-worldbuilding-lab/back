@@ -12,6 +12,8 @@ import { PaginatedResponse } from '@common/types/responses';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
 import { PostitService } from './services/postit.service';
+import { PostitWithCoordinates } from '@modules/mandala/types/postits';
+import { ProjectService } from '@modules/project/project.service';
 
 @Injectable()
 export class MandalaService {
@@ -19,10 +21,29 @@ export class MandalaService {
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
     private postitService: PostitService,
+    private projectService: ProjectService,
   ) {}
 
+  private async completeMissingVariables(
+    createMandalaDto: CreateMandalaDto,
+  ): Promise<CreateMandalaDto> {
+    if (!createMandalaDto.dimensions || !createMandalaDto.scales) {
+      const project = await this.projectService.findOne(
+        createMandalaDto.projectId,
+      );
+      createMandalaDto.dimensions =
+        createMandalaDto.dimensions || project.configuration.dimensions;
+      createMandalaDto.scales =
+        createMandalaDto.scales || project.configuration.scales;
+    }
+    return createMandalaDto;
+  }
+
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
-    const mandala = await this.mandalaRepository.create(createMandalaDto);
+    const completeDto: CreateMandalaDto =
+      await this.completeMissingVariables(createMandalaDto);
+    const mandala: MandalaDto =
+      await this.mandalaRepository.create(completeDto);
 
     try {
       const firestoreData: MandalaWithPostitsDto = {
@@ -98,14 +119,14 @@ export class MandalaService {
         'Project ID is required to generate mandala',
       );
     }
-    const projectId = createMandalaDto.projectId;
 
     // Create mandala first
     const mandala: MandalaDto = await this.create(createMandalaDto);
 
     try {
-      // Generate postits using PostitService
-      const postits = await this.postitService.generatePostits(projectId);
+      // Generate postits using mandala's configuration
+      const postits: PostitWithCoordinates[] =
+        await this.postitService.generatePostitsForMandala(mandala.id);
 
       const firestoreData: MandalaWithPostitsDto = {
         mandala: mandala,
@@ -114,7 +135,7 @@ export class MandalaService {
 
       // Create in Firestore
       await this.firebaseDataService.createDocument(
-        projectId,
+        createMandalaDto.projectId,
         firestoreData,
         mandala.id,
       );

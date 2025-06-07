@@ -7,9 +7,10 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { FirebaseModule } from '@modules/firebase/firebase.module';
 import { AiModule } from '@modules/ai/ai.module';
 import { PostitService } from './services/postit.service';
+import { ProjectModule } from '@modules/project/project.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, FirebaseModule, AiModule],
+  imports: [PrismaModule, AuthModule, FirebaseModule, AiModule, ProjectModule],
   controllers: [MandalaController],
   providers: [MandalaService, MandalaRepository, PostitService],
   exports: [MandalaService],

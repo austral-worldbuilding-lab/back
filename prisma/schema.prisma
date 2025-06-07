@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-   binaryTargets = ["native", "darwin"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "darwin"]
 }
 
 datasource db {
@@ -18,13 +18,14 @@ model User {
 }
 
 model Project {
-  id         String            @id @default(uuid())
-  name       String
-  createdAt  DateTime          @default(now())
-  userRoles  UserProjectRole[] @relation("ProjectToUserRoles")
-  mandalas   Mandala[]         @relation("ProjectToMandalas")
-  Invitation Invitation[]      @relation("ProjectToInvitations")
-  projectTags ProjectTag[]
+  id            String            @id @default(uuid())
+  name          String
+  configuration Json // Contains dimensions[] and scales[]
+  createdAt     DateTime          @default(now())
+  userRoles     UserProjectRole[] @relation("ProjectToUserRoles")
+  mandalas      Mandala[]         @relation("ProjectToMandalas")
+  Invitation    Invitation[]      @relation("ProjectToInvitations")
+  projectTags   ProjectTag[]
 }
 
 model Role {
@@ -46,12 +47,13 @@ model UserProjectRole {
 }
 
 model Mandala {
-  id        String   @id @default(uuid())
-  name      String
-  project   Project  @relation("ProjectToMandalas", fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  configuration Json // Contains dimensions[] and scales[]
+  project       Project  @relation("ProjectToMandalas", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Invitation {
@@ -84,10 +86,10 @@ model Tag {
 }
 
 model ProjectTag {
-  id        String   @id @default(uuid())
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String  @id @default(uuid())
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
-  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
   tagId     String
 
   @@unique([projectId, tagId])

@@ -8,5 +8,9 @@ export interface AiProvider {
    * @param scales - Array of scales to use in the prompt
    * @returns An array of Postit objects
    */
-  generatePostits(projectId: string, dimensions: string[], scales: string[]): Promise<Postit[]>;
+  generatePostits(
+    projectId: string,
+    dimensions: string[],
+    scales: string[],
+  ): Promise<Postit[]>;
 }
