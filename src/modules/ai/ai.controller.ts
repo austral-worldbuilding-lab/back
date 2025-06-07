@@ -1,7 +1,12 @@
-import { Controller, Post, Param } from '@nestjs/common';
+import { Controller, Post, Param, Body } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { Postit } from '@modules/mandala/types/postits';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+
+interface AiRequestBody {
+  dimensions: string[];
+  scales: string[];
+}
 
 @ApiTags('AI')
 @Controller('ai')
@@ -24,7 +29,12 @@ export class AiController {
   })
   async generatePostits(
     @Param('projectId') projectId: string,
+    @Body() aiRequestBody: AiRequestBody,
   ): Promise<Postit[]> {
-    return this.aiService.generatePostits(projectId);
+    return this.aiService.generatePostits(
+      projectId,
+      aiRequestBody.dimensions,
+      aiRequestBody.scales,
+    );
   }
 }
