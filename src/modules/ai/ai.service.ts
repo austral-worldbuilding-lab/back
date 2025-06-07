@@ -7,6 +7,17 @@ import { Postit } from '@modules/mandala/types/postits';
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
+  //TODO: cambiar el uso de defaultDimensions y defaultScales por las que carga el usuario en el proyecto
+  private readonly defaultDimensions = [
+    'Recursos',
+    'Cultura',
+    'Infraestructura',
+    'Economía',
+    'Gobierno',
+    'Ecología',
+  ];
+  private readonly defaultScales = ['Persona', 'Comunidad', 'Institución'];
+
   constructor(@Inject(AI_PROVIDER) private aiProvider: AiProvider) {
     this.logger.log(
       `AI Service initialized with ${this.aiProvider.constructor.name}`,
@@ -22,6 +33,10 @@ export class AiService {
     this.logger.log(
       `Delegating postit generation to AI provider for project ${projectId}`,
     );
-    return this.aiProvider.generatePostits(projectId);
+    return this.aiProvider.generatePostits(
+      projectId,
+      this.defaultDimensions,
+      this.defaultScales,
+    );
   }
 }

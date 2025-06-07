@@ -19,16 +19,6 @@ export class GeminiAdapter implements AiProvider {
   private ai: GoogleGenAI;
   private readonly logger = new Logger(GeminiAdapter.name);
 
-  private readonly defaultDimensions = [
-    'Recursos',
-    'Cultura',
-    'Infraestructura',
-    'Economía',
-    'Gobierno',
-    'Ecología',
-  ];
-  private readonly defaultSections = ['Persona', 'Comunidad', 'Institución'];
-
   constructor(
     private configService: ConfigService,
     private fileService: FileService,
@@ -43,7 +33,11 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log('Gemini Adapter initialized');
   }
 
-  async generatePostits(projectId: string): Promise<Postit[]> {
+  async generatePostits(
+    projectId: string,
+    dimensions: string[],
+    scales: string[],
+  ): Promise<Postit[]> {
     this.logger.log(
       `Processing files for project ${projectId} for postit generation`,
     );
@@ -72,8 +66,8 @@ export class GeminiAdapter implements AiProvider {
     try {
       systemInstruction = replacePromptPlaceholders(
         promptTemplate,
-        this.defaultDimensions,
-        this.defaultSections,
+        dimensions,
+        scales,
       );
       this.logger.log('Successfully replaced placeholders in prompt');
     } catch (error: unknown) {
