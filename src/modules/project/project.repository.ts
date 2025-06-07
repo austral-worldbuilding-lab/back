@@ -104,7 +104,9 @@ export class ProjectRepository {
       include: {
         tag: {
           select: {
+            id: true,
             name: true,
+            color: true,
           },
         },
       },
@@ -112,7 +114,7 @@ export class ProjectRepository {
 
     return projectTags.map((projectTag) => ({
       name: projectTag.tag.name,
-      color: '#3B82F6',
+      color: projectTag.tag.color,
     }));
   }
 }

@@ -11,6 +11,23 @@ async function main() {
       create: { name },
     });
   }
+
+  // Seed some example tags with different colors
+  const tags = [
+    { name: 'Comedor' },
+    { name: 'Cocina' },
+    { name: 'Dormitorio' },
+    { name: 'Baño' },
+    { name: 'Sala' },
+  ];
+
+  for (const tag of tags) {
+    await prisma.tag.upsert({
+      where: { name: tag.name },
+      update: { name: tag.name },
+      create: { name: tag.name },
+    });
+  }
 }
 
 main()
