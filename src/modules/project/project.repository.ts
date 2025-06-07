@@ -5,7 +5,6 @@ import { ProjectDto } from './dto/project.dto';
 import { Role, Prisma, Project } from '@prisma/client';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
-import { DimensionDto } from '@common/dto/dimension.dto';
 
 @Injectable()
 export class ProjectRepository {
@@ -14,10 +13,7 @@ export class ProjectRepository {
   private parseToProjectConfiguration(
     config: Prisma.JsonValue,
   ): ProjectConfiguration {
-    const parsedConfig = config as {
-      dimensions: DimensionDto[];
-      scales: string[];
-    };
+    const parsedConfig = config as unknown as ProjectConfiguration;
 
     return {
       dimensions: parsedConfig.dimensions.map((dim) => ({

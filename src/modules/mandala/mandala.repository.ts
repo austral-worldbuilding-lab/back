@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@modules/prisma/prisma.service';
-import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { MandalaConfiguration } from './types/mandala-configuration.type';
 import { Mandala, Prisma } from '@prisma/client';
+import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 
 @Injectable()
 export class MandalaRepository {
@@ -13,10 +13,7 @@ export class MandalaRepository {
   private parseToMandalaConfiguration(
     config: Prisma.JsonValue,
   ): MandalaConfiguration {
-    const parsedConfig = config as {
-      dimensions: { name: string; color: string }[];
-      scales: string[];
-    };
+    const parsedConfig = config as unknown as MandalaConfiguration;
 
     return {
       dimensions: parsedConfig.dimensions.map((dim) => ({

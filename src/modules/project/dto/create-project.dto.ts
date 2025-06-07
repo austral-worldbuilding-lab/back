@@ -4,22 +4,11 @@ import {
   IsArray,
   ValidateNested,
   ArrayMinSize,
-  IsHexadecimal,
   IsOptional,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-
-class DimensionDto {
-  @IsString()
-  @IsNotEmpty()
-  name!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsHexadecimal()
-  color!: string;
-}
+import { DimensionDto } from '@common/dto/dimension.dto';
 
 export class CreateProjectDto {
   @ApiProperty({
