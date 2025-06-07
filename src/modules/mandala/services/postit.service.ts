@@ -11,16 +11,6 @@ import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 
 @Injectable()
 export class PostitService {
-  private readonly defaultDimensions = [
-    'Recursos',
-    'Cultura',
-    'Infraestructura',
-    'Economía',
-    'Gobierno',
-    'Ecología',
-  ];
-  private readonly defaultSections = ['Persona', 'Comunidad', 'Institución'];
-
   constructor(
     private aiService: AiService,
     private mandalaRepository: MandalaRepository,
@@ -70,13 +60,11 @@ export class PostitService {
   getRandomCoordinates(
     dimension: string,
     section: string,
-    dimensions: string[] = this.defaultDimensions,
-    sections: string[] = this.defaultSections,
+    dimensions: string[],
+    sections: string[],
   ): PostitCoordinates | null {
     const dimIndex = dimensions.indexOf(dimension);
     const secIndex = sections.indexOf(section);
-
-    // Filter out invalid dimensions or sections
     if (dimIndex === -1 || secIndex === -1) return null;
 
     const anglePerDim = (2 * Math.PI) / dimensions.length;
