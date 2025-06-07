@@ -4,6 +4,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectRepository } from './project.repository';
 import { ProjectDto } from './dto/project.dto';
 import { PaginatedResponse } from '@common/types/responses';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 @Injectable()
 export class ProjectService {
@@ -51,5 +52,16 @@ export class ProjectService {
       throw new ResourceNotFoundException('Project', id);
     }
     return this.projectRepository.remove(id);
+  }
+
+  async update(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+  ): Promise<ProjectDto> {
+    const project = await this.projectRepository.findOne(id);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', id);
+    }
+    return this.projectRepository.update(id, updateProjectDto);
   }
 }

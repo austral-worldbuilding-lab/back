@@ -13,6 +13,8 @@ export class MandalaRepository {
       data: {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
+        dimensions: createMandalaDto.dimensions,
+        scales: createMandalaDto.scales,
       },
     });
   }
@@ -49,7 +51,11 @@ export class MandalaRepository {
     return this.prisma.mandala.update({
       where: { id },
       data: {
-        name: updateMandalaDto.name,
+        ...(updateMandalaDto.name && { name: updateMandalaDto.name }),
+        ...(updateMandalaDto.dimensions && {
+          dimensions: updateMandalaDto.dimensions,
+        }),
+        ...(updateMandalaDto.scales && { scales: updateMandalaDto.scales }),
       },
     });
   }

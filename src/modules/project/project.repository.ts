@@ -3,6 +3,7 @@ import { PrismaService } from '@modules/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectDto } from './dto/project.dto';
 import { Role } from '@prisma/client';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 @Injectable()
 export class ProjectRepository {
@@ -33,17 +34,23 @@ export class ProjectRepository {
     userId: string,
   ): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
-      // Create project
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
+          dimensions: createProjectDto.dimensions,
+          scales: createProjectDto.scales,
+        },
+        select: {
+          id: true,
+          name: true,
+          dimensions: true,
+          scales: true,
+          createdAt: true,
         },
       });
 
-      // Find or create owner role
-      const ownerRole = await this.findOrCreateRole('owner');
+      const ownerRole: Role = await this.findOrCreateRole('owner');
 
-      // Create user-project-role relation
       await tx.userProjectRole.create({
         data: {
           userId,
@@ -65,6 +72,13 @@ export class ProjectRepository {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          dimensions: true,
+          scales: true,
+          createdAt: true,
+        },
       }),
       this.prisma.project.count(),
     ]);
@@ -75,12 +89,47 @@ export class ProjectRepository {
   async findOne(id: string): Promise<ProjectDto | null> {
     return this.prisma.project.findUnique({
       where: { id },
+      select: {
+        id: true,
+        name: true,
+        dimensions: true,
+        scales: true,
+        createdAt: true,
+      },
     });
   }
 
   async remove(id: string): Promise<ProjectDto> {
     return this.prisma.project.delete({
       where: { id },
+      select: {
+        id: true,
+        name: true,
+        dimensions: true,
+        scales: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async update(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+  ): Promise<ProjectDto> {
+    return this.prisma.project.update({
+      where: { id },
+      data: {
+        name: updateProjectDto.name,
+        dimensions: updateProjectDto.dimensions,
+        scales: updateProjectDto.scales,
+      },
+      select: {
+        id: true,
+        name: true,
+        dimensions: true,
+        scales: true,
+        createdAt: true,
+      },
     });
   }
 }

@@ -9,6 +9,8 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   UseGuards,
+  Patch,
+  Req,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -28,6 +30,8 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -46,10 +50,11 @@ export class ProjectController {
   @ApiResponse({ status: 400, description: 'Solicitud incorrecta' })
   async create(
     @Body() createProjectDto: CreateProjectDto,
+    @Req() req: RequestWithUser,
   ): Promise<MessageResponse<ProjectDto>> {
     const project = await this.projectService.create(
       createProjectDto,
-      createProjectDto.userId,
+      req.user.id,
     );
     return {
       message: 'Project created successfully',
@@ -114,6 +119,30 @@ export class ProjectController {
     const project = await this.projectService.remove(id);
     return {
       message: 'Project deleted successfully',
+      data: project,
+    };
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar un proyecto' })
+  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'El proyecto ha sido actualizado exitosamente',
+    type: ProjectDto,
+  })
+  @ApiResponse({ status: 404, description: 'Proyecto no encontrado' })
+  @ApiResponse({
+    status: 403,
+    description: 'Prohibido - Solo el propietario puede actualizar proyectos',
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.update(id, updateProjectDto);
+    return {
+      message: 'Project updated successfully',
       data: project,
     };
   }

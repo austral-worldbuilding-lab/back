@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PostitCoordinates, PostitWithCoordinates } from '../types/postits';
+import {
+  Postit,
+  PostitCoordinates,
+  PostitWithCoordinates,
+} from '../types/postits';
 import { AiService } from '@modules/ai/ai.service';
 import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
+import { MandalaRepository } from '../mandala.repository';
+import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 
 @Injectable()
 export class PostitService {
@@ -15,25 +21,33 @@ export class PostitService {
   ];
   private readonly defaultSections = ['Persona', 'Comunidad', 'Institución'];
 
-  constructor(private aiService: AiService) {}
+  constructor(
+    private aiService: AiService,
+    private mandalaRepository: MandalaRepository,
+  ) {}
 
-  async generatePostits(projectId: string): Promise<PostitWithCoordinates[]> {
-    const postits = await this.aiService.generatePostits(projectId);
+  async generatePostitsForMandala(
+    mandalaId: string,
+  ): Promise<PostitWithCoordinates[]> {
+    const mandala: MandalaDto | null =
+      await this.mandalaRepository.findOne(mandalaId);
 
-    if (!postits || postits.length === 0) {
-      throw new BusinessLogicException('No postits received from AI service', {
-        projectId,
-      });
+    if (!mandala) {
+      throw new BusinessLogicException('Mandala not found', { mandalaId });
     }
 
-    const postitsWithCoordinates = postits
+    const postits: Postit[] = await this.aiService.generatePostits(
+      mandala.projectId,
+    );
+
+    const postitsWithCoordinates: PostitWithCoordinates[] = postits
       .map((postit) => ({
         ...postit,
         coordinates: this.getRandomCoordinates(
           postit.dimension,
           postit.section,
-          this.defaultDimensions,
-          this.defaultSections,
+          mandala.dimensions,
+          mandala.scales,
         ),
       }))
       .filter(
@@ -43,7 +57,7 @@ export class PostitService {
 
     if (postitsWithCoordinates.length === 0) {
       throw new BusinessLogicException('No valid postits were generated', {
-        projectId,
+        mandalaId,
         totalPostits: postits.length,
       });
     }
