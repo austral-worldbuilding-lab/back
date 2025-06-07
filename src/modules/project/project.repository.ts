@@ -2,12 +2,50 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectDto } from './dto/project.dto';
-import { Role } from '@prisma/client';
+import { Role, Prisma, Project } from '@prisma/client';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { ProjectConfiguration } from './types/project-configuration.type';
+import { DimensionDto } from '@common/dto/dimension.dto';
 
 @Injectable()
 export class ProjectRepository {
   constructor(private prisma: PrismaService) {}
+
+  private parseToProjectConfiguration(
+    config: Prisma.JsonValue,
+  ): ProjectConfiguration {
+    const parsedConfig = config as {
+      dimensions: DimensionDto[];
+      scales: string[];
+    };
+
+    return {
+      dimensions: parsedConfig.dimensions.map((dim) => ({
+        name: dim.name,
+        color: dim.color,
+      })),
+      scales: parsedConfig.scales,
+    };
+  }
+
+  private parseToJson(config: ProjectConfiguration): Prisma.InputJsonValue {
+    return {
+      dimensions: config.dimensions.map((dim) => ({
+        name: dim.name,
+        color: dim.color,
+      })),
+      scales: config.scales,
+    };
+  }
+
+  private parseToProjectDto(project: Project): ProjectDto {
+    return {
+      id: project.id,
+      name: project.name,
+      configuration: this.parseToProjectConfiguration(project.configuration),
+      createdAt: project.createdAt,
+    };
+  }
 
   async findRoleByName(name: string): Promise<Role | null> {
     return this.prisma.role.findUnique({
@@ -37,16 +75,10 @@ export class ProjectRepository {
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
-          dimensions: {
-            create: createProjectDto.dimensions!.map((dim) => ({
-              name: dim.name,
-              color: dim.color,
-            })),
-          },
-          scales: createProjectDto.scales,
-        },
-        include: {
-          dimensions: true,
+          configuration: this.parseToJson({
+            dimensions: createProjectDto.dimensions!,
+            scales: createProjectDto.scales!,
+          }),
         },
       });
 
@@ -60,7 +92,7 @@ export class ProjectRepository {
         },
       });
 
-      return project;
+      return this.parseToProjectDto(project);
     });
   }
 
@@ -73,54 +105,48 @@ export class ProjectRepository {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        include: {
-          dimensions: true,
-        },
       }),
       this.prisma.project.count(),
     ]);
 
-    return [projects, total];
+    return [projects.map((project) => this.parseToProjectDto(project)), total];
   }
 
   async findOne(id: string): Promise<ProjectDto | null> {
-    return this.prisma.project.findUnique({
+    const project = await this.prisma.project.findUnique({
       where: { id },
-      include: {
-        dimensions: true,
-      },
     });
+
+    if (!project) {
+      return null;
+    }
+
+    return this.parseToProjectDto(project);
   }
 
   async remove(id: string): Promise<ProjectDto> {
-    return this.prisma.project.delete({
+    const project = await this.prisma.project.delete({
       where: { id },
-      include: {
-        dimensions: true,
-      },
     });
+
+    return this.parseToProjectDto(project);
   }
 
   async update(
     id: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
-    return this.prisma.project.update({
+    const project = await this.prisma.project.update({
       where: { id },
       data: {
         name: updateProjectDto.name,
-        dimensions: {
-          deleteMany: {},
-          create: updateProjectDto.dimensions!.map((dim) => ({
-            name: dim.name,
-            color: dim.color,
-          })),
-        },
-        scales: updateProjectDto.scales,
-      },
-      include: {
-        dimensions: true,
+        configuration: this.parseToJson({
+          dimensions: updateProjectDto.dimensions!,
+          scales: updateProjectDto.scales!,
+        }),
       },
     });
+
+    return this.parseToProjectDto(project);
   }
 }

@@ -2,11 +2,24 @@ import {
   IsNotEmpty,
   IsString,
   IsArray,
-  IsOptional,
+  ValidateNested,
   ArrayMinSize,
+  IsHexadecimal,
+  IsOptional,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateDimensionDto } from '../types/dimension.type';
+import { Type } from 'class-transformer';
+
+class DimensionDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsHexadecimal()
+  color!: string;
+}
 
 export class CreateProjectDto {
   @ApiProperty({
@@ -31,11 +44,11 @@ export class CreateProjectDto {
     required: false,
   })
   @IsArray()
+  @ValidateNested({ each: true })
+  @ArrayMinSize(1)
+  @Type(() => DimensionDto)
   @IsOptional()
-  @ArrayMinSize(1, {
-    message: 'Las dimensiones no pueden estar vacías si se proporcionan',
-  })
-  dimensions?: CreateDimensionDto[];
+  dimensions?: DimensionDto[];
 
   @ApiProperty({
     description:
@@ -46,8 +59,6 @@ export class CreateProjectDto {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  @ArrayMinSize(1, {
-    message: 'Las escalas no pueden estar vacías si se proporcionan',
-  })
+  @ArrayMinSize(1)
   scales?: string[];
 }

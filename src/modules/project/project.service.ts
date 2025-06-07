@@ -6,15 +6,13 @@ import { ProjectDto } from './dto/project.dto';
 import { PaginatedResponse } from '@common/types/responses';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
-import { CreateDimensionDto } from './types/dimension.type';
+import { DimensionDto } from '@common/dto/dimension.dto';
 
 @Injectable()
 export class ProjectService {
   constructor(private projectRepository: ProjectRepository) {}
 
-  private getDimensions(
-    dimensions?: CreateDimensionDto[],
-  ): CreateDimensionDto[] {
+  private getDimensions(dimensions?: DimensionDto[]): DimensionDto[] {
     return !dimensions || dimensions.length === 0
       ? DEFAULT_DIMENSIONS
       : dimensions;

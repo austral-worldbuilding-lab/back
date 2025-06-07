@@ -1,6 +1,6 @@
-import { CreateDimensionDto } from '../types/dimension.type';
+import { DimensionDto } from '@common/dto/dimension.dto';
 
-export const DEFAULT_DIMENSIONS: CreateDimensionDto[] = [
+export const DEFAULT_DIMENSIONS: DimensionDto[] = [
   { name: 'Recursos', color: '#FF0000' },
   { name: 'Cultura', color: '#00FF00' },
   { name: 'Infraestructura', color: '#0000FF' },
