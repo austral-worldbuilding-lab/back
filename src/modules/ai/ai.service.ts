@@ -27,16 +27,29 @@ export class AiService {
   /**
    * Generates postits for a project
    * @param projectId - The ID of the project to generate postits for
+   * @param dimensions - Optional array of dimensions. If not provided, uses defaults
+   * @param scales - Optional array of scales. If not provided, uses defaults
    * @returns An array of Postit objects
    */
-  async generatePostits(projectId: string): Promise<Postit[]> {
+  async generatePostits(
+    projectId: string,
+    dimensions?: string[],
+    scales?: string[],
+  ): Promise<Postit[]> {
+    const finalDimensions = dimensions || this.defaultDimensions;
+    const finalScales = scales || this.defaultScales;
+
     this.logger.log(
       `Delegating postit generation to AI provider for project ${projectId}`,
     );
+    this.logger.log(
+      `Using ${finalDimensions.length} dimensions and ${finalScales.length} scales ${dimensions ? '(user-provided)' : '(defaults)'}`,
+    );
+
     return this.aiProvider.generatePostits(
       projectId,
-      this.defaultDimensions,
-      this.defaultScales,
+      finalDimensions,
+      finalScales,
     );
   }
 }
