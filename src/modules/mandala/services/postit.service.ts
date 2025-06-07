@@ -38,6 +38,8 @@ export class PostitService {
 
     const postits: Postit[] = await this.aiService.generatePostits(
       mandala.projectId,
+      mandala.configuration.dimensions.map((dim) => dim.name),
+      mandala.configuration.scales,
     );
 
     const postitsWithCoordinates: PostitWithCoordinates[] = postits
