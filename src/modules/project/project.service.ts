@@ -5,16 +5,36 @@ import { ProjectRepository } from './project.repository';
 import { ProjectDto } from './dto/project.dto';
 import { PaginatedResponse } from '@common/types/responses';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
+import { CreateDimensionDto } from './types/dimension.type';
 
 @Injectable()
 export class ProjectService {
   constructor(private projectRepository: ProjectRepository) {}
 
+  private getDimensions(
+    dimensions?: CreateDimensionDto[],
+  ): CreateDimensionDto[] {
+    return !dimensions || dimensions.length === 0
+      ? DEFAULT_DIMENSIONS
+      : dimensions;
+  }
+
+  private getScales(scales?: string[]): string[] {
+    return !scales || scales.length === 0 ? DEFAULT_SCALES : scales;
+  }
+
   async create(
     createProjectDto: CreateProjectDto,
     userId: string,
   ): Promise<ProjectDto> {
-    return this.projectRepository.create(createProjectDto, userId);
+    const dimensions = this.getDimensions(createProjectDto.dimensions);
+    const scales = this.getScales(createProjectDto.scales);
+
+    return this.projectRepository.create(
+      { ...createProjectDto, dimensions, scales } as CreateProjectDto,
+      userId,
+    );
   }
 
   async findAllPaginated(

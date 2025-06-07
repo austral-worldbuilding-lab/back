@@ -13,8 +13,16 @@ export class MandalaRepository {
       data: {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
-        dimensions: createMandalaDto.dimensions,
+        dimensions: {
+          create: createMandalaDto.dimensions!.map((dim) => ({
+            name: dim.name,
+            color: dim.color,
+          })),
+        },
         scales: createMandalaDto.scales,
+      },
+      include: {
+        dimensions: true,
       },
     });
   }
@@ -31,6 +39,9 @@ export class MandalaRepository {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
+        include: {
+          dimensions: true,
+        },
       }),
       this.prisma.mandala.count({ where }),
     ]);
@@ -41,6 +52,9 @@ export class MandalaRepository {
   async findOne(id: string): Promise<MandalaDto | null> {
     return this.prisma.mandala.findFirst({
       where: { id },
+      include: {
+        dimensions: true,
+      },
     });
   }
 
@@ -53,9 +67,18 @@ export class MandalaRepository {
       data: {
         ...(updateMandalaDto.name && { name: updateMandalaDto.name }),
         ...(updateMandalaDto.dimensions && {
-          dimensions: updateMandalaDto.dimensions,
+          dimensions: {
+            deleteMany: {},
+            create: updateMandalaDto.dimensions.map((dim) => ({
+              name: dim.name,
+              color: dim.color,
+            })),
+          },
         }),
         ...(updateMandalaDto.scales && { scales: updateMandalaDto.scales }),
+      },
+      include: {
+        dimensions: true,
       },
     });
   }
@@ -63,6 +86,9 @@ export class MandalaRepository {
   async remove(id: string): Promise<MandalaDto> {
     return this.prisma.mandala.delete({
       where: { id },
+      include: {
+        dimensions: true,
+      },
     });
   }
 }

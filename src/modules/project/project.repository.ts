@@ -37,15 +37,16 @@ export class ProjectRepository {
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
-          dimensions: createProjectDto.dimensions,
+          dimensions: {
+            create: createProjectDto.dimensions!.map((dim) => ({
+              name: dim.name,
+              color: dim.color,
+            })),
+          },
           scales: createProjectDto.scales,
         },
-        select: {
-          id: true,
-          name: true,
+        include: {
           dimensions: true,
-          scales: true,
-          createdAt: true,
         },
       });
 
@@ -72,12 +73,8 @@ export class ProjectRepository {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          name: true,
+        include: {
           dimensions: true,
-          scales: true,
-          createdAt: true,
         },
       }),
       this.prisma.project.count(),
@@ -89,12 +86,8 @@ export class ProjectRepository {
   async findOne(id: string): Promise<ProjectDto | null> {
     return this.prisma.project.findUnique({
       where: { id },
-      select: {
-        id: true,
-        name: true,
+      include: {
         dimensions: true,
-        scales: true,
-        createdAt: true,
       },
     });
   }
@@ -102,12 +95,8 @@ export class ProjectRepository {
   async remove(id: string): Promise<ProjectDto> {
     return this.prisma.project.delete({
       where: { id },
-      select: {
-        id: true,
-        name: true,
+      include: {
         dimensions: true,
-        scales: true,
-        createdAt: true,
       },
     });
   }
@@ -120,15 +109,17 @@ export class ProjectRepository {
       where: { id },
       data: {
         name: updateProjectDto.name,
-        dimensions: updateProjectDto.dimensions,
+        dimensions: {
+          deleteMany: {},
+          create: updateProjectDto.dimensions!.map((dim) => ({
+            name: dim.name,
+            color: dim.color,
+          })),
+        },
         scales: updateProjectDto.scales,
       },
-      select: {
-        id: true,
-        name: true,
+      include: {
         dimensions: true,
-        scales: true,
-        createdAt: true,
       },
     });
   }

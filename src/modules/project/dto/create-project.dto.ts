@@ -6,6 +6,7 @@ import {
   ArrayMinSize,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { CreateDimensionDto } from '../types/dimension.type';
 
 export class CreateProjectDto {
   @ApiProperty({
@@ -20,22 +21,21 @@ export class CreateProjectDto {
     description:
       'Dimensiones del proyecto. En caso de no tener dimensiones, se usarán las dimensiones por defecto.',
     example: [
-      'Recursos',
-      'Cultura',
-      'Infraestructura',
-      'Economía',
-      'Gobierno',
-      'Ecología',
+      { name: 'Recursos', color: '#FF0000' },
+      { name: 'Cultura', color: '#00FF00' },
+      { name: 'Infraestructura', color: '#0000FF' },
+      { name: 'Economía', color: '#FFFF00' },
+      { name: 'Gobierno', color: '#FF00FF' },
+      { name: 'Ecología', color: '#00FFFF' },
     ],
     required: false,
   })
   @IsArray()
-  @IsString({ each: true })
   @IsOptional()
   @ArrayMinSize(1, {
     message: 'Las dimensiones no pueden estar vacías si se proporcionan',
   })
-  dimensions?: string[];
+  dimensions?: CreateDimensionDto[];
 
   @ApiProperty({
     description:

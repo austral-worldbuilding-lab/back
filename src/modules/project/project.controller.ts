@@ -106,23 +106,6 @@ export class ProjectController {
     };
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar un proyecto' })
-  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'El proyecto ha sido eliminado exitosamente',
-    type: ProjectDto,
-  })
-  @ApiResponse({ status: 404, description: 'Proyecto no encontrado' })
-  async remove(@Param('id') id: string): Promise<MessageResponse<ProjectDto>> {
-    const project = await this.projectService.remove(id);
-    return {
-      message: 'Project deleted successfully',
-      data: project,
-    };
-  }
-
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar un proyecto' })
   @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
@@ -143,6 +126,23 @@ export class ProjectController {
     const project = await this.projectService.update(id, updateProjectDto);
     return {
       message: 'Project updated successfully',
+      data: project,
+    };
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar un proyecto' })
+  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'El proyecto ha sido eliminado exitosamente',
+    type: ProjectDto,
+  })
+  @ApiResponse({ status: 404, description: 'Proyecto no encontrado' })
+  async remove(@Param('id') id: string): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.remove(id);
+    return {
+      message: 'Project deleted successfully',
       data: project,
     };
   }

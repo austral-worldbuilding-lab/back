@@ -7,6 +7,7 @@ import {
   ArrayMinSize,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { CreateDimensionDto } from '@modules/project/types/dimension.type';
 
 export class CreateMandalaDto {
   @ApiProperty({
@@ -25,29 +26,26 @@ export class CreateMandalaDto {
   projectId!: string;
 
   @ApiProperty({
-    description:
-      'Dimensiones del mandala. Si no se proporcionan, se usarán las dimensiones del proyecto.',
+    description: 'Dimensiones del mandala',
     example: [
-      'Recursos',
-      'Cultura',
-      'Infraestructura',
-      'Economía',
-      'Gobierno',
-      'Ecología',
+      { name: 'Recursos', color: '#FF0000' },
+      { name: 'Cultura', color: '#00FF00' },
+      { name: 'Infraestructura', color: '#0000FF' },
+      { name: 'Economía', color: '#FFFF00' },
+      { name: 'Gobierno', color: '#FF00FF' },
+      { name: 'Ecología', color: '#00FFFF' },
     ],
     required: false,
   })
   @IsArray()
-  @IsString({ each: true })
   @IsOptional()
   @ArrayMinSize(1, {
     message: 'Las dimensiones no pueden estar vacías si se proporcionan',
   })
-  dimensions?: string[];
+  dimensions?: CreateDimensionDto[];
 
   @ApiProperty({
-    description:
-      'Escalas del mandala. Si no se proporcionan, se usarán las escalas del proyecto.',
+    description: 'Escalas del mandala',
     example: ['Persona', 'Comunidad', 'Institución'],
     required: false,
   })
