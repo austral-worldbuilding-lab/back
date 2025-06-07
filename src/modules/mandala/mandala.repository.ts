@@ -3,28 +3,66 @@ import { PrismaService } from '@modules/prisma/prisma.service';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaDto } from './dto/mandala.dto';
+import { MandalaConfiguration } from './types/mandala-configuration.type';
+import { Mandala, Prisma } from '@prisma/client';
 
 @Injectable()
 export class MandalaRepository {
   constructor(private prisma: PrismaService) {}
 
+  private parseToMandalaConfiguration(
+    config: Prisma.JsonValue,
+  ): MandalaConfiguration {
+    const parsedConfig = config as {
+      dimensions: { name: string; color: string }[];
+      scales: string[];
+    };
+
+    return {
+      dimensions: parsedConfig.dimensions.map((dim) => ({
+        name: dim.name,
+        color: dim.color,
+      })),
+      scales: parsedConfig.scales,
+    };
+  }
+
+  private parseToJson(config: MandalaConfiguration): Prisma.InputJsonValue {
+    return {
+      dimensions: config.dimensions.map((dim) => ({
+        name: dim.name,
+        color: dim.color,
+      })),
+      scales: config.scales,
+    };
+  }
+
+  private parseToMandalaDto(mandala: Mandala): MandalaDto {
+    return {
+      id: mandala.id,
+      name: mandala.name,
+      projectId: mandala.projectId,
+      configuration: this.parseToMandalaConfiguration(mandala.configuration),
+      createdAt: mandala.createdAt,
+      updatedAt: mandala.updatedAt,
+    };
+  }
+
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
-    return this.prisma.mandala.create({
+    const configuration: MandalaConfiguration = {
+      dimensions: createMandalaDto.dimensions!,
+      scales: createMandalaDto.scales!,
+    };
+
+    const mandala = await this.prisma.mandala.create({
       data: {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
-        dimensions: {
-          create: createMandalaDto.dimensions!.map((dim) => ({
-            name: dim.name,
-            color: dim.color,
-          })),
-        },
-        scales: createMandalaDto.scales,
-      },
-      include: {
-        dimensions: true,
+        configuration: this.parseToJson(configuration),
       },
     });
+
+    return this.parseToMandalaDto(mandala);
   }
 
   async findAllPaginated(
@@ -39,56 +77,44 @@ export class MandalaRepository {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        include: {
-          dimensions: true,
-        },
       }),
       this.prisma.mandala.count({ where }),
     ]);
 
-    return [mandalas, total];
+    return [mandalas.map((m) => this.parseToMandalaDto(m)), total];
   }
 
   async findOne(id: string): Promise<MandalaDto | null> {
-    return this.prisma.mandala.findFirst({
+    const mandala = await this.prisma.mandala.findUnique({
       where: { id },
-      include: {
-        dimensions: true,
-      },
     });
+
+    if (!mandala) {
+      return null;
+    }
+
+    return this.parseToMandalaDto(mandala);
   }
 
   async update(
     id: string,
     updateMandalaDto: UpdateMandalaDto,
   ): Promise<MandalaDto> {
-    return this.prisma.mandala.update({
+    const mandala = await this.prisma.mandala.update({
       where: { id },
       data: {
-        ...(updateMandalaDto.name && { name: updateMandalaDto.name }),
-        ...(updateMandalaDto.dimensions && {
-          dimensions: {
-            deleteMany: {},
-            create: updateMandalaDto.dimensions.map((dim) => ({
-              name: dim.name,
-              color: dim.color,
-            })),
-          },
-        }),
-        ...(updateMandalaDto.scales && { scales: updateMandalaDto.scales }),
-      },
-      include: {
-        dimensions: true,
+        name: updateMandalaDto.name,
       },
     });
+
+    return this.parseToMandalaDto(mandala);
   }
 
   async remove(id: string): Promise<MandalaDto> {
-    return this.prisma.mandala.delete({
+    const mandala = await this.prisma.mandala.delete({
       where: { id },
-      include: {
-        dimensions: true,
-      },
     });
+
+    return this.parseToMandalaDto(mandala);
   }
 }

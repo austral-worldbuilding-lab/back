@@ -7,7 +7,7 @@ import {
   ArrayMinSize,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateDimensionDto } from '@modules/project/types/dimension.type';
+import { DimensionDto } from '@common/dto/dimension.dto';
 
 export class CreateMandalaDto {
   @ApiProperty({
@@ -42,7 +42,7 @@ export class CreateMandalaDto {
   @ArrayMinSize(1, {
     message: 'Las dimensiones no pueden estar vacías si se proporcionan',
   })
-  dimensions?: CreateDimensionDto[];
+  dimensions?: DimensionDto[];
 
   @ApiProperty({
     description: 'Escalas del mandala',

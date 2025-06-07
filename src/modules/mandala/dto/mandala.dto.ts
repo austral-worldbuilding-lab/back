@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Dimension } from '@modules/project/types/dimension.type';
+import { MandalaConfiguration } from '../types/mandala-configuration.type';
 
 export class MandalaDto {
   @ApiProperty({
@@ -19,59 +19,20 @@ export class MandalaDto {
   projectId!: string;
 
   @ApiProperty({
-    description: 'Dimensiones del mandala',
-    example: [
-      {
-        id: '1',
-        name: 'Recursos',
-        color: '#FF0000',
-        projectId: null,
-        mandalaId: '1',
-      },
-      {
-        id: '2',
-        name: 'Cultura',
-        color: '#00FF00',
-        projectId: null,
-        mandalaId: '1',
-      },
-      {
-        id: '3',
-        name: 'Infraestructura',
-        color: '#0000FF',
-        projectId: null,
-        mandalaId: '1',
-      },
-      {
-        id: '4',
-        name: 'Economía',
-        color: '#FFFF00',
-        projectId: null,
-        mandalaId: '1',
-      },
-      {
-        id: '5',
-        name: 'Gobierno',
-        color: '#FF00FF',
-        projectId: null,
-        mandalaId: '1',
-      },
-      {
-        id: '6',
-        name: 'Ecología',
-        color: '#00FFFF',
-        projectId: null,
-        mandalaId: '1',
-      },
-    ],
+    description: 'Configuración del mandala',
+    example: {
+      dimensions: [
+        { name: 'Recursos', color: '#FF0000' },
+        { name: 'Cultura', color: '#00FF00' },
+        { name: 'Infraestructura', color: '#0000FF' },
+        { name: 'Economía', color: '#FFFF00' },
+        { name: 'Gobierno', color: '#FF00FF' },
+        { name: 'Ecología', color: '#00FFFF' },
+      ],
+      scales: ['Persona', 'Comunidad', 'Institución'],
+    },
   })
-  dimensions!: Dimension[];
-
-  @ApiProperty({
-    description: 'Escalas del mandala',
-    example: ['Persona', 'Comunidad', 'Institución'],
-  })
-  scales!: string[];
+  configuration!: MandalaConfiguration;
 
   @ApiProperty({
     description: 'Fecha de creación del mandala',

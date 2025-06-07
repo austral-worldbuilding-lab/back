@@ -46,8 +46,8 @@ export class PostitService {
         coordinates: this.getRandomCoordinates(
           postit.dimension,
           postit.section,
-          mandala.dimensions.map((dim) => dim.name),
-          mandala.scales,
+          mandala.configuration.dimensions.map((dim) => dim.name),
+          mandala.configuration.scales,
         ),
       }))
       .filter(

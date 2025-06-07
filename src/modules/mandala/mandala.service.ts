@@ -24,18 +24,26 @@ export class MandalaService {
     private projectService: ProjectService,
   ) {}
 
-  async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
-    // Get project defaults if dimensions/scales are not provided
+  private async completeMissingVariables(
+    createMandalaDto: CreateMandalaDto,
+  ): Promise<CreateMandalaDto> {
     if (!createMandalaDto.dimensions || !createMandalaDto.scales) {
       const project = await this.projectService.findOne(
         createMandalaDto.projectId,
       );
       createMandalaDto.dimensions =
-        createMandalaDto.dimensions || project.dimensions;
-      createMandalaDto.scales = createMandalaDto.scales || project.scales;
+        createMandalaDto.dimensions || project.configuration.dimensions;
+      createMandalaDto.scales =
+        createMandalaDto.scales || project.configuration.scales;
     }
+    return createMandalaDto;
+  }
 
-    const mandala = await this.mandalaRepository.create(createMandalaDto);
+  async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
+    const completeDto: CreateMandalaDto =
+      await this.completeMissingVariables(createMandalaDto);
+    const mandala: MandalaDto =
+      await this.mandalaRepository.create(completeDto);
 
     try {
       const firestoreData: MandalaWithPostitsDto = {
@@ -116,7 +124,7 @@ export class MandalaService {
     const mandala: MandalaDto = await this.create(createMandalaDto);
 
     try {
-      // Generate postits using mandala-specific dimensions and scales
+      // Generate postits using mandala's configuration
       const postits: PostitWithCoordinates[] =
         await this.postitService.generatePostitsForMandala(mandala.id);
 
