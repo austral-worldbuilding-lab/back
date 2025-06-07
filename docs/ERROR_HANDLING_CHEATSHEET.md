@@ -19,17 +19,17 @@ import {
 
 ## 🎯 Cuándo Usar Cada Excepción
 
-| Situación | Excepción | Código |
-|-----------|-----------|---------|
-| Usuario/Proyecto/Recurso no existe | `ResourceNotFoundException` | 404 |
-| Regla de negocio violada | `BusinessLogicException` | 422 |
-| Firebase/API externa falla | `ExternalServiceException` | 502 |
-| Estado inválido para operación | `StateConflictException` | 409 |
-| Permisos insuficientes | `AuthorizationException` | 403 |
-| Validación específica falla | `ValidationException` | 400 |
-| Token inválido/faltante | `UnauthorizedException` | 401 |
-| Acceso denegado | `ForbiddenException` | 403 |
-| Datos de entrada incorrectos | `BadRequestException` | 400 |
+| Situación                          | Excepción                   | Código |
+|------------------------------------|-----------------------------|--------|
+| Usuario/Proyecto/Recurso no existe | `ResourceNotFoundException` | 404    |
+| Regla de negocio violada           | `BusinessLogicException`    | 422    |
+| Firebase/API externa falla         | `ExternalServiceException`  | 502    |
+| Estado inválido para operación     | `StateConflictException`    | 409    |
+| Permisos insuficientes             | `AuthorizationException`    | 403    |
+| Validación específica falla        | `ValidationException`       | 400    |
+| Token inválido/faltante            | `UnauthorizedException`     | 401    |
+| Acceso denegado                    | `ForbiddenException`        | 403    |
+| Datos de entrada incorrectos       | `BadRequestException`       | 400    |
 
 ## ⚡ Ejemplos Rápidos
 

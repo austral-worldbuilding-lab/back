@@ -25,7 +25,8 @@ export class CreateMandalaDto {
   projectId!: string;
 
   @ApiProperty({
-    description: 'Dimensiones del mandala. Si no se proporcionan, se usarán las dimensiones del proyecto.',
+    description:
+      'Dimensiones del mandala. Si no se proporcionan, se usarán las dimensiones del proyecto.',
     example: [
       'Recursos',
       'Cultura',
@@ -39,17 +40,22 @@ export class CreateMandalaDto {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  @ArrayMinSize(1, { message: 'Las dimensiones no pueden estar vacías si se proporcionan' })
+  @ArrayMinSize(1, {
+    message: 'Las dimensiones no pueden estar vacías si se proporcionan',
+  })
   dimensions?: string[];
 
   @ApiProperty({
-    description: 'Escalas del mandala. Si no se proporcionan, se usarán las escalas del proyecto.',
+    description:
+      'Escalas del mandala. Si no se proporcionan, se usarán las escalas del proyecto.',
     example: ['Persona', 'Comunidad', 'Institución'],
     required: false,
   })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  @ArrayMinSize(1, { message: 'Las escalas no pueden estar vacías si se proporcionan' })
+  @ArrayMinSize(1, {
+    message: 'Las escalas no pueden estar vacías si se proporcionan',
+  })
   scales?: string[];
 }

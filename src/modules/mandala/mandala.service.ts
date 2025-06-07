@@ -27,8 +27,11 @@ export class MandalaService {
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
     // Get project defaults if dimensions/scales are not provided
     if (!createMandalaDto.dimensions || !createMandalaDto.scales) {
-      const project = await this.projectService.findOne(createMandalaDto.projectId);
-      createMandalaDto.dimensions = createMandalaDto.dimensions || project.dimensions;
+      const project = await this.projectService.findOne(
+        createMandalaDto.projectId,
+      );
+      createMandalaDto.dimensions =
+        createMandalaDto.dimensions || project.dimensions;
       createMandalaDto.scales = createMandalaDto.scales || project.scales;
     }
 
