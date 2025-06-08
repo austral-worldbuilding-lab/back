@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MandalaConfiguration } from '../types/mandala-configuration.type';
+import { CenterDto } from '@common/dto/center.dto';
 
 export class MandalaDto {
   @ApiProperty({
@@ -17,6 +18,16 @@ export class MandalaDto {
     description: 'ID del proyecto al que pertenece el mandala',
   })
   projectId!: string;
+
+  @ApiProperty({
+    description: 'Centro del mandala',
+    example: {
+      name: 'Estudiante',
+      description: 'Alumno de 23 años que estudia en la universidad',
+      color: '#3B82F6',
+    },
+  })
+  center!: CenterDto;
 
   @ApiProperty({
     description: 'Configuración del mandala',

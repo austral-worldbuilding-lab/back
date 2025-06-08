@@ -49,7 +49,7 @@ model UserProjectRole {
 model Mandala {
   id            String   @id @default(uuid())
   name          String
-  configuration Json // Contains dimensions[] and scales[]
+  configuration Json // Contains center, dimensions[] and scales[]
   project       Project  @relation("ProjectToMandalas", fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
   linkedTo      Mandala? @relation("MandalaToMandala", fields: [linkedToId], references: [id])

@@ -5,9 +5,12 @@ import {
   IsArray,
   IsOptional,
   ArrayMinSize,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { DimensionDto } from '@common/dto/dimension.dto';
+import { CenterDto } from '@common/dto/center.dto';
+import { Type } from 'class-transformer';
 
 export class CreateMandalaDto {
   @ApiProperty({
@@ -24,6 +27,19 @@ export class CreateMandalaDto {
   @IsUUID()
   @IsNotEmpty()
   projectId!: string;
+
+  @ApiProperty({
+    description: 'Centro del mandala',
+    example: {
+      name: 'Estudiante',
+      description: 'Alumno de 23 años que estudia en la universidad',
+      color: '#3B82F6',
+    },
+  })
+  @ValidateNested()
+  @Type(() => CenterDto)
+  @IsNotEmpty()
+  center!: CenterDto;
 
   @ApiProperty({
     description: 'Dimensiones del mandala',
