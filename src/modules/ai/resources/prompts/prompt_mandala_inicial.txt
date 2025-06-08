@@ -5,8 +5,8 @@ Filtrado por personaje
 • No generes post-its genéricos: todo debe tener sentido para ese personaje.
 
 Configuración del proyecto
-• Personaje central: Alumno
-• Descripción del personaje: Alumno de 18 años que estudia en la universidad
+• Personaje central: ${center}
+• Descripción del personaje: ${centerDescription}
 • Dimensiones habilitadas: ${dimensions}
 • Escalas habilitadas: ${scales}
 • Prohibido inventar nuevas dimensiones o escalas.
