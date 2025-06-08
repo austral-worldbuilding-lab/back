@@ -198,7 +198,7 @@ export class PostitService {
     if (placed.length === 0) return Infinity;
     return Math.min(
       ...placed.map((p) =>
-        Math.sqrt((candidate.x - p.x) ** 2 + (candidate.y - p.y) ** 2),
+        (candidate.x - p.x) ** 2 + (candidate.y - p.y) ** 2,
       ),
     );
   }
