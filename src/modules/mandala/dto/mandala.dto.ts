@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MandalaConfiguration } from '../types/mandala-configuration.type';
-import { CenterDto } from '@common/dto/center.dto';
 
 export class MandalaDto {
   @ApiProperty({
@@ -27,7 +26,6 @@ export class MandalaDto {
       color: '#3B82F6',
     },
   })
-
   @ApiProperty({
     description: 'Configuración del mandala',
     example: {
@@ -45,6 +43,7 @@ export class MandalaDto {
         { name: 'Ecología', color: '#00FFFF' },
       ],
       scales: ['Persona', 'Comunidad', 'Institución'],
+      linkedTo: 'id_mandala_padre',
     },
   })
   configuration!: MandalaConfiguration;
