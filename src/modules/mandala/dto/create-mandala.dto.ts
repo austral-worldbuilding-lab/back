@@ -29,7 +29,7 @@ export class CreateMandalaDto {
   projectId!: string;
 
   @ApiProperty({
-    description: 'Centro del mandala',
+    description: 'Personaje central del mandala',
     example: {
       name: 'Estudiante',
       description: 'Alumno de 23 años que estudia en la universidad',

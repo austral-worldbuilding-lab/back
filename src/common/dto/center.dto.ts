@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CenterDto {
   @ApiProperty({
-    description: 'Nombre del centro',
+    description: 'Nombre del personaje central',
     example: 'Estudiante',
   })
   @IsString()
@@ -11,7 +11,7 @@ export class CenterDto {
   name!: string;
 
   @ApiProperty({
-    description: 'Descripción del centro',
+    description: 'Descripción del personaje central',
     example: 'Alumno de 23 años que estudia en la universidad',
   })
   @IsString()
@@ -19,7 +19,7 @@ export class CenterDto {
   description?: string;
 
   @ApiProperty({
-    description: 'Color del centro en formato hexadecimal',
+    description: 'Color del personaje central en formato hexadecimal',
     example: '#3B82F6',
   })
   @IsString()
