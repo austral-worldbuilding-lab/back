@@ -27,11 +27,15 @@ export class MandalaDto {
       color: '#3B82F6',
     },
   })
-  center!: CenterDto;
 
   @ApiProperty({
     description: 'Configuración del mandala',
     example: {
+      center: {
+        name: 'Estudiante',
+        description: 'Alumno de 23 años que estudia en la universidad',
+        color: '#3B82F6',
+      },
       dimensions: [
         { name: 'Recursos', color: '#FF0000' },
         { name: 'Cultura', color: '#00FF00' },

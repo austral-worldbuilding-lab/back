@@ -51,8 +51,11 @@ export class MandalaRepository {
       id: mandala.id,
       name: mandala.name,
       projectId: mandala.projectId,
-      center: configuration.center,
-      configuration,
+      configuration: {
+        center: configuration.center,
+        dimensions: configuration.dimensions,
+        scales: configuration.scales,
+      },
       linkedToId: mandala.linkedToId,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
