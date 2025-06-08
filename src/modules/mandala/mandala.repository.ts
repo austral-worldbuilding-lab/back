@@ -136,7 +136,9 @@ export class MandalaRepository {
     return this.parseToMandalaDto(mandala);
   }
 
-  async findLinkedMandalasCenters(mandalaId: string): Promise<LinkedMandalaCenterDto[]> {
+  async findLinkedMandalasCenters(
+    mandalaId: string,
+  ): Promise<LinkedMandalaCenterDto[]> {
     const mandala = await this.prisma.mandala.findUnique({
       where: { id: mandalaId },
       include: {
@@ -149,7 +151,9 @@ export class MandalaRepository {
     }
 
     return mandala.linkedMandalas.map((linkedMandala) => {
-      const configuration = this.parseToMandalaConfiguration(linkedMandala.configuration);
+      const configuration = this.parseToMandalaConfiguration(
+        linkedMandala.configuration,
+      );
       return {
         center: configuration.center,
         position: {
