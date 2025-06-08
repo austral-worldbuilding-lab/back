@@ -40,6 +40,7 @@ export class MandalaRepository {
       name: mandala.name,
       projectId: mandala.projectId,
       configuration: this.parseToMandalaConfiguration(mandala.configuration),
+      linkedToId: mandala.linkedToId,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
     };
@@ -56,6 +57,7 @@ export class MandalaRepository {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
         configuration: this.parseToJson(configuration),
+        linkedToId: createMandalaDto.linkedToId,
       },
     });
 
