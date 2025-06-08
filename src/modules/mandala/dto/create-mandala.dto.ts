@@ -56,4 +56,12 @@ export class CreateMandalaDto {
     message: 'Las escalas no pueden estar vacías si se proporcionan',
   })
   scales?: string[];
+
+  @ApiProperty({
+    description: 'ID de la mandala al que está vinculado (padre)',
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  linkedToId: string | null = null;
 }

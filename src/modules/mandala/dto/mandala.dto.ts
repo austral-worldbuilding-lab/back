@@ -35,6 +35,12 @@ export class MandalaDto {
   configuration!: MandalaConfiguration;
 
   @ApiProperty({
+    description: 'ID de la mandala al que está vinculado (padre)',
+    required: false,
+  })
+  linkedToId: string | null = null;
+
+  @ApiProperty({
     description: 'Fecha de creación del mandala',
   })
   createdAt!: Date;
