@@ -100,19 +100,23 @@ export class PostitService {
 
   private findOptimalCoordinates(
     dimension: string,
-    section: string,
+    scale: string,
     dimensions: string[],
-    sections: string[],
+    scales: string[],
     sectionCoordinates: PostitCoordinates[],
     allCoordinates: PostitCoordinates[],
     candidateAttempts: number = 30,
   ): PostitCoordinates | null {
+    if (!dimensions.includes(dimension) || !scales.includes(scale)) {
+      return null;
+    }
+
     if (sectionCoordinates.length === 0) {
       return this.getSectionCenterCoordinates(
         dimension,
-        section,
+        scale,
         dimensions,
-        sections,
+        scales,
       );
     }
 
@@ -122,9 +126,9 @@ export class PostitService {
     for (let i = 0; i < candidateAttempts; i++) {
       const candidate = this.generateRandomCoordinatesInSection(
         dimension,
-        section,
+        scale,
         dimensions,
-        sections,
+        scales,
       );
       const minDistance = this.getMinDistanceToPlaced(
         candidate,
