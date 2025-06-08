@@ -24,7 +24,7 @@ import {
   PaginatedResponse,
 } from '@common/types/responses';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
-import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
+import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -177,11 +177,11 @@ export class MandalaController {
   @ApiResponse({
     status: 201,
     description: 'Se generó un nuevo mandala automáticamente con sus post-its',
-    type: MandalaWithPostitsDto,
+    type: MandalaWithPostitsAndLinkedCentersDto,
   })
   async generate(
     @Body() createMandalaDto: CreateMandalaDto,
-  ): Promise<MessageResponse<MandalaWithPostitsDto>> {
+  ): Promise<MessageResponse<MandalaWithPostitsAndLinkedCentersDto>> {
     const mandalaWithPostits =
       await this.mandalaService.generate(createMandalaDto);
     return {

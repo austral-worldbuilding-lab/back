@@ -10,7 +10,7 @@ import { MandalaRepository } from './mandala.repository';
 import { MandalaDto } from './dto/mandala.dto';
 import { PaginatedResponse } from '@common/types/responses';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
-import { MandalaWithPostitsDto } from './dto/mandala-with-postits.dto';
+import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits.dto';
 import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { ProjectService } from '@modules/project/project.service';
@@ -46,9 +46,11 @@ export class MandalaService {
       await this.mandalaRepository.create(completeDto);
 
     try {
-      const firestoreData: MandalaWithPostitsDto = {
+      const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala,
         postits: [],
+        linkedMandalasCenter:
+          await this.mandalaRepository.findLinkedMandalasCenters(mandala.id),
       };
       await this.firebaseDataService.createDocument(
         createMandalaDto.projectId,
@@ -113,7 +115,7 @@ export class MandalaService {
 
   async generate(
     createMandalaDto: CreateMandalaDto,
-  ): Promise<MandalaWithPostitsDto> {
+  ): Promise<MandalaWithPostitsAndLinkedCentersDto> {
     if (!createMandalaDto.projectId) {
       throw new BadRequestException(
         'Project ID is required to generate mandala',
@@ -128,9 +130,11 @@ export class MandalaService {
       const postits: PostitWithCoordinates[] =
         await this.postitService.generatePostitsForMandala(mandala.id);
 
-      const firestoreData: MandalaWithPostitsDto = {
+      const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala: mandala,
         postits: postits,
+        linkedMandalasCenter:
+          await this.mandalaRepository.findLinkedMandalasCenters(mandala.id),
       };
 
       // Create in Firestore
