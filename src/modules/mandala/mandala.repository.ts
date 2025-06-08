@@ -67,7 +67,7 @@ export class MandalaRepository {
       center: createMandalaDto.center,
       dimensions: createMandalaDto.dimensions!,
       scales: createMandalaDto.scales!,
-      linkedTo: createMandalaDto.linkedToId || undefined,
+      linkedTo: createMandalaDto.linkedToId || null,
     };
 
     const mandala = await this.prisma.mandala.create({

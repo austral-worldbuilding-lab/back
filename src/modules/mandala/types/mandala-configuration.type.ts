@@ -5,5 +5,5 @@ export interface MandalaConfiguration {
   center: CenterDto;
   dimensions: DimensionDto[];
   scales: string[];
-  linkedTo?: string; // mandalaId del personaje padre
+  linkedTo?: string | null; // mandalaId del personaje padre
 }
