@@ -6,6 +6,7 @@ import { MandalaConfiguration } from './types/mandala-configuration.type';
 import { Mandala, Prisma } from '@prisma/client';
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 import { CenterDto } from '@common/dto/center.dto';
+import { LinkedMandalaCenterDto } from './dto/mandala-with-postits.dto';
 
 @Injectable()
 export class MandalaRepository {
@@ -136,7 +137,7 @@ export class MandalaRepository {
     return this.parseToMandalaDto(mandala);
   }
 
-  async findLinkedMandalasCenters(mandalaId: string): Promise<CenterDto[]> {
+  async findLinkedMandalasCenters(mandalaId: string): Promise<LinkedMandalaCenterDto[]> {
     const mandala = await this.prisma.mandala.findUnique({
       where: { id: mandalaId },
       include: {
@@ -150,7 +151,15 @@ export class MandalaRepository {
 
     return mandala.linkedMandalas.map((linkedMandala) => {
       const configuration = this.parseToMandalaConfiguration(linkedMandala.configuration);
-      return configuration.center;
+      return {
+        center: configuration.center,
+        position: {
+          x: 0,
+          y: 0,
+        },
+        section: '',
+        dimension: '',
+      };
     });
   }
 }
