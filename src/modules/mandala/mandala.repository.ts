@@ -16,30 +16,46 @@ export class MandalaRepository {
     const parsedConfig = config as unknown as MandalaConfiguration;
 
     return {
+      center: parsedConfig.center,
       dimensions: parsedConfig.dimensions.map((dim) => ({
         name: dim.name,
         color: dim.color,
       })),
       scales: parsedConfig.scales,
+      linkedTo: parsedConfig.linkedTo,
     };
   }
 
   private parseToJson(config: MandalaConfiguration): Prisma.InputJsonValue {
     return {
+      center: {
+        name: config.center.name,
+        description: config.center.description,
+        color: config.center.color,
+      },
       dimensions: config.dimensions.map((dim) => ({
         name: dim.name,
         color: dim.color,
       })),
       scales: config.scales,
-    };
+      linkedTo: config.linkedTo,
+    } as Prisma.InputJsonValue;
   }
 
   private parseToMandalaDto(mandala: Mandala): MandalaDto {
+    const configuration = this.parseToMandalaConfiguration(
+      mandala.configuration,
+    );
+
     return {
       id: mandala.id,
       name: mandala.name,
       projectId: mandala.projectId,
-      configuration: this.parseToMandalaConfiguration(mandala.configuration),
+      configuration: {
+        center: configuration.center,
+        dimensions: configuration.dimensions,
+        scales: configuration.scales,
+      },
       linkedToId: mandala.linkedToId,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
@@ -48,8 +64,10 @@ export class MandalaRepository {
 
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
     const configuration: MandalaConfiguration = {
+      center: createMandalaDto.center,
       dimensions: createMandalaDto.dimensions!,
       scales: createMandalaDto.scales!,
+      linkedTo: createMandalaDto.linkedToId || undefined,
     };
 
     const mandala = await this.prisma.mandala.create({
