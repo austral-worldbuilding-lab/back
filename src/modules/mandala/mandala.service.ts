@@ -51,8 +51,14 @@ export class MandalaService {
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala,
         postits: [],
-        linkedMandalasCenter:
-          await this.mandalaRepository.findLinkedMandalasCenters(mandala.id),
+        linkedMandalasCenter: (
+          await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
+        ).map((center) => ({
+          center,
+          position: { x: 0, y: 0 },
+          section: '',
+          dimension: '',
+        })),
       };
       await this.firebaseDataService.createDocument(
         createMandalaDto.projectId,
@@ -131,8 +137,14 @@ export class MandalaService {
       }
 
       // Get updated linked mandalas centers
-      const linkedMandalasCenter =
-        await this.mandalaRepository.findLinkedMandalasCenters(parentMandalaId);
+      const linkedMandalasCenter = (
+        await this.mandalaRepository.findLinkedMandalasCenters(parentMandalaId)
+      ).map((center) => ({
+        center,
+        position: { x: 0, y: 0 },
+        section: '',
+        dimension: '',
+      }));
 
       // Update the Firebase document with new linked centers
       const updateData = {
@@ -175,8 +187,14 @@ export class MandalaService {
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala: mandala,
         postits: postits,
-        linkedMandalasCenter:
-          await this.mandalaRepository.findLinkedMandalasCenters(mandala.id),
+        linkedMandalasCenter: (
+          await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
+        ).map((center) => ({
+          center,
+          position: { x: 0, y: 0 },
+          section: '',
+          dimension: '',
+        })),
       };
 
       // Create in Firestore
