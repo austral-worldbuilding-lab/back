@@ -6,7 +6,7 @@ import { MandalaConfiguration } from './types/mandala-configuration.type';
 import { Mandala, Prisma } from '@prisma/client';
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 import { CenterDto } from '@common/dto/center.dto';
-import { LinkedMandalaCenterDto } from './dto/mandala-with-postits.dto';
+import { LinkedMandalaCenterDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 
 @Injectable()
 export class MandalaRepository {

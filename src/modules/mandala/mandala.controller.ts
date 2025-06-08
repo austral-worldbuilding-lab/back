@@ -24,7 +24,7 @@ import {
   PaginatedResponse,
 } from '@common/types/responses';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
-import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits.dto';
+import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import {
   ApiTags,
   ApiOperation,
