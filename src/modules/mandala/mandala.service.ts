@@ -10,7 +10,7 @@ import { MandalaRepository } from './mandala.repository';
 import { MandalaDto } from './dto/mandala.dto';
 import { PaginatedResponse } from '@common/types/responses';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
-import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
+import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits.dto';
 import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { ProjectService } from '@modules/project/project.service';
