@@ -84,6 +84,7 @@ enum InvitationStatus {
 model Tag {
   id          String       @id @default(uuid())
   name        String       @unique
+  color       String       @default(dbgenerated("'#' || lpad(to_hex((random() * 16777215)::int), 6, '0')")) // Color hexadecimal aleatorio
   projectTags ProjectTag[]
 }
 

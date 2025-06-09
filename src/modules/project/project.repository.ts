@@ -5,6 +5,7 @@ import { ProjectDto } from './dto/project.dto';
 import { Role, Prisma, Project } from '@prisma/client';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
+import { TagDto } from './dto/tag.dto';
 
 @Injectable()
 export class ProjectRepository {
@@ -144,5 +145,19 @@ export class ProjectRepository {
     });
 
     return this.parseToProjectDto(project);
+  }
+
+  async getProjectTags(projectId: string): Promise<TagDto[]> {
+    const projectTags = await this.prisma.projectTag.findMany({
+      where: { projectId },
+      include: {
+        tag: true,
+      },
+    });
+
+    return projectTags.map((projectTag) => ({
+      name: projectTag.tag.name,
+      color: projectTag.tag.color,
+    }));
   }
 }

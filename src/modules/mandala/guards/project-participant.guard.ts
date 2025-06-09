@@ -15,6 +15,7 @@ export class ProjectParticipantGuard implements CanActivate {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (request.body?.projectId as string | undefined) ||
       (request.params?.projectId as string | undefined) ||
+      (request.params?.id as string | undefined) ||
       (request.query?.projectId as string | undefined);
 
     if (!userId || !projectId) {

@@ -7,6 +7,7 @@ import { PaginatedResponse } from '@common/types/responses';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { DimensionDto } from '@common/dto/dimension.dto';
+import { TagDto } from './dto/tag.dto';
 
 @Injectable()
 export class ProjectService {
@@ -81,5 +82,13 @@ export class ProjectService {
       throw new ResourceNotFoundException('Project', id);
     }
     return this.projectRepository.update(id, updateProjectDto);
+  }
+
+  async getProjectTags(id: string, _userId: string): Promise<TagDto[]> {
+    const project = await this.projectRepository.findOne(id);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', id);
+    }
+    return this.projectRepository.getProjectTags(id);
   }
 }
