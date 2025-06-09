@@ -16,6 +16,7 @@ import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
+import { ProjectParticipantGuard } from '@modules/mandala/guards/project-participant.guard';
 import { ProjectDto } from './dto/project.dto';
 import {
   MessageResponse,
@@ -149,6 +150,7 @@ export class ProjectController {
   }
 
   @Get(':id/tags')
+  @UseGuards(ProjectParticipantGuard)
   @ApiOperation({ summary: 'Obtener tags de un proyecto específico' })
   @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
   @ApiResponse({
@@ -163,8 +165,9 @@ export class ProjectController {
   })
   async getProjectTags(
     @Param('id') id: string,
+    @Req() req: RequestWithUser,
   ): Promise<DataResponse<TagDto[]>> {
-    const tags = await this.projectService.getProjectTags(id);
+    const tags = await this.projectService.getProjectTags(id, req.user.id);
     return {
       data: tags,
     };
