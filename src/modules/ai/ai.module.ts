@@ -8,14 +8,16 @@ import {
   aiProviderFactory,
   AI_PROVIDER,
 } from './factories/ai-provider.factory';
+import { AiRequestValidator } from './validators/ai-request.validator';
 
 @Module({
   providers: [
     AiService,
+    AiRequestValidator,
     {
       provide: AI_PROVIDER,
       useFactory: aiProviderFactory,
-      inject: [ConfigService, FileService],
+      inject: [ConfigService, FileService, AiRequestValidator],
     },
   ],
   controllers: [AiController],
