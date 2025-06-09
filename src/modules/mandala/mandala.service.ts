@@ -48,21 +48,24 @@ export class MandalaService {
       await this.mandalaRepository.create(completeDto);
 
     try {
-      const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
+      const linkedMandalasCenter = (
+        await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
+      ).map((center) => ({
+        id: center.id,
+        name: center.name,
+        description: center.description,
+        color: center.color,
+        position: { x: 0, y: 0 },
+        section: '',
+        dimension: '',
+      }));
+
+      const firestoreData = {
         mandala,
         postits: [],
-        linkedMandalasCenter: (
-          await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
-        ).map((center) => ({
-          id: center.id,
-          name: center.name,
-          description: center.description,
-          color: center.color,
-          position: { x: 0, y: 0 },
-          section: '',
-          dimension: '',
-        })),
+        characters: linkedMandalasCenter,
       };
+      
       await this.firebaseDataService.createDocument(
         createMandalaDto.projectId,
         firestoreData,
@@ -154,8 +157,8 @@ export class MandalaService {
 
       // Update the Firebase document with new linked centers
       const updateData = {
-        linkedMandalasCenter: linkedMandalasCenter,
-      };
+        characters: linkedMandalasCenter,
+      };  
 
       await this.firebaseDataService.updateDocument(
         parentMandala.projectId,
@@ -190,25 +193,31 @@ export class MandalaService {
       const postits: PostitWithCoordinates[] =
         await this.postitService.generatePostitsForMandala(mandala.id);
 
+      const linkedMandalasCenter = (
+        await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
+      ).map((center) => ({
+        name: center.name,
+        description: center.description,
+        color: center.color,
+        position: { x: 0, y: 0 },
+        section: '',
+        dimension: '',
+      }));
+
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala: mandala,
         postits: postits,
-        linkedMandalasCenter: (
-          await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
-        ).map((center) => ({
-          name: center.name,
-          description: center.description,
-          color: center.color,
-          position: { x: 0, y: 0 },
-          section: '',
-          dimension: '',
-        })),
+        linkedMandalasCenter,
       };
 
-      // Create in Firestore
+      // Create in Firestore with characters key
       await this.firebaseDataService.createDocument(
         createMandalaDto.projectId,
-        firestoreData,
+        {
+          mandala: mandala,
+          postits: postits,
+          characters: linkedMandalasCenter,
+        },
         mandala.id,
       );
 
