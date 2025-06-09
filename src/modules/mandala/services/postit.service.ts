@@ -11,16 +11,6 @@ import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 
 @Injectable()
 export class PostitService {
-  private readonly defaultDimensions = [
-    'Recursos',
-    'Cultura',
-    'Infraestructura',
-    'Economía',
-    'Gobierno',
-    'Ecología',
-  ];
-  private readonly defaultSections = ['Persona', 'Comunidad', 'Institución'];
-
   constructor(
     private aiService: AiService,
     private mandalaRepository: MandalaRepository,
@@ -29,33 +19,34 @@ export class PostitService {
   async generatePostitsForMandala(
     mandalaId: string,
   ): Promise<PostitWithCoordinates[]> {
-    const mandala: MandalaDto | null =
-      await this.mandalaRepository.findOne(mandalaId);
+    const mandala = await this.getMandalaOrThrow(mandalaId);
+    const postits = await this.generatePostits(mandala);
 
-    if (!mandala) {
-      throw new BusinessLogicException('Mandala not found', { mandalaId });
-    }
+    const postitsBySection = this.groupPostitsBySection(postits);
 
-    const postits: Postit[] = await this.aiService.generatePostits(
-      mandala.projectId,
-      mandala.configuration.dimensions.map((dim) => dim.name),
-      mandala.configuration.scales,
-    );
+    const coordinatesBySection: Record<string, PostitCoordinates[]> = {};
+    const allCoordinates: PostitCoordinates[] = [];
+    const postitsWithCoordinates: PostitWithCoordinates[] = [];
 
-    const postitsWithCoordinates: PostitWithCoordinates[] = postits
-      .map((postit) => ({
-        ...postit,
-        coordinates: this.getRandomCoordinates(
-          postit.dimension,
-          postit.section,
+    for (const sectionKey in postitsBySection) {
+      const [dimension, section] = this.parseSectionKey(sectionKey);
+      coordinatesBySection[sectionKey] = [];
+      for (const postit of postitsBySection[sectionKey]) {
+        const coordinates = this.findOptimalCoordinates(
+          dimension,
+          section,
           mandala.configuration.dimensions.map((dim) => dim.name),
           mandala.configuration.scales,
-        ),
-      }))
-      .filter(
-        (postit): postit is PostitWithCoordinates =>
-          postit.coordinates !== null,
-      );
+          coordinatesBySection[sectionKey],
+          allCoordinates,
+        );
+        if (coordinates) {
+          postitsWithCoordinates.push({ ...postit, coordinates });
+          coordinatesBySection[sectionKey].push(coordinates);
+          allCoordinates.push(coordinates);
+        }
+      }
+    }
 
     if (postitsWithCoordinates.length === 0) {
       throw new BusinessLogicException('No valid postits were generated', {
@@ -67,35 +58,146 @@ export class PostitService {
     return postitsWithCoordinates;
   }
 
-  getRandomCoordinates(
+  private async getMandalaOrThrow(mandalaId: string): Promise<MandalaDto> {
+    const mandala = await this.mandalaRepository.findOne(mandalaId);
+    if (!mandala) {
+      throw new BusinessLogicException('Mandala not found', { mandalaId });
+    }
+    return mandala;
+  }
+
+  private async generatePostits(mandala: MandalaDto): Promise<Postit[]> {
+    return this.aiService.generatePostits(
+      mandala.projectId,
+      mandala.configuration.dimensions.map((dim) => dim.name),
+      mandala.configuration.scales,
+    );
+  }
+
+  private groupPostitsBySection(postits: Postit[]): Record<string, Postit[]> {
+    return postits.reduce(
+      (sections, postit) => {
+        const sectionKey = this.createSectionKey(
+          postit.dimension,
+          postit.section,
+        );
+        if (!sections[sectionKey]) sections[sectionKey] = [];
+        sections[sectionKey].push(postit);
+        return sections;
+      },
+      {} as Record<string, Postit[]>,
+    );
+  }
+
+  private createSectionKey(dimension: string, section: string): string {
+    return `${dimension}::${section}`;
+  }
+
+  private parseSectionKey(sectionKey: string): [string, string] {
+    const [dimension, section] = sectionKey.split('::');
+    return [dimension, section];
+  }
+
+  private findOptimalCoordinates(
+    dimension: string,
+    scale: string,
+    dimensions: string[],
+    scales: string[],
+    sectionCoordinates: PostitCoordinates[],
+    allCoordinates: PostitCoordinates[],
+    candidateAttempts: number = 30,
+  ): PostitCoordinates | null {
+    if (!dimensions.includes(dimension) || !scales.includes(scale)) {
+      return null;
+    }
+
+    if (sectionCoordinates.length === 0) {
+      return this.getSectionCenterCoordinates(
+        dimension,
+        scale,
+        dimensions,
+        scales,
+      );
+    }
+
+    let bestCandidate: PostitCoordinates | null = null;
+    let maxMinDistance = -Infinity;
+
+    for (let i = 0; i < candidateAttempts; i++) {
+      const candidate = this.generateRandomCoordinatesInSection(
+        dimension,
+        scale,
+        dimensions,
+        scales,
+      );
+      const minDistance = this.getMinDistanceToPlaced(
+        candidate,
+        allCoordinates,
+      );
+      if (minDistance > maxMinDistance) {
+        maxMinDistance = minDistance;
+        bestCandidate = candidate;
+      }
+    }
+
+    return bestCandidate;
+  }
+
+  private getSectionCenterCoordinates(
     dimension: string,
     section: string,
-    dimensions: string[] = this.defaultDimensions,
-    sections: string[] = this.defaultSections,
-  ): PostitCoordinates | null {
-    const dimIndex = dimensions.indexOf(dimension);
-    const secIndex = sections.indexOf(section);
-
-    // Filter out invalid dimensions or sections
-    if (dimIndex === -1 || secIndex === -1) return null;
-
-    const anglePerDim = (2 * Math.PI) / dimensions.length;
-    const startAngle = dimIndex * anglePerDim;
-    const angle = startAngle + Math.random() * anglePerDim;
-
-    const sectionRadiusMin = secIndex / sections.length;
-    const sectionRadiusMax = (secIndex + 1) / sections.length;
-    const percentileDistance =
-      sectionRadiusMin + Math.random() * (sectionRadiusMax - sectionRadiusMin);
-
-    const x = percentileDistance * Math.cos(angle);
-    const y = percentileDistance * Math.sin(angle);
-
+    dimensions: string[],
+    sections: string[],
+  ): PostitCoordinates {
+    const { startAngle, endAngle, minRadius, maxRadius } =
+      this.getSectionBounds(dimension, section, dimensions, sections);
+    const angle = (startAngle + endAngle) / 2;
+    const radius = (minRadius + maxRadius) / 2;
     return {
-      x, // percentile
-      y, // percentile
-      angle, // radians
-      percentileDistance, // between 0 and 1, distance from the center to exterior
+      x: radius * Math.cos(angle),
+      y: radius * Math.sin(angle),
     };
+  }
+
+  private generateRandomCoordinatesInSection(
+    dimension: string,
+    section: string,
+    dimensions: string[],
+    sections: string[],
+  ): PostitCoordinates {
+    const { startAngle, angleSpan, minRadius, maxRadius } =
+      this.getSectionBounds(dimension, section, dimensions, sections);
+    const angle = startAngle + Math.random() * angleSpan;
+    const radius = minRadius + Math.random() * (maxRadius - minRadius);
+    return {
+      x: radius * Math.cos(angle),
+      y: radius * Math.sin(angle),
+    };
+  }
+
+  private getSectionBounds(
+    dimension: string,
+    section: string,
+    dimensions: string[],
+    sections: string[],
+  ) {
+    const dimensionIndex = dimensions.indexOf(dimension);
+    const sectionIndex = sections.indexOf(section);
+    const angleSpan = (2 * Math.PI) / dimensions.length;
+    const startAngle = dimensionIndex * angleSpan;
+    const endAngle = startAngle + angleSpan;
+    const minRadius = sectionIndex / sections.length;
+    const maxRadius = (sectionIndex + 1) / sections.length;
+    return { startAngle, endAngle, angleSpan, minRadius, maxRadius };
+  }
+
+  private getMinDistanceToPlaced(
+    candidate: PostitCoordinates,
+    placed: PostitCoordinates[],
+  ): number {
+    if (placed.length === 0) return Infinity;
+    return Math.min(
+      ...placed.map((p) => (candidate.x - p.x) ** 2 + (candidate.y - p.y) ** 2),
+    );
   }
 }

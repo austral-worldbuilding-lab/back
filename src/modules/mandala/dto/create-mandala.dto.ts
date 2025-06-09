@@ -5,10 +5,37 @@ import {
   IsArray,
   IsOptional,
   ArrayMinSize,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { DimensionDto } from '@common/dto/dimension.dto';
+import { Type } from 'class-transformer';
 
+export class CreateMandalaCenterDto {
+  @ApiProperty({
+    description: 'Nombre del personaje central',
+    example: 'Estudiante',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @ApiProperty({
+    description: 'Descripción del personaje central',
+    example: 'Alumno de 23 años que estudia en la universidad',
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'Color del personaje central en formato hexadecimal',
+    example: '#3B82F6',
+  })
+  @IsString()
+  @IsNotEmpty()
+  color!: string;
+}
 export class CreateMandalaDto {
   @ApiProperty({
     description: 'Nombre del mandala',
@@ -24,6 +51,19 @@ export class CreateMandalaDto {
   @IsUUID()
   @IsNotEmpty()
   projectId!: string;
+
+  @ApiProperty({
+    description: 'Personaje central del mandala',
+    example: {
+      name: 'Estudiante',
+      description: 'Alumno de 23 años que estudia en la universidad',
+      color: '#3B82F6',
+    },
+  })
+  @ValidateNested()
+  @Type(() => CreateMandalaCenterDto)
+  @IsNotEmpty()
+  center!: CreateMandalaCenterDto;
 
   @ApiProperty({
     description: 'Dimensiones del mandala',
@@ -56,4 +96,12 @@ export class CreateMandalaDto {
     message: 'Las escalas no pueden estar vacías si se proporcionan',
   })
   scales?: string[];
+
+  @ApiProperty({
+    description: 'ID de la mandala al que está vinculado (padre)',
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  linkedToId: string | null = null;
 }

@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaDto } from './dto/mandala.dto';
-import { MandalaConfiguration } from './types/mandala-configuration.type';
+import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
 import { Mandala, Prisma } from '@prisma/client';
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
+import { MandalaCenter } from '@/modules/mandala/types/mandala-center.type';
 
 @Injectable()
 export class MandalaRepository {
@@ -12,43 +13,64 @@ export class MandalaRepository {
 
   private parseToMandalaConfiguration(
     config: Prisma.JsonValue,
-  ): MandalaConfiguration {
-    const parsedConfig = config as unknown as MandalaConfiguration;
+  ): CreateMandalaConfiguration {
+    const parsedConfig = config as unknown as CreateMandalaConfiguration;
 
     return {
+      center: parsedConfig.center,
       dimensions: parsedConfig.dimensions.map((dim) => ({
         name: dim.name,
         color: dim.color,
       })),
       scales: parsedConfig.scales,
+      linkedTo: parsedConfig.linkedTo,
     };
   }
 
-  private parseToJson(config: MandalaConfiguration): Prisma.InputJsonValue {
+  private parseToJson(
+    config: CreateMandalaConfiguration,
+  ): Prisma.InputJsonValue {
     return {
+      center: {
+        name: config.center.name,
+        description: config.center.description,
+        color: config.center.color,
+      },
       dimensions: config.dimensions.map((dim) => ({
         name: dim.name,
         color: dim.color,
       })),
       scales: config.scales,
-    };
+      linkedTo: config.linkedTo,
+    } as Prisma.InputJsonValue;
   }
 
   private parseToMandalaDto(mandala: Mandala): MandalaDto {
+    const configuration = this.parseToMandalaConfiguration(
+      mandala.configuration,
+    );
+
     return {
       id: mandala.id,
       name: mandala.name,
       projectId: mandala.projectId,
-      configuration: this.parseToMandalaConfiguration(mandala.configuration),
+      configuration: {
+        center: configuration.center,
+        dimensions: configuration.dimensions,
+        scales: configuration.scales,
+      },
+      linkedToId: mandala.linkedToId,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
     };
   }
 
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
-    const configuration: MandalaConfiguration = {
+    const configuration: CreateMandalaConfiguration = {
+      center: createMandalaDto.center,
       dimensions: createMandalaDto.dimensions!,
       scales: createMandalaDto.scales!,
+      linkedTo: createMandalaDto.linkedToId || null,
     };
 
     const mandala = await this.prisma.mandala.create({
@@ -56,6 +78,7 @@ export class MandalaRepository {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
         configuration: this.parseToJson(configuration),
+        linkedToId: createMandalaDto.linkedToId,
       },
     });
 
@@ -113,5 +136,28 @@ export class MandalaRepository {
     });
 
     return this.parseToMandalaDto(mandala);
+  }
+
+  async findLinkedMandalasCenters(mandalaId: string): Promise<MandalaCenter[]> {
+    const mandala = await this.prisma.mandala.findUnique({
+      where: { id: mandalaId },
+      include: {
+        linkedMandalas: true,
+      },
+    });
+
+    if (!mandala || !mandala.linkedMandalas) {
+      return [];
+    }
+
+    return mandala.linkedMandalas.map((linkedMandala) => {
+      const configuration = this.parseToMandalaConfiguration(
+        linkedMandala.configuration,
+      );
+      return {
+        id: linkedMandala.id,
+        ...configuration.center,
+      };
+    });
   }
 }

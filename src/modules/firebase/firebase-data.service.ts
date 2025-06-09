@@ -21,4 +21,15 @@ export class FirebaseDataService {
 
     await docRef.set(data);
   }
+
+  async updateDocument(
+    collectionPath: string,
+    data: any,
+    documentId: string,
+  ): Promise<void> {
+    const db = this.firebaseConfig.getDB();
+    const docRef = db.collection(collectionPath).doc(documentId);
+
+    await docRef.update(data);
+  }
 }
