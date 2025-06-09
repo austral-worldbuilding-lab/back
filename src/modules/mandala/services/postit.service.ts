@@ -72,7 +72,7 @@ export class PostitService {
       mandala.configuration.dimensions.map((dim) => dim.name),
       mandala.configuration.scales,
       mandala.configuration.center.name,
-      mandala.configuration.center.description || '',
+      mandala.configuration.center.description || 'N/A',
     );
   }
 
