@@ -13,6 +13,10 @@ export function replacePromptPlaceholders(
   if (!dimensions?.length)
     throw new Error('At least one dimension must be provided');
   if (!scales?.length) throw new Error('At least one scale must be provided');
+  if (!centerCharacter?.trim())
+    throw new Error('Center character must be provided');
+  if (!centerCharacterDescription?.trim())
+    throw new Error('Center character description must be provided');
 
   dimensions.forEach((dim, i) => {
     if (!dim?.trim())

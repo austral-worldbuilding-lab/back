@@ -36,11 +36,7 @@ export class AiService {
       `Delegating postit generation to AI provider for project ${projectId}`,
     );
     this.logger.log(
-      `Using ${finalDimensions.length} dimensions and ${finalScales.length} scales ${dimensions ? '(user-provided)' : '(defaults)'}`,
-    );
-    this.logger.log(`Using center character: ${finalCenterCharacter}`);
-    this.logger.log(
-      `Using center character description: ${finalCenterCharacterDescription}`,
+      `Configuration: ${finalDimensions.length} dimensions, ${finalScales.length} scales ${dimensions ? '(user-provided)' : '(defaults)'}, center character: ${finalCenterCharacter} ${finalCenterCharacterDescription}`,
     );
     return this.aiProvider.generatePostits(
       projectId,
