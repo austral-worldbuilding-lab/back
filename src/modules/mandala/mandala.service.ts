@@ -65,7 +65,7 @@ export class MandalaService {
         postits: [],
         characters: linkedMandalasCenter,
       };
-      
+
       await this.firebaseDataService.createDocument(
         createMandalaDto.projectId,
         firestoreData,
@@ -158,7 +158,7 @@ export class MandalaService {
       // Update the Firebase document with new linked centers
       const updateData = {
         characters: linkedMandalasCenter,
-      };  
+      };
 
       await this.firebaseDataService.updateDocument(
         parentMandala.projectId,

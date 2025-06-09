@@ -29,7 +29,7 @@ describe('AiRequestValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should fail validation with blocked file type', async () => {
+    it('should fail validation with blocked file type', () => {
       const fileBuffers: FileBuffer[] = [
         {
           buffer: Buffer.from('video content'),
@@ -51,7 +51,7 @@ describe('AiRequestValidator', () => {
       );
     });
 
-    it('should fail validation with empty dimensions', async () => {
+    it('should fail validation with empty dimensions', () => {
       const fileBuffers: FileBuffer[] = [
         {
           buffer: Buffer.from('test content'),
@@ -71,7 +71,7 @@ describe('AiRequestValidator', () => {
       expect(result.errors).toContain('Dimensions array cannot be empty');
     });
 
-    it('should fail validation with file too large', async () => {
+    it('should fail validation with file too large', () => {
       const config = validator.getConfig();
       const largeBuffer = Buffer.alloc(config.maxFileSize + 1);
 
@@ -98,7 +98,7 @@ describe('AiRequestValidator', () => {
       ).toBe(true);
     });
 
-    it('should fail validation with too many expected postits', async () => {
+    it('should fail validation with too many expected postits', () => {
       const fileBuffers: FileBuffer[] = [
         {
           buffer: Buffer.from('test content'),
