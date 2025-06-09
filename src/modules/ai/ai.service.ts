@@ -24,21 +24,26 @@ export class AiService {
     projectId: string,
     dimensions: string[],
     scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
   ): Promise<Postit[]> {
     const finalDimensions = dimensions;
     const finalScales = scales;
+    const finalCenterCharacter = centerCharacter;
+    const finalCenterCharacterDescription = centerCharacterDescription;
 
     this.logger.log(
       `Delegating postit generation to AI provider for project ${projectId}`,
     );
     this.logger.log(
-      `Using ${finalDimensions.length} dimensions and ${finalScales.length} scales ${dimensions ? '(user-provided)' : '(defaults)'}`,
+      `Configuration: ${finalDimensions.length} dimensions, ${finalScales.length} scales ${dimensions ? '(user-provided)' : '(defaults)'}, center character: ${finalCenterCharacter} ${finalCenterCharacterDescription}`,
     );
-
     return this.aiProvider.generatePostits(
       projectId,
       finalDimensions,
       finalScales,
+      finalCenterCharacter,
+      finalCenterCharacterDescription,
     );
   }
 }

@@ -12,5 +12,7 @@ export interface AiProvider {
     projectId: string,
     dimensions: string[],
     scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
   ): Promise<Postit[]>;
 }

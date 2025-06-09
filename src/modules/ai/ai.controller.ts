@@ -6,6 +6,8 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 interface AiRequestBody {
   dimensions: string[];
   scales: string[];
+  centerCharacter: string;
+  centerCharacterDescription: string;
 }
 
 @ApiTags('AI')
@@ -35,6 +37,8 @@ export class AiController {
       projectId,
       aiRequestBody.dimensions,
       aiRequestBody.scales,
+      aiRequestBody.centerCharacter,
+      aiRequestBody.centerCharacterDescription,
     );
   }
 }
