@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaDto } from './dto/mandala.dto';
-import { MandalaConfiguration } from './types/mandala-configuration.type';
+import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
 import { Mandala, Prisma } from '@prisma/client';
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
+import { MandalaCenter } from '@/modules/mandala/types/mandala-center.type';
 
 @Injectable()
 export class MandalaRepository {
@@ -12,8 +13,8 @@ export class MandalaRepository {
 
   private parseToMandalaConfiguration(
     config: Prisma.JsonValue,
-  ): MandalaConfiguration {
-    const parsedConfig = config as unknown as MandalaConfiguration;
+  ): CreateMandalaConfiguration {
+    const parsedConfig = config as unknown as CreateMandalaConfiguration;
 
     return {
       center: parsedConfig.center,
@@ -26,7 +27,9 @@ export class MandalaRepository {
     };
   }
 
-  private parseToJson(config: MandalaConfiguration): Prisma.InputJsonValue {
+  private parseToJson(
+    config: CreateMandalaConfiguration,
+  ): Prisma.InputJsonValue {
     return {
       center: {
         name: config.center.name,
@@ -63,11 +66,11 @@ export class MandalaRepository {
   }
 
   async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
-    const configuration: MandalaConfiguration = {
+    const configuration: CreateMandalaConfiguration = {
       center: createMandalaDto.center,
       dimensions: createMandalaDto.dimensions!,
       scales: createMandalaDto.scales!,
-      linkedTo: createMandalaDto.linkedToId || undefined,
+      linkedTo: createMandalaDto.linkedToId || null,
     };
 
     const mandala = await this.prisma.mandala.create({
@@ -133,5 +136,28 @@ export class MandalaRepository {
     });
 
     return this.parseToMandalaDto(mandala);
+  }
+
+  async findLinkedMandalasCenters(mandalaId: string): Promise<MandalaCenter[]> {
+    const mandala = await this.prisma.mandala.findUnique({
+      where: { id: mandalaId },
+      include: {
+        linkedMandalas: true,
+      },
+    });
+
+    if (!mandala || !mandala.linkedMandalas) {
+      return [];
+    }
+
+    return mandala.linkedMandalas.map((linkedMandala) => {
+      const configuration = this.parseToMandalaConfiguration(
+        linkedMandala.configuration,
+      );
+      return {
+        id: linkedMandala.id,
+        ...configuration.center,
+      };
+    });
   }
 }

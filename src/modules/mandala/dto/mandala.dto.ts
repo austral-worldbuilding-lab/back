@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MandalaConfiguration } from '../types/mandala-configuration.type';
+import { CreateMandalaConfiguration } from '../types/mandala-configuration.type';
 
 export class MandalaDto {
   @ApiProperty({
@@ -46,7 +46,7 @@ export class MandalaDto {
       linkedTo: 'id_mandala_padre',
     },
   })
-  configuration!: MandalaConfiguration;
+  configuration!: CreateMandalaConfiguration;
 
   @ApiProperty({
     description: 'ID de la mandala al que está vinculado (padre)',
