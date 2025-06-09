@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectRepository } from './project.repository';
@@ -8,6 +8,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { TagDto } from './dto/tag.dto';
+import { CreateTagDto } from './dto/create-tag.dto';
 
 @Injectable()
 export class ProjectService {
@@ -90,5 +91,14 @@ export class ProjectService {
       throw new ResourceNotFoundException('Project', id);
     }
     return this.projectRepository.getProjectTags(id);
+  }
+
+  async createTag(projectId: string, dto: TagDto) {
+    const project = await this.projectRepository.findOne(projectId);
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return this.projectRepository.createTag(projectId, dto);
   }
 }

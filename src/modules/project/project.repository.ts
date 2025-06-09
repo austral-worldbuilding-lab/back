@@ -6,6 +6,7 @@ import { Role, Prisma, Project } from '@prisma/client';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
 import { TagDto } from './dto/tag.dto';
+import { TagResponseDto } from './dto/tagResponse.dto';
 
 @Injectable()
 export class ProjectRepository {
@@ -159,5 +160,27 @@ export class ProjectRepository {
       name: projectTag.tag.name,
       color: projectTag.tag.color,
     }));
+  }
+
+  async createTag(projectId: string, dto: TagDto): Promise<TagResponseDto> {
+    const tag = await this.prisma.tag.upsert({
+      where: { name: dto.name },
+      update: {},
+      create: { name: dto.name, color: dto.color },
+    });
+
+    const projectTag = await this.prisma.projectTag.create({
+      data: {
+        projectId,
+        tagId: tag.id,
+      },
+    });
+
+    return {
+      id: tag.id,
+      name: tag.name,
+      color: tag.color,
+      projectId: projectTag.projectId,
+    };
   }
 }

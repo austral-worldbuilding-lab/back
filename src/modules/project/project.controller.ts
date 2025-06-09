@@ -34,6 +34,8 @@ import {
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { TagDto } from './dto/tag.dto';
+import { CreateTagDto } from './dto/create-tag.dto';
+import { TagResponseDto } from './dto/tagResponse.dto';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -146,6 +148,27 @@ export class ProjectController {
     return {
       message: 'Project deleted successfully',
       data: project,
+    };
+  }
+
+  @Post(':id/tag')
+  @UseGuards(ProjectParticipantGuard)
+  @ApiOperation({ summary: 'Crear un nuevo tag para un proyecto' })
+  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Tag creado exitosamente',
+    type: TagResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Solicitud incorrecta' })
+  async createProjectTag(
+    @Param('id') projectId: string,
+    @Body() tagDto: TagDto,
+  ): Promise<MessageResponse<TagResponseDto>> {
+    const tag = await this.projectService.createTag(projectId, tagDto);
+    return {
+      message: 'Tag created successfully',
+      data: tag,
     };
   }
 
