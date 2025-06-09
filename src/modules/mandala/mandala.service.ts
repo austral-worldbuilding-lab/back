@@ -54,6 +54,7 @@ export class MandalaService {
         linkedMandalasCenter: (
           await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
         ).map((center) => ({
+          id: center.id,
           name: center.name,
           description: center.description,
           color: center.color,
@@ -142,7 +143,10 @@ export class MandalaService {
       const linkedMandalasCenter = (
         await this.mandalaRepository.findLinkedMandalasCenters(parentMandalaId)
       ).map((center) => ({
-        center,
+        id: center.id,
+        name: center.name,
+        description: center.description,
+        color: center.color,
         position: { x: 0, y: 0 },
         section: '',
         dimension: '',

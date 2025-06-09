@@ -1,8 +1,8 @@
 import { DimensionDto } from '@common/dto/dimension.dto';
-import { CenterDto } from '@common/dto/center.dto';
+import { CreateMandalaCenterDto } from '@/modules/mandala/dto/create-mandala.dto';
 
-export interface MandalaConfiguration {
-  center: CenterDto;
+export interface CreateMandalaConfiguration {
+  center: CreateMandalaCenterDto;
   dimensions: DimensionDto[];
   scales: string[];
   linkedTo?: string | null; // mandalaId del personaje padre
