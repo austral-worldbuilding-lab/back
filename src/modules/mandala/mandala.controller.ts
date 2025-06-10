@@ -10,6 +10,7 @@ import {
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
+  Req,
 } from '@nestjs/common';
 import { MandalaService } from './mandala.service';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
@@ -33,6 +34,8 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { FilterSectionDto } from './dto/filter-option.dto';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -187,6 +190,45 @@ export class MandalaController {
     return {
       message: 'Mandala generated successfully with IA',
       data: mandalaWithPostits,
+    };
+  }
+
+  @Get('filters')
+  @UseGuards(ProjectParticipantGuard)
+  @ApiOperation({ 
+    summary: 'Obtener filtros configurables para un proyecto',
+    description: 'Retorna todas las opciones de filtros disponibles para construir dinámicamente un menú de selección (dimensiones, escalas y tags)'
+  })
+  @ApiQuery({
+    name: 'projectId',
+    required: true,
+    description: 'ID del proyecto para obtener tags',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'mandalaId',
+    required: true,
+    description: 'ID del mandala para obtener dimensiones y escalas',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna las secciones de filtros configurables',
+    type: [FilterSectionDto],
+  })
+  @ApiResponse({ status: 404, description: 'Proyecto o mandala no encontrado' })
+  @ApiResponse({
+    status: 400,
+    description: 'El mandala no pertenece al proyecto especificado',
+  })
+  async getFilters(
+    @Query('projectId') projectId: string,
+    @Query('mandalaId') mandalaId: string,
+    @Req() req: RequestWithUser,
+  ): Promise<DataResponse<FilterSectionDto[]>> {
+    const filters = await this.mandalaService.getFilters(projectId, mandalaId, req.user.id);
+    return {
+      data: filters,
     };
   }
 }
