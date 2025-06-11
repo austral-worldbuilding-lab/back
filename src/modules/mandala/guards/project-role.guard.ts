@@ -24,12 +24,36 @@ export class ProjectRoleGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
 
     const userId = request.user.id;
-    const projectId =
+    let projectId =
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (request.body?.projectId as string | undefined) ||
       (request.params?.projectId as string | undefined) ||
       (request.query?.projectId as string | undefined);
+    
+    // If projectId is not provided, try to get it from the mandalaId
+    if (!projectId) {
+      const mandalaId =
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        (request.body?.mandalaId as string | undefined) ||
+        (request.params?.mandalaId as string | undefined) ||
+        (request.query?.mandalaId as string | undefined) ||
+        (request.params?.id as string | undefined) ||
+        (request.query?.id as string | undefined);
 
+      if (mandalaId) {
+        const mandala = await this.prisma.mandala.findUnique({
+          where: { id: mandalaId },
+          select: { projectId: true },
+        });
+
+        if (!mandala) {
+          throw new ForbiddenException('Mandala not found');
+        }
+
+        projectId = mandala.projectId;
+      }
+    }
+    
     const allowedRoles =
       this.reflector.get<string[]>(ALLOWED_ROLES_KEY, context.getHandler()) ??
       [];

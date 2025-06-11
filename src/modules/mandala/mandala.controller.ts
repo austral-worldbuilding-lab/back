@@ -103,6 +103,39 @@ export class MandalaController {
     return await this.mandalaService.findAllPaginated(projectId, page, limit);
   }
 
+  @Get('filter-options')
+  @UseGuards(ProjectRoleGuard)
+  @AllowedRoles('owner', 'member')
+  @ApiOperation({ 
+    summary: 'Obtener filtros configurables para un mandala',
+    description: 'Retorna todas las opciones de filtros disponibles para construir dinámicamente un menú de selección (dimensiones, escalas y tags) basado en el mandala especificado'
+  })
+  @ApiQuery({
+    name: 'id',
+    required: true,
+    description: 'ID del mandala para obtener dimensiones, escalas y tags del proyecto asociado',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna las secciones de filtros configurables',
+    type: [FilterSectionDto],
+  })
+  @ApiResponse({ status: 404, description: 'Mandala no encontrado' })
+  @ApiResponse({
+    status: 403,
+    description: 'No tiene acceso al proyecto del mandala',
+  })
+  async getFilters(
+    @Query('id') id: string,
+    @Req() req: RequestWithUser,
+  ): Promise<DataResponse<FilterSectionDto[]>> {
+    const filters = await this.mandalaService.getFilters(id, req.user.id);
+    return {
+      data: filters,
+    };
+  }
+
   @Get(':id')
   @UseGuards(ProjectParticipantGuard)
   @ApiOperation({ summary: 'Obtener un mandala por ID' })
@@ -193,36 +226,4 @@ export class MandalaController {
     };
   }
 
-  @Get('filters')
-  @UseGuards(ProjectParticipantGuard)
-  @AllowedRoles('owner', 'member')
-  @ApiOperation({ 
-    summary: 'Obtener filtros configurables para un mandala',
-    description: 'Retorna todas las opciones de filtros disponibles para construir dinámicamente un menú de selección (dimensiones, escalas y tags) basado en el mandala especificado'
-  })
-  @ApiQuery({
-    name: 'mandalaId',
-    required: true,
-    description: 'ID del mandala para obtener dimensiones, escalas y tags del proyecto asociado',
-    type: String,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna las secciones de filtros configurables',
-    type: [FilterSectionDto],
-  })
-  @ApiResponse({ status: 404, description: 'Mandala no encontrado' })
-  @ApiResponse({
-    status: 403,
-    description: 'No tiene acceso al proyecto del mandala',
-  })
-  async getFilters(
-    @Query('mandalaId') mandalaId: string,
-    @Req() req: RequestWithUser,
-  ): Promise<DataResponse<FilterSectionDto[]>> {
-    const filters = await this.mandalaService.getFilters(mandalaId, req.user.id);
-    return {
-      data: filters,
-    };
-  }
 }
