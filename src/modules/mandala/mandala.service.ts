@@ -230,22 +230,18 @@ export class MandalaService {
     }
   }
 
-  async getFilters(projectId: string, mandalaId: string, userId: string): Promise<FilterSectionDto[]> {
-    const project = await this.projectService.findOne(projectId);
-    if (!project) {
-      throw new ResourceNotFoundException('Project', projectId);
-    }
-
+  async getFilters(mandalaId: string, userId: string): Promise<FilterSectionDto[]> {
     const mandala = await this.findOne(mandalaId);
     if (!mandala) {
       throw new ResourceNotFoundException('Mandala', mandalaId);
     }
 
-    if (mandala.projectId !== projectId) {
-      throw new BadRequestException('Mandala does not belong to the specified project');
+    const project = await this.projectService.findOne(mandala.projectId);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', mandala.projectId);
     }
 
-    const projectTags = await this.projectService.getProjectTags(projectId, userId);
+    const projectTags = await this.projectService.getProjectTags(mandala.projectId, userId);
 
     const filterSections: FilterSectionDto[] = [];
 

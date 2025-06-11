@@ -195,20 +195,15 @@ export class MandalaController {
 
   @Get('filters')
   @UseGuards(ProjectParticipantGuard)
+  @AllowedRoles('owner', 'member')
   @ApiOperation({ 
-    summary: 'Obtener filtros configurables para un proyecto',
-    description: 'Retorna todas las opciones de filtros disponibles para construir dinámicamente un menú de selección (dimensiones, escalas y tags)'
-  })
-  @ApiQuery({
-    name: 'projectId',
-    required: true,
-    description: 'ID del proyecto para obtener tags',
-    type: String,
+    summary: 'Obtener filtros configurables para un mandala',
+    description: 'Retorna todas las opciones de filtros disponibles para construir dinámicamente un menú de selección (dimensiones, escalas y tags) basado en el mandala especificado'
   })
   @ApiQuery({
     name: 'mandalaId',
     required: true,
-    description: 'ID del mandala para obtener dimensiones y escalas',
+    description: 'ID del mandala para obtener dimensiones, escalas y tags del proyecto asociado',
     type: String,
   })
   @ApiResponse({
@@ -216,17 +211,16 @@ export class MandalaController {
     description: 'Retorna las secciones de filtros configurables',
     type: [FilterSectionDto],
   })
-  @ApiResponse({ status: 404, description: 'Proyecto o mandala no encontrado' })
+  @ApiResponse({ status: 404, description: 'Mandala no encontrado' })
   @ApiResponse({
-    status: 400,
-    description: 'El mandala no pertenece al proyecto especificado',
+    status: 403,
+    description: 'No tiene acceso al proyecto del mandala',
   })
   async getFilters(
-    @Query('projectId') projectId: string,
     @Query('mandalaId') mandalaId: string,
     @Req() req: RequestWithUser,
   ): Promise<DataResponse<FilterSectionDto[]>> {
-    const filters = await this.mandalaService.getFilters(projectId, mandalaId, req.user.id);
+    const filters = await this.mandalaService.getFilters(mandalaId, req.user.id);
     return {
       data: filters,
     };
