@@ -1,12 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, Logger } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { ForbiddenException } from '@common/exceptions/custom-exceptions';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 
 @Injectable()
 export class ProjectParticipantGuard implements CanActivate {
-  private readonly logger = new Logger(ProjectParticipantGuard.name);
-  
   constructor(private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -32,10 +30,6 @@ export class ProjectParticipantGuard implements CanActivate {
         },
       },
     });
-
-    this.logger.debug(`userRole: ${userRole}`);
-    this.logger.debug(`userId: ${userId}`);
-    this.logger.debug(`projectId: ${projectId}`);
 
     if (!userRole) {
       throw new ForbiddenException('User does not have access to this project');

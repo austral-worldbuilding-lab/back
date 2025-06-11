@@ -106,14 +106,16 @@ export class MandalaController {
   @Get('filter-options')
   @UseGuards(ProjectRoleGuard)
   @AllowedRoles('owner', 'member')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Obtener filtros configurables para un mandala',
-    description: 'Retorna todas las opciones de filtros disponibles para construir dinámicamente un menú de selección (dimensiones, escalas y tags) basado en el mandala especificado'
+    description:
+      'Retorna todas las opciones de filtros disponibles para construir dinámicamente un menú de selección (dimensiones, escalas y tags) basado en el mandala especificado',
   })
   @ApiQuery({
     name: 'id',
     required: true,
-    description: 'ID del mandala para obtener dimensiones, escalas y tags del proyecto asociado',
+    description:
+      'ID del mandala para obtener dimensiones, escalas y tags del proyecto asociado',
     type: String,
   })
   @ApiResponse({
@@ -225,5 +227,4 @@ export class MandalaController {
       data: mandalaWithPostits,
     };
   }
-
 }

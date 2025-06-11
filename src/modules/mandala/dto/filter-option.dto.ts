@@ -35,4 +35,4 @@ export class FilterSectionDto {
     type: [FilterOptionDto],
   })
   options!: FilterOptionDto[];
-} 
+}

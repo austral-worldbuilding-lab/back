@@ -29,7 +29,7 @@ export class ProjectRoleGuard implements CanActivate {
       (request.body?.projectId as string | undefined) ||
       (request.params?.projectId as string | undefined) ||
       (request.query?.projectId as string | undefined);
-    
+
     // If projectId is not provided, try to get it from the mandalaId
     if (!projectId) {
       const mandalaId =
@@ -53,7 +53,7 @@ export class ProjectRoleGuard implements CanActivate {
         projectId = mandala.projectId;
       }
     }
-    
+
     const allowedRoles =
       this.reflector.get<string[]>(ALLOWED_ROLES_KEY, context.getHandler()) ??
       [];

@@ -230,7 +230,10 @@ export class MandalaService {
     }
   }
 
-  async getFilters(mandalaId: string, userId: string): Promise<FilterSectionDto[]> {
+  async getFilters(
+    mandalaId: string,
+    userId: string,
+  ): Promise<FilterSectionDto[]> {
     const mandala = await this.findOne(mandalaId);
     if (!mandala) {
       throw new ResourceNotFoundException('Mandala', mandalaId);
@@ -241,11 +244,17 @@ export class MandalaService {
       throw new ResourceNotFoundException('Project', mandala.projectId);
     }
 
-    const projectTags = await this.projectService.getProjectTags(mandala.projectId, userId);
+    const projectTags = await this.projectService.getProjectTags(
+      mandala.projectId,
+      userId,
+    );
 
     const filterSections: FilterSectionDto[] = [];
 
-    if (mandala.configuration.dimensions && mandala.configuration.dimensions.length > 0) {
+    if (
+      mandala.configuration.dimensions &&
+      mandala.configuration.dimensions.length > 0
+    ) {
       filterSections.push({
         sectionName: 'Dimensiones',
         type: 'multiple',
@@ -256,7 +265,10 @@ export class MandalaService {
       });
     }
 
-    if (mandala.configuration.scales && mandala.configuration.scales.length > 0) {
+    if (
+      mandala.configuration.scales &&
+      mandala.configuration.scales.length > 0
+    ) {
       filterSections.push({
         sectionName: 'Escalas',
         type: 'multiple',
