@@ -2,7 +2,10 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log('🌱 Starting database seeding...');
+
   const roles = ['owner', 'member'];
+  console.log('📝 Seeding roles:', roles);
 
   for (const name of roles) {
     await prisma.role.upsert({
@@ -11,6 +14,7 @@ async function main() {
       create: { name },
     });
   }
+  console.log('✅ Roles seeded successfully');
 
   // Seed some example tags with different colors
   const tags = [
@@ -20,6 +24,7 @@ async function main() {
     { name: 'Baño' },
     { name: 'Sala' },
   ];
+  console.log('📝 Seeding tags');
 
   for (const tag of tags) {
     await prisma.tag.upsert({
@@ -32,11 +37,12 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Error during seeding:', e);
     process.exit(1);
   })
   .finally(() => {
     prisma.$disconnect().catch((e) => {
-      console.error('Error disconnecting Prisma:', e);
+      console.error('❌ Error disconnecting Prisma:', e);
+      process.exit(1);
     });
   });
