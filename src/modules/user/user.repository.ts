@@ -9,7 +9,7 @@ export class UserRepository {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserDto> {
-    const user = await this.prisma.user.create({
+    return this.prisma.user.create({
       data: {
         id: createUserDto.firebaseUid,
         username: createUserDto.username,
@@ -17,30 +17,6 @@ export class UserRepository {
         is_active: createUserDto.is_active,
       },
     });
-
-    //para la demo, hacemos que cada vez que se cree un usuario este sea miembro del proyecto,
-    //asi aparecen las mandalas creadas
-    const demoProjectId = 'e2e9e2d5-e3c7-47e4-9f12-4f6f40062eee';
-
-    let role = await this.prisma.role.findFirst({
-      where: { name: 'member' },
-    });
-
-    if (!role) {
-      role = await this.prisma.role.create({
-        data: { name: 'member' },
-      });
-    }
-
-    await this.prisma.userProjectRole.create({
-      data: {
-        userId: user.id,
-        projectId: demoProjectId,
-        roleId: role.id,
-      },
-    });
-
-    return user;
   }
 
   async findAllPaginated(
