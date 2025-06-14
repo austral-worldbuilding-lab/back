@@ -11,8 +11,10 @@ import {
   ExternalServiceException,
   ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
+import { Logger } from '@nestjs/common';
 
 export class AzureBlobStorageService implements StorageService {
+  private readonly logger = new Logger(AzureBlobStorageService.name);
   private containerName = process.env.AZURE_STORAGE_CONTAINER_NAME!;
   private blobServiceClient: BlobServiceClient;
 
@@ -134,14 +136,19 @@ export class AzureBlobStorageService implements StorageService {
 
     try {
       await blobClient.delete();
-    } catch (error: unknown) {
-      type AzureErrorShape = {
+    } catch (rawError: unknown) {
+      // For logging purposes keep the original error reference.
+      const isNativeError = rawError instanceof Error;
+      const stack = isNativeError ? rawError.stack : undefined;
+
+      // Narrow the shape to retrieve Azure‐specific fields.
+
+      const err = rawError as {
         statusCode?: number;
         details?: { errorCode?: string };
         message?: string;
       };
 
-      const err = error as AzureErrorShape;
       const statusCode = err.statusCode;
       const message = err.details?.errorCode ?? err.message ?? 'Unknown error';
 
@@ -152,6 +159,8 @@ export class AzureBlobStorageService implements StorageService {
           message,
         );
       }
+
+      this.logger.error(`Failed to delete blob ${blobName}: ${message}`, stack);
 
       throw new ExternalServiceException('AzureBlobStorage', message, err);
     }
