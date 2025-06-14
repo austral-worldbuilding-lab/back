@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectDto } from './dto/project.dto';
-import { Role, Prisma, Project } from '@prisma/client';
+import { Prisma, Project } from '@prisma/client';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
 import { TagDto } from './dto/tag.dto';
@@ -44,29 +44,10 @@ export class ProjectRepository {
     };
   }
 
-  async findRoleByName(name: string): Promise<Role | null> {
-    return this.prisma.role.findUnique({
-      where: { name },
-    });
-  }
-
-  async createRole(name: string): Promise<Role> {
-    return this.prisma.role.create({
-      data: { name },
-    });
-  }
-
-  async findOrCreateRole(name: string): Promise<Role> {
-    const role = await this.findRoleByName(name);
-    if (role) {
-      return role;
-    }
-    return this.createRole(name);
-  }
-
   async create(
     createProjectDto: CreateProjectDto,
     userId: string,
+    roleId: string,
   ): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.create({
@@ -79,13 +60,11 @@ export class ProjectRepository {
         },
       });
 
-      const ownerRole: Role = await this.findOrCreateRole('owner');
-
       await tx.userProjectRole.create({
         data: {
           userId,
           projectId: project.id,
-          roleId: ownerRole.id,
+          roleId: roleId,
         },
       });
 
@@ -148,16 +127,8 @@ export class ProjectRepository {
   }
 
   async getProjectTags(projectId: string): Promise<TagDto[]> {
-    const projectTags = await this.prisma.projectTag.findMany({
+    return this.prisma.tag.findMany({
       where: { projectId },
-      include: {
-        tag: true,
-      },
     });
-
-    return projectTags.map((projectTag) => ({
-      name: projectTag.tag.name,
-      color: projectTag.tag.color,
-    }));
   }
 }

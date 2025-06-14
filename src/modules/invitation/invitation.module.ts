@@ -4,9 +4,10 @@ import { InvitationController } from './invitation.controller';
 import { InvitationRepository } from './invitation.repository';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { RoleModule } from '@modules/role/role.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, RoleModule],
   controllers: [InvitationController],
   providers: [InvitationService, InvitationRepository],
 })

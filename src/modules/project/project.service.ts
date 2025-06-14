@@ -8,10 +8,14 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { TagDto } from './dto/tag.dto';
+import { RoleService } from '@modules/role/role.service';
 
 @Injectable()
 export class ProjectService {
-  constructor(private projectRepository: ProjectRepository) {}
+  constructor(
+    private projectRepository: ProjectRepository,
+    private roleService: RoleService,
+  ) {}
 
   private getDimensions(dimensions?: DimensionDto[]): DimensionDto[] {
     return !dimensions || dimensions.length === 0
@@ -30,9 +34,13 @@ export class ProjectService {
     const dimensions = this.getDimensions(createProjectDto.dimensions);
     const scales = this.getScales(createProjectDto.scales);
 
+    // Handle role at service level
+    const ownerRole = await this.roleService.findOrCreate('owner');
+
     return this.projectRepository.create(
       { ...createProjectDto, dimensions, scales } as CreateProjectDto,
       userId,
+      ownerRole.id,
     );
   }
 
