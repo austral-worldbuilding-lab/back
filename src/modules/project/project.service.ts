@@ -99,4 +99,19 @@ export class ProjectService {
     }
     return this.projectRepository.getProjectTags(id);
   }
+
+  async removeProjectTag(projectId: string, tagId: string): Promise<TagDto> {
+    const project = await this.projectRepository.findOne(projectId);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', projectId);
+    }
+
+    const tag = await this.projectRepository.findProjectTag(projectId, tagId);
+
+    if (!tag) {
+      throw new ResourceNotFoundException('Tag', tagId);
+    }
+
+    return this.projectRepository.removeTag(projectId, tagId);
+  }
 }

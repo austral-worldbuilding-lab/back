@@ -34,6 +34,10 @@ import {
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { TagDto } from './dto/tag.dto';
+import {
+  ProjectRoleGuard,
+  AllowedRoles,
+} from '@modules/mandala/guards/project-role.guard';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -170,6 +174,34 @@ export class ProjectController {
     const tags = await this.projectService.getProjectTags(id, req.user.id);
     return {
       data: tags,
+    };
+  }
+
+  @Delete(':projectId/tags/:tagId')
+  @UseGuards(ProjectRoleGuard)
+  @AllowedRoles('owner', 'member')
+  @ApiOperation({ summary: 'Eliminar un tag de un proyecto' })
+  @ApiParam({ name: 'projectId', description: 'ID del proyecto', type: String })
+  @ApiParam({ name: 'tagId', description: 'ID del tag', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'El tag ha sido eliminado exitosamente',
+    type: TagDto,
+  })
+  @ApiResponse({ status: 404, description: 'Proyecto o tag no encontrado' })
+  @ApiResponse({
+    status: 403,
+    description: 'Prohibido - El usuario no tiene permiso para eliminar tags',
+  })
+  async deleteTag(
+    @Param('projectId') projectId: string,
+    @Param('tagId') tagId: string,
+  ): Promise<MessageResponse<TagDto>> {
+    const tag = await this.projectService.removeProjectTag(projectId, tagId);
+
+    return {
+      message: 'Tag deleted successfully',
+      data: tag,
     };
   }
 }

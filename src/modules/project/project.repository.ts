@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectDto } from './dto/project.dto';
-import { Prisma, Project } from '@prisma/client';
+import { Prisma, Project, Tag } from '@prisma/client';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
 import { TagDto } from './dto/tag.dto';
@@ -42,6 +42,13 @@ export class ProjectRepository {
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
     };
+  }
+
+  private parseToTagDto(tag: Tag): TagDto {
+    return {
+      name: tag.name,
+      color: tag.color,
+    } as TagDto;
   }
 
   async create(
@@ -129,6 +136,36 @@ export class ProjectRepository {
   async getProjectTags(projectId: string): Promise<TagDto[]> {
     return this.prisma.tag.findMany({
       where: { projectId },
+    });
+  }
+
+  async findProjectTag(projectId: string, tagId: string): Promise<Tag | null> {
+    return this.prisma.tag.findFirst({
+      where: {
+        id: tagId,
+        projectId: projectId,
+      },
+    });
+  }
+
+  async removeTag(projectId: string, tagId: string): Promise<TagDto> {
+    return this.prisma.$transaction(async (tx) => {
+      const tag = await tx.tag.findFirst({
+        where: {
+          id: tagId,
+          projectId: projectId,
+        },
+      });
+
+      if (!tag) {
+        throw new Error('Tag not found in this project');
+      }
+
+      const deleted = await tx.tag.delete({
+        where: { id: tagId },
+      });
+
+      return this.parseToTagDto(deleted);
     });
   }
 }
