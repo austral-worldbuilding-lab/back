@@ -25,4 +25,4 @@ export class RoleService {
     }
     return this.create(name);
   }
-} 
+}
