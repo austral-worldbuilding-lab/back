@@ -2,14 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Invitation } from './entities/invitation.entity';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { InvitationStatus, Project, User } from '@prisma/client';
-import { RoleService } from '@modules/role/role.service';
 
 @Injectable()
 export class InvitationRepository {
-  constructor(
-    private prisma: PrismaService,
-    private roleService: RoleService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async findProjectById(id: string): Promise<Project | null> {
     return this.prisma.project.findUnique({
