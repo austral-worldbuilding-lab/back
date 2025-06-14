@@ -2,6 +2,7 @@ import { Controller, Post, Param, Body } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { Postit } from '@modules/mandala/types/postits';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
 interface AiRequestBody {
   dimensions: string[];
@@ -30,7 +31,7 @@ export class AiController {
     description: 'Project ID to generate postits for',
   })
   async generatePostits(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() aiRequestBody: AiRequestBody,
   ): Promise<Postit[]> {
     return this.aiService.generatePostits(

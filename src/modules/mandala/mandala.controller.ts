@@ -25,6 +25,7 @@ import {
   PaginatedResponse,
 } from '@common/types/responses';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
+import { MaxValuePipe } from '@common/pipes/max-value.pipe';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import {
   ApiTags,
@@ -36,6 +37,7 @@ import {
 } from '@nestjs/swagger';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -94,10 +96,16 @@ export class MandalaController {
     type: [MandalaDto],
   })
   async findAll(
-    @Query('projectId') projectId: string,
+    @Query('projectId', new UuidValidationPipe()) projectId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1))
+    @Query(
+      'limit',
+      new DefaultValuePipe(10),
+      ParseIntPipe,
+      new MinValuePipe(1),
+      new MaxValuePipe(100),
+    )
     limit: number,
   ): Promise<PaginatedResponse<MandalaDto>> {
     return await this.mandalaService.findAllPaginated(projectId, page, limit);
@@ -129,7 +137,7 @@ export class MandalaController {
     description: 'No tiene acceso al proyecto del mandala',
   })
   async getFilters(
-    @Query('id') id: string,
+    @Query('id', new UuidValidationPipe()) id: string,
     @Req() req: RequestWithUser,
   ): Promise<DataResponse<FilterSectionDto[]>> {
     const filters = await this.mandalaService.getFilters(id, req.user.id);
@@ -148,7 +156,9 @@ export class MandalaController {
     type: MandalaDto,
   })
   @ApiResponse({ status: 404, description: 'Mandala no encontrado' })
-  async findOne(@Param('id') id: string): Promise<DataResponse<MandalaDto>> {
+  async findOne(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<MandalaDto>> {
     const mandala = await this.mandalaService.findOne(id);
     return {
       data: mandala,
@@ -171,7 +181,7 @@ export class MandalaController {
     description: 'Prohibido - No tiene permisos suficientes',
   })
   async update(
-    @Param('id') id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
     @Body() updateMandalaDto: UpdateMandalaDto,
   ): Promise<MessageResponse<MandalaDto>> {
     const mandala = await this.mandalaService.update(id, updateMandalaDto);
@@ -196,7 +206,9 @@ export class MandalaController {
     status: 403,
     description: 'Prohibido - Solo el propietario puede eliminar mandalas',
   })
-  async remove(@Param('id') id: string): Promise<MessageResponse<MandalaDto>> {
+  async remove(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<MessageResponse<MandalaDto>> {
     const mandala = await this.mandalaService.remove(id);
     return {
       message: 'Mandala deleted successfully',

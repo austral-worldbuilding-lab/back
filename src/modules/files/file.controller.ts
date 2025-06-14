@@ -12,6 +12,7 @@ import {
 import { CreateFileDto } from './dto/create-file.dto';
 import { DataResponse } from '@common/types/responses';
 import { PresignedUrl } from '@common/types/presigned-url';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
 @ApiTags('Files')
 @Controller('files')
@@ -45,7 +46,7 @@ export class FileController {
     description: 'Sin autorización',
   })
   async getFiles(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
   ): Promise<DataResponse<CreateFileDto[]>> {
     const response = await this.fileService.getFiles(projectId);
     return { data: response };
@@ -109,7 +110,7 @@ export class FileController {
     description: 'Sin autorización',
   })
   async uploadFiles(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() body: CreateFileDto[],
   ): Promise<DataResponse<PresignedUrl[]>> {
     const response = await this.fileService.uploadFiles(body, projectId);
@@ -154,7 +155,7 @@ export class FileController {
     description: 'Sin autorización',
   })
   async getFileBuffers(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
   ): Promise<DataResponse<Buffer[]>> {
     const response = await this.fileService.readAllFilesAsBuffers(projectId);
     return { data: response };

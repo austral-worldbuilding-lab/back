@@ -17,6 +17,7 @@ import { InvitationDto } from './dto/invitation.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { InvitationStatus } from '@prisma/client';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
+import { MaxValuePipe } from '@common/pipes/max-value.pipe';
 import {
   MessageResponse,
   PaginatedResponse,
@@ -31,6 +32,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
 @ApiTags('Invitations')
 @Controller('invitation')
@@ -93,9 +95,9 @@ export class InvitationController {
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1))
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1), new MaxValuePipe(100))
     limit: number,
-    @Query('projectId') projectId?: string,
+    @Query('projectId', new UuidValidationPipe()) projectId?: string,
     @Query('status') status?: InvitationStatus,
   ): Promise<PaginatedResponse<InvitationDto>> {
     return await this.invitationService.findAllPaginated(
@@ -127,10 +129,10 @@ export class InvitationController {
     type: [InvitationDto],
   })
   async findByProject(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1))
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1), new MaxValuePipe(100))
     limit: number,
   ): Promise<PaginatedResponse<InvitationDto>> {
     return await this.invitationService.findByProject(projectId, page, limit);
@@ -144,7 +146,9 @@ export class InvitationController {
     type: InvitationDto,
   })
   @ApiResponse({ status: 404, description: 'Invitación no encontrada' })
-  async findOne(@Param('id') id: string): Promise<DataResponse<InvitationDto>> {
+  async findOne(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<InvitationDto>> {
     const invitation = await this.invitationService.findOne(id);
     return { data: invitation };
   }
@@ -179,7 +183,7 @@ export class InvitationController {
   })
   @ApiResponse({ status: 404, description: 'Invitación no encontrada' })
   async reject(
-    @Param('id') id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<MessageResponse<InvitationDto>> {
     const invitation = await this.invitationService.reject(id);
     return {
@@ -196,7 +200,9 @@ export class InvitationController {
     description: 'La invitación ha sido eliminada exitosamente',
   })
   @ApiResponse({ status: 404, description: 'Invitación no encontrada' })
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<void> {
     await this.invitationService.remove(id);
   }
 }

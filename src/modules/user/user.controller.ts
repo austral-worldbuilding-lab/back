@@ -22,6 +22,7 @@ import {
   PaginatedResponse,
 } from '@common/types/responses';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
+import { MaxValuePipe } from '@common/pipes/max-value.pipe';
 import {
   ApiTags,
   ApiOperation,
@@ -30,6 +31,7 @@ import {
   ApiQuery,
   ApiParam,
 } from '@nestjs/swagger';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
 @ApiTags('Users')
 @Controller('user')
@@ -79,7 +81,13 @@ export class UserController {
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1))
+    @Query(
+      'limit',
+      new DefaultValuePipe(10),
+      ParseIntPipe,
+      new MinValuePipe(1),
+      new MaxValuePipe(100),
+    )
     limit: number,
   ): Promise<PaginatedResponse<UserDto>> {
     return await this.userService.findAllPaginated(page, limit);
@@ -97,7 +105,9 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  async findOne(@Param('id') id: string): Promise<DataResponse<UserDto>> {
+  async findOne(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<UserDto>> {
     const user = await this.userService.findOne(id);
     return {
       data: user,
@@ -117,7 +127,7 @@ export class UserController {
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @ApiResponse({ status: 401, description: 'Sin autorizacion.' })
   async update(
-    @Param('id') id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.update(id, updateUserDto);
@@ -139,7 +149,9 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  async remove(@Param('id') id: string): Promise<MessageResponse<UserDto>> {
+  async remove(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.deactivateUser(id);
     return {
       message: 'User deactivated successfully',
