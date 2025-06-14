@@ -16,23 +16,7 @@ async function main() {
   }
   console.log('✅ Roles seeded successfully');
 
-  // Seed some example tags with different colors
-  const tags = [
-    { name: 'Comedor' },
-    { name: 'Cocina' },
-    { name: 'Dormitorio' },
-    { name: 'Baño' },
-    { name: 'Sala' },
-  ];
-  console.log('📝 Seeding tags');
-
-  for (const tag of tags) {
-    await prisma.tag.upsert({
-      where: { name: tag.name },
-      update: { name: tag.name },
-      create: { name: tag.name },
-    });
-  }
+  console.log('✅ Seeding completed successfully');
 }
 
 main()

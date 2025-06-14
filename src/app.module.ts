@@ -10,6 +10,7 @@ import { MandalaModule } from '@modules/mandala/mandala.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
 import { AiModule } from '@modules/ai/ai.module';
+import { RoleModule } from '@modules/role/role.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AiModule } from '@modules/ai/ai.module';
     AuthModule,
     FileModule,
     AiModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
