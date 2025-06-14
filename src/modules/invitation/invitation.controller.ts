@@ -18,6 +18,7 @@ import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { InvitationStatus } from '@prisma/client';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { MaxValuePipe } from '@common/pipes/max-value.pipe';
+import { EnumValidationPipe } from '@common/pipes/enum-validation.pipe';
 import {
   MessageResponse,
   PaginatedResponse,
@@ -95,10 +96,17 @@ export class InvitationController {
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1), new MaxValuePipe(100))
+    @Query(
+      'limit',
+      new DefaultValuePipe(10),
+      ParseIntPipe,
+      new MinValuePipe(1),
+      new MaxValuePipe(100),
+    )
     limit: number,
     @Query('projectId', new UuidValidationPipe()) projectId?: string,
-    @Query('status') status?: InvitationStatus,
+    @Query('status', new EnumValidationPipe(InvitationStatus))
+    status?: InvitationStatus,
   ): Promise<PaginatedResponse<InvitationDto>> {
     return await this.invitationService.findAllPaginated(
       page,
@@ -132,7 +140,13 @@ export class InvitationController {
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1), new MaxValuePipe(100))
+    @Query(
+      'limit',
+      new DefaultValuePipe(10),
+      ParseIntPipe,
+      new MinValuePipe(1),
+      new MaxValuePipe(100),
+    )
     limit: number,
   ): Promise<PaginatedResponse<InvitationDto>> {
     return await this.invitationService.findByProject(projectId, page, limit);
