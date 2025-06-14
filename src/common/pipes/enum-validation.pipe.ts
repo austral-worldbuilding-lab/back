@@ -16,16 +16,25 @@ export class EnumValidationPipe implements PipeTransform<unknown, unknown> {
     const validValues = Object.values(this.enumType);
 
     if (this.isArray) {
-      const valuesArray = !Array.isArray(value)
-        ? String(value).split(',')
-        : value;
+      let valuesArray: unknown[] = [];
+
+      if (Array.isArray(value)) {
+        valuesArray = value;
+      } else if (typeof value === 'string') {
+        valuesArray = value.split(',');
+      } else {
+        throw new BadRequestException(
+          `${metadata.data ?? 'value'} must be a string or array representing enum values`,
+        );
+      }
+
       const allValid = valuesArray.every((v) =>
         validValues.includes(v as never),
       );
 
       if (!allValid) {
         throw new BadRequestException(
-          `${metadata.data ?? 'value'} must be a comma-separated list of valid enum values: ${validValues.join(', ')}`,
+          `${metadata.data ?? 'value'} must contain only valid enum values: ${validValues.join(', ')}`,
         );
       }
       return valuesArray as unknown;
