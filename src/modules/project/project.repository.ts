@@ -6,6 +6,7 @@ import { Prisma, Project, Tag } from '@prisma/client';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
 import { TagDto } from './dto/tag.dto';
+import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 
 @Injectable()
 export class ProjectRepository {
@@ -158,7 +159,7 @@ export class ProjectRepository {
       });
 
       if (!tag) {
-        throw new Error('Tag not found in this project');
+        throw new ResourceNotFoundException('Tag', tagId);
       }
 
       const deleted = await tx.tag.delete({
