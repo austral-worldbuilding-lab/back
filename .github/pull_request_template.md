@@ -1,10 +1,8 @@
 ### Creación de Pull Request
 
-- [ ] Moví la tarea desde In Progress a In Review
-- [ ] Mi branch sigue el naming pattern establecido ([CARD_ID] DESCRIPTION)
-- [ ] Testie, al menos, manualmente el funcionamiento del código creado
-- [ ] Revisé que no existen errores de eslint o prettier
-- [ ] Agregué al menos un reviewer
-- [ ] Agregué un link a la tarea en el mensaje de la PR
-- [ ] Agregué una explicación breve de los cambios realizados
-- [ ] Esta branch está al dia con 'dev'
+- [ ] Verifiqué manualmente que el código funcione correctamente.
+- [ ] Verifiqué que el código no tenga errores o warnings de linting (en lo posible).
+- [ ] Me asigné como responsable (Assignee) de la Pull Request.
+- [ ] Copié el comentario automático de Jira (resumen + criterios de aceptación) y lo pegué en la descripción de la PR.
+- [ ] Agregué a Copilot como reviewer y apliqué sus sugerencias.
+- [ ] Agregué al QA BACKEND como reviewer.
