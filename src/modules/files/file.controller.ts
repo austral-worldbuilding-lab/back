@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { FileService } from './file.service';
 import {
   ApiTags,
@@ -10,8 +18,10 @@ import {
 } from '@nestjs/swagger';
 
 import { CreateFileDto } from './dto/create-file.dto';
-import { DataResponse } from '@common/types/responses';
+import { DataResponse, MessageResponse } from '@common/types/responses';
 import { PresignedUrl } from '@common/types/presigned-url';
+import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
+import { ProjectParticipantGuard } from '@modules/mandala/guards/project-participant.guard';
 
 @ApiTags('Files')
 @Controller('files')
@@ -158,5 +168,51 @@ export class FileController {
   ): Promise<DataResponse<Buffer[]>> {
     const response = await this.fileService.readAllFilesAsBuffers(projectId);
     return { data: response };
+  }
+
+  @Delete(':projectId/:filename')
+  @UseGuards(FirebaseAuthGuard, ProjectParticipantGuard)
+  @ApiOperation({
+    summary: 'Eliminar un archivo de un proyecto',
+    description:
+      'Elimina un archivo específico almacenado en Azure Blob para un proyecto',
+  })
+  @ApiParam({
+    name: 'projectId',
+    description: 'ID del proyecto',
+    type: String,
+    example: 'project_123',
+  })
+  @ApiParam({
+    name: 'filename',
+    description: 'Nombre del archivo a eliminar',
+    type: String,
+    example: 'documento.pdf',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Archivo eliminado exitosamente',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Archivo o proyecto no encontrado',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sin autorización',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Prohibido - No pertenece al proyecto',
+  })
+  async deleteFile(
+    @Param('projectId') projectId: string,
+    @Param('filename') filename: string,
+  ): Promise<MessageResponse<null>> {
+    await this.fileService.deleteFile(projectId, filename);
+    return {
+      message: 'File deleted successfully',
+      data: null,
+    };
   }
 }

@@ -7,6 +7,10 @@ import { StorageService } from './StorageService';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { PresignedUrl } from '@common/types/presigned-url';
+import {
+  ExternalServiceException,
+  ResourceNotFoundException,
+} from '@common/exceptions/custom-exceptions';
 
 export class AzureBlobStorageService implements StorageService {
   private containerName = process.env.AZURE_STORAGE_CONTAINER_NAME!;
@@ -118,5 +122,38 @@ export class AzureBlobStorageService implements StorageService {
     }
 
     return fileBuffers;
+  }
+
+  async deleteFile(projectId: string, fileName: string): Promise<void> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+
+    const blobName = `${projectId}/${fileName}`;
+    const blobClient = containerClient.getBlobClient(blobName);
+
+    try {
+      await blobClient.delete();
+    } catch (error: unknown) {
+      type AzureErrorShape = {
+        statusCode?: number;
+        details?: { errorCode?: string };
+        message?: string;
+      };
+
+      const err = error as AzureErrorShape;
+      const statusCode = err.statusCode;
+      const message = err.details?.errorCode ?? err.message ?? 'Unknown error';
+
+      if (statusCode === 404) {
+        throw new ResourceNotFoundException(
+          'File',
+          `${projectId}/${fileName}`,
+          message,
+        );
+      }
+
+      throw new ExternalServiceException('AzureBlobStorage', message, err);
+    }
   }
 }
