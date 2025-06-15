@@ -5,9 +5,10 @@ import { PrismaModule } from '@modules/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { ProjectRepository } from './project.repository';
 import { ProjectParticipantGuard } from '@modules/mandala/guards/project-participant.guard';
+import { RoleModule } from '@modules/role/role.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, RoleModule],
   controllers: [ProjectController],
   providers: [ProjectService, ProjectRepository, ProjectParticipantGuard],
   exports: [ProjectService],

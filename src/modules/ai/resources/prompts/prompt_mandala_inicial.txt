@@ -5,8 +5,8 @@ Filtrado por personaje
 • No generes post-its genéricos: todo debe tener sentido para ese personaje.
 
 Configuración del proyecto
-• Personaje central: ${center}
-• Descripción del personaje: ${centerDescription}
+• Personaje central: ${centerCharacter}
+• Descripción del personaje: ${centerCharacterDescription}
 • Dimensiones habilitadas: ${dimensions}
 • Escalas habilitadas: ${scales}
 • Prohibido inventar nuevas dimensiones o escalas.

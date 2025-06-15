@@ -7,6 +7,8 @@ import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Postit } from '@modules/mandala/types/postits';
 import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
+import { AiRequestValidator } from '../validators/ai-request.validator';
+import { AiValidationException } from '../exceptions/ai-validation.exception';
 import * as fs from 'fs';
 
 interface GeminiUploadedFile {
@@ -22,6 +24,7 @@ export class GeminiAdapter implements AiProvider {
   constructor(
     private configService: ConfigService,
     private fileService: FileService,
+    private readonly validator: AiRequestValidator,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -37,18 +40,37 @@ export class GeminiAdapter implements AiProvider {
     projectId: string,
     dimensions: string[],
     scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
   ): Promise<Postit[]> {
     this.logger.log(
       `Processing files for project ${projectId} for postit generation`,
     );
 
-    // Get buffers with metadata from file service
     const fileBuffers =
       await this.fileService.readAllFilesAsBuffersWithMetadata(projectId);
 
     if (fileBuffers.length === 0) {
       throw new Error('No files found for project');
     }
+
+    this.logger.log(`Starting pre-validation for project ${projectId}`);
+    const validationResult = this.validator.validateAiRequest(
+      fileBuffers,
+      projectId,
+      dimensions,
+      scales,
+    );
+
+    if (!validationResult.isValid) {
+      this.logger.error(`Validation failed for project ${projectId}`, {
+        errors: validationResult.errors,
+        warnings: validationResult.warnings,
+      });
+      throw new AiValidationException(validationResult.errors, projectId);
+    }
+
+    this.logger.log(`Pre-validation passed for project ${projectId}`);
 
     const geminiFiles = await this.uploadFiles(fileBuffers);
     this.logger.log(
@@ -61,13 +83,14 @@ export class GeminiAdapter implements AiProvider {
     );
     this.logger.log('Loaded prompt template from file');
 
-    // Reemplazar placeholders
     let systemInstruction: string;
     try {
       systemInstruction = replacePromptPlaceholders(
         promptTemplate,
         dimensions,
         scales,
+        centerCharacter,
+        centerCharacterDescription,
       );
       this.logger.log('Successfully replaced placeholders in prompt');
     } catch (error: unknown) {
@@ -122,8 +145,28 @@ export class GeminiAdapter implements AiProvider {
       this.logger.log(
         `Successfully parsed ${postits.length} postits from AI response`,
       );
+
+      const config = this.validator.getConfig();
+      if (postits.length > config.maxPostitsPerRequest) {
+        this.logger.error(`Generated postits count exceeds limit`, {
+          projectId,
+          generatedCount: postits.length,
+          maxAllowed: config.maxPostitsPerRequest,
+          timestamp: new Date().toISOString(),
+        });
+        throw new AiValidationException(
+          [
+            `Generated ${postits.length} postits, but maximum allowed is ${config.maxPostitsPerRequest}`,
+          ],
+          projectId,
+        );
+      }
+
       return postits;
     } catch (error) {
+      if (error instanceof AiValidationException) {
+        throw error;
+      }
       this.logger.error('Failed to parse AI response as JSON:', error);
       throw new Error('Invalid JSON response from Gemini API');
     }

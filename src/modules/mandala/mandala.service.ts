@@ -14,6 +14,7 @@ import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postit
 import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { ProjectService } from '@modules/project/project.service';
+import { FilterSectionDto } from './dto/filter-option.dto';
 
 @Injectable()
 export class MandalaService {
@@ -65,7 +66,7 @@ export class MandalaService {
         postits: [],
         characters: linkedMandalasCenter,
       };
-      
+
       await this.firebaseDataService.createDocument(
         createMandalaDto.projectId,
         firestoreData,
@@ -158,7 +159,7 @@ export class MandalaService {
       // Update the Firebase document with new linked centers
       const updateData = {
         characters: linkedMandalasCenter,
-      };  
+      };
 
       await this.firebaseDataService.updateDocument(
         parentMandala.projectId,
@@ -227,5 +228,67 @@ export class MandalaService {
       await this.remove(mandala.id);
       throw error;
     }
+  }
+
+  async getFilters(
+    mandalaId: string,
+    userId: string,
+  ): Promise<FilterSectionDto[]> {
+    const mandala = await this.findOne(mandalaId);
+    if (!mandala) {
+      throw new ResourceNotFoundException('Mandala', mandalaId);
+    }
+
+    const project = await this.projectService.findOne(mandala.projectId);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', mandala.projectId);
+    }
+
+    const projectTags = await this.projectService.getProjectTags(
+      mandala.projectId,
+      userId,
+    );
+
+    const filterSections: FilterSectionDto[] = [];
+
+    if (
+      mandala.configuration.dimensions &&
+      mandala.configuration.dimensions.length > 0
+    ) {
+      filterSections.push({
+        sectionName: 'Dimensiones',
+        type: 'multiple',
+        options: mandala.configuration.dimensions.map((dimension) => ({
+          label: dimension.name,
+          color: dimension.color,
+        })),
+      });
+    }
+
+    if (
+      mandala.configuration.scales &&
+      mandala.configuration.scales.length > 0
+    ) {
+      filterSections.push({
+        sectionName: 'Escalas',
+        type: 'multiple',
+        options: mandala.configuration.scales.map((scale) => ({
+          label: scale,
+        })),
+      });
+    }
+
+    if (projectTags && projectTags.length > 0) {
+      filterSections.push({
+        sectionName: 'Tags',
+        type: 'multiple',
+        options: projectTags.map((tag) => ({
+          label: tag.name,
+          color: tag.color,
+        })),
+      });
+    }
+
+    return filterSections;
   }
 }

@@ -71,6 +71,8 @@ export class PostitService {
       mandala.projectId,
       mandala.configuration.dimensions.map((dim) => dim.name),
       mandala.configuration.scales,
+      mandala.configuration.center.name,
+      mandala.configuration.center.description || 'N/A',
     );
   }
 
