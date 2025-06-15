@@ -5,7 +5,7 @@ import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 import { AiValidationException } from '../exceptions/ai-validation.exception';
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 
 @Injectable()
 export class AiAdapterUtilsService {
@@ -31,19 +31,19 @@ export class AiAdapterUtilsService {
     return model;
   }
 
-  preparePrompt(
+  async preparePrompt(
     dimensions: string[],
     scales: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
     promptFilePath: string,
-  ): string {
+  ): Promise<string> {
     this.logger.debug(`Preparing prompt template...`);
 
-    const promptTemplate = fs.readFileSync(promptFilePath, 'utf-8');
-
     try {
+      const promptTemplate = await fs.readFile(promptFilePath, 'utf-8');
+
       const systemInstruction = replacePromptPlaceholders(
         promptTemplate,
         dimensions,

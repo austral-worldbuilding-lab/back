@@ -48,7 +48,7 @@ export class GeminiAdapter implements AiProvider {
 
     const promptFilePath =
       './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt';
-    const systemInstruction = this.utilsService.preparePrompt(
+    const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
       scales,
       centerCharacter,
