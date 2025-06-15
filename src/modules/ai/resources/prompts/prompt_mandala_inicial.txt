@@ -9,6 +9,7 @@ Configuración del proyecto
 • Descripción del personaje: ${centerCharacterDescription}
 • Dimensiones habilitadas: ${dimensions}
 • Escalas habilitadas: ${scales}
+• Etiquetas disponibles: ${tags}
 • Prohibido inventar nuevas dimensiones o escalas.
 
 Procesamiento de la información
@@ -23,36 +24,59 @@ Reglas de los post-its
 • Sin explicaciones ni combinaciones de ideas.
 • Enfoque: experiencia, necesidad o percepción concreta del personaje.
 
+Uso de etiquetas
+• Seleccioná entre 0 a todas de las etiquetas de la lista proporcionada que sean relevantes al contenido del post-it.
+• Las etiquetas permiten conectar post-its de diferentes dimensiones y secciones bajo ideas comunes.
+• Solo usá etiquetas de la lista disponible, no inventes nuevas.
+
 Ubicación en la Mandala
 La Mandala es un esquema circular dividido en Dimensiones y Escalas. Funciona como un contenedor de conocimiento y máquina de hacer preguntas.
 • Cada post-it “pega” en la intersección de la dimensión y escala que mejor corresponda a su contenido y nivel de alcance.
 • Pensá la Mandala como un ecosistema: al llenar sus secciones, ayudás al equipo a responder preguntas críticas para cada parte del mundo narrativo.
 
 Usá este formato EXACTO para cada post-it:
-content: “[3–5 palabras]”
-dimension: [Nombre de dimensión]
-section: [Nombre de escala]
+{
+  "content": "[3–5 palabras]",
+  "dimension": "[Nombre de dimensión]",
+  "section": "[Nombre de escala]",
+  "tags": ["etiqueta1", "etiqueta2", "etiqueta3"]
+}
 
 Ejemplos de postits para worldbuilding que explora por qué Volvo vende más a adultos que a jóvenes
 Personaje: Gen Z (Comprador joven)
 Descripción: Jóvenes urbanos buscando su primer SUV compacto
 
-content: "Preferencia por SUV pequeños"
-dimension: Producto
-section: Persona
+{
+  "content": "Preferencia por SUV pequeños",
+  "dimension": "Producto",
+  "section": "Persona",
+  "tags": ["primer auto", "diseño"]
+}
 
-content: "Suscripción corta plazo atractiva"
-dimension: Modelo de Negocio
-section: Comunidad
+{
+  "content": "Suscripción corta plazo atractiva",
+  "dimension": "Modelo de Negocio",
+  "section": "Comunidad",
+  "tags": ["financiamiento"]
+}
 
-content: "Lealtad de marca baja en Gen Z"
-dimension: Identidad de Marca
-section: Global
+{
+  "content": "Lealtad de marca baja en Gen Z",
+  "dimension": "Identidad de Marca",
+  "section": "Global",
+  "tags": ["reputación"]
+}
 
-content: "Diseño minimalista no resuena"
-dimension: Estética
-section: Persona
+{
+  "content": "Diseño minimalista no resuena",
+  "dimension": "Estética",
+  "section": "Persona",
+  "tags": ["diseño"]
+}
 
-content: "Precio inicial elevado"
-dimension: Economía
-section: Persona
+{
+  "content": "Precio inicial elevado",
+  "dimension": "Economía",
+  "section": "Persona",
+  "tags": ["financiamiento"]
+}

@@ -165,9 +165,8 @@ export class ProjectController {
   })
   async getProjectTags(
     @Param('id') id: string,
-    @Req() req: RequestWithUser,
   ): Promise<DataResponse<TagDto[]>> {
-    const tags = await this.projectService.getProjectTags(id, req.user.id);
+    const tags = await this.projectService.getProjectTags(id);
     return {
       data: tags,
     };

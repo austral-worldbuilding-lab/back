@@ -92,7 +92,7 @@ export class ProjectService {
     return this.projectRepository.update(id, updateProjectDto);
   }
 
-  async getProjectTags(id: string, _userId: string): Promise<TagDto[]> {
+  async getProjectTags(id: string): Promise<TagDto[]> {
     const project = await this.projectRepository.findOne(id);
     if (!project) {
       throw new ResourceNotFoundException('Project', id);

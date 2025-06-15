@@ -10,13 +10,10 @@ import {
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
-  Req,
 } from '@nestjs/common';
 import { MandalaService } from './mandala.service';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
-import { ProjectRoleGuard, AllowedRoles } from './guards/project-role.guard';
-import { ProjectParticipantGuard } from './guards/project-participant.guard';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { MandalaDto } from './dto/mandala.dto';
 import {
@@ -35,7 +32,6 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { FilterSectionDto } from './dto/filter-option.dto';
-import { RequestWithUser } from '@modules/auth/types/auth.types';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -45,8 +41,6 @@ export class MandalaController {
   constructor(private readonly mandalaService: MandalaService) {}
 
   @Post()
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
   @ApiOperation({ summary: 'Crear un nuevo mandala' })
   @ApiResponse({
     status: 201,
@@ -68,7 +62,6 @@ export class MandalaController {
   }
 
   @Get()
-  @UseGuards(ProjectParticipantGuard)
   @ApiOperation({ summary: 'Obtener todos los mandalas de un proyecto' })
   @ApiQuery({
     name: 'projectId',
@@ -104,8 +97,6 @@ export class MandalaController {
   }
 
   @Get('filter-options')
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
   @ApiOperation({
     summary: 'Obtener filtros configurables para un mandala',
     description:
@@ -130,16 +121,14 @@ export class MandalaController {
   })
   async getFilters(
     @Query('id') id: string,
-    @Req() req: RequestWithUser,
   ): Promise<DataResponse<FilterSectionDto[]>> {
-    const filters = await this.mandalaService.getFilters(id, req.user.id);
+    const filters = await this.mandalaService.getFilters(id);
     return {
       data: filters,
     };
   }
 
   @Get(':id')
-  @UseGuards(ProjectParticipantGuard)
   @ApiOperation({ summary: 'Obtener un mandala por ID' })
   @ApiParam({ name: 'id', description: 'ID del mandala', type: String })
   @ApiResponse({
@@ -156,8 +145,6 @@ export class MandalaController {
   }
 
   @Patch(':id')
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
   @ApiOperation({ summary: 'Actualizar un mandala' })
   @ApiParam({ name: 'id', description: 'ID del mandala', type: String })
   @ApiResponse({
@@ -182,8 +169,6 @@ export class MandalaController {
   }
 
   @Delete(':id')
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner')
   @ApiOperation({ summary: 'Eliminar un mandala' })
   @ApiParam({ name: 'id', description: 'ID del mandala', type: String })
   @ApiResponse({
@@ -205,8 +190,6 @@ export class MandalaController {
   }
 
   @Post('generate')
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
   @ApiOperation({
     summary: 'Generar un mandala automáticamente con IA',
     description:
