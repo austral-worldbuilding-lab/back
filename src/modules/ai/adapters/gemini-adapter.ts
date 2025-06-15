@@ -3,13 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
 import { PostitsResponse } from '../resources/dto/generate-postits.dto';
 import { AiProvider } from '../interfaces/ai-provider.interface';
-import { FileService } from '@modules/files/file.service';
 import { AiPostitResponse } from '@modules/mandala/types/postits';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 import { AiValidationException } from '../exceptions/ai-validation.exception';
-import * as fs from 'fs';
+import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 
 interface GeminiUploadedFile {
   uri: string;
@@ -23,8 +21,8 @@ export class GeminiAdapter implements AiProvider {
 
   constructor(
     private configService: ConfigService,
-    private fileService: FileService,
     private readonly validator: AiRequestValidator,
+    private readonly utilsService: AiAdapterUtilsService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -46,113 +44,33 @@ export class GeminiAdapter implements AiProvider {
   ): Promise<AiPostitResponse[]> {
     this.logger.log(`Starting postit generation for project: ${projectId}`);
 
-    const model = this.validateConfiguration();
+    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
 
-    const systemInstruction = this.preparePrompt(
+    const promptFilePath =
+      './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt';
+    const systemInstruction = this.utilsService.preparePrompt(
       dimensions,
       scales,
       centerCharacter,
       centerCharacterDescription,
       tags,
+      promptFilePath,
     );
 
-    const fileBuffers = await this.loadAndValidateFiles(
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
       dimensions,
       scales,
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
-
-    return await this.generateWithGemini(
-      projectId,
+    const responseText = await this.generateWithGemini(
       model,
       systemInstruction,
       geminiFiles,
     );
-  }
 
-  private validateConfiguration(): string {
-    this.logger.debug('Validating configuration...');
-
-    const model = this.configService.get<string>('GEMINI_MODEL');
-    if (!model) {
-      throw new Error(
-        'GEMINI_MODEL is not configured in environment variables',
-      );
-    }
-
-    this.logger.debug(`Configuration valid - using model: ${model}`);
-    return model;
-  }
-
-  private preparePrompt(
-    dimensions: string[],
-    scales: string[],
-    centerCharacter: string,
-    centerCharacterDescription: string,
-    tags: string[],
-  ): string {
-    this.logger.debug('Preparing prompt template...');
-
-    const promptTemplate = fs.readFileSync(
-      './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt',
-      'utf-8',
-    );
-
-    try {
-      const systemInstruction = replacePromptPlaceholders(
-        promptTemplate,
-        dimensions,
-        scales,
-        centerCharacter,
-        centerCharacterDescription,
-        tags,
-      );
-
-      this.logger.debug('Prompt template prepared successfully');
-      return systemInstruction;
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error('Failed to prepare prompt template:', error);
-      throw new Error(`Prompt placeholder replacement failed: ${errorMessage}`);
-    }
-  }
-
-  private async loadAndValidateFiles(
-    projectId: string,
-    dimensions: string[],
-    scales: string[],
-  ): Promise<FileBuffer[]> {
-    this.logger.debug(`Loading files for project: ${projectId}`);
-
-    const fileBuffers =
-      await this.fileService.readAllFilesAsBuffersWithMetadata(projectId);
-
-    if (fileBuffers.length === 0) {
-      throw new Error('No files found for project');
-    }
-
-    this.logger.debug(`Loaded ${fileBuffers.length} files, validating...`);
-
-    const validationResult = this.validator.validateAiRequest(
-      fileBuffers,
-      projectId,
-      dimensions,
-      scales,
-    );
-
-    if (!validationResult.isValid) {
-      this.logger.error(`File validation failed for project ${projectId}`, {
-        errors: validationResult.errors,
-        warnings: validationResult.warnings,
-      });
-      throw new AiValidationException(validationResult.errors, projectId);
-    }
-
-    this.logger.debug(`File validation passed for project ${projectId}`);
-    return fileBuffers;
+    return this.parseAndValidateResponse(responseText, projectId);
   }
 
   private async uploadFilesToGemini(
@@ -192,11 +110,10 @@ export class GeminiAdapter implements AiProvider {
   }
 
   private async generateWithGemini(
-    projectId: string,
     model: string,
     systemInstruction: string,
     geminiFiles: GeminiUploadedFile[],
-  ): Promise<AiPostitResponse[]> {
+  ): Promise<string | undefined> {
     this.logger.debug('Preparing Gemini API request...');
 
     const config = {
@@ -227,7 +144,7 @@ export class GeminiAdapter implements AiProvider {
 
     this.logger.log('Generation completed successfully');
 
-    return this.parseAndValidateResponse(response.text, projectId);
+    return response.text;
   }
 
   private parseAndValidateResponse(
