@@ -117,7 +117,10 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @ApiResponse({ status: 401, description: 'Sin autorizacion.' })
-  @ApiResponse({ status: 403, description: 'Solo puedes modificar tu propio perfil.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Solo puedes modificar tu propio perfil.',
+  })
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -141,7 +144,10 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Solo puedes desactivar tu propio perfil.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Solo puedes desactivar tu propio perfil.',
+  })
   async remove(@Param('id') id: string): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.deactivateUser(id);
     return {
