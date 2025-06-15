@@ -6,9 +6,9 @@ export const PostitsResponse = {
       content: { type: 'string' },
       dimension: { type: 'string' },
       section: { type: 'string' },
-      tags: { 
+      tags: {
         type: 'array',
-        items: { type: 'string' }
+        items: { type: 'string' },
       },
     },
   },
