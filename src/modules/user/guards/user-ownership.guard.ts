@@ -6,9 +6,9 @@ import { RequestWithUser } from '@modules/auth/types/auth.types';
 export class UserOwnershipGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
-    
+
     const authenticatedUserId = request.user.id;
-    const targetUserId = request.params?.id as string;
+    const targetUserId = request.params?.id;
 
     if (!targetUserId) {
       throw new ForbiddenException('User ID not specified in request');
@@ -20,4 +20,4 @@ export class UserOwnershipGuard implements CanActivate {
 
     return true;
   }
-} 
+}

@@ -23,10 +23,7 @@ import {
   PaginatedResponse,
 } from '@common/types/responses';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
-import {
-  ApiTags,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   ApiCreateUser,
   ApiGetAllUsers,
