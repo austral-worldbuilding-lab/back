@@ -19,7 +19,12 @@ import { AiAdapterUtilsService } from './services/ai-adapter-utils.service';
     {
       provide: AI_PROVIDER,
       useFactory: aiProviderFactory,
-      inject: [ConfigService, FileService, AiRequestValidator, AiAdapterUtilsService],
+      inject: [
+        ConfigService,
+        FileService,
+        AiRequestValidator,
+        AiAdapterUtilsService,
+      ],
     },
   ],
   controllers: [AiController],
