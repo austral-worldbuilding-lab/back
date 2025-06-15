@@ -15,6 +15,7 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
+import { UserOwnershipGuard } from './guards/user-ownership.guard';
 import { UserDto } from './dto/user.dto';
 import {
   MessageResponse,
@@ -105,7 +106,7 @@ export class UserController {
   }
 
   @Patch(':id')
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(FirebaseAuthGuard, UserOwnershipGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Actualizar usuario' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
@@ -116,6 +117,7 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @ApiResponse({ status: 401, description: 'Sin autorizacion.' })
+  @ApiResponse({ status: 403, description: 'Solo puedes modificar tu propio perfil.' })
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -128,7 +130,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(FirebaseAuthGuard, UserOwnershipGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Desactivar usuario' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
@@ -139,6 +141,7 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 403, description: 'Solo puedes desactivar tu propio perfil.' })
   async remove(@Param('id') id: string): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.deactivateUser(id);
     return {
