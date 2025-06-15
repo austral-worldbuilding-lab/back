@@ -128,51 +128,18 @@ export class ProjectRepository {
   }
 
   async getProjectTags(projectId: string): Promise<TagDto[]> {
-    return this.prisma.tag.findMany({
-        where: {
-          projectTags: {
-            some: {
-              projectId,
-            },
-          },
-        },
-        include: {
-          projectTags: {
-            where: { projectId },
-            select: { projectId: true },
-          },
-        },
-      })
-      .then((tags) =>
-        tags.map((tag) => ({
-          id: tag.id,
-          name: tag.name,
-          color: tag.color,
-          projectId: tag.projectTags[0].projectId,
-        })),
-      );
+    return await this.prisma.tag.findMany({
+      where: { projectId },
+    });
   }
 
   async createTag(projectId: string, dto: CreateTagDto): Promise<TagDto> {
-    const tag = await this.prisma.tag.create({
+    return await this.prisma.tag.create({
       data: {
         name: dto.name,
         color: dto.color,
-      },
-    });
-
-    const projectTag = await this.prisma.projectTag.create({
-      data: {
         projectId,
-        tagId: tag.id,
       },
     });
-
-    return {
-      id: tag.id,
-      name: tag.name,
-      color: tag.color,
-      projectId: projectTag.projectId,
-    };
   }
 }
