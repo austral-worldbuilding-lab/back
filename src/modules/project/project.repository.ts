@@ -6,7 +6,7 @@ import { Prisma, Project } from '@prisma/client';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
 import { TagDto } from './dto/tag.dto';
-import { TagResponseDto } from './dto/tagResponse.dto';
+import { CreateTagDto } from './dto/create-tag.dto';
 
 @Injectable()
 export class ProjectRepository {
@@ -129,15 +129,36 @@ export class ProjectRepository {
 
   async getProjectTags(projectId: string): Promise<TagDto[]> {
     return this.prisma.tag.findMany({
-      where: { projectId },
-    });
+        where: {
+          projectTags: {
+            some: {
+              projectId,
+            },
+          },
+        },
+        include: {
+          projectTags: {
+            where: { projectId },
+            select: { projectId: true },
+          },
+        },
+      })
+      .then((tags) =>
+        tags.map((tag) => ({
+          id: tag.id,
+          name: tag.name,
+          color: tag.color,
+          projectId: tag.projectTags[0].projectId,
+        })),
+      );
   }
 
-  async createTag(projectId: string, dto: TagDto): Promise<TagResponseDto> {
-    const tag = await this.prisma.tag.upsert({
-      where: { name: dto.name },
-      update: {},
-      create: { name: dto.name, color: dto.color },
+  async createTag(projectId: string, dto: CreateTagDto): Promise<TagDto> {
+    const tag = await this.prisma.tag.create({
+      data: {
+        name: dto.name,
+        color: dto.color,
+      },
     });
 
     const projectTag = await this.prisma.projectTag.create({

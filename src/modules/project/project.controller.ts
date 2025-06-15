@@ -35,7 +35,6 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { TagDto } from './dto/tag.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
-import { TagResponseDto } from './dto/tagResponse.dto';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -158,13 +157,13 @@ export class ProjectController {
   @ApiResponse({
     status: 200,
     description: 'Tag creado exitosamente',
-    type: TagResponseDto,
+    type: TagDto,
   })
   @ApiResponse({ status: 400, description: 'Solicitud incorrecta' })
   async createProjectTag(
     @Param('id') projectId: string,
-    @Body() tagDto: TagDto,
-  ): Promise<MessageResponse<TagResponseDto>> {
+    @Body() tagDto: CreateTagDto,
+  ): Promise<MessageResponse<TagDto>> {
     const tag = await this.projectService.createTag(projectId, tagDto);
     return {
       message: 'Tag created successfully',

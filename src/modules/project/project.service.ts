@@ -8,8 +8,8 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { TagDto } from './dto/tag.dto';
-import { CreateTagDto } from './dto/create-tag.dto';
 import { RoleService } from '@modules/role/role.service';
+import { CreateTagDto } from './dto/create-tag.dto';
 
 @Injectable()
 export class ProjectService {
@@ -101,7 +101,7 @@ export class ProjectService {
     return this.projectRepository.getProjectTags(id);
   }
 
-  async createTag(projectId: string, dto: TagDto) {
+  async createTag(projectId: string, dto: CreateTagDto) {
     const project = await this.projectRepository.findOne(projectId);
     if (!project) {
       throw new NotFoundException('Project not found');
