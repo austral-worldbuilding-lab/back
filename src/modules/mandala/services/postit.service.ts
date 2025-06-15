@@ -87,7 +87,6 @@ export class PostitService {
       tagNames,
     );
 
-    // Convert AI response to proper Postit format with tag colors
     return aiResponse.map(
       (aiPostit: AiPostitResponse): Postit => ({
         content: aiPostit.content,
@@ -102,16 +101,16 @@ export class PostitService {
     tagNames: string[],
     projectTags: TagDto[],
   ): PostitTag[] {
+    if (!tagNames || tagNames.length === 0) return [];
+
     return tagNames
       .map((tagName) => {
         const projectTag = projectTags.find((pt) => pt.name === tagName);
-        if (projectTag) {
-          return {
-            name: projectTag.name,
-            color: projectTag.color,
-          };
-        }
-        return null;
+        if (!projectTag) return null;
+        return {
+          name: projectTag.name,
+          color: projectTag.color,
+        };
       })
       .filter((tag): tag is PostitTag => tag !== null);
   }
