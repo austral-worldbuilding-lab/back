@@ -1,10 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { 
-  ApiOperation, 
-  ApiResponse, 
-  ApiParam, 
-  ApiQuery 
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ProjectDto } from '../dto/project.dto';
 import { TagDto } from '../dto/tag.dto';
 
@@ -54,7 +49,10 @@ export const ApiGetProject = () =>
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
     ApiResponse({ status: 401, description: 'Sin autorización' }),
-    ApiResponse({ status: 403, description: 'No tienes acceso a este proyecto' }),
+    ApiResponse({
+      status: 403,
+      description: 'No tienes acceso a este proyecto',
+    }),
   );
 
 export const ApiUpdateProject = () =>
@@ -68,7 +66,10 @@ export const ApiUpdateProject = () =>
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
     ApiResponse({ status: 401, description: 'Sin autorización' }),
-    ApiResponse({ status: 403, description: 'Solo el propietario puede actualizar proyectos' }),
+    ApiResponse({
+      status: 403,
+      description: 'Solo el propietario puede actualizar proyectos',
+    }),
   );
 
 export const ApiDeleteProject = () =>
@@ -82,7 +83,10 @@ export const ApiDeleteProject = () =>
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
     ApiResponse({ status: 401, description: 'Sin autorización' }),
-    ApiResponse({ status: 403, description: 'Solo el propietario puede eliminar proyectos' }),
+    ApiResponse({
+      status: 403,
+      description: 'Solo el propietario puede eliminar proyectos',
+    }),
   );
 
 export const ApiGetProjectTags = () =>
@@ -96,5 +100,8 @@ export const ApiGetProjectTags = () =>
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
     ApiResponse({ status: 401, description: 'Sin autorización' }),
-    ApiResponse({ status: 403, description: 'No tienes acceso a este proyecto' }),
-  ); 
+    ApiResponse({
+      status: 403,
+      description: 'No tienes acceso a este proyecto',
+    }),
+  );
