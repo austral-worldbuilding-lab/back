@@ -8,12 +8,14 @@ import { AiService } from '@modules/ai/ai.service';
 import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
 import { MandalaRepository } from '../mandala.repository';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
+import { ProjectService } from '@modules/project/project.service';
 
 @Injectable()
 export class PostitService {
   constructor(
     private aiService: AiService,
     private mandalaRepository: MandalaRepository,
+    private projectService: ProjectService,
   ) {}
 
   async generatePostitsForMandala(
@@ -67,12 +69,19 @@ export class PostitService {
   }
 
   private async generatePostits(mandala: MandalaDto): Promise<Postit[]> {
+    const projectTags = await this.projectService.getProjectTags(
+      mandala.projectId,
+    );
+
+    const tagNames = projectTags.map((tag) => tag.name);
+
     return this.aiService.generatePostits(
       mandala.projectId,
       mandala.configuration.dimensions.map((dim) => dim.name),
       mandala.configuration.scales,
       mandala.configuration.center.name,
       mandala.configuration.center.description || 'N/A',
+      tagNames,
     );
   }
 

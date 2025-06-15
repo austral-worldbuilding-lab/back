@@ -42,6 +42,7 @@ export class GeminiAdapter implements AiProvider {
     scales: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
+    tags: string[],
   ): Promise<Postit[]> {
     this.logger.log(
       `Processing files for project ${projectId} for postit generation`,
@@ -91,6 +92,7 @@ export class GeminiAdapter implements AiProvider {
         scales,
         centerCharacter,
         centerCharacterDescription,
+        tags,
       );
       this.logger.log('Successfully replaced placeholders in prompt');
     } catch (error: unknown) {

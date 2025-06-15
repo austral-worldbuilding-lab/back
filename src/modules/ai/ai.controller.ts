@@ -8,6 +8,7 @@ interface AiRequestBody {
   scales: string[];
   centerCharacter: string;
   centerCharacterDescription: string;
+  tags: string[];
 }
 
 @ApiTags('AI')
@@ -39,6 +40,7 @@ export class AiController {
       aiRequestBody.scales,
       aiRequestBody.centerCharacter,
       aiRequestBody.centerCharacterDescription,
+      aiRequestBody.tags,
     );
   }
 }

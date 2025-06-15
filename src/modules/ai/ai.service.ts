@@ -18,6 +18,9 @@ export class AiService {
    * @param projectId - The ID of the project to generate postits for
    * @param dimensions - Array of dimensions
    * @param scales - Array of scales
+   * @param centerCharacter
+   * @param centerCharacterDescription
+   * @param tags - Array of tags for connecting postits across dimensions
    * @returns An array of Postit objects
    */
   async generatePostits(
@@ -26,17 +29,19 @@ export class AiService {
     scales: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
+    tags: string[],
   ): Promise<Postit[]> {
     const finalDimensions = dimensions;
     const finalScales = scales;
     const finalCenterCharacter = centerCharacter;
     const finalCenterCharacterDescription = centerCharacterDescription;
+    const finalTags = tags;
 
     this.logger.log(
       `Delegating postit generation to AI provider for project ${projectId}`,
     );
     this.logger.log(
-      `Configuration: ${finalDimensions.length} dimensions, ${finalScales.length} scales ${dimensions ? '(user-provided)' : '(defaults)'}, center character: ${finalCenterCharacter} ${finalCenterCharacterDescription}`,
+      `Configuration: ${finalDimensions.length} dimensions, ${finalScales.length} scales ${dimensions ? '(user-provided)' : '(defaults)'}, center character: ${finalCenterCharacter} ${finalCenterCharacterDescription}, ${finalTags.length} tags`,
     );
     return this.aiProvider.generatePostits(
       projectId,
@@ -44,6 +49,7 @@ export class AiService {
       finalScales,
       finalCenterCharacter,
       finalCenterCharacterDescription,
+      finalTags,
     );
   }
 }
