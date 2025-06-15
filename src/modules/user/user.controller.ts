@@ -25,12 +25,15 @@ import {
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import {
   ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
-  ApiQuery,
-  ApiParam,
 } from '@nestjs/swagger';
+import {
+  ApiCreateUser,
+  ApiGetAllUsers,
+  ApiGetUser,
+  ApiUpdateUser,
+  ApiDeleteUser,
+} from './decorators/user-swagger.decorators';
 
 @ApiTags('Users')
 @Controller('user')
@@ -38,13 +41,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear un nuevo usuario' })
-  @ApiResponse({
-    status: 201,
-    description: 'El usuario fue creado exitosamente.',
-    type: UserDto,
-  })
-  @ApiResponse({ status: 400, description: 'Bad request.' })
+  @ApiCreateUser()
   async create(
     @Body() createUserDto: CreateUserDto,
   ): Promise<MessageResponse<UserDto>> {
@@ -58,25 +55,7 @@ export class UserController {
   @Get()
   @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Obtener todos los usuarios con paginación' })
-  @ApiQuery({
-    name: 'pagina',
-    description: 'Numero de pagina',
-    type: Number,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limite',
-    description: 'Items por pagina',
-    type: Number,
-    example: 10,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Devuelve una lista paginada de usuarios',
-    type: [UserDto],
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiGetAllUsers()
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
@@ -89,15 +68,7 @@ export class UserController {
   @Get(':id')
   @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Obtener un usuario por ID' })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Devuelve el usuario con el ID especifico',
-    type: UserDto,
-  })
-  @ApiResponse({ status: 404, description: 'User not found.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiGetUser()
   async findOne(@Param('id') id: string): Promise<DataResponse<UserDto>> {
     const user = await this.userService.findOne(id);
     return {
@@ -108,19 +79,7 @@ export class UserController {
   @Patch(':id')
   @UseGuards(FirebaseAuthGuard, UserOwnershipGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Actualizar usuario' })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'El usuario ha sido creado correctamente.',
-    type: UserDto,
-  })
-  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-  @ApiResponse({ status: 401, description: 'Sin autorizacion.' })
-  @ApiResponse({
-    status: 403,
-    description: 'Solo puedes modificar tu propio perfil.',
-  })
+  @ApiUpdateUser()
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -135,19 +94,7 @@ export class UserController {
   @Delete(':id')
   @UseGuards(FirebaseAuthGuard, UserOwnershipGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Desactivar usuario' })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'El usuario fue desactivado exitosamente',
-    type: UserDto,
-  })
-  @ApiResponse({ status: 404, description: 'User not found.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({
-    status: 403,
-    description: 'Solo puedes desactivar tu propio perfil.',
-  })
+  @ApiDeleteUser()
   async remove(@Param('id') id: string): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.deactivateUser(id);
     return {
