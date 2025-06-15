@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GoogleGenAI } from '@google/genai';
 import { ConfigService } from '@nestjs/config';
-import { AiProvider } from '../interfaces/ai-provider.interface';
+import { GoogleGenAI } from '@google/genai';
 import { PostitsResponse } from '../resources/dto/generate-postits.dto';
+import { AiProvider } from '../interfaces/ai-provider.interface';
 import { FileService } from '@modules/files/file.service';
+import { AiPostitResponse } from '@modules/mandala/types/postits';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { Postit } from '@modules/mandala/types/postits';
 import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 import { AiValidationException } from '../exceptions/ai-validation.exception';
@@ -43,7 +43,7 @@ export class GeminiAdapter implements AiProvider {
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
-  ): Promise<Postit[]> {
+  ): Promise<AiPostitResponse[]> {
     this.logger.log(
       `Processing files for project ${projectId} for postit generation`,
     );
@@ -143,7 +143,7 @@ export class GeminiAdapter implements AiProvider {
     }
 
     try {
-      const postits = JSON.parse(response.text) as Postit[];
+      const postits = JSON.parse(response.text) as AiPostitResponse[];
       this.logger.log(
         `Successfully parsed ${postits.length} postits from AI response`,
       );

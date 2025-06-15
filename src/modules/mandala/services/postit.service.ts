@@ -3,12 +3,15 @@ import {
   Postit,
   PostitCoordinates,
   PostitWithCoordinates,
+  PostitTag,
+  AiPostitResponse,
 } from '../types/postits';
 import { AiService } from '@modules/ai/ai.service';
 import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
 import { MandalaRepository } from '../mandala.repository';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { ProjectService } from '@modules/project/project.service';
+import { TagDto } from '@modules/project/dto/tag.dto';
 
 @Injectable()
 export class PostitService {
@@ -75,7 +78,7 @@ export class PostitService {
 
     const tagNames = projectTags.map((tag) => tag.name);
 
-    return this.aiService.generatePostits(
+    const aiResponse: AiPostitResponse[] = await this.aiService.generatePostits(
       mandala.projectId,
       mandala.configuration.dimensions.map((dim) => dim.name),
       mandala.configuration.scales,
@@ -83,6 +86,34 @@ export class PostitService {
       mandala.configuration.center.description || 'N/A',
       tagNames,
     );
+
+    // Convert AI response to proper Postit format with tag colors
+    return aiResponse.map(
+      (aiPostit: AiPostitResponse): Postit => ({
+        content: aiPostit.content,
+        dimension: aiPostit.dimension,
+        section: aiPostit.section,
+        tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
+      }),
+    );
+  }
+
+  private mapTagsWithColors(
+    tagNames: string[],
+    projectTags: TagDto[],
+  ): PostitTag[] {
+    return tagNames
+      .map((tagName) => {
+        const projectTag = projectTags.find((pt) => pt.name === tagName);
+        if (projectTag) {
+          return {
+            name: projectTag.name,
+            color: projectTag.color,
+          };
+        }
+        return null;
+      })
+      .filter((tag): tag is PostitTag => tag !== null);
   }
 
   private groupPostitsBySection(postits: Postit[]): Record<string, Postit[]> {

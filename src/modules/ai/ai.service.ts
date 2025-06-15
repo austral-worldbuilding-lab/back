@@ -1,7 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { AiProvider } from './interfaces/ai-provider.interface';
 import { AI_PROVIDER } from './factories/ai-provider.factory';
-import { Postit } from '@modules/mandala/types/postits';
+import { AiPostitResponse } from '@modules/mandala/types/postits';
 
 @Injectable()
 export class AiService {
@@ -21,7 +21,7 @@ export class AiService {
    * @param centerCharacter
    * @param centerCharacterDescription
    * @param tags - Array of tags for connecting postits across dimensions
-   * @returns An array of Postit objects
+   * @returns An array of AiPostitResponse objects (with string tags)
    */
   async generatePostits(
     projectId: string,
@@ -30,7 +30,7 @@ export class AiService {
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
-  ): Promise<Postit[]> {
+  ): Promise<AiPostitResponse[]> {
     const finalDimensions = dimensions;
     const finalScales = scales;
     const finalCenterCharacter = centerCharacter;

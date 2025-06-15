@@ -1,15 +1,15 @@
-import { Postit } from '@modules/mandala/types/postits';
+import { AiPostitResponse } from '@modules/mandala/types/postits';
 
 export interface AiProvider {
   /**
-   * Generates postits for a project and returns them as an array of Postit objects
+   * Generates postits for a project
    * @param projectId - The ID of the project to generate postits for
-   * @param dimensions - Array of dimensions to use in the prompt
-   * @param scales - Array of scales to use in the prompt
-   * @param centerCharacter - The central character for the worldbuilding context
-   * @param centerCharacterDescription - Description of the central character
+   * @param dimensions - Array of dimensions
+   * @param scales - Array of scales
+   * @param centerCharacter
+   * @param centerCharacterDescription
    * @param tags - Array of tags to be used for connecting postits across dimensions
-   * @returns An array of Postit objects
+   * @returns An array of AiPostitResponse objects (with string tags)
    */
   generatePostits(
     projectId: string,
@@ -18,5 +18,5 @@ export interface AiProvider {
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
-  ): Promise<Postit[]>;
+  ): Promise<AiPostitResponse[]>;
 }
