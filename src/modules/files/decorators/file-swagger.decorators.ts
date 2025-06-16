@@ -130,3 +130,37 @@ export const ApiGetFileBuffers = () =>
       description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );
+
+export const ApiDeleteFile = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Eliminar un archivo de un proyecto',
+      description:
+        'Elimina un archivo específico almacenado en Azure Blob para un proyecto',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+      example: 'project_123',
+    }),
+    ApiParam({
+      name: 'fileName',
+      description: 'Nombre del archivo a eliminar',
+      type: String,
+      example: 'documento.pdf',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Archivo eliminado exitosamente',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Archivo o proyecto no encontrado',
+    }),
+    ApiResponse({ status: 401, description: 'Sin autorización' }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+  );
