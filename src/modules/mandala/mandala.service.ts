@@ -230,10 +230,7 @@ export class MandalaService {
     }
   }
 
-  async getFilters(
-    mandalaId: string,
-    userId: string,
-  ): Promise<FilterSectionDto[]> {
+  async getFilters(mandalaId: string): Promise<FilterSectionDto[]> {
     const mandala = await this.findOne(mandalaId);
     if (!mandala) {
       throw new ResourceNotFoundException('Mandala', mandalaId);
@@ -246,7 +243,6 @@ export class MandalaService {
 
     const projectTags = await this.projectService.getProjectTags(
       mandala.projectId,
-      userId,
     );
 
     const filterSections: FilterSectionDto[] = [];
