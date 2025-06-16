@@ -137,32 +137,32 @@ export class AzureBlobStorageService implements StorageService {
     try {
       await blobClient.delete();
     } catch (rawError: unknown) {
-      // For logging purposes keep the original error reference.
-      const isNativeError = rawError instanceof Error;
-      const stack = isNativeError ? rawError.stack : undefined;
-
-      // Narrow the shape to retrieve Azure‐specific fields.
-
-      const err = rawError as {
-        statusCode?: number;
-        details?: { errorCode?: string };
-        message?: string;
-      };
-
-      const statusCode = err.statusCode;
-      const message = err.details?.errorCode ?? err.message ?? 'Unknown error';
-
-      if (statusCode === 404) {
-        throw new ResourceNotFoundException(
-          'File',
-          `${projectId}/${fileName}`,
-          message,
-        );
-      }
-
-      this.logger.error(`Failed to delete blob ${blobName}: ${message}`, stack);
-
-      throw new ExternalServiceException('AzureBlobStorage', message, err);
+      this.handleAzureDeletionError(rawError, blobName);
     }
+  }
+
+  /**
+   * Centralizes error mapping and logging for blob deletions.
+   */
+  private handleAzureDeletionError(error: unknown, blobName: string): never {
+    const isNativeError = error instanceof Error;
+    const stack = isNativeError ? error.stack : undefined;
+
+    const err = error as {
+      statusCode?: number;
+      details?: { errorCode?: string };
+      message?: string;
+    };
+
+    const statusCode = err.statusCode;
+    const message = err.details?.errorCode ?? err.message ?? 'Unknown error';
+
+    if (statusCode === 404) {
+      throw new ResourceNotFoundException('File', blobName, message);
+    }
+
+    this.logger.error(`Failed to delete blob ${blobName}: ${message}`, stack);
+
+    throw new ExternalServiceException('AzureBlobStorage', message, err);
   }
 }

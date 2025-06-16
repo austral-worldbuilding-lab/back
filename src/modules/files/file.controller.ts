@@ -10,7 +10,7 @@ import {
 import { FileService } from './file.service';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateFileDto } from './dto/create-file.dto';
-import { DataResponse, MessageResponse, MessageOnlyResponse } from '@common/types/responses';
+import { DataResponse, MessageOnlyResponse } from '@common/types/responses';
 import { PresignedUrl } from '@common/types/presigned-url';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { FileRoleGuard } from './guards/file-role.guard';
