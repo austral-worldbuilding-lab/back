@@ -128,13 +128,13 @@ export class ProjectRepository {
   }
 
   async getProjectTags(projectId: string): Promise<TagDto[]> {
-    return await this.prisma.tag.findMany({
+    return this.prisma.tag.findMany({
       where: { projectId },
     });
   }
 
   async createTag(projectId: string, dto: CreateTagDto): Promise<TagDto> {
-    return await this.prisma.tag.create({
+    return this.prisma.tag.create({
       data: {
         name: dto.name,
         color: dto.color,
