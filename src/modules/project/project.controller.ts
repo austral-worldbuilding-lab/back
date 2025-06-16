@@ -26,7 +26,6 @@ import {
   DataResponse,
   PaginatedResponse,
 } from '@common/types/responses';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { TagDto } from './dto/tag.dto';
@@ -38,8 +37,10 @@ import {
   ApiDeleteProject,
   ApiGetProjectTags,
   ApiCreateProjectTag,
+  ApiDeleteProjectTag,
 } from './decorators/project-swagger.decorators';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -135,6 +136,22 @@ export class ProjectController {
     const tags = await this.projectService.getProjectTags(id);
     return {
       data: tags,
+    };
+  }
+
+  @Delete(':projectId/tags/:tagId')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner')
+  @ApiDeleteProjectTag()
+  async deleteTag(
+    @Param('projectId') projectId: string,
+    @Param('tagId') tagId: string,
+  ): Promise<MessageResponse<TagDto>> {
+    const tag = await this.projectService.removeProjectTag(projectId, tagId);
+
+    return {
+      message: 'Tag deleted successfully',
+      data: tag,
     };
   }
 }
