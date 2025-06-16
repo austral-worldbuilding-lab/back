@@ -28,4 +28,8 @@ export class FileService {
   ): Promise<FileBuffer[]> {
     return this.storageService.readAllFilesAsBuffersWithMetadata(projectId);
   }
+
+  async deleteFile(projectId: string, fileName: string): Promise<void> {
+    return this.storageService.deleteFile(projectId, fileName);
+  }
 }

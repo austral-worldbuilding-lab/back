@@ -7,8 +7,14 @@ import { StorageService } from './StorageService';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { PresignedUrl } from '@common/types/presigned-url';
+import {
+  ExternalServiceException,
+  ResourceNotFoundException,
+} from '@common/exceptions/custom-exceptions';
+import { Logger } from '@nestjs/common';
 
 export class AzureBlobStorageService implements StorageService {
+  private readonly logger = new Logger(AzureBlobStorageService.name);
   private containerName = process.env.AZURE_STORAGE_CONTAINER_NAME!;
   private blobServiceClient: BlobServiceClient;
 
@@ -118,5 +124,42 @@ export class AzureBlobStorageService implements StorageService {
     }
 
     return fileBuffers;
+  }
+
+  async deleteFile(projectId: string, fileName: string): Promise<void> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+
+    const blobName = `${projectId}/${fileName}`;
+    const blobClient = containerClient.getBlobClient(blobName);
+
+    try {
+      await blobClient.delete();
+    } catch (rawError: unknown) {
+      this.handleAzureDeletionError(rawError, blobName);
+    }
+  }
+
+  private handleAzureDeletionError(error: unknown, blobName: string): never {
+    const isNativeError = error instanceof Error;
+    const stack = isNativeError ? error.stack : undefined;
+
+    const err = error as {
+      statusCode?: number;
+      details?: { errorCode?: string };
+      message?: string;
+    };
+
+    const statusCode = err.statusCode;
+    const message = err.details?.errorCode ?? err.message ?? 'Unknown error';
+
+    if (statusCode === 404) {
+      throw new ResourceNotFoundException('File', blobName, message);
+    }
+
+    this.logger.error(`Failed to delete blob ${blobName}: ${message}`, stack);
+
+    throw new ExternalServiceException('AzureBlobStorage', message, err);
   }
 }

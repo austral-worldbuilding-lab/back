@@ -1,8 +1,16 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  UseGuards,
+  Delete,
+} from '@nestjs/common';
 import { FileService } from './file.service';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateFileDto } from './dto/create-file.dto';
-import { DataResponse } from '@common/types/responses';
+import { DataResponse, MessageOnlyResponse } from '@common/types/responses';
 import { PresignedUrl } from '@common/types/presigned-url';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { FileRoleGuard } from './guards/file-role.guard';
@@ -10,6 +18,7 @@ import {
   ApiGetFiles,
   ApiUploadFiles,
   ApiGetFileBuffers,
+  ApiDeleteFile,
 } from './decorators/file-swagger.decorators';
 
 @ApiTags('Files')
@@ -48,5 +57,18 @@ export class FileController {
   ): Promise<DataResponse<Buffer[]>> {
     const response = await this.fileService.readAllFilesAsBuffers(projectId);
     return { data: response };
+  }
+
+  @Delete(':projectId/:fileName')
+  @UseGuards(FileRoleGuard)
+  @ApiDeleteFile()
+  async deleteFile(
+    @Param('projectId') projectId: string,
+    @Param('fileName') fileName: string,
+  ): Promise<MessageOnlyResponse> {
+    await this.fileService.deleteFile(projectId, fileName);
+    return {
+      message: 'File deleted successfully',
+    };
   }
 }
