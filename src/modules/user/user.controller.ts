@@ -32,7 +32,7 @@ import {
   ApiUpdateUser,
   ApiDeleteUser,
 } from './decorators/user-swagger.decorators';
-import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { FirebaseUidValidationPipe } from '@common/pipes/firebase-uid-validation.pipe';
 
 @ApiTags('Users')
 @Controller('user')
@@ -75,7 +75,7 @@ export class UserController {
   @ApiBearerAuth()
   @ApiGetUser()
   async findOne(
-    @Param('id', new UuidValidationPipe()) id: string,
+    @Param('id', new FirebaseUidValidationPipe()) id: string,
   ): Promise<DataResponse<UserDto>> {
     const user = await this.userService.findOne(id);
     return {
@@ -88,7 +88,7 @@ export class UserController {
   @ApiBearerAuth()
   @ApiUpdateUser()
   async update(
-    @Param('id', new UuidValidationPipe()) id: string,
+    @Param('id', new FirebaseUidValidationPipe()) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.update(id, updateUserDto);
@@ -103,7 +103,7 @@ export class UserController {
   @ApiBearerAuth()
   @ApiDeleteUser()
   async remove(
-    @Param('id', new UuidValidationPipe()) id: string,
+    @Param('id', new FirebaseUidValidationPipe()) id: string,
   ): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.deactivateUser(id);
     return {
