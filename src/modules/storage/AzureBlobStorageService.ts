@@ -141,9 +141,6 @@ export class AzureBlobStorageService implements StorageService {
     }
   }
 
-  /**
-   * Centralizes error mapping and logging for blob deletions.
-   */
   private handleAzureDeletionError(error: unknown, blobName: string): never {
     const isNativeError = error instanceof Error;
     const stack = isNativeError ? error.stack : undefined;
