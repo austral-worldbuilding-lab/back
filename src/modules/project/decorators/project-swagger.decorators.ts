@@ -67,7 +67,8 @@ export const ApiUpdateProject = () =>
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
     ApiResponse({
       status: 403,
-      description: 'Prohibido - Solo el propietario puede actualizar el proyecto',
+      description:
+        'Prohibido - Solo el propietario puede actualizar el proyecto',
     }),
   );
 

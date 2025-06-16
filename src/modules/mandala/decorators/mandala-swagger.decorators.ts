@@ -1,10 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { MandalaDto } from '../dto/mandala.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
@@ -125,7 +120,8 @@ export const ApiDeleteMandala = () =>
     ApiResponse({ status: 404, description: 'Mandala no encontrado' }),
     ApiResponse({
       status: 403,
-      description: 'Prohibido - Solo el propietario del proyecto puede eliminar mandalas',
+      description:
+        'Prohibido - Solo el propietario del proyecto puede eliminar mandalas',
     }),
   );
 
@@ -138,7 +134,8 @@ export const ApiGenerateMandala = () =>
     }),
     ApiResponse({
       status: 201,
-      description: 'Se generó un nuevo mandala automáticamente con sus post-its',
+      description:
+        'Se generó un nuevo mandala automáticamente con sus post-its',
       type: MandalaWithPostitsAndLinkedCentersDto,
     }),
     ApiResponse({
