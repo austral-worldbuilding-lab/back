@@ -37,16 +37,10 @@ import {
   ApiDeleteProject,
   ApiGetProjectTags,
   ApiCreateProjectTag,
+  ApiDeleteProjectTag,
 } from './decorators/project-swagger.decorators';
 import { CreateTagDto } from './dto/create-tag.dto';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiParam,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
-import {AllowedRoles} from "@modules/mandala/guards/project-role.guard";
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -147,20 +141,8 @@ export class ProjectController {
 
   @Delete(':projectId/tags/:tagId')
   @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
-  @ApiOperation({ summary: 'Eliminar un tag de un proyecto' })
-  @ApiParam({ name: 'projectId', description: 'ID del proyecto', type: String })
-  @ApiParam({ name: 'tagId', description: 'ID del tag', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'El tag ha sido eliminado exitosamente',
-    type: TagDto,
-  })
-  @ApiResponse({ status: 404, description: 'Proyecto o tag no encontrado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Prohibido - El usuario no tiene permiso para eliminar tags',
-  })
+  @RequireProjectRoles('owner')
+  @ApiDeleteProjectTag()
   async deleteTag(
     @Param('projectId') projectId: string,
     @Param('tagId') tagId: string,

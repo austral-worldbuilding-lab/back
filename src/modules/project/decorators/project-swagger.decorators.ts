@@ -119,3 +119,24 @@ export const ApiCreateProjectTag = () =>
       description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );
+
+export const ApiDeleteProjectTag = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Eliminar un tag de un proyecto' }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+    }),
+    ApiParam({ name: 'tagId', description: 'ID del tag', type: String }),
+    ApiResponse({
+      status: 200,
+      description: 'El tag ha sido eliminado exitosamente',
+      type: TagDto,
+    }),
+    ApiResponse({ status: 404, description: 'Proyecto o tag no encontrado' }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - El usuario no tiene permiso para eliminar tags',
+    }),
+  );
