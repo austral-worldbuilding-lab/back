@@ -8,6 +8,7 @@ export function replacePromptPlaceholders(
   scales: string[],
   centerCharacter: string,
   centerCharacterDescription: string,
+  tags: string[],
 ): string {
   if (!promptTemplate) throw new Error('Prompt template is required');
   if (!dimensions?.length)
@@ -28,11 +29,17 @@ export function replacePromptPlaceholders(
       throw new Error(`Scale at index ${i} must be a valid string`);
   });
 
+  tags.forEach((tag, i) => {
+    if (!tag?.trim())
+      throw new Error(`Tag at index ${i} must be a valid string`);
+  });
+
   const processedPrompt = promptTemplate
     .replace(/\$\{dimensions}/g, dimensions.join(', '))
     .replace(/\$\{scales}/g, scales.join(', '))
     .replace(/\$\{centerCharacter}/g, centerCharacter)
-    .replace(/\$\{centerCharacterDescription}/g, centerCharacterDescription);
+    .replace(/\$\{centerCharacterDescription}/g, centerCharacterDescription)
+    .replace(/\$\{tags}/g, tags.join(', '));
 
   const remainingPlaceholders = processedPrompt.match(/\$\{[^}]+}/g);
   if (remainingPlaceholders?.length) {
