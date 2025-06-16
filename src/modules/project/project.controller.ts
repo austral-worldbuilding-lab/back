@@ -15,6 +15,7 @@ import {
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
+import { MaxValuePipe } from '@common/pipes/max-value.pipe';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import {
   ProjectRoleGuard,
@@ -41,6 +42,7 @@ import {
 } from './decorators/project-swagger.decorators';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -70,7 +72,13 @@ export class ProjectController {
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1))
+    @Query(
+      'limit',
+      new DefaultValuePipe(10),
+      ParseIntPipe,
+      new MinValuePipe(1),
+      new MaxValuePipe(100),
+    )
     limit: number,
   ): Promise<PaginatedResponse<ProjectDto>> {
     return await this.projectService.findAllPaginated(page, limit);
@@ -79,7 +87,9 @@ export class ProjectController {
   @Get(':id')
   @UseGuards(ProjectRoleGuard)
   @ApiGetProject()
-  async findOne(@Param('id') id: string): Promise<DataResponse<ProjectDto>> {
+  async findOne(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<ProjectDto>> {
     const project = await this.projectService.findOne(id);
     return {
       data: project,
@@ -91,7 +101,7 @@ export class ProjectController {
   @RequireProjectRoles('owner')
   @ApiUpdateProject()
   async update(
-    @Param('id') id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
     @Body() updateProjectDto: UpdateProjectDto,
   ): Promise<MessageResponse<ProjectDto>> {
     const project = await this.projectService.update(id, updateProjectDto);
@@ -105,7 +115,9 @@ export class ProjectController {
   @UseGuards(ProjectRoleGuard)
   @RequireProjectRoles('owner')
   @ApiDeleteProject()
-  async remove(@Param('id') id: string): Promise<MessageResponse<ProjectDto>> {
+  async remove(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<MessageResponse<ProjectDto>> {
     const project = await this.projectService.remove(id);
     return {
       message: 'Project deleted successfully',

@@ -20,6 +20,7 @@ import {
   ApiGetFileBuffers,
   ApiDeleteFile,
 } from './decorators/file-swagger.decorators';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
 @ApiTags('Files')
 @Controller('files')
@@ -32,7 +33,7 @@ export class FileController {
   @UseGuards(FileRoleGuard)
   @ApiGetFiles()
   async getFiles(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
   ): Promise<DataResponse<CreateFileDto[]>> {
     const response = await this.fileService.getFiles(projectId);
     return { data: response };
@@ -42,7 +43,7 @@ export class FileController {
   @UseGuards(FileRoleGuard)
   @ApiUploadFiles()
   async uploadFiles(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() body: CreateFileDto[],
   ): Promise<DataResponse<PresignedUrl[]>> {
     const response = await this.fileService.uploadFiles(body, projectId);
@@ -53,7 +54,7 @@ export class FileController {
   @UseGuards(FileRoleGuard)
   @ApiGetFileBuffers()
   async getFileBuffers(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
   ): Promise<DataResponse<Buffer[]>> {
     const response = await this.fileService.readAllFilesAsBuffers(projectId);
     return { data: response };

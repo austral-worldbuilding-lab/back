@@ -24,6 +24,7 @@ import {
 } from '@common/types/responses';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { MaxValuePipe } from '@common/pipes/max-value.pipe';
 import {
   ApiCreateUser,
   ApiGetAllUsers,
@@ -31,6 +32,7 @@ import {
   ApiUpdateUser,
   ApiDeleteUser,
 } from './decorators/user-swagger.decorators';
+import { FirebaseUidValidationPipe } from '@common/pipes/firebase-uid-validation.pipe';
 
 @ApiTags('Users')
 @Controller('user')
@@ -56,7 +58,13 @@ export class UserController {
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe, new MinValuePipe(1))
+    @Query(
+      'limit',
+      new DefaultValuePipe(10),
+      ParseIntPipe,
+      new MinValuePipe(1),
+      new MaxValuePipe(100),
+    )
     limit: number,
   ): Promise<PaginatedResponse<UserDto>> {
     return await this.userService.findAllPaginated(page, limit);
@@ -66,7 +74,9 @@ export class UserController {
   @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
   @ApiGetUser()
-  async findOne(@Param('id') id: string): Promise<DataResponse<UserDto>> {
+  async findOne(
+    @Param('id', new FirebaseUidValidationPipe()) id: string,
+  ): Promise<DataResponse<UserDto>> {
     const user = await this.userService.findOne(id);
     return {
       data: user,
@@ -78,7 +88,7 @@ export class UserController {
   @ApiBearerAuth()
   @ApiUpdateUser()
   async update(
-    @Param('id') id: string,
+    @Param('id', new FirebaseUidValidationPipe()) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.update(id, updateUserDto);
@@ -92,7 +102,9 @@ export class UserController {
   @UseGuards(FirebaseAuthGuard, UserOwnershipGuard)
   @ApiBearerAuth()
   @ApiDeleteUser()
-  async remove(@Param('id') id: string): Promise<MessageResponse<UserDto>> {
+  async remove(
+    @Param('id', new FirebaseUidValidationPipe()) id: string,
+  ): Promise<MessageResponse<UserDto>> {
     const user = await this.userService.deactivateUser(id);
     return {
       message: 'User deactivated successfully',
