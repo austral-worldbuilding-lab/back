@@ -23,4 +23,4 @@ export class FileRoleGuard extends BaseProjectRoleGuard {
 
     return Promise.resolve(projectId);
   }
-} 
+}

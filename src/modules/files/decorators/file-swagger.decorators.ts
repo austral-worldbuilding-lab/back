@@ -129,4 +129,4 @@ export const ApiGetFileBuffers = () =>
       status: 403,
       description: 'Prohibido - No tienes acceso a este proyecto',
     }),
-  ); 
+  );
