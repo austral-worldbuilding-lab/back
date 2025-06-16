@@ -75,9 +75,9 @@ export class UserController {
   @ApiBearerAuth()
   @ApiGetUser()
   async findOne(
-      @Param('id', new UuidValidationPipe()) id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<DataResponse<UserDto>> {
-      const user = await this.userService.findOne(id);
+    const user = await this.userService.findOne(id);
     return {
       data: user,
     };
@@ -103,9 +103,9 @@ export class UserController {
   @ApiBearerAuth()
   @ApiDeleteUser()
   async remove(
-      @Param('id', new UuidValidationPipe()) id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<MessageResponse<UserDto>> {
-      const user = await this.userService.deactivateUser(id);
+    const user = await this.userService.deactivateUser(id);
     return {
       message: 'User deactivated successfully',
       data: user,

@@ -23,6 +23,7 @@ import {
   MessageResponse,
   PaginatedResponse,
   DataResponse,
+  MessageOnlyResponse,
 } from '@common/types/responses';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -108,9 +109,9 @@ export class InvitationController {
   @Get(':id')
   @ApiGetInvitation()
   async findOne(
-      @Param('id', new UuidValidationPipe()) id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<DataResponse<InvitationDto>> {
-      const invitation = await this.invitationService.findOne(id);
+    const invitation = await this.invitationService.findOne(id);
     return { data: invitation };
   }
 
@@ -148,7 +149,9 @@ export class InvitationController {
   @RequireInvitationAccess('sender', 'recipient')
   @ApiDeleteInvitation()
   async remove(
-      @Param('id', new UuidValidationPipe()): Promise<void> {
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<MessageOnlyResponse> {
     await this.invitationService.remove(id);
+    return { message: 'Invitation deleted successfully' };
   }
 }

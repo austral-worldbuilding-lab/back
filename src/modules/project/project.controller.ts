@@ -88,8 +88,9 @@ export class ProjectController {
   @UseGuards(ProjectRoleGuard)
   @ApiGetProject()
   async findOne(
-      @Param('id', new UuidValidationPipe()) id: string,
-  ): Promise<DataResponse<ProjectDto>> {   const project = await this.projectService.findOne(id);
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<ProjectDto>> {
+    const project = await this.projectService.findOne(id);
     return {
       data: project,
     };
@@ -115,8 +116,9 @@ export class ProjectController {
   @RequireProjectRoles('owner')
   @ApiDeleteProject()
   async remove(
-      @Param('id', new UuidValidationPipe()) id: string,
-  ): Promise<MessageResponse<ProjectDto>> {  const project = await this.projectService.remove(id);
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.remove(id);
     return {
       message: 'Project deleted successfully',
       data: project,

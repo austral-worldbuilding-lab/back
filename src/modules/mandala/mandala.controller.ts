@@ -10,7 +10,6 @@ import {
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
-  Req,
 } from '@nestjs/common';
 import { MandalaService } from './mandala.service';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
@@ -40,7 +39,6 @@ import {
   ApiDeleteMandala,
   ApiGenerateMandala,
 } from './decorators/mandala-swagger.decorators';
-import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
 @ApiTags('Mandalas')
@@ -86,9 +84,7 @@ export class MandalaController {
   @UseGuards(MandalaRoleGuard)
   @ApiGetMandalaFilters()
   async getFilters(
-    @Query('id') id: string,
     @Query('id', new UuidValidationPipe()) id: string,
-    @Req() req: RequestWithUser,
   ): Promise<DataResponse<FilterSectionDto[]>> {
     const filters = await this.mandalaService.getFilters(id);
     return {
@@ -100,7 +96,7 @@ export class MandalaController {
   @UseGuards(MandalaRoleGuard)
   @ApiGetMandala()
   async findOne(
-      @Param('id', new UuidValidationPipe()) id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<DataResponse<MandalaDto>> {
     const mandala = await this.mandalaService.findOne(id);
     return {
@@ -127,7 +123,7 @@ export class MandalaController {
   @RequireProjectRoles('owner')
   @ApiDeleteMandala()
   async remove(
-      @Param('id', new UuidValidationPipe()) id: string,
+    @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<MessageResponse<MandalaDto>> {
     const mandala = await this.mandalaService.remove(id);
     return {
