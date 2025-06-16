@@ -11,13 +11,15 @@ export const ApiCreateProject = () =>
       description: 'El proyecto ha sido creado exitosamente',
       type: ProjectDto,
     }),
-    ApiResponse({ status: 400, description: 'Solicitud incorrecta' }),
-    ApiResponse({ status: 401, description: 'Sin autorización' }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tiene permisos suficientes',
+    }),
   );
 
 export const ApiGetAllProjects = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Obtener todos los proyectos con paginación' }),
+    ApiOperation({ summary: 'Obtener todos los proyectos' }),
     ApiQuery({
       name: 'page',
       description: 'Número de página',
@@ -35,7 +37,6 @@ export const ApiGetAllProjects = () =>
       description: 'Retorna una lista paginada de proyectos',
       type: [ProjectDto],
     }),
-    ApiResponse({ status: 401, description: 'Sin autorización' }),
   );
 
 export const ApiGetProject = () =>
@@ -48,10 +49,9 @@ export const ApiGetProject = () =>
       type: ProjectDto,
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
-    ApiResponse({ status: 401, description: 'Sin autorización' }),
     ApiResponse({
       status: 403,
-      description: 'No tienes acceso a este proyecto',
+      description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );
 
@@ -65,10 +65,9 @@ export const ApiUpdateProject = () =>
       type: ProjectDto,
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
-    ApiResponse({ status: 401, description: 'Sin autorización' }),
     ApiResponse({
       status: 403,
-      description: 'Solo el propietario puede actualizar proyectos',
+      description: 'Prohibido - Solo el propietario puede actualizar el proyecto',
     }),
   );
 
@@ -82,26 +81,40 @@ export const ApiDeleteProject = () =>
       type: ProjectDto,
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
-    ApiResponse({ status: 401, description: 'Sin autorización' }),
     ApiResponse({
       status: 403,
-      description: 'Solo el propietario puede eliminar proyectos',
+      description: 'Prohibido - Solo el propietario puede eliminar el proyecto',
     }),
   );
 
 export const ApiGetProjectTags = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Obtener tags de un proyecto específico' }),
+    ApiOperation({ summary: 'Obtener todos los tags de un proyecto' }),
     ApiParam({ name: 'id', description: 'ID del proyecto', type: String }),
     ApiResponse({
       status: 200,
-      description: 'Retorna la lista de tags del proyecto',
+      description: 'Retorna una lista de tags del proyecto',
       type: [TagDto],
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
-    ApiResponse({ status: 401, description: 'Sin autorización' }),
     ApiResponse({
       status: 403,
-      description: 'No tienes acceso a este proyecto',
+      description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+  );
+
+export const ApiCreateProjectTag = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Crear un nuevo tag para un proyecto' }),
+    ApiParam({ name: 'id', description: 'ID del proyecto', type: String }),
+    ApiResponse({
+      status: 200,
+      description: 'Tag creado exitosamente',
+      type: TagDto,
+    }),
+    ApiResponse({ status: 400, description: 'Solicitud incorrecta' }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );

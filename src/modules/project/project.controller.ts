@@ -37,7 +37,9 @@ import {
   ApiUpdateProject,
   ApiDeleteProject,
   ApiGetProjectTags,
+  ApiCreateProjectTag,
 } from './decorators/project-swagger.decorators';
+import { CreateTagDto } from './dto/create-tag.dto';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -107,6 +109,20 @@ export class ProjectController {
     return {
       message: 'Project deleted successfully',
       data: project,
+    };
+  }
+
+  @Post(':id/tag')
+  @UseGuards(ProjectRoleGuard)
+  @ApiCreateProjectTag()
+  async createProjectTag(
+    @Param('id') projectId: string,
+    @Body() tagDto: CreateTagDto,
+  ): Promise<MessageResponse<TagDto>> {
+    const tag = await this.projectService.createTag(projectId, tagDto);
+    return {
+      message: 'Tag created successfully',
+      data: tag,
     };
   }
 

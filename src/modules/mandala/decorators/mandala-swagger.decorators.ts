@@ -1,11 +1,16 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { MandalaDto } from '../dto/mandala.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
 
-export function ApiCreateMandala() {
-  return applyDecorators(
+export const ApiCreateMandala = () =>
+  applyDecorators(
     ApiOperation({ summary: 'Crear un nuevo mandala' }),
     ApiResponse({
       status: 201,
@@ -17,10 +22,9 @@ export function ApiCreateMandala() {
       description: 'Prohibido - No tiene permisos suficientes',
     }),
   );
-}
 
-export function ApiGetAllMandalas() {
-  return applyDecorators(
+export const ApiGetAllMandalas = () =>
+  applyDecorators(
     ApiOperation({ summary: 'Obtener todos los mandalas de un proyecto' }),
     ApiQuery({
       name: 'projectId',
@@ -50,10 +54,9 @@ export function ApiGetAllMandalas() {
       description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );
-}
 
-export function ApiGetMandalaFilters() {
-  return applyDecorators(
+export const ApiGetMandalaFilters = () =>
+  applyDecorators(
     ApiOperation({
       summary: 'Obtener filtros configurables para un mandala',
       description:
@@ -77,10 +80,9 @@ export function ApiGetMandalaFilters() {
       description: 'No tienes acceso al proyecto del mandala',
     }),
   );
-}
 
-export function ApiGetMandala() {
-  return applyDecorators(
+export const ApiGetMandala = () =>
+  applyDecorators(
     ApiOperation({ summary: 'Obtener un mandala por ID' }),
     ApiParam({ name: 'id', description: 'ID del mandala', type: String }),
     ApiResponse({
@@ -94,10 +96,9 @@ export function ApiGetMandala() {
       description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );
-}
 
-export function ApiUpdateMandala() {
-  return applyDecorators(
+export const ApiUpdateMandala = () =>
+  applyDecorators(
     ApiOperation({ summary: 'Actualizar un mandala' }),
     ApiParam({ name: 'id', description: 'ID del mandala', type: String }),
     ApiResponse({
@@ -111,10 +112,9 @@ export function ApiUpdateMandala() {
       description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );
-}
 
-export function ApiDeleteMandala() {
-  return applyDecorators(
+export const ApiDeleteMandala = () =>
+  applyDecorators(
     ApiOperation({ summary: 'Eliminar un mandala' }),
     ApiParam({ name: 'id', description: 'ID del mandala', type: String }),
     ApiResponse({
@@ -125,14 +125,12 @@ export function ApiDeleteMandala() {
     ApiResponse({ status: 404, description: 'Mandala no encontrado' }),
     ApiResponse({
       status: 403,
-      description:
-        'Prohibido - Solo el propietario del proyecto puede eliminar mandalas',
+      description: 'Prohibido - Solo el propietario del proyecto puede eliminar mandalas',
     }),
   );
-}
 
-export function ApiGenerateMandala() {
-  return applyDecorators(
+export const ApiGenerateMandala = () =>
+  applyDecorators(
     ApiOperation({
       summary: 'Generar un mandala automáticamente con IA',
       description:
@@ -140,8 +138,7 @@ export function ApiGenerateMandala() {
     }),
     ApiResponse({
       status: 201,
-      description:
-        'Se generó un nuevo mandala automáticamente con sus post-its',
+      description: 'Se generó un nuevo mandala automáticamente con sus post-its',
       type: MandalaWithPostitsAndLinkedCentersDto,
     }),
     ApiResponse({
@@ -149,4 +146,3 @@ export function ApiGenerateMandala() {
       description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );
-}
