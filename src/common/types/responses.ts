@@ -16,3 +16,7 @@ export interface MessageResponse<T> {
 export interface DataResponse<T> {
   data: T;
 }
+
+export interface MessageOnlyResponse {
+  message: string;
+}

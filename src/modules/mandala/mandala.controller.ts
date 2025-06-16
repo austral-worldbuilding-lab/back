@@ -15,8 +15,6 @@ import {
 import { MandalaService } from './mandala.service';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
-import { ProjectRoleGuard, AllowedRoles } from './guards/project-role.guard';
-import { ProjectParticipantGuard } from './guards/project-participant.guard';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { MandalaDto } from './dto/mandala.dto';
 import {
@@ -27,15 +25,21 @@ import {
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { MaxValuePipe } from '@common/pipes/max-value.pipe';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FilterSectionDto } from './dto/filter-option.dto';
+import {
+  MandalaRoleGuard,
+  RequireProjectRoles,
+} from './guards/mandala-role.guard';
+import {
+  ApiCreateMandala,
+  ApiGetAllMandalas,
+  ApiGetMandalaFilters,
+  ApiGetMandala,
+  ApiUpdateMandala,
+  ApiDeleteMandala,
+  ApiGenerateMandala,
+} from './decorators/mandala-swagger.decorators';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
@@ -47,18 +51,8 @@ export class MandalaController {
   constructor(private readonly mandalaService: MandalaService) {}
 
   @Post()
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
-  @ApiOperation({ summary: 'Crear un nuevo mandala' })
-  @ApiResponse({
-    status: 201,
-    description: 'El mandala ha sido creado exitosamente',
-    type: MandalaDto,
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Prohibido - No tiene permisos suficientes',
-  })
+  @UseGuards(MandalaRoleGuard)
+  @ApiCreateMandala()
   async create(
     @Body() createMandalaDto: CreateMandalaDto,
   ): Promise<MessageResponse<MandalaDto>> {
@@ -70,31 +64,8 @@ export class MandalaController {
   }
 
   @Get()
-  @UseGuards(ProjectParticipantGuard)
-  @ApiOperation({ summary: 'Obtener todos los mandalas de un proyecto' })
-  @ApiQuery({
-    name: 'projectId',
-    required: true,
-    description: 'ID del proyecto',
-    type: String,
-  })
-  @ApiQuery({
-    name: 'page',
-    description: 'Número de página',
-    type: Number,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Elementos por página',
-    type: Number,
-    example: 10,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna una lista paginada de mandalas',
-    type: [MandalaDto],
-  })
+  @UseGuards(MandalaRoleGuard)
+  @ApiGetAllMandalas()
   async findAll(
     @Query('projectId', new UuidValidationPipe()) projectId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
@@ -112,52 +83,24 @@ export class MandalaController {
   }
 
   @Get('filter-options')
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
-  @ApiOperation({
-    summary: 'Obtener filtros configurables para un mandala',
-    description:
-      'Retorna todas las opciones de filtros disponibles para construir dinámicamente un menú de selección (dimensiones, escalas y tags) basado en el mandala especificado',
-  })
-  @ApiQuery({
-    name: 'id',
-    required: true,
-    description:
-      'ID del mandala para obtener dimensiones, escalas y tags del proyecto asociado',
-    type: String,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna las secciones de filtros configurables',
-    type: [FilterSectionDto],
-  })
-  @ApiResponse({ status: 404, description: 'Mandala no encontrado' })
-  @ApiResponse({
-    status: 403,
-    description: 'No tiene acceso al proyecto del mandala',
-  })
+  @UseGuards(MandalaRoleGuard)
+  @ApiGetMandalaFilters()
   async getFilters(
+    @Query('id') id: string,
     @Query('id', new UuidValidationPipe()) id: string,
     @Req() req: RequestWithUser,
   ): Promise<DataResponse<FilterSectionDto[]>> {
-    const filters = await this.mandalaService.getFilters(id, req.user.id);
+    const filters = await this.mandalaService.getFilters(id);
     return {
       data: filters,
     };
   }
 
   @Get(':id')
-  @UseGuards(ProjectParticipantGuard)
-  @ApiOperation({ summary: 'Obtener un mandala por ID' })
-  @ApiParam({ name: 'id', description: 'ID del mandala', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna el mandala con el ID especificado',
-    type: MandalaDto,
-  })
-  @ApiResponse({ status: 404, description: 'Mandala no encontrado' })
+  @UseGuards(MandalaRoleGuard)
+  @ApiGetMandala()
   async findOne(
-    @Param('id', new UuidValidationPipe()) id: string,
+      @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<DataResponse<MandalaDto>> {
     const mandala = await this.mandalaService.findOne(id);
     return {
@@ -166,20 +109,8 @@ export class MandalaController {
   }
 
   @Patch(':id')
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
-  @ApiOperation({ summary: 'Actualizar un mandala' })
-  @ApiParam({ name: 'id', description: 'ID del mandala', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'El mandala ha sido actualizado exitosamente',
-    type: MandalaDto,
-  })
-  @ApiResponse({ status: 404, description: 'Mandala no encontrado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Prohibido - No tiene permisos suficientes',
-  })
+  @UseGuards(MandalaRoleGuard)
+  @ApiUpdateMandala()
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
     @Body() updateMandalaDto: UpdateMandalaDto,
@@ -192,22 +123,11 @@ export class MandalaController {
   }
 
   @Delete(':id')
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner')
-  @ApiOperation({ summary: 'Eliminar un mandala' })
-  @ApiParam({ name: 'id', description: 'ID del mandala', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'El mandala ha sido eliminado exitosamente',
-    type: MandalaDto,
-  })
-  @ApiResponse({ status: 404, description: 'Mandala no encontrado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Prohibido - Solo el propietario puede eliminar mandalas',
-  })
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner')
+  @ApiDeleteMandala()
   async remove(
-    @Param('id', new UuidValidationPipe()) id: string,
+      @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<MessageResponse<MandalaDto>> {
     const mandala = await this.mandalaService.remove(id);
     return {
@@ -217,18 +137,8 @@ export class MandalaController {
   }
 
   @Post('generate')
-  @UseGuards(ProjectRoleGuard)
-  @AllowedRoles('owner', 'member')
-  @ApiOperation({
-    summary: 'Generar un mandala automáticamente con IA',
-    description:
-      'Crea un nuevo mandala con post-its generados automáticamente usando ia.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Se generó un nuevo mandala automáticamente con sus post-its',
-    type: MandalaWithPostitsAndLinkedCentersDto,
-  })
+  @UseGuards(MandalaRoleGuard)
+  @ApiGenerateMandala()
   async generate(
     @Body() createMandalaDto: CreateMandalaDto,
   ): Promise<MessageResponse<MandalaWithPostitsAndLinkedCentersDto>> {

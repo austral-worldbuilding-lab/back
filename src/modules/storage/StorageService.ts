@@ -10,4 +10,5 @@ export interface StorageService {
   getFiles(projectId: string): Promise<CreateFileDto[]>;
   readAllFilesAsBuffers(folder: string): Promise<Buffer[]>;
   readAllFilesAsBuffersWithMetadata(folder: string): Promise<FileBuffer[]>;
+  deleteFile(projectId: string, fileName: string): Promise<void>;
 }
