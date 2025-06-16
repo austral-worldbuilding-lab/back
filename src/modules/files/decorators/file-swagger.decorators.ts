@@ -153,6 +153,12 @@ export const ApiDeleteFile = () =>
     ApiResponse({
       status: 200,
       description: 'Archivo eliminado exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string' },
+        },
+      },
     }),
     ApiResponse({
       status: 404,
