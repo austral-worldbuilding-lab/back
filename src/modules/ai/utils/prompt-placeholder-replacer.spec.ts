@@ -6,6 +6,7 @@ describe('replacePromptPlaceholders', () => {
     Trabaja con estas escalas: \${scales}
     Personaje central: \${centerCharacter}
     Descripción: \${centerCharacterDescription}
+    Etiquetas disponibles: \${tags}
     Nunca inventes nuevas dimensiones ni escalas fuera de las proporcionadas.
   `;
 
@@ -13,6 +14,7 @@ describe('replacePromptPlaceholders', () => {
   const validScales = ['Persona', 'Comunidad', 'Institución'];
   const validCenterCharacter = 'Alumno';
   const validCenterCharacterDescription = 'Un alumno generico de la UA';
+  const validTags = ['educación', 'tecnología'];
 
   it('should successfully replace all placeholders with valid data', () => {
     const result = replacePromptPlaceholders(
@@ -21,16 +23,37 @@ describe('replacePromptPlaceholders', () => {
       validScales,
       validCenterCharacter,
       validCenterCharacterDescription,
+      validTags,
     );
 
     expect(result).toContain('Recursos, Cultura, Economía');
     expect(result).toContain('Persona, Comunidad, Institución');
     expect(result).toContain('Alumno');
     expect(result).toContain('Un alumno generico de la UA');
+    expect(result).toContain('educación, tecnología');
     expect(result).not.toContain('${dimensions}');
     expect(result).not.toContain('${scales}');
     expect(result).not.toContain('${centerCharacter}');
     expect(result).not.toContain('${centerCharacterDescription}');
+    expect(result).not.toContain('${tags}');
+  });
+
+  it('should handle empty tags array', () => {
+    const result = replacePromptPlaceholders(
+      mockPromptTemplate,
+      validDimensions,
+      validScales,
+      validCenterCharacter,
+      validCenterCharacterDescription,
+      [],
+    );
+
+    expect(result).toContain('Recursos, Cultura, Economía');
+    expect(result).toContain('Persona, Comunidad, Institución');
+    expect(result).toContain('Alumno');
+    expect(result).toContain('Un alumno generico de la UA');
+    expect(result).toContain('Etiquetas disponibles: ');
+    expect(result).not.toContain('${tags}');
   });
 
   it('should handle single dimension and scale', () => {
@@ -40,6 +63,7 @@ describe('replacePromptPlaceholders', () => {
       ['Persona'],
       validCenterCharacter,
       validCenterCharacterDescription,
+      validTags,
     );
 
     expect(result).toContain('Recursos');
@@ -56,6 +80,7 @@ describe('replacePromptPlaceholders', () => {
         validScales,
         validCenterCharacter,
         validCenterCharacterDescription,
+        validTags,
       );
     }).toThrow('Prompt template is required');
   });
@@ -68,6 +93,7 @@ describe('replacePromptPlaceholders', () => {
         validScales,
         validCenterCharacter,
         validCenterCharacterDescription,
+        validTags,
       );
     }).toThrow('At least one dimension must be provided');
   });
@@ -80,6 +106,7 @@ describe('replacePromptPlaceholders', () => {
         [],
         validCenterCharacter,
         validCenterCharacterDescription,
+        validTags,
       );
     }).toThrow('At least one scale must be provided');
   });
@@ -92,6 +119,7 @@ describe('replacePromptPlaceholders', () => {
         validScales,
         validCenterCharacter,
         validCenterCharacterDescription,
+        validTags,
       );
     }).toThrow('Dimension at index 0 must be a valid string');
   });
@@ -104,6 +132,7 @@ describe('replacePromptPlaceholders', () => {
         [''],
         validCenterCharacter,
         validCenterCharacterDescription,
+        validTags,
       );
     }).toThrow('Scale at index 0 must be a valid string');
   });
@@ -116,6 +145,7 @@ describe('replacePromptPlaceholders', () => {
         validScales,
         '',
         validCenterCharacterDescription,
+        validTags,
       );
     }).toThrow('Center character must be provided');
   });
@@ -128,8 +158,22 @@ describe('replacePromptPlaceholders', () => {
         validScales,
         validCenterCharacter,
         '',
+        validTags,
       );
     }).toThrow('Center character description must be provided');
+  });
+
+  it('should throw error when tag is empty string', () => {
+    expect(() => {
+      replacePromptPlaceholders(
+        mockPromptTemplate,
+        validDimensions,
+        validScales,
+        validCenterCharacter,
+        validCenterCharacterDescription,
+        [''],
+      );
+    }).toThrow('Tag at index 0 must be a valid string');
   });
 
   it('should throw error when template contains unreplaced placeholders', () => {
@@ -138,6 +182,7 @@ describe('replacePromptPlaceholders', () => {
       \${scales}
       \${centerCharacter}
       \${centerCharacterDescription}
+      \${tags}
       \${unknownPlaceholder}
     `;
 
@@ -148,6 +193,7 @@ describe('replacePromptPlaceholders', () => {
         validScales,
         validCenterCharacter,
         validCenterCharacterDescription,
+        validTags,
       );
     }).toThrow('Unreplaced placeholders found: ${unknownPlaceholder}');
   });
@@ -159,6 +205,7 @@ describe('replacePromptPlaceholders', () => {
       Escalas: \${scales}
       Personaje: \${centerCharacter}
       Personaje otra vez: \${centerCharacter}
+      Tags: \${tags}
     `;
 
     const result = replacePromptPlaceholders(
@@ -167,12 +214,14 @@ describe('replacePromptPlaceholders', () => {
       validScales,
       validCenterCharacter,
       validCenterCharacterDescription,
+      validTags,
     );
 
     expect(result).not.toContain('${dimensions}');
     expect(result).not.toContain('${scales}');
     expect(result).not.toContain('${centerCharacter}');
     expect(result).not.toContain('${centerCharacterDescription}');
+    expect(result).not.toContain('${tags}');
 
     // Should contain the replacement text multiple times
     expect((result.match(/Recursos, Cultura, Economía/g) || []).length).toBe(2);

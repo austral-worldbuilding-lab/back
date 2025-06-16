@@ -16,28 +16,37 @@ import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
-import { ProjectParticipantGuard } from '@modules/mandala/guards/project-participant.guard';
+import {
+  ProjectRoleGuard,
+  RequireProjectRoles,
+} from './guards/project-role.guard';
 import { ProjectDto } from './dto/project.dto';
 import {
   MessageResponse,
   DataResponse,
   PaginatedResponse,
 } from '@common/types/responses';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { TagDto } from './dto/tag.dto';
 import {
-  ProjectRoleGuard,
-  AllowedRoles,
-} from '@modules/mandala/guards/project-role.guard';
+  ApiCreateProject,
+  ApiGetAllProjects,
+  ApiGetProject,
+  ApiUpdateProject,
+  ApiDeleteProject,
+  ApiGetProjectTags,
+  ApiCreateProjectTag,
+} from './decorators/project-swagger.decorators';
+import { CreateTagDto } from './dto/create-tag.dto';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiParam,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
+import {AllowedRoles} from "@modules/mandala/guards/project-role.guard";
 
 @ApiTags('Projects')
 @Controller('project')
@@ -47,13 +56,7 @@ export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear un nuevo proyecto' })
-  @ApiResponse({
-    status: 201,
-    description: 'El proyecto ha sido creado exitosamente',
-    type: ProjectDto,
-  })
-  @ApiResponse({ status: 400, description: 'Solicitud incorrecta' })
+  @ApiCreateProject()
   async create(
     @Body() createProjectDto: CreateProjectDto,
     @Req() req: RequestWithUser,
@@ -69,24 +72,7 @@ export class ProjectController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Obtener todos los proyectos con paginación' })
-  @ApiQuery({
-    name: 'page',
-    description: 'Número de página',
-    type: Number,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Elementos por página',
-    type: Number,
-    example: 10,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna una lista paginada de proyectos',
-    type: [ProjectDto],
-  })
+  @ApiGetAllProjects()
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
@@ -97,14 +83,8 @@ export class ProjectController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener un proyecto por ID' })
-  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna el proyecto con el ID especificado',
-    type: ProjectDto,
-  })
-  @ApiResponse({ status: 404, description: 'Proyecto no encontrado' })
+  @UseGuards(ProjectRoleGuard)
+  @ApiGetProject()
   async findOne(@Param('id') id: string): Promise<DataResponse<ProjectDto>> {
     const project = await this.projectService.findOne(id);
     return {
@@ -113,18 +93,9 @@ export class ProjectController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Actualizar un proyecto' })
-  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'El proyecto ha sido actualizado exitosamente',
-    type: ProjectDto,
-  })
-  @ApiResponse({ status: 404, description: 'Proyecto no encontrado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Prohibido - Solo el propietario puede actualizar proyectos',
-  })
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner')
+  @ApiUpdateProject()
   async update(
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
@@ -137,14 +108,9 @@ export class ProjectController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar un proyecto' })
-  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'El proyecto ha sido eliminado exitosamente',
-    type: ProjectDto,
-  })
-  @ApiResponse({ status: 404, description: 'Proyecto no encontrado' })
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner')
+  @ApiDeleteProject()
   async remove(@Param('id') id: string): Promise<MessageResponse<ProjectDto>> {
     const project = await this.projectService.remove(id);
     return {
@@ -153,25 +119,27 @@ export class ProjectController {
     };
   }
 
+  @Post(':id/tag')
+  @UseGuards(ProjectRoleGuard)
+  @ApiCreateProjectTag()
+  async createProjectTag(
+    @Param('id') projectId: string,
+    @Body() tagDto: CreateTagDto,
+  ): Promise<MessageResponse<TagDto>> {
+    const tag = await this.projectService.createTag(projectId, tagDto);
+    return {
+      message: 'Tag created successfully',
+      data: tag,
+    };
+  }
+
   @Get(':id/tags')
-  @UseGuards(ProjectParticipantGuard)
-  @ApiOperation({ summary: 'Obtener tags de un proyecto específico' })
-  @ApiParam({ name: 'id', description: 'ID del proyecto', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna la lista de tags del proyecto',
-    type: [TagDto],
-  })
-  @ApiResponse({ status: 404, description: 'Proyecto no encontrado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Prohibido - No pertenece al proyecto',
-  })
+  @UseGuards(ProjectRoleGuard)
+  @ApiGetProjectTags()
   async getProjectTags(
     @Param('id') id: string,
-    @Req() req: RequestWithUser,
   ): Promise<DataResponse<TagDto[]>> {
-    const tags = await this.projectService.getProjectTags(id, req.user.id);
+    const tags = await this.projectService.getProjectTags(id);
     return {
       data: tags,
     };

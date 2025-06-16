@@ -7,6 +7,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
 import { TagDto } from './dto/tag.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import { CreateTagDto } from './dto/create-tag.dto';
 
 @Injectable()
 export class ProjectRepository {
@@ -137,6 +138,16 @@ export class ProjectRepository {
   async getProjectTags(projectId: string): Promise<TagDto[]> {
     return this.prisma.tag.findMany({
       where: { projectId },
+    });
+  }
+
+  async createTag(projectId: string, dto: CreateTagDto): Promise<TagDto> {
+    return this.prisma.tag.create({
+      data: {
+        name: dto.name,
+        color: dto.color,
+        projectId,
+      },
     });
   }
 

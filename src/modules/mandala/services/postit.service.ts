@@ -3,17 +3,22 @@ import {
   Postit,
   PostitCoordinates,
   PostitWithCoordinates,
+  PostitTag,
+  AiPostitResponse,
 } from '../types/postits';
 import { AiService } from '@modules/ai/ai.service';
 import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
 import { MandalaRepository } from '../mandala.repository';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
+import { ProjectService } from '@modules/project/project.service';
+import { TagDto } from '@modules/project/dto/tag.dto';
 
 @Injectable()
 export class PostitService {
   constructor(
     private aiService: AiService,
     private mandalaRepository: MandalaRepository,
+    private projectService: ProjectService,
   ) {}
 
   async generatePostitsForMandala(
@@ -67,13 +72,47 @@ export class PostitService {
   }
 
   private async generatePostits(mandala: MandalaDto): Promise<Postit[]> {
-    return this.aiService.generatePostits(
+    const projectTags = await this.projectService.getProjectTags(
+      mandala.projectId,
+    );
+
+    const tagNames = projectTags.map((tag) => tag.name);
+
+    const aiResponse: AiPostitResponse[] = await this.aiService.generatePostits(
       mandala.projectId,
       mandala.configuration.dimensions.map((dim) => dim.name),
       mandala.configuration.scales,
       mandala.configuration.center.name,
       mandala.configuration.center.description || 'N/A',
+      tagNames,
     );
+
+    return aiResponse.map(
+      (aiPostit: AiPostitResponse): Postit => ({
+        content: aiPostit.content,
+        dimension: aiPostit.dimension,
+        section: aiPostit.section,
+        tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
+      }),
+    );
+  }
+
+  private mapTagsWithColors(
+    tagNames: string[],
+    projectTags: TagDto[],
+  ): PostitTag[] {
+    if (!tagNames || tagNames.length === 0) return [];
+
+    return tagNames
+      .map((tagName) => {
+        const projectTag = projectTags.find((pt) => pt.name === tagName);
+        if (!projectTag) return null;
+        return {
+          name: projectTag.name,
+          color: projectTag.color,
+        };
+      })
+      .filter((tag): tag is PostitTag => tag !== null);
   }
 
   private groupPostitsBySection(postits: Postit[]): Record<string, Postit[]> {
