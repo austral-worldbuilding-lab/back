@@ -12,6 +12,11 @@ export const ApiCreateInvitation = () =>
       type: InvitationDto,
     }),
     ApiResponse({ status: 400, description: 'Solicitud incorrecta' }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - Solo los miembros del proyecto pueden crear invitaciones',
+    }),
   );
 
 export const ApiGetAllInvitations = () =>
@@ -53,7 +58,11 @@ export const ApiGetAllInvitations = () =>
 export const ApiGetInvitationsByProject = () =>
   applyDecorators(
     ApiOperation({ summary: 'Obtener invitaciones por proyecto' }),
-    ApiParam({ name: 'projectId', description: 'ID del proyecto', type: String }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+    }),
     ApiQuery({
       name: 'page',
       description: 'Número de página',
@@ -71,6 +80,11 @@ export const ApiGetInvitationsByProject = () =>
       description: 'Retorna una lista paginada de invitaciones del proyecto',
       type: [InvitationDto],
     }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - Solo los miembros del proyecto pueden ver las invitaciones',
+    }),
   );
 
 export const ApiGetInvitation = () =>
@@ -82,6 +96,11 @@ export const ApiGetInvitation = () =>
       type: InvitationDto,
     }),
     ApiResponse({ status: 404, description: 'Invitación no encontrada' }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - Solo puedes ver invitaciones que enviaste o recibiste',
+    }),
   );
 
 export const ApiAcceptInvitation = () =>
@@ -94,6 +113,11 @@ export const ApiAcceptInvitation = () =>
       type: InvitationDto,
     }),
     ApiResponse({ status: 404, description: 'Invitación no encontrada' }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - Solo el destinatario puede aceptar la invitación',
+    }),
   );
 
 export const ApiRejectInvitation = () =>
@@ -106,6 +130,11 @@ export const ApiRejectInvitation = () =>
       type: InvitationDto,
     }),
     ApiResponse({ status: 404, description: 'Invitación no encontrada' }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - Solo el destinatario puede rechazar la invitación',
+    }),
   );
 
 export const ApiDeleteInvitation = () =>
@@ -117,4 +146,9 @@ export const ApiDeleteInvitation = () =>
       description: 'La invitación ha sido eliminada exitosamente',
     }),
     ApiResponse({ status: 404, description: 'Invitación no encontrada' }),
-  ); 
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - Solo el remitente o destinatario puede eliminar la invitación',
+    }),
+  );

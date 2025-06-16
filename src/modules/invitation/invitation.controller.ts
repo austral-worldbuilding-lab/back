@@ -33,6 +33,11 @@ import {
   ApiRejectInvitation,
   ApiDeleteInvitation,
 } from './decorators/invitation-swagger.decorators';
+import { InvitationRoleGuard } from './guards/invitation-role.guard';
+import {
+  InvitationAccessGuard,
+  RequireInvitationAccess,
+} from './guards/invitation-access.guard';
 
 @ApiTags('Invitations')
 @Controller('invitation')
@@ -42,6 +47,7 @@ export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
   @Post()
+  @UseGuards(InvitationRoleGuard)
   @ApiCreateInvitation()
   async create(
     @Body() createInvitationDto: CreateInvitationDto,
@@ -91,6 +97,8 @@ export class InvitationController {
   }
 
   @Post(':id/accept')
+  @UseGuards(InvitationAccessGuard)
+  @RequireInvitationAccess('recipient')
   @ApiAcceptInvitation()
   async accept(
     @Param('id') id: string,
@@ -104,6 +112,8 @@ export class InvitationController {
   }
 
   @Post(':id/reject')
+  @UseGuards(InvitationAccessGuard)
+  @RequireInvitationAccess('recipient')
   @ApiRejectInvitation()
   async reject(
     @Param('id') id: string,
@@ -116,6 +126,8 @@ export class InvitationController {
   }
 
   @Delete(':id')
+  @UseGuards(InvitationAccessGuard)
+  @RequireInvitationAccess('sender', 'recipient')
   @ApiDeleteInvitation()
   async remove(@Param('id') id: string): Promise<void> {
     await this.invitationService.remove(id);
