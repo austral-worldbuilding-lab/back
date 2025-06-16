@@ -23,14 +23,16 @@ import {
   DataResponse,
 } from '@common/types/responses';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
+  ApiCreateInvitation,
+  ApiGetAllInvitations,
+  ApiGetInvitationsByProject,
+  ApiGetInvitation,
+  ApiAcceptInvitation,
+  ApiRejectInvitation,
+  ApiDeleteInvitation,
+} from './decorators/invitation-swagger.decorators';
 
 @ApiTags('Invitations')
 @Controller('invitation')
@@ -40,13 +42,7 @@ export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear una nueva invitación' })
-  @ApiResponse({
-    status: 201,
-    description: 'La invitación ha sido enviada exitosamente',
-    type: InvitationDto,
-  })
-  @ApiResponse({ status: 400, description: 'Solicitud incorrecta' })
+  @ApiCreateInvitation()
   async create(
     @Body() createInvitationDto: CreateInvitationDto,
   ): Promise<MessageResponse<InvitationDto>> {
@@ -58,38 +54,7 @@ export class InvitationController {
   }
 
   @Get()
-  @ApiOperation({
-    summary: 'Obtener todas las invitaciones con filtros opcionales',
-  })
-  @ApiQuery({
-    name: 'page',
-    description: 'Número de página',
-    type: Number,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Elementos por página',
-    type: Number,
-    example: 10,
-  })
-  @ApiQuery({
-    name: 'projectId',
-    description: 'ID del proyecto (opcional)',
-    type: String,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'status',
-    description: 'Estado de la invitación (opcional)',
-    enum: InvitationStatus,
-    required: false,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna una lista paginada de invitaciones',
-    type: [InvitationDto],
-  })
+  @ApiGetAllInvitations()
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
@@ -107,25 +72,7 @@ export class InvitationController {
   }
 
   @Get('project/:projectId')
-  @ApiOperation({ summary: 'Obtener invitaciones por proyecto' })
-  @ApiParam({ name: 'projectId', description: 'ID del proyecto', type: String })
-  @ApiQuery({
-    name: 'page',
-    description: 'Número de página',
-    type: Number,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Elementos por página',
-    type: Number,
-    example: 10,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna una lista paginada de invitaciones del proyecto',
-    type: [InvitationDto],
-  })
+  @ApiGetInvitationsByProject()
   async findByProject(
     @Param('projectId') projectId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
@@ -137,27 +84,14 @@ export class InvitationController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener una invitación por ID' })
-  @ApiParam({ name: 'id', description: 'ID de la invitación', type: String })
-  @ApiResponse({
-    status: 200,
-    type: InvitationDto,
-  })
-  @ApiResponse({ status: 404, description: 'Invitación no encontrada' })
+  @ApiGetInvitation()
   async findOne(@Param('id') id: string): Promise<DataResponse<InvitationDto>> {
     const invitation = await this.invitationService.findOne(id);
     return { data: invitation };
   }
 
   @Post(':id/accept')
-  @ApiOperation({ summary: 'Aceptar una invitación' })
-  @ApiParam({ name: 'id', description: 'ID de la invitación', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'La invitación ha sido aceptada exitosamente',
-    type: InvitationDto,
-  })
-  @ApiResponse({ status: 404, description: 'Invitación no encontrada' })
+  @ApiAcceptInvitation()
   async accept(
     @Param('id') id: string,
     @Request() req: RequestWithUser,
@@ -170,14 +104,7 @@ export class InvitationController {
   }
 
   @Post(':id/reject')
-  @ApiOperation({ summary: 'Rechazar una invitación' })
-  @ApiParam({ name: 'id', description: 'ID de la invitación', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'La invitación ha sido rechazada exitosamente',
-    type: InvitationDto,
-  })
-  @ApiResponse({ status: 404, description: 'Invitación no encontrada' })
+  @ApiRejectInvitation()
   async reject(
     @Param('id') id: string,
   ): Promise<MessageResponse<InvitationDto>> {
@@ -189,13 +116,7 @@ export class InvitationController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar una invitación' })
-  @ApiParam({ name: 'id', description: 'ID de la invitación', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'La invitación ha sido eliminada exitosamente',
-  })
-  @ApiResponse({ status: 404, description: 'Invitación no encontrada' })
+  @ApiDeleteInvitation()
   async remove(@Param('id') id: string): Promise<void> {
     await this.invitationService.remove(id);
   }
