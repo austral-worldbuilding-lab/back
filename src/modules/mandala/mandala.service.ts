@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ResourceNotFoundException,
   InternalServerErrorException,
+  ExternalServiceException,
 } from '@common/exceptions/custom-exceptions';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
@@ -15,6 +16,10 @@ import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { ProjectService } from '@modules/project/project.service';
 import { FilterSectionDto } from './dto/filter-option.dto';
+import {
+  FirestoreMandalaDocument,
+  FirestoreCharacter,
+} from '../firebase/types/firestore-character.type';
 
 @Injectable()
 export class MandalaService {
@@ -131,19 +136,84 @@ export class MandalaService {
   }
 
   async remove(id: string): Promise<MandalaDto> {
-    return this.mandalaRepository.remove(id);
+    const mandala = await this.findOne(id);
+
+    try {
+      await this.firebaseDataService.deleteDocument(mandala.projectId, id);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new ExternalServiceException(
+        'Firebase',
+        'Failed to delete mandala document',
+        { mandalaId: id, originalError: errorMessage },
+      );
+    }
+
+    const deletedMandala = await this.mandalaRepository.remove(id);
+
+    if (mandala.linkedToId) {
+      await this.removeChildFromParentFirestore(mandala.linkedToId, id).catch(
+        (error: unknown) => {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error';
+          this.logger.error(
+            `Failed to remove child ${id} from parent mandala ${mandala.linkedToId}: ${errorMessage}`,
+          );
+        },
+      );
+    }
+
+    return deletedMandala;
+  }
+
+  async removeChildFromParentFirestore(
+    parentMandalaId: string,
+    deletedChildId: string,
+  ): Promise<void> {
+    const parentMandala = await this.findOne(parentMandalaId);
+
+    try {
+      const currentDocument = (await this.firebaseDataService.getDocument(
+        parentMandala.projectId,
+        parentMandalaId,
+      )) as FirestoreMandalaDocument;
+
+      const existingCharacters: FirestoreCharacter[] =
+        currentDocument.characters || [];
+
+      const updatedCharacters = existingCharacters.filter(
+        (character) => character.id !== deletedChildId,
+      );
+
+      await this.firebaseDataService.updateDocument(
+        parentMandala.projectId,
+        { characters: updatedCharacters },
+        parentMandalaId,
+      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new ExternalServiceException(
+        'Firebase',
+        'Failed to remove child from parent mandala document',
+        {
+          parentMandalaId,
+          deletedChildId,
+          originalError: errorMessage,
+        },
+      );
+    }
   }
 
   async updateParentMandalaDocument(parentMandalaId: string): Promise<void> {
     try {
-      // Get the parent mandala
       const parentMandala =
         await this.mandalaRepository.findOne(parentMandalaId);
       if (!parentMandala) {
         throw new ResourceNotFoundException('Parent Mandala', parentMandalaId);
       }
 
-      // Get updated linked mandalas centers
       const linkedMandalasCenter = (
         await this.mandalaRepository.findLinkedMandalasCenters(parentMandalaId)
       ).map((center) => ({
@@ -156,7 +226,6 @@ export class MandalaService {
         dimension: '',
       }));
 
-      // Update the Firebase document with new linked centers
       const updateData = {
         characters: linkedMandalasCenter,
       };
