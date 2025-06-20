@@ -12,6 +12,7 @@ export interface AiPostitResponse {
 }
 
 export interface Postit {
+  id: string;
   content: string;
   dimension: string;
   section: string;

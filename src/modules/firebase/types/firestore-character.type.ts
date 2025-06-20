@@ -1,3 +1,5 @@
+import { Postit } from '@modules/mandala/types/postits';
+
 export interface FirestorePosition {
   x: number;
   y: number;
@@ -15,6 +17,7 @@ export interface FirestoreCharacter {
 
 export interface FirestoreMandalaDocument {
   mandala?: any;
-  postits?: any[];
+  postits?: Postit[];
   characters?: FirestoreCharacter[];
+  updatedAt?: Date;
 }

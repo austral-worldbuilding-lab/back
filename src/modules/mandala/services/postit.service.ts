@@ -13,6 +13,7 @@ import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { ProjectService } from '@modules/project/project.service';
 import { TagDto } from '@modules/project/dto/tag.dto';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
+import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -92,6 +93,7 @@ export class PostitService {
 
     return aiResponse.map(
       (aiPostit: AiPostitResponse): Postit => ({
+        id: randomUUID(),
         content: aiPostit.content,
         dimension: aiPostit.dimension,
         section: aiPostit.section,
@@ -252,30 +254,24 @@ export class PostitService {
     mandalaId: string,
     postit: Postit,
   ): Promise<void> {
-    // Get the current mandala document from Firestore
-    const currentDocument = await this.firebaseDataService.getDocument(
+    const currentDocument = (await this.firebaseDataService.getDocument(
       projectId,
       mandalaId,
-    );
+    )) as FirestoreMandalaDocument | null;
 
     if (!currentDocument) {
       throw new BusinessLogicException('Mandala not found', { mandalaId });
     }
 
-    // Generate a unique ID for the post-it
     const postitWithId = {
       ...postit,
       id: randomUUID(),
       fatherId: postit.fatherId || null,
     };
 
-    // Get existing postits or initialize empty array
     const existingPostits = currentDocument.postits || [];
-
-    // Add the new postit
     const updatedPostits = [...existingPostits, postitWithId];
 
-    // Update the document in Firestore
     await this.firebaseDataService.updateDocument(
       projectId,
       {
@@ -289,13 +285,12 @@ export class PostitService {
   async deletePostit(
     projectId: string,
     mandalaId: string,
-    index: number,
+    postitId: string,
   ): Promise<boolean> {
-    // Get the current mandala document from Firestore
-    const currentDocument = await this.firebaseDataService.getDocument(
+    const currentDocument = (await this.firebaseDataService.getDocument(
       projectId,
       mandalaId,
-    );
+    )) as FirestoreMandalaDocument | null;
 
     if (!currentDocument) {
       throw new BusinessLogicException('Mandala not found', { mandalaId });
@@ -303,14 +298,9 @@ export class PostitService {
 
     const postits = currentDocument.postits || [];
 
-    if (index < 0 || index >= postits.length) {
-      throw new BusinessLogicException('Invalid postit index', { index });
-    }
+    const postitIdsToDelete = this.findPostitAndAllChildren(postits, postitId);
+    const updatedPostits = postits.filter((p) => !postitIdsToDelete.includes(p.id));
 
-    // Remove the postit at the specified index
-    const updatedPostits = postits.filter((_: Postit, i: number) => i !== index);
-
-    // Update the document in Firestore
     await this.firebaseDataService.updateDocument(
       projectId,
       {
@@ -321,5 +311,38 @@ export class PostitService {
     );
 
     return true;
+  }
+
+  /**
+   * Recursively finds all post-its that should be deleted when removing a parent post-it.
+   * This includes the parent post-it itself and all its descendants in the hierarchy.
+   * 
+   * @param postits - Array of all post-its in the mandala document
+   * @param parentId - ID of the parent post-it to be deleted
+   * @returns Array of post-it IDs that should be deleted (parent + all children)
+   * 
+   * Example hierarchy:
+   * Postit A (id: "a")
+   * ├── Postit B (fatherId: "a")
+   * │   ├── Postit D (fatherId: "b")
+   * │   └── Postit E (fatherId: "b")
+   * └── Postit C (fatherId: "a")
+   *     └── Postit F (fatherId: "c")
+   * 
+   * If we delete Postit A, this method returns: ["a", "b", "d", "e", "c", "f"]
+   */
+  private findPostitAndAllChildren(postits: Postit[], parentId: string): string[] {
+    const idsToDelete = [parentId];
+    
+    // Find direct children
+    const directChildren = postits.filter(postit => postit.fatherId === parentId);
+    
+    // Recursively find children of children
+    for (const child of directChildren) {
+      const childIds = this.findPostitAndAllChildren(postits, child.id);
+      idsToDelete.push(...childIds);
+    }
+    
+    return idsToDelete;
   }
 }
