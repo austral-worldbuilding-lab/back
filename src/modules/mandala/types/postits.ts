@@ -8,15 +8,16 @@ export interface AiPostitResponse {
   dimension: string;
   section: string;
   tags: string[];
-  linkedToId: string | null;
+  fatherId: string | null;
 }
 
 export interface Postit {
+  id: string;
   content: string;
   dimension: string;
   section: string;
   tags: PostitTag[];
-  linkedToId: string | null;
+  fatherId: string | null;
 }
 
 export interface PostitCoordinates {
