@@ -54,8 +54,8 @@ export class MandalaService {
       await this.mandalaRepository.create(completeDto);
 
     try {
-      const linkedMandalasCenter = (
-        await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
+      const childrenCenter = (
+        await this.mandalaRepository.findChildrenMandalasCenters(mandala.id)
       ).map((center) => ({
         id: center.id,
         name: center.name,
@@ -69,7 +69,7 @@ export class MandalaService {
       const firestoreData = {
         mandala,
         postits: [],
-        characters: linkedMandalasCenter,
+        characters: childrenCenter,
       };
 
       await this.firebaseDataService.createDocument(
@@ -87,11 +87,14 @@ export class MandalaService {
         details: { mandalaId: mandala.id, originalError: errorMessage },
       });
     }
-    if (mandala.linkedToId) {
-      await this.updateParentMandalaDocument(mandala.linkedToId);
-      this.logger.log(
-        `Parent mandala ${mandala.linkedToId} document updated for mandala ${mandala.id}`,
-      );
+
+    if (mandala.parentIds && mandala.parentIds.length > 0) {
+      for (const parentId of mandala.parentIds) {
+        await this.updateParentMandalaDocument(parentId);
+        this.logger.log(
+          `Parent mandala ${parentId} document updated for mandala ${mandala.id}`,
+        );
+      }
     }
 
     return mandala;
@@ -152,16 +155,19 @@ export class MandalaService {
 
     const deletedMandala = await this.mandalaRepository.remove(id);
 
-    if (mandala.linkedToId) {
-      await this.removeChildFromParentFirestore(mandala.linkedToId, id).catch(
-        (error: unknown) => {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          this.logger.error(
-            `Failed to remove child ${id} from parent mandala ${mandala.linkedToId}: ${errorMessage}`,
-          );
-        },
-      );
+    // Update all parent mandalas to remove this child
+    if (mandala.parentIds && mandala.parentIds.length > 0) {
+      for (const parentId of mandala.parentIds) {
+        await this.removeChildFromParentFirestore(parentId, id).catch(
+          (error: unknown) => {
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(
+              `Failed to remove child ${id} from parent mandala ${parentId}: ${errorMessage}`,
+            );
+          },
+        );
+      }
     }
 
     return deletedMandala;
@@ -214,8 +220,10 @@ export class MandalaService {
         throw new ResourceNotFoundException('Parent Mandala', parentMandalaId);
       }
 
-      const linkedMandalasCenter = (
-        await this.mandalaRepository.findLinkedMandalasCenters(parentMandalaId)
+      const childrenCenter = (
+        await this.mandalaRepository.findChildrenMandalasCenters(
+          parentMandalaId,
+        )
       ).map((center) => ({
         id: center.id,
         name: center.name,
@@ -227,7 +235,7 @@ export class MandalaService {
       }));
 
       const updateData = {
-        characters: linkedMandalasCenter,
+        characters: childrenCenter,
       };
 
       await this.firebaseDataService.updateDocument(
@@ -263,8 +271,8 @@ export class MandalaService {
       const postits: PostitWithCoordinates[] =
         await this.postitService.generatePostitsForMandala(mandala.id);
 
-      const linkedMandalasCenter = (
-        await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
+      const childrenCenter = (
+        await this.mandalaRepository.findChildrenMandalasCenters(mandala.id)
       ).map((center) => ({
         name: center.name,
         description: center.description,
@@ -277,7 +285,7 @@ export class MandalaService {
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala: mandala,
         postits: postits,
-        linkedMandalasCenter,
+        childrenCenter,
       };
 
       // Create in Firestore with characters key
@@ -286,7 +294,7 @@ export class MandalaService {
         {
           mandala: mandala,
           postits: postits,
-          characters: linkedMandalasCenter,
+          characters: childrenCenter,
         },
         mandala.id,
       );

@@ -98,10 +98,10 @@ export class CreateMandalaDto {
   scales?: string[];
 
   @ApiProperty({
-    description: 'ID de la mandala al que está vinculado (padre)',
+    description: 'ID del mandala padre al que está vinculado este mandala',
     required: false,
   })
   @IsUUID()
   @IsOptional()
-  linkedToId: string | null = null;
+  parentId: string | null = null;
 }
