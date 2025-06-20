@@ -94,7 +94,7 @@ export class PostitService {
         section: aiPostit.section,
         tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
         // TODO: linkedToId is not used in the mandala generation by AI yet
-        linkedToId: aiPostit.linkedToId || null,
+        fatherId: aiPostit.fatherId || null,
       }),
     );
   }
