@@ -388,6 +388,10 @@ export class MandalaService {
   }
 
   async linkMandala(parentId: string, childId: string): Promise<MandalaDto> {
+    if (parentId === childId) {
+      throw new BadRequestException('Cannot link a mandala to itself');
+    }
+
     const parentMandala = await this.findOne(parentId);
     const childMandala = await this.findOne(childId);
 
