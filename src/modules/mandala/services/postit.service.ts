@@ -12,6 +12,8 @@ import { MandalaRepository } from '../mandala.repository';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { ProjectService } from '@modules/project/project.service';
 import { TagDto } from '@modules/project/dto/tag.dto';
+import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class PostitService {
@@ -19,6 +21,7 @@ export class PostitService {
     private aiService: AiService,
     private mandalaRepository: MandalaRepository,
     private projectService: ProjectService,
+    private firebaseDataService: FirebaseDataService,
   ) {}
 
   async generatePostitsForMandala(
@@ -242,5 +245,81 @@ export class PostitService {
     return Math.min(
       ...placed.map((p) => (candidate.x - p.x) ** 2 + (candidate.y - p.y) ** 2),
     );
+  }
+
+  async createPostit(
+    projectId: string,
+    mandalaId: string,
+    postit: Postit,
+  ): Promise<void> {
+    // Get the current mandala document from Firestore
+    const currentDocument = await this.firebaseDataService.getDocument(
+      projectId,
+      mandalaId,
+    );
+
+    if (!currentDocument) {
+      throw new BusinessLogicException('Mandala not found', { mandalaId });
+    }
+
+    // Generate a unique ID for the post-it
+    const postitWithId = {
+      ...postit,
+      id: randomUUID(),
+      fatherId: postit.fatherId || null,
+    };
+
+    // Get existing postits or initialize empty array
+    const existingPostits = currentDocument.postits || [];
+
+    // Add the new postit
+    const updatedPostits = [...existingPostits, postitWithId];
+
+    // Update the document in Firestore
+    await this.firebaseDataService.updateDocument(
+      projectId,
+      {
+        postits: updatedPostits,
+        updatedAt: new Date(),
+      },
+      mandalaId,
+    );
+  }
+
+  async deletePostit(
+    projectId: string,
+    mandalaId: string,
+    index: number,
+  ): Promise<boolean> {
+    // Get the current mandala document from Firestore
+    const currentDocument = await this.firebaseDataService.getDocument(
+      projectId,
+      mandalaId,
+    );
+
+    if (!currentDocument) {
+      throw new BusinessLogicException('Mandala not found', { mandalaId });
+    }
+
+    const postits = currentDocument.postits || [];
+
+    if (index < 0 || index >= postits.length) {
+      throw new BusinessLogicException('Invalid postit index', { index });
+    }
+
+    // Remove the postit at the specified index
+    const updatedPostits = postits.filter((_: Postit, i: number) => i !== index);
+
+    // Update the document in Firestore
+    await this.firebaseDataService.updateDocument(
+      projectId,
+      {
+        postits: updatedPostits,
+        updatedAt: new Date(),
+      },
+      mandalaId,
+    );
+
+    return true;
   }
 }
