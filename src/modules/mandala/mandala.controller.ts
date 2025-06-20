@@ -20,6 +20,7 @@ import {
   MessageResponse,
   DataResponse,
   PaginatedResponse,
+  MessageOnlyResponse,
 } from '@common/types/responses';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { MaxValuePipe } from '@common/pipes/max-value.pipe';
@@ -38,6 +39,8 @@ import {
   ApiUpdateMandala,
   ApiDeleteMandala,
   ApiGenerateMandala,
+  ApiLinkMandala,
+  ApiUnlinkMandala,
 } from './decorators/mandala-swagger.decorators';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 
@@ -148,6 +151,7 @@ export class MandalaController {
 
   @Post(':id/link/:childId')
   @UseGuards(MandalaRoleGuard)
+  @ApiLinkMandala()
   async linkMandala(
     @Param('id', new UuidValidationPipe()) parentId: string,
     @Param('childId', new UuidValidationPipe()) childId: string,
@@ -164,17 +168,14 @@ export class MandalaController {
 
   @Delete(':id/unlink/:childId')
   @UseGuards(MandalaRoleGuard)
+  @ApiUnlinkMandala()
   async unlinkMandala(
     @Param('id', new UuidValidationPipe()) parentId: string,
     @Param('childId', new UuidValidationPipe()) childId: string,
-  ): Promise<MessageResponse<MandalaDto>> {
-    const updatedMandala = await this.mandalaService.unlinkMandala(
-      parentId,
-      childId,
-    );
+  ): Promise<MessageOnlyResponse> {
+    await this.mandalaService.unlinkMandala(parentId, childId);
     return {
       message: 'Mandala unlinked successfully',
-      data: updatedMandala,
     };
   }
 }
