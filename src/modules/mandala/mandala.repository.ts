@@ -191,4 +191,38 @@ export class MandalaRepository {
       };
     });
   }
+
+  async linkMandala(parentId: string, childId: string): Promise<MandalaDto> {
+    const mandala = await this.prisma.mandala.update({
+      where: { id: parentId },
+      data: {
+        children: {
+          connect: { id: childId },
+        },
+      },
+      include: {
+        children: { select: { id: true } },
+        parent: { select: { id: true } },
+      },
+    });
+
+    return this.parseToMandalaDto(mandala);
+  }
+
+  async unlinkMandala(parentId: string, childId: string): Promise<MandalaDto> {
+    const mandala = await this.prisma.mandala.update({
+      where: { id: parentId },
+      data: {
+        children: {
+          disconnect: { id: childId },
+        },
+      },
+      include: {
+        children: { select: { id: true } },
+        parent: { select: { id: true } },
+      },
+    });
+
+    return this.parseToMandalaDto(mandala);
+  }
 }

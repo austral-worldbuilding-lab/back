@@ -364,4 +364,80 @@ export class MandalaService {
 
     return filterSections;
   }
+
+  async linkMandala(parentId: string, childId: string): Promise<MandalaDto> {
+    const parentMandala = await this.findOne(parentId);
+    const childMandala = await this.findOne(childId);
+
+    if (!parentMandala) {
+      throw new ResourceNotFoundException('Parent Mandala', parentId);
+    }
+    if (!childMandala) {
+      throw new ResourceNotFoundException('Child Mandala', childId);
+    }
+
+    if (parentMandala.projectId !== childMandala.projectId) {
+      throw new BadRequestException(
+        'Mandalas must be in the same project to be linked',
+      );
+    }
+
+    try {
+      const updatedParent = await this.mandalaRepository.linkMandala(
+        parentId,
+        childId,
+      );
+
+      await this.updateParentMandalaDocument(parentId);
+
+      this.logger.log(
+        `Mandala ${childId} successfully linked as child of ${parentId}`,
+      );
+
+      return updatedParent;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException({
+        message: 'Failed to link mandalas',
+        error: 'Link Operation Error',
+        details: { parentId, childId, originalError: errorMessage },
+      });
+    }
+  }
+
+  async unlinkMandala(parentId: string, childId: string): Promise<MandalaDto> {
+    const parentMandala = await this.findOne(parentId);
+    const childMandala = await this.findOne(childId);
+
+    if (!parentMandala) {
+      throw new ResourceNotFoundException('Parent Mandala', parentId);
+    }
+    if (!childMandala) {
+      throw new ResourceNotFoundException('Child Mandala', childId);
+    }
+
+    try {
+      const updatedParent = await this.mandalaRepository.unlinkMandala(
+        parentId,
+        childId,
+      );
+
+      await this.removeChildFromParentFirestore(parentId, childId);
+
+      this.logger.log(
+        `Mandala ${childId} successfully unlinked from parent ${parentId}`,
+      );
+
+      return updatedParent;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException({
+        message: 'Failed to unlink mandalas',
+        error: 'Unlink Operation Error',
+        details: { parentId, childId, originalError: errorMessage },
+      });
+    }
+  }
 }

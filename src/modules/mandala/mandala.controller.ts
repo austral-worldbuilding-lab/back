@@ -145,4 +145,36 @@ export class MandalaController {
       data: mandalaWithPostits,
     };
   }
+
+  @Post(':id/link/:childId')
+  @UseGuards(MandalaRoleGuard)
+  async linkMandala(
+    @Param('id', new UuidValidationPipe()) parentId: string,
+    @Param('childId', new UuidValidationPipe()) childId: string,
+  ): Promise<MessageResponse<MandalaDto>> {
+    const updatedMandala = await this.mandalaService.linkMandala(
+      parentId,
+      childId,
+    );
+    return {
+      message: 'Mandala linked successfully',
+      data: updatedMandala,
+    };
+  }
+
+  @Delete(':id/unlink/:childId')
+  @UseGuards(MandalaRoleGuard)
+  async unlinkMandala(
+    @Param('id', new UuidValidationPipe()) parentId: string,
+    @Param('childId', new UuidValidationPipe()) childId: string,
+  ): Promise<MessageResponse<MandalaDto>> {
+    const updatedMandala = await this.mandalaService.unlinkMandala(
+      parentId,
+      childId,
+    );
+    return {
+      message: 'Mandala unlinked successfully',
+      data: updatedMandala,
+    };
+  }
 }
