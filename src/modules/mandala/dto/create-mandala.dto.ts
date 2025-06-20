@@ -103,5 +103,5 @@ export class CreateMandalaDto {
   })
   @IsUUID()
   @IsOptional()
-  parentId: string | null = null;
+  parentId?: string | null = null;
 }

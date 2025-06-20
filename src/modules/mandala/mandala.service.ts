@@ -220,22 +220,48 @@ export class MandalaService {
         throw new ResourceNotFoundException('Parent Mandala', parentMandalaId);
       }
 
-      const childrenCenter = (
+      const currentDocument = (await this.firebaseDataService.getDocument(
+        parentMandala.projectId,
+        parentMandalaId,
+      )) as FirestoreMandalaDocument;
+
+      const existingCharacters: FirestoreCharacter[] =
+        currentDocument.characters || [];
+
+      const childrenCenter =
         await this.mandalaRepository.findChildrenMandalasCenters(
           parentMandalaId,
-        )
-      ).map((center) => ({
-        id: center.id,
-        name: center.name,
-        description: center.description,
-        color: center.color,
-        position: { x: 0, y: 0 },
-        section: '',
-        dimension: '',
-      }));
+        );
+
+      const existingCharactersMap = new Map(
+        existingCharacters.map((char) => [char.id, char]),
+      );
+
+      const updatedCharacters = childrenCenter.map((center) => {
+        const existingCharacter = existingCharactersMap.get(center.id);
+
+        if (existingCharacter) {
+          return {
+            ...existingCharacter,
+            name: center.name,
+            description: center.description,
+            color: center.color,
+          };
+        } else {
+          return {
+            id: center.id,
+            name: center.name,
+            description: center.description,
+            color: center.color,
+            position: { x: 0, y: 0 },
+            section: '',
+            dimension: '',
+          };
+        }
+      });
 
       const updateData = {
-        characters: childrenCenter,
+        characters: updatedCharacters,
       };
 
       await this.firebaseDataService.updateDocument(
@@ -263,11 +289,9 @@ export class MandalaService {
       );
     }
 
-    // Create mandala first
     const mandala: MandalaDto = await this.create(createMandalaDto);
 
     try {
-      // Generate postits using mandala's configuration
       const postits: PostitWithCoordinates[] =
         await this.postitService.generatePostitsForMandala(mandala.id);
 
@@ -288,7 +312,6 @@ export class MandalaService {
         childrenCenter,
       };
 
-      // Create in Firestore with characters key
       await this.firebaseDataService.createDocument(
         createMandalaDto.projectId,
         {
@@ -301,7 +324,6 @@ export class MandalaService {
 
       return firestoreData;
     } catch (error) {
-      // If anything fails, delete the created mandala
       await this.remove(mandala.id);
       throw error;
     }
