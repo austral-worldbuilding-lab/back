@@ -299,7 +299,9 @@ export class PostitService {
     const postits = currentDocument.postits || [];
 
     const postitIdsToDelete = this.findPostitAndAllChildren(postits, postitId);
-    const updatedPostits = postits.filter((p) => !postitIdsToDelete.includes(p.id));
+    const updatedPostits = postits.filter(
+      (p) => !postitIdsToDelete.includes(p.id),
+    );
 
     await this.firebaseDataService.updateDocument(
       projectId,
@@ -316,11 +318,11 @@ export class PostitService {
   /**
    * Recursively finds all post-its that should be deleted when removing a parent post-it.
    * This includes the parent post-it itself and all its descendants in the hierarchy.
-   * 
+   *
    * @param postits - Array of all post-its in the mandala document
    * @param parentId - ID of the parent post-it to be deleted
    * @returns Array of post-it IDs that should be deleted (parent + all children)
-   * 
+   *
    * Example hierarchy:
    * Postit A (id: "a")
    * ├── Postit B (fatherId: "a")
@@ -328,21 +330,26 @@ export class PostitService {
    * │   └── Postit E (fatherId: "b")
    * └── Postit C (fatherId: "a")
    *     └── Postit F (fatherId: "c")
-   * 
+   *
    * If we delete Postit A, this method returns: ["a", "b", "d", "e", "c", "f"]
    */
-  private findPostitAndAllChildren(postits: Postit[], parentId: string): string[] {
+  private findPostitAndAllChildren(
+    postits: Postit[],
+    parentId: string,
+  ): string[] {
     const idsToDelete = [parentId];
-    
+
     // Find direct children
-    const directChildren = postits.filter(postit => postit.fatherId === parentId);
-    
+    const directChildren = postits.filter(
+      (postit) => postit.fatherId === parentId,
+    );
+
     // Recursively find children of children
     for (const child of directChildren) {
       const childIds = this.findPostitAndAllChildren(postits, child.id);
       idsToDelete.push(...childIds);
     }
-    
+
     return idsToDelete;
   }
 }
