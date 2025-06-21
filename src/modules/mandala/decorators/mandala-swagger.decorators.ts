@@ -147,14 +147,15 @@ export const ApiGenerateMandala = () =>
 
 export const ApiCreatePostit = () =>
   applyDecorators(
-    ApiOperation({ 
+    ApiOperation({
       summary: 'Crear un nuevo post-it en un mandala',
-      description: 'Crea un nuevo post-it en el mandala especificado con coordenadas, dimensiones, sección y tags'
+      description:
+        'Crea un nuevo post-it en el mandala especificado con coordenadas, dimensiones, sección y tags',
     }),
-    ApiParam({ 
-      name: 'mandalaId', 
-      description: 'ID del mandala donde se creará el post-it', 
-      type: String 
+    ApiParam({
+      name: 'mandalaId',
+      description: 'ID del mandala donde se creará el post-it',
+      type: String,
     }),
     ApiResponse({
       status: 201,
@@ -173,19 +174,20 @@ export const ApiCreatePostit = () =>
 
 export const ApiDeletePostit = () =>
   applyDecorators(
-    ApiOperation({ 
+    ApiOperation({
       summary: 'Eliminar un post-it y todos sus hijos',
-      description: 'Elimina un post-it y recursivamente todos sus post-its hijos del mandala'
+      description:
+        'Elimina un post-it y recursivamente todos sus post-its hijos del mandala',
     }),
-    ApiParam({ 
-      name: 'mandalaId', 
-      description: 'ID del mandala donde se encuentra el post-it', 
-      type: String 
+    ApiParam({
+      name: 'mandalaId',
+      description: 'ID del mandala donde se encuentra el post-it',
+      type: String,
     }),
-    ApiParam({ 
-      name: 'postitId', 
-      description: 'ID del post-it a eliminar', 
-      type: String 
+    ApiParam({
+      name: 'postitId',
+      description: 'ID del post-it a eliminar',
+      type: String,
     }),
     ApiResponse({
       status: 200,
@@ -201,5 +203,3 @@ export const ApiDeletePostit = () =>
       description: 'Mandala o post-it no encontrado',
     }),
   );
-
-  

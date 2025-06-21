@@ -264,10 +264,27 @@ export class PostitService {
       throw new BusinessLogicException('Mandala not found', { mandalaId });
     }
 
-    const postitWithId = {
-      ...postit,
-      id: randomUUID(),
+    // Convert DTO to plain object to avoid Firestore serialization issues
+    const plainPostit = {
+      content: postit.content,
+      dimension: postit.dimension,
+      section: postit.section,
+      tags: postit.tags.map(tag => ({
+        name: tag.name, 
+        color: tag.color,
+      })),
       parentId: postit.parentId || null,
+      coordinates: {
+        x: postit.coordinates.x,
+        y: postit.coordinates.y,
+        angle: postit.coordinates.angle,
+        percentileDistance: postit.coordinates.percentileDistance,
+      },
+    };
+
+    const postitWithId = {
+      id: randomUUID(),
+      ...plainPostit,
     };
 
     const existingPostits = currentDocument.postits || [];
@@ -302,19 +319,17 @@ export class PostitService {
     const postits = currentDocument.postits || [];
 
     // Find the postit to be deleted
-    const postitToDelete = postits.find(p => p.id === postitId);
+    const postitToDelete = postits.find((p) => p.id === postitId);
     if (!postitToDelete) {
       throw new BusinessLogicException('Postit not found', { postitId });
     }
     // Find all children post-its to be deleted
     const childrenPostitsToDelete = this.findChildrenPostits(postits, postitId);
-    
+
     // Delete the postit to be deleted and all its children
     const postitsToDelete = [postitToDelete, ...childrenPostitsToDelete];
-    const postitIdsToDelete = new Set(postitsToDelete.map(p => p.id));
-    const updatedPostits = postits.filter(
-      (p) => !postitIdsToDelete.has(p.id),
-    );
+    const postitIdsToDelete = new Set(postitsToDelete.map((p) => p.id));
+    const updatedPostits = postits.filter((p) => !postitIdsToDelete.has(p.id));
 
     await this.firebaseDataService.updateDocument(
       projectId,
@@ -331,11 +346,11 @@ export class PostitService {
   /**
    * Recursively finds all children post-its that should be deleted when removing a father post-it.
    * This includes all descendants in the hierarchy (children, grandchildren, etc.).
-   * 
+   *
    * @param postits - Array of all post-its in the mandala document
    * @param parentId - ID of the parent post-it whose children should be deleted
    * @returns Array of post-it IDs that should be deleted (only children, not including parent)
-   * 
+   *
    * Example hierarchy:
    * Postit A (id: "a")
    * ├── Postit B (fatherId: "a")
@@ -343,22 +358,24 @@ export class PostitService {
    * │   └── Postit E (fatherId: "b")
    * └── Postit C (fatherId: "a")
    *     └── Postit F (fatherId: "c")
-   * 
+   *
    * If we delete Postit A, this method returns: ["b", "d", "e", "c", "f"]
    * (Postit A is handled separately before calling this method)
    */
   private findChildrenPostits(postits: Postit[], parentId: string): Postit[] {
     const childrenPostits = [];
-    
+
     // Find direct children
-    const directChildren = postits.filter(postit => postit.parentId === parentId);
-    
+    const directChildren = postits.filter(
+      (postit) => postit.parentId === parentId,
+    );
+    childrenPostits.push(...directChildren);
+
     // Recursively find children of children
     for (const child of directChildren) {
       const childIds = this.findChildrenPostits(postits, child.id);
       childrenPostits.push(...childIds);
     }
-    
     return childrenPostits;
   }
 }

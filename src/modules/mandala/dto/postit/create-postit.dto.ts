@@ -1,5 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsUUID, ValidateNested, IsObject, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  ValidateNested,
+  IsObject,
+  IsNumber,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateTagDto } from '@/modules/project/dto/create-tag.dto';
 
@@ -27,7 +36,7 @@ class PostitCoordinatesDto {
   percentileDistance!: number;
 }
 
-export class CreatePostitDto {
+export class  CreatePostitDto {
   @ApiProperty({
     description: 'Content of the post-it',
     example: 'This is a sample post-it content',
@@ -63,11 +72,11 @@ export class CreatePostitDto {
 
   @ApiProperty({
     description: 'Tags associated with the post-it',
-    type: CreateTagDto,
+    type: [CreateTagDto],
   })
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => CreateTagDto)
-  @IsObject()
+  @IsArray()
   tags!: CreateTagDto[];
 
   @ApiProperty({
@@ -78,4 +87,4 @@ export class CreatePostitDto {
   @IsOptional()
   @IsUUID()
   parentId?: string | null;
-} 
+}

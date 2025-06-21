@@ -162,7 +162,7 @@ export class MandalaController {
     @Body() createPostitDto: CreatePostitDto,
   ): Promise<MessageResponse<Postit>> {
     const mandala = await this.mandalaService.findOne(mandalaId);
-    
+
     const createdPostit = await this.postitService.createPostit(
       mandala.projectId,
       mandalaId,
@@ -183,7 +183,7 @@ export class MandalaController {
     @Param('postitId', new UuidValidationPipe()) postitId: string,
   ): Promise<MessageResponse<Postit[]>> {
     const mandala = await this.mandalaService.findOne(mandalaId);
-    
+
     const deletedPostits = await this.postitService.deletePostit(
       mandala.projectId,
       mandalaId,
