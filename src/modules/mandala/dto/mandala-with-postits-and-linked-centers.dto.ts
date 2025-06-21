@@ -4,10 +4,10 @@ import { PostitWithCoordinates } from '../types/postits';
 export class MandalaWithPostitsAndLinkedCentersDto {
   mandala!: MandalaDto;
   postits!: PostitWithCoordinates[];
-  linkedMandalasCenter!: LinkedMandalaCenterDto[];
+  childrenCenter!: ChildMandalaCenterDto[];
 }
 
-export class LinkedMandalaCenterDto {
+export class ChildMandalaCenterDto {
   name!: string;
   description?: string;
   color!: string;

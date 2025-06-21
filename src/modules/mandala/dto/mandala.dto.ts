@@ -43,16 +43,23 @@ export class MandalaDto {
         { name: 'Ecología', color: '#00FFFF' },
       ],
       scales: ['Persona', 'Comunidad', 'Institución'],
-      linkedTo: 'id_mandala_padre',
     },
   })
   configuration!: CreateMandalaConfiguration;
 
   @ApiProperty({
-    description: 'ID de la mandala al que está vinculado (padre)',
-    required: false,
+    description:
+      'IDs de mandalas hijos (mandalas que son personajes en este mandala)',
+    type: [String],
   })
-  linkedToId: string | null = null;
+  childrenIds!: string[];
+
+  @ApiProperty({
+    description:
+      'IDs de mandalas padre (mandalas en las que esta es un personaje)',
+    type: [String],
+  })
+  parentIds!: string[];
 
   @ApiProperty({
     description: 'Fecha de creación del mandala',
