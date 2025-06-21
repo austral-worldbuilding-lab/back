@@ -47,7 +47,7 @@ import {
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
 import { PostitService } from './services/postit.service';
-import { Postit } from './types/postits';
+import { Postit, PostitWithCoordinates } from './types/postits';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -163,7 +163,7 @@ export class MandalaController {
   async createPostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
     @Body() createPostitDto: CreatePostitDto,
-  ): Promise<MessageResponse<Postit>> {
+  ): Promise<MessageResponse<PostitWithCoordinates>> {
     const mandala = await this.mandalaService.findOne(mandalaId);
 
     const createdPostit = await this.postitService.createPostit(
@@ -184,7 +184,7 @@ export class MandalaController {
   async deletePostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
     @Param('postitId', new UuidValidationPipe()) postitId: string,
-  ): Promise<MessageResponse<Postit[]>> {
+  ): Promise<MessageResponse<PostitWithCoordinates[]>> {
     const mandala = await this.mandalaService.findOne(mandalaId);
 
     const deletedPostits = await this.postitService.deletePostit(

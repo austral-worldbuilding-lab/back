@@ -344,12 +344,12 @@ export class PostitService {
   }
 
   /**
-   * Recursively finds all children post-its that should be deleted when removing a father post-it.
+   * Recursively finds all children post-its that should be deleted when removing a parent post-it.
    * This includes all descendants in the hierarchy (children, grandchildren, etc.).
    *
    * @param postits - Array of all post-its in the mandala document
    * @param parentId - ID of the parent post-it whose children should be deleted
-   * @returns Array of post-it IDs that should be deleted (only children, not including parent)
+   * @returns Array of post-its that should be deleted (only children, not including parent)
    *
    * Example hierarchy:
    * Postit A (id: "a")
