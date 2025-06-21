@@ -18,4 +18,4 @@ export class CharacterListItemDto {
     example: '#3B82F6',
   })
   color!: string;
-} 
+}
