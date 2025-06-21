@@ -306,7 +306,7 @@ export class PostitService {
     projectId: string,
     mandalaId: string,
     postitId: string,
-  ): Promise<Postit[]> {
+  ): Promise<PostitWithCoordinates[]> {
     const currentDocument = (await this.firebaseDataService.getDocument(
       projectId,
       mandalaId,
@@ -362,7 +362,7 @@ export class PostitService {
    * If we delete Postit A, this method returns: ["b", "d", "e", "c", "f"]
    * (Postit A is handled separately before calling this method)
    */
-  private findChildrenPostits(postits: Postit[], parentId: string): Postit[] {
+  private findChildrenPostits(postits: PostitWithCoordinates[], parentId: string): PostitWithCoordinates[] {
     const childrenPostits = [];
 
     // Find direct children
@@ -376,6 +376,7 @@ export class PostitService {
       const childIds = this.findChildrenPostits(postits, child.id);
       childrenPostits.push(...childIds);
     }
+
     return childrenPostits;
   }
 }
