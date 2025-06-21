@@ -15,6 +15,7 @@ import { TagDto } from '@modules/project/dto/tag.dto';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 import { randomUUID } from 'crypto';
+import { CreatePostitDto } from '../dto/postit/create-postit.dto';
 
 @Injectable()
 export class PostitService {
@@ -99,7 +100,7 @@ export class PostitService {
         section: aiPostit.section,
         tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
         // TODO: linkedToId is not used in the mandala generation by AI yet
-        fatherId: aiPostit.fatherId || null,
+        parentId: aiPostit.parentId || null,
       }),
     );
   }
@@ -252,8 +253,8 @@ export class PostitService {
   async createPostit(
     projectId: string,
     mandalaId: string,
-    postit: Postit,
-  ): Promise<Postit> {
+    postit: CreatePostitDto,
+  ): Promise<PostitWithCoordinates> {
     const currentDocument = (await this.firebaseDataService.getDocument(
       projectId,
       mandalaId,
@@ -266,7 +267,7 @@ export class PostitService {
     const postitWithId = {
       ...postit,
       id: randomUUID(),
-      fatherId: postit.fatherId || null,
+      parentId: postit.parentId || null,
     };
 
     const existingPostits = currentDocument.postits || [];
@@ -350,7 +351,7 @@ export class PostitService {
     const childrenPostits = [];
     
     // Find direct children
-    const directChildren = postits.filter(postit => postit.fatherId === parentId);
+    const directChildren = postits.filter(postit => postit.parentId === parentId);
     
     // Recursively find children of children
     for (const child of directChildren) {

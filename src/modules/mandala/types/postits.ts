@@ -8,7 +8,7 @@ export interface AiPostitResponse {
   dimension: string;
   section: string;
   tags: string[];
-  fatherId: string | null;
+  parentId: string | null;
 }
 
 export interface Postit {
@@ -17,7 +17,7 @@ export interface Postit {
   dimension: string;
   section: string;
   tags: PostitTag[];
-  fatherId: string | null;
+  parentId: string | null;
 }
 
 export interface PostitCoordinates {
