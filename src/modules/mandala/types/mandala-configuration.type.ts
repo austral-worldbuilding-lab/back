@@ -5,5 +5,4 @@ export interface CreateMandalaConfiguration {
   center: CreateMandalaCenterDto;
   dimensions: DimensionDto[];
   scales: string[];
-  linkedTo?: string | null; // mandalaId del personaje padre
 }

@@ -54,8 +54,8 @@ export class MandalaService {
       await this.mandalaRepository.create(completeDto);
 
     try {
-      const linkedMandalasCenter = (
-        await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
+      const childrenCenter = (
+        await this.mandalaRepository.findChildrenMandalasCenters(mandala.id)
       ).map((center) => ({
         id: center.id,
         name: center.name,
@@ -69,7 +69,7 @@ export class MandalaService {
       const firestoreData = {
         mandala,
         postits: [],
-        characters: linkedMandalasCenter,
+        characters: childrenCenter,
       };
 
       await this.firebaseDataService.createDocument(
@@ -87,11 +87,14 @@ export class MandalaService {
         details: { mandalaId: mandala.id, originalError: errorMessage },
       });
     }
-    if (mandala.linkedToId) {
-      await this.updateParentMandalaDocument(mandala.linkedToId);
-      this.logger.log(
-        `Parent mandala ${mandala.linkedToId} document updated for mandala ${mandala.id}`,
-      );
+
+    if (mandala.parentIds && mandala.parentIds.length > 0) {
+      for (const parentId of mandala.parentIds) {
+        await this.updateParentMandalaDocument(parentId);
+        this.logger.log(
+          `Parent mandala ${parentId} document updated for mandala ${mandala.id}`,
+        );
+      }
     }
 
     return mandala;
@@ -152,16 +155,19 @@ export class MandalaService {
 
     const deletedMandala = await this.mandalaRepository.remove(id);
 
-    if (mandala.linkedToId) {
-      await this.removeChildFromParentFirestore(mandala.linkedToId, id).catch(
-        (error: unknown) => {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          this.logger.error(
-            `Failed to remove child ${id} from parent mandala ${mandala.linkedToId}: ${errorMessage}`,
-          );
-        },
-      );
+    // Update all parent mandalas to remove this child
+    if (mandala.parentIds && mandala.parentIds.length > 0) {
+      for (const parentId of mandala.parentIds) {
+        await this.removeChildFromParentFirestore(parentId, id).catch(
+          (error: unknown) => {
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(
+              `Failed to remove child ${id} from parent mandala ${parentId}: ${errorMessage}`,
+            );
+          },
+        );
+      }
     }
 
     return deletedMandala;
@@ -214,20 +220,48 @@ export class MandalaService {
         throw new ResourceNotFoundException('Parent Mandala', parentMandalaId);
       }
 
-      const linkedMandalasCenter = (
-        await this.mandalaRepository.findLinkedMandalasCenters(parentMandalaId)
-      ).map((center) => ({
-        id: center.id,
-        name: center.name,
-        description: center.description,
-        color: center.color,
-        position: { x: 0, y: 0 },
-        section: '',
-        dimension: '',
-      }));
+      const currentDocument = (await this.firebaseDataService.getDocument(
+        parentMandala.projectId,
+        parentMandalaId,
+      )) as FirestoreMandalaDocument;
+
+      const existingCharacters: FirestoreCharacter[] =
+        currentDocument.characters || [];
+
+      const childrenCenter =
+        await this.mandalaRepository.findChildrenMandalasCenters(
+          parentMandalaId,
+        );
+
+      const existingCharactersMap = new Map(
+        existingCharacters.map((char) => [char.id, char]),
+      );
+
+      const updatedCharacters = childrenCenter.map((center) => {
+        const existingCharacter = existingCharactersMap.get(center.id);
+
+        if (existingCharacter) {
+          return {
+            ...existingCharacter,
+            name: center.name,
+            description: center.description,
+            color: center.color,
+          };
+        } else {
+          return {
+            id: center.id,
+            name: center.name,
+            description: center.description,
+            color: center.color,
+            position: { x: 0, y: 0 },
+            section: '',
+            dimension: '',
+          };
+        }
+      });
 
       const updateData = {
-        characters: linkedMandalasCenter,
+        characters: updatedCharacters,
       };
 
       await this.firebaseDataService.updateDocument(
@@ -255,16 +289,14 @@ export class MandalaService {
       );
     }
 
-    // Create mandala first
     const mandala: MandalaDto = await this.create(createMandalaDto);
 
     try {
-      // Generate postits using mandala's configuration
       const postits: PostitWithCoordinates[] =
         await this.postitService.generatePostitsForMandala(mandala.id);
 
-      const linkedMandalasCenter = (
-        await this.mandalaRepository.findLinkedMandalasCenters(mandala.id)
+      const childrenCenter = (
+        await this.mandalaRepository.findChildrenMandalasCenters(mandala.id)
       ).map((center) => ({
         name: center.name,
         description: center.description,
@@ -277,23 +309,21 @@ export class MandalaService {
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala: mandala,
         postits: postits,
-        linkedMandalasCenter,
+        childrenCenter,
       };
 
-      // Create in Firestore with characters key
       await this.firebaseDataService.createDocument(
         createMandalaDto.projectId,
         {
           mandala: mandala,
           postits: postits,
-          characters: linkedMandalasCenter,
+          characters: childrenCenter,
         },
         mandala.id,
       );
 
       return firestoreData;
     } catch (error) {
-      // If anything fails, delete the created mandala
       await this.remove(mandala.id);
       throw error;
     }
@@ -355,5 +385,85 @@ export class MandalaService {
     }
 
     return filterSections;
+  }
+
+  async linkMandala(parentId: string, childId: string): Promise<MandalaDto> {
+    if (parentId === childId) {
+      throw new BadRequestException('Cannot link a mandala to itself');
+    }
+
+    const parentMandala = await this.findOne(parentId);
+    const childMandala = await this.findOne(childId);
+
+    if (!parentMandala) {
+      throw new ResourceNotFoundException('Parent Mandala', parentId);
+    }
+    if (!childMandala) {
+      throw new ResourceNotFoundException('Child Mandala', childId);
+    }
+
+    if (parentMandala.projectId !== childMandala.projectId) {
+      throw new BadRequestException(
+        'Mandalas must be in the same project to be linked',
+      );
+    }
+
+    try {
+      const updatedParent = await this.mandalaRepository.linkMandala(
+        parentId,
+        childId,
+      );
+
+      await this.updateParentMandalaDocument(parentId);
+
+      this.logger.log(
+        `Mandala ${childId} successfully linked as child of ${parentId}`,
+      );
+
+      return updatedParent;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException({
+        message: 'Failed to link mandalas',
+        error: 'Link Operation Error',
+        details: { parentId, childId, originalError: errorMessage },
+      });
+    }
+  }
+
+  async unlinkMandala(parentId: string, childId: string): Promise<MandalaDto> {
+    const parentMandala = await this.findOne(parentId);
+    const childMandala = await this.findOne(childId);
+
+    if (!parentMandala) {
+      throw new ResourceNotFoundException('Parent Mandala', parentId);
+    }
+    if (!childMandala) {
+      throw new ResourceNotFoundException('Child Mandala', childId);
+    }
+
+    try {
+      const updatedParent = await this.mandalaRepository.unlinkMandala(
+        parentId,
+        childId,
+      );
+
+      await this.removeChildFromParentFirestore(parentId, childId);
+
+      this.logger.log(
+        `Mandala ${childId} successfully unlinked from parent ${parentId}`,
+      );
+
+      return updatedParent;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException({
+        message: 'Failed to unlink mandalas',
+        error: 'Unlink Operation Error',
+        details: { parentId, childId, originalError: errorMessage },
+      });
+    }
   }
 }

@@ -203,3 +203,76 @@ export const ApiDeletePostit = () =>
       description: 'Mandala o post-it no encontrado',
     }),
   );
+
+export const ApiLinkMandala = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Vincular un mandala como hijo de otro mandala',
+      description:
+        'Establece una relación padre-hijo entre dos mandalas existentes. Ambos mandalas deben pertenecer al mismo proyecto.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala padre',
+      type: String,
+    }),
+    ApiParam({
+      name: 'childId',
+      description: 'ID del mandala hijo a vincular',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'La mandala ha sido vinculado exitosamente',
+      type: MandalaDto,
+    }),
+    ApiResponse({
+      status: 400,
+      description:
+        'Solicitud inválida - Las mandalas pertenecen a proyectos diferentes',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala padre o hijo no encontrada',
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+  );
+
+export const ApiUnlinkMandala = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Desvincular un mandala hijo de su mandala padre',
+      description:
+        'Elimina la relación padre-hijo entre dos mandalas. El mandala hijo seguirá existiendo independientemente.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID de la mandala padre',
+      type: String,
+    }),
+    ApiParam({
+      name: 'childId',
+      description: 'ID de la mandala hijo a desvincular',
+      type: String,
+    }),
+    ApiResponse({
+      status: 204,
+      description: 'La mandala ha sido desvinculado exitosamente',
+    }),
+    ApiResponse({
+      status: 400,
+      description:
+        'Solicitud inválida - No existe relación entre esta mandala y la mandala padre',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala padre o hijo no encontrado',
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+  );
