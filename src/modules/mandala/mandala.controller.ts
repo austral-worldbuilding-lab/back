@@ -39,17 +39,25 @@ import {
   ApiUpdateMandala,
   ApiDeleteMandala,
   ApiGenerateMandala,
+  ApiCreatePostit,
+  ApiDeletePostit,
   ApiLinkMandala,
   ApiUnlinkMandala,
 } from './decorators/mandala-swagger.decorators';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { CreatePostitDto } from './dto/postit/create-postit.dto';
+import { PostitService } from './services/postit.service';
+import { PostitWithCoordinates } from './types/postits';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
 @UseGuards(FirebaseAuthGuard)
 @ApiBearerAuth()
 export class MandalaController {
-  constructor(private readonly mandalaService: MandalaService) {}
+  constructor(
+    private readonly mandalaService: MandalaService,
+    private readonly postitService: PostitService,
+  ) {}
 
   @Post()
   @UseGuards(MandalaRoleGuard)
@@ -146,6 +154,48 @@ export class MandalaController {
     return {
       message: 'Mandala generated successfully with IA',
       data: mandalaWithPostits,
+    };
+  }
+
+  @Post(':mandalaId/postits')
+  @UseGuards(MandalaRoleGuard)
+  @ApiCreatePostit()
+  async createPostit(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Body() createPostitDto: CreatePostitDto,
+  ): Promise<MessageResponse<PostitWithCoordinates>> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    const createdPostit = await this.postitService.createPostit(
+      mandala.projectId,
+      mandalaId,
+      createPostitDto,
+    );
+
+    return {
+      message: 'Post-it created successfully',
+      data: createdPostit,
+    };
+  }
+
+  @Delete(':mandalaId/postits/:postitId')
+  @UseGuards(MandalaRoleGuard)
+  @ApiDeletePostit()
+  async deletePostit(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Param('postitId', new UuidValidationPipe()) postitId: string,
+  ): Promise<MessageResponse<PostitWithCoordinates[]>> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    const deletedPostits = await this.postitService.deletePostit(
+      mandala.projectId,
+      mandalaId,
+      postitId,
+    );
+
+    return {
+      message: 'Post-it/s deleted successfully',
+      data: deletedPostits,
     };
   }
 

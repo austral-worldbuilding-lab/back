@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { MandalaDto } from '../dto/mandala.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
+import { PostitResponseDto } from '../dto/postit/postit-response.dto';
 
 export const ApiCreateMandala = () =>
   applyDecorators(
@@ -141,6 +142,65 @@ export const ApiGenerateMandala = () =>
     ApiResponse({
       status: 403,
       description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+  );
+
+export const ApiCreatePostit = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear un nuevo post-it en un mandala',
+      description:
+        'Crea un nuevo post-it en el mandala especificado con coordenadas, dimensiones, sección y tags',
+    }),
+    ApiParam({
+      name: 'mandalaId',
+      description: 'ID del mandala donde se creará el post-it',
+      type: String,
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'El post-it ha sido creado exitosamente',
+      type: PostitResponseDto,
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiDeletePostit = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Eliminar un post-it y todos sus hijos',
+      description:
+        'Elimina un post-it y recursivamente todos sus post-its hijos del mandala',
+    }),
+    ApiParam({
+      name: 'mandalaId',
+      description: 'ID del mandala donde se encuentra el post-it',
+      type: String,
+    }),
+    ApiParam({
+      name: 'postitId',
+      description: 'ID del post-it a eliminar',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'El post-it y sus hijos han sido eliminados exitosamente',
+      type: [PostitResponseDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala o post-it no encontrado',
     }),
   );
 
