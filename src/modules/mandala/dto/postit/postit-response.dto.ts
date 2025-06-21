@@ -1,4 +1,7 @@
-import { TagResponseDto, toTagResponseDto } from '@/modules/project/dto/tag-response.dto';
+import {
+  TagResponseDto,
+  toTagResponseDto,
+} from '@/modules/project/dto/tag-response.dto';
 import { PostitWithCoordinates } from '../../types/postits';
 
 export class PostitResponseDto {
@@ -10,7 +13,9 @@ export class PostitResponseDto {
   parentId?: string | null;
 }
 
-export function toPostitResponseDto(postit: PostitWithCoordinates): PostitResponseDto {
+export function toPostitResponseDto(
+  postit: PostitWithCoordinates,
+): PostitResponseDto {
   return {
     id: postit.id,
     content: postit.content,

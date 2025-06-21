@@ -47,7 +47,7 @@ import {
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
 import { PostitService } from './services/postit.service';
-import { Postit, PostitWithCoordinates } from './types/postits';
+import { PostitWithCoordinates } from './types/postits';
 
 @ApiTags('Mandalas')
 @Controller('mandala')

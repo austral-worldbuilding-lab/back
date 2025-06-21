@@ -1,4 +1,4 @@
-import { PostitTag } from "@/modules/mandala/types/postits";
+import { PostitTag } from '@/modules/mandala/types/postits';
 
 export class TagResponseDto {
   name!: string;
