@@ -64,7 +64,7 @@ export class FileController {
   @UseGuards(FileRoleGuard)
   @ApiDeleteFile()
   async deleteFile(
-    @Param('projectId') projectId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Param('fileName') fileName: string,
   ): Promise<MessageOnlyResponse> {
     await this.fileService.deleteFile(projectId, fileName);

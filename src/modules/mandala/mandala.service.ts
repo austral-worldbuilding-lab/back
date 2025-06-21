@@ -20,6 +20,7 @@ import {
   FirestoreMandalaDocument,
   FirestoreCharacter,
 } from '../firebase/types/firestore-character.type';
+import { CharacterListItemDto } from './dto/character-list-item.dto';
 
 @Injectable()
 export class MandalaService {
@@ -171,6 +172,18 @@ export class MandalaService {
     }
 
     return deletedMandala;
+  }
+
+  async findAvailableMandalasForLinking(
+    mandalaId: string,
+  ): Promise<CharacterListItemDto[]> {
+    const mandala = await this.findOne(mandalaId);
+    const availableCharacters =
+      await this.mandalaRepository.findAvailableMandalasForLinking(
+        mandalaId,
+        mandala.projectId,
+      );
+    return availableCharacters || [];
   }
 
   async removeChildFromParentFirestore(

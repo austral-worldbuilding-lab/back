@@ -4,6 +4,7 @@ import { MandalaDto } from '../dto/mandala.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
 import { PostitResponseDto } from '../dto/postit/postit-response.dto';
+import { CharacterListItemDto } from '../dto/character-list-item.dto';
 
 export const ApiCreateMandala = () =>
   applyDecorators(
@@ -271,6 +272,31 @@ export const ApiUnlinkMandala = () =>
       status: 404,
       description: 'Mandala padre o hijo no encontrado',
     }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+  );
+
+export const ApiGetAvailableCharacters = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener personajes disponibles para vincular a un mandala',
+      description:
+        'Retorna una lista de todos los mandalas en el mismo proyecto que no son el mandala actual y que aún no están vinculados como hijos directos. Estos mandalas pueden ser seleccionados para convertirse en personajes (hijos) del mandala especificado.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala para el cual se buscan personajes',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description:
+        'Lista de mandalas disponibles para ser vinculados como personajes',
+      type: [CharacterListItemDto],
+    }),
+    ApiResponse({ status: 404, description: 'Mandala no encontrado' }),
     ApiResponse({
       status: 403,
       description: 'Prohibido - No tienes acceso a este proyecto',
