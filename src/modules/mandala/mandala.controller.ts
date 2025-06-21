@@ -41,8 +41,10 @@ import {
   ApiGenerateMandala,
   ApiLinkMandala,
   ApiUnlinkMandala,
+  ApiGetAvailableCharacters,
 } from './decorators/mandala-swagger.decorators';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { CharacterListItemDto } from './dto/character-list-item.dto';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -104,6 +106,19 @@ export class MandalaController {
     const mandala = await this.mandalaService.findOne(id);
     return {
       data: mandala,
+    };
+  }
+
+  @Get(':id/characters')
+  @UseGuards(MandalaRoleGuard)
+  @ApiGetAvailableCharacters()
+  async getAvailableCharacters(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<CharacterListItemDto[]>> {
+    const characters =
+      await this.mandalaService.findAvailableMandalasForLinking(id);
+    return {
+      data: characters,
     };
   }
 

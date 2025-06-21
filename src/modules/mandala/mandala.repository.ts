@@ -6,6 +6,7 @@ import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
 import { Prisma } from '@prisma/client';
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 import { MandalaCenter } from '@/modules/mandala/types/mandala-center.type';
+import { CharacterListItemDto } from './dto/character-list-item.dto';
 
 type MandalaWithRelations = Prisma.MandalaGetPayload<{
   include: {
@@ -165,6 +166,34 @@ export class MandalaRepository {
     });
 
     return this.parseToMandalaDto(mandala);
+  }
+
+  async findAvailableMandalasForLinking(
+    mandalaId: string,
+    projectId: string,
+  ): Promise<CharacterListItemDto[]> {
+    const mandalas = await this.prisma.mandala.findMany({
+      where: {
+        projectId,
+        id: { not: mandalaId },
+        parent: {
+          none: {
+            id: mandalaId,
+          },
+        },
+      },
+    });
+
+    return mandalas.map((mandala) => {
+      const configuration = this.parseToMandalaConfiguration(
+        mandala.configuration,
+      );
+      return {
+        id: mandala.id,
+        name: configuration.center.name,
+        color: configuration.center.color,
+      };
+    });
   }
 
   async findChildrenMandalasCenters(
