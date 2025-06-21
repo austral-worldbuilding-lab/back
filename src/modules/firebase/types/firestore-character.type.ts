@@ -1,4 +1,4 @@
-import { Postit, PostitWithCoordinates } from '@modules/mandala/types/postits';
+import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 
 export interface FirestorePosition {
   x: number;

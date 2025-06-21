@@ -36,7 +36,7 @@ class PostitCoordinatesDto {
   percentileDistance!: number;
 }
 
-export class  CreatePostitDto {
+export class CreatePostitDto {
   @ApiProperty({
     description: 'Content of the post-it',
     example: 'This is a sample post-it content',

@@ -269,8 +269,8 @@ export class PostitService {
       content: postit.content,
       dimension: postit.dimension,
       section: postit.section,
-      tags: postit.tags.map(tag => ({
-        name: tag.name, 
+      tags: postit.tags.map((tag) => ({
+        name: tag.name,
         color: tag.color,
       })),
       parentId: postit.parentId || null,
@@ -362,7 +362,10 @@ export class PostitService {
    * If we delete Postit A, this method returns: ["b", "d", "e", "c", "f"]
    * (Postit A is handled separately before calling this method)
    */
-  private findChildrenPostits(postits: PostitWithCoordinates[], parentId: string): PostitWithCoordinates[] {
+  private findChildrenPostits(
+    postits: PostitWithCoordinates[],
+    parentId: string,
+  ): PostitWithCoordinates[] {
     const childrenPostits = [];
 
     // Find direct children
