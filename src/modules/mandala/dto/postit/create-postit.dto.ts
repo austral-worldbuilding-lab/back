@@ -8,6 +8,7 @@ import {
   IsObject,
   IsNumber,
   IsArray,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateTagDto } from '@/modules/project/dto/create-tag.dto';
