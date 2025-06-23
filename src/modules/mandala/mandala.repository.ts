@@ -73,7 +73,9 @@ export class MandalaRepository {
       childrenIds: (
         (mandala.linkedMandalas ?? []) as Array<{ id: string }>
       ).map((child): string => child.id),
-      parentIds: mandala.linkedTo ? [mandala.linkedTo.id] : [],
+      parentIds: mandala.linkedTo
+        ? [(mandala.linkedTo as { id: string }).id]
+        : [],
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
     };
