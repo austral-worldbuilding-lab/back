@@ -254,4 +254,27 @@ export class MandalaRepository {
 
     return this.parseToMandalaDto(mandala);
   }
+
+  async findCharacterListByProject(
+    projectId: string,
+  ): Promise<CharacterListItemDto[]> {
+    const mandalas = await this.prisma.mandala.findMany({
+      where: { projectId },
+      select: {
+        id: true,
+        configuration: true,
+      },
+    });
+
+    return mandalas.map((mandala) => {
+      const configuration = this.parseToMandalaConfiguration(
+        mandala.configuration,
+      );
+      return {
+        id: mandala.id,
+        name: configuration.center.name,
+        color: configuration.center.color,
+      };
+    });
+  }
 }
