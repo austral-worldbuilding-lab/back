@@ -10,8 +10,8 @@ import { CharacterListItemDto } from './dto/character-list-item.dto';
 
 type MandalaWithRelations = Prisma.MandalaGetPayload<{
   include: {
-    children: { select: { id: true } };
-    parent: { select: { id: true } };
+    linkedMandalas: { select: { id: true } };
+    linkedTo: { select: { id: true } };
   };
 }>;
 
@@ -65,8 +65,8 @@ export class MandalaRepository {
         dimensions: configuration.dimensions,
         scales: configuration.scales,
       },
-      childrenIds: mandala.children?.map((child) => child.id) || [],
-      parentIds: mandala.parent?.map((parent) => parent.id) || [],
+      childrenIds: mandala.linkedMandalas?.map((child) => child.id) || [],
+      parentIds: mandala.linkedTo ? [mandala.linkedTo.id] : [],
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
     };
@@ -85,14 +85,12 @@ export class MandalaRepository {
         projectId: createMandalaDto.projectId,
         configuration: this.parseToJson(configuration),
         ...(createMandalaDto.parentId && {
-          parent: {
-            connect: { id: createMandalaDto.parentId },
-          },
+          linkedToId: createMandalaDto.parentId,
         }),
       },
       include: {
-        children: { select: { id: true } },
-        parent: { select: { id: true } },
+        linkedMandalas: { select: { id: true } },
+        linkedTo: { select: { id: true } },
       },
     });
 
@@ -112,8 +110,8 @@ export class MandalaRepository {
         take,
         orderBy: { createdAt: 'desc' },
         include: {
-          children: { select: { id: true } },
-          parent: { select: { id: true } },
+          linkedMandalas: { select: { id: true } },
+          linkedTo: { select: { id: true } },
         },
       }),
       this.prisma.mandala.count({ where }),
@@ -126,8 +124,8 @@ export class MandalaRepository {
     const mandala = await this.prisma.mandala.findUnique({
       where: { id },
       include: {
-        children: { select: { id: true } },
-        parent: { select: { id: true } },
+        linkedMandalas: { select: { id: true } },
+        linkedTo: { select: { id: true } },
       },
     });
 
@@ -148,8 +146,8 @@ export class MandalaRepository {
         name: updateMandalaDto.name,
       },
       include: {
-        children: { select: { id: true } },
-        parent: { select: { id: true } },
+        linkedMandalas: { select: { id: true } },
+        linkedTo: { select: { id: true } },
       },
     });
 
@@ -160,8 +158,8 @@ export class MandalaRepository {
     const mandala = await this.prisma.mandala.delete({
       where: { id },
       include: {
-        children: { select: { id: true } },
-        parent: { select: { id: true } },
+        linkedMandalas: { select: { id: true } },
+        linkedTo: { select: { id: true } },
       },
     });
 
@@ -176,11 +174,7 @@ export class MandalaRepository {
       where: {
         projectId,
         id: { not: mandalaId },
-        parent: {
-          none: {
-            id: mandalaId,
-          },
-        },
+        linkedToId: null,
       },
     });
 
@@ -202,15 +196,15 @@ export class MandalaRepository {
     const mandala = await this.prisma.mandala.findUnique({
       where: { id: mandalaId },
       include: {
-        children: true,
+        linkedMandalas: true,
       },
     });
 
-    if (!mandala || !mandala.children) {
+    if (!mandala || !mandala.linkedMandalas) {
       return [];
     }
 
-    return mandala.children.map((childMandala) => {
+    return mandala.linkedMandalas.map((childMandala) => {
       const configuration = this.parseToMandalaConfiguration(
         childMandala.configuration,
       );
@@ -225,13 +219,13 @@ export class MandalaRepository {
     const mandala = await this.prisma.mandala.update({
       where: { id: parentId },
       data: {
-        children: {
+        linkedMandalas: {
           connect: { id: childId },
         },
       },
       include: {
-        children: { select: { id: true } },
-        parent: { select: { id: true } },
+        linkedMandalas: { select: { id: true } },
+        linkedTo: { select: { id: true } },
       },
     });
 
@@ -242,16 +236,43 @@ export class MandalaRepository {
     const mandala = await this.prisma.mandala.update({
       where: { id: parentId },
       data: {
-        children: {
+        linkedMandalas: {
           disconnect: { id: childId },
         },
       },
       include: {
-        children: { select: { id: true } },
-        parent: { select: { id: true } },
+        linkedMandalas: { select: { id: true } },
+        linkedTo: { select: { id: true } },
       },
     });
 
     return this.parseToMandalaDto(mandala);
+  }
+
+  async findCharacterList(
+    projectId: string,
+  ): Promise<{ id: string; name: string; color: string }[]> {
+    const mandalas = await this.prisma.mandala.findMany({
+      where: {
+        projectId,
+        linkedToId: {
+          not: null,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        configuration: true,
+      },
+    });
+
+    return mandalas.map((m) => {
+      const config = this.parseToMandalaConfiguration(m.configuration);
+      return {
+        id: m.id,
+        name: m.name,
+        color: config.center.color,
+      };
+    });
   }
 }

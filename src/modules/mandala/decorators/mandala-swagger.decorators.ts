@@ -5,6 +5,8 @@ import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
 import { PostitResponseDto } from '../dto/postit/postit-response.dto';
 import { CharacterListItemDto } from '../dto/character-list-item.dto';
+import { CharacterMandalaDto } from '../dto/character-mandala.dto';
+import { MandalaListFields } from '../types/mandala-fields.enum';
 
 export const ApiCreateMandala = () =>
   applyDecorators(
@@ -41,10 +43,23 @@ export const ApiGetAllMandalas = () =>
       type: Number,
       example: 10,
     }),
+    ApiQuery({
+      name: 'fields',
+      required: false,
+      description:
+        'Si vale "characterList" devuelve solo la lista de personajes (id, name, color)',
+      enum: MandalaListFields,
+      example: 'characterList',
+    }),
     ApiResponse({
       status: 200,
       description: 'Retorna una lista paginada de mandalas',
       type: [MandalaDto],
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Retorna una lista de personajes (respuesta liviana)',
+      type: [CharacterMandalaDto],
     }),
     ApiResponse({
       status: 403,

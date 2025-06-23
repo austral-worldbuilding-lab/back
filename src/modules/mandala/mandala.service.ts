@@ -479,4 +479,13 @@ export class MandalaService {
       });
     }
   }
+
+  /**
+   * (solo id, name, color)
+   */
+  async getCharacterList(
+    projectId: string,
+  ): Promise<{ id: string; name: string; color: string }[]> {
+    return this.mandalaRepository.findCharacterList(projectId);
+  }
 }

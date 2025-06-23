@@ -10,6 +10,7 @@ import {
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
+  ParseEnumPipe,
 } from '@nestjs/common';
 import { MandalaService } from './mandala.service';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
@@ -46,10 +47,12 @@ import {
   ApiGetAvailableCharacters,
 } from './decorators/mandala-swagger.decorators';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { CharacterMandalaDto } from './dto/character-mandala.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
 import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from './types/postits';
+import { MandalaListFields } from './types/mandala-fields.enum';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -89,7 +92,16 @@ export class MandalaController {
       new MaxValuePipe(100),
     )
     limit: number,
-  ): Promise<PaginatedResponse<MandalaDto>> {
+    @Query('fields', new ParseEnumPipe(MandalaListFields, { optional: true }))
+    fields?: MandalaListFields,
+  ): Promise<
+    PaginatedResponse<MandalaDto> | DataResponse<CharacterMandalaDto[]>
+  > {
+    if (fields === MandalaListFields.CharacterList) {
+      const characters = await this.mandalaService.getCharacterList(projectId);
+      return { data: characters } as DataResponse<CharacterMandalaDto[]>;
+    }
+
     return await this.mandalaService.findAllPaginated(projectId, page, limit);
   }
 
