@@ -65,9 +65,9 @@ export class MandalaRepository {
         dimensions: configuration.dimensions,
         scales: configuration.scales,
       },
-      childrenIds: (mandala.linkedMandalas ?? []).map(
-        (child: { id: string }) => child.id,
-      ),
+      childrenIds: (
+        (mandala.linkedMandalas ?? []) as Array<{ id: string }>
+      ).map((child) => child.id),
       parentIds: mandala.linkedTo ? [mandala.linkedTo.id] : [],
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
@@ -206,17 +206,20 @@ export class MandalaRepository {
       return [];
     }
 
-    return mandala.linkedMandalas.map(
-      (childMandala: { id: string; configuration: Prisma.JsonValue }) => {
-        const configuration = this.parseToMandalaConfiguration(
-          childMandala.configuration,
-        );
-        return {
-          id: childMandala.id,
-          ...configuration.center,
-        };
-      },
-    );
+    const linkedChildren = mandala.linkedMandalas as Array<{
+      id: string;
+      configuration: Prisma.JsonValue;
+    }>;
+
+    return linkedChildren.map((childMandala) => {
+      const configuration = this.parseToMandalaConfiguration(
+        childMandala.configuration,
+      );
+      return {
+        id: childMandala.id,
+        ...configuration.center,
+      } as MandalaCenter;
+    });
   }
 
   async linkMandala(parentId: string, childId: string): Promise<MandalaDto> {
