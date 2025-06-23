@@ -42,6 +42,7 @@ import {
   RequireInvitationAccess,
 } from './guards/invitation-access.guard';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { RequireOwner } from '@common/guards/owner.guard';
 
 @ApiTags('Invitations')
 @Controller('invitation')
@@ -52,6 +53,7 @@ export class InvitationController {
 
   @Post()
   @UseGuards(InvitationRoleGuard)
+  @RequireOwner()
   @ApiCreateInvitation()
   async create(
     @Body() createInvitationDto: CreateInvitationDto,
