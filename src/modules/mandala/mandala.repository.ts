@@ -65,7 +65,9 @@ export class MandalaRepository {
         dimensions: configuration.dimensions,
         scales: configuration.scales,
       },
-      childrenIds: mandala.linkedMandalas?.map((child) => child.id) || [],
+      childrenIds: (mandala.linkedMandalas ?? []).map(
+        (child: { id: string }) => child.id,
+      ),
       parentIds: mandala.linkedTo ? [mandala.linkedTo.id] : [],
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
@@ -204,15 +206,17 @@ export class MandalaRepository {
       return [];
     }
 
-    return mandala.linkedMandalas.map((childMandala) => {
-      const configuration = this.parseToMandalaConfiguration(
-        childMandala.configuration,
-      );
-      return {
-        id: childMandala.id,
-        ...configuration.center,
-      };
-    });
+    return mandala.linkedMandalas.map(
+      (childMandala: { id: string; configuration: Prisma.JsonValue }) => {
+        const configuration = this.parseToMandalaConfiguration(
+          childMandala.configuration,
+        );
+        return {
+          id: childMandala.id,
+          ...configuration.center,
+        };
+      },
+    );
   }
 
   async linkMandala(parentId: string, childId: string): Promise<MandalaDto> {
@@ -272,7 +276,7 @@ export class MandalaRepository {
         id: m.id,
         name: m.name,
         color: config.center.color,
-      };
+      } as { id: string; name: string; color: string };
     });
   }
 }
