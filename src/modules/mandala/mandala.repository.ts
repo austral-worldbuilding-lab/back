@@ -15,6 +15,11 @@ type MandalaWithRelations = Prisma.MandalaGetPayload<{
   };
 }>;
 
+const MANDALA_RELATIONS_INCLUDE = {
+  linkedMandalas: { select: { id: true } },
+  linkedTo: { select: { id: true } },
+} as const;
+
 @Injectable()
 export class MandalaRepository {
   constructor(private prisma: PrismaService) {}
@@ -90,10 +95,7 @@ export class MandalaRepository {
           linkedToId: createMandalaDto.parentId,
         }),
       },
-      include: {
-        linkedMandalas: { select: { id: true } },
-        linkedTo: { select: { id: true } },
-      },
+      include: MANDALA_RELATIONS_INCLUDE,
     });
 
     return this.parseToMandalaDto(mandala);
@@ -111,10 +113,7 @@ export class MandalaRepository {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        include: {
-          linkedMandalas: { select: { id: true } },
-          linkedTo: { select: { id: true } },
-        },
+        include: MANDALA_RELATIONS_INCLUDE,
       }),
       this.prisma.mandala.count({ where }),
     ]);
@@ -125,10 +124,7 @@ export class MandalaRepository {
   async findOne(id: string): Promise<MandalaDto | null> {
     const mandala = await this.prisma.mandala.findUnique({
       where: { id },
-      include: {
-        linkedMandalas: { select: { id: true } },
-        linkedTo: { select: { id: true } },
-      },
+      include: MANDALA_RELATIONS_INCLUDE,
     });
 
     if (!mandala) {
@@ -147,10 +143,7 @@ export class MandalaRepository {
       data: {
         name: updateMandalaDto.name,
       },
-      include: {
-        linkedMandalas: { select: { id: true } },
-        linkedTo: { select: { id: true } },
-      },
+      include: MANDALA_RELATIONS_INCLUDE,
     });
 
     return this.parseToMandalaDto(mandala);
@@ -159,10 +152,7 @@ export class MandalaRepository {
   async remove(id: string): Promise<MandalaDto> {
     const mandala = await this.prisma.mandala.delete({
       where: { id },
-      include: {
-        linkedMandalas: { select: { id: true } },
-        linkedTo: { select: { id: true } },
-      },
+      include: MANDALA_RELATIONS_INCLUDE,
     });
 
     return this.parseToMandalaDto(mandala);
@@ -230,10 +220,7 @@ export class MandalaRepository {
           connect: { id: childId },
         },
       },
-      include: {
-        linkedMandalas: { select: { id: true } },
-        linkedTo: { select: { id: true } },
-      },
+      include: MANDALA_RELATIONS_INCLUDE,
     });
 
     return this.parseToMandalaDto(mandala);
@@ -247,10 +234,7 @@ export class MandalaRepository {
           disconnect: { id: childId },
         },
       },
-      include: {
-        linkedMandalas: { select: { id: true } }, // Represents the 'children' relation, now renamed to 'linkedMandalas'
-        linkedTo: { select: { id: true } }, // Represents the 'parent' relation, now renamed to 'linkedTo'
-      },
+      include: MANDALA_RELATIONS_INCLUDE,
     });
 
     return this.parseToMandalaDto(mandala);
