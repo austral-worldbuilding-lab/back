@@ -248,8 +248,8 @@ export class MandalaRepository {
         },
       },
       include: {
-        linkedMandalas: { select: { id: true } },
-        linkedTo: { select: { id: true } },
+        linkedMandalas: { select: { id: true } }, // Represents the 'children' relation, now renamed to 'linkedMandalas'
+        linkedTo: { select: { id: true } }, // Represents the 'parent' relation, now renamed to 'linkedTo'
       },
     });
 
