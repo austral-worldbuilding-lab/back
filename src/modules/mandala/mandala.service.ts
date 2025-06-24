@@ -226,13 +226,13 @@ export class MandalaService {
   }
 
   async updateParentMandalaDocument(parentMandalaId: string): Promise<void> {
-    try {
-      const parentMandala =
-        await this.mandalaRepository.findOne(parentMandalaId);
-      if (!parentMandala) {
-        throw new ResourceNotFoundException('Parent Mandala', parentMandalaId);
-      }
+    const parentMandala = await this.mandalaRepository.findOne(parentMandalaId);
 
+    if (!parentMandala) {
+      throw new ResourceNotFoundException('Parent Mandala', parentMandalaId);
+    }
+
+    try {
       const currentDocument = (await this.firebaseDataService.getDocument(
         parentMandala.projectId,
         parentMandalaId,
@@ -260,17 +260,17 @@ export class MandalaService {
             description: center.description,
             color: center.color,
           };
-        } else {
-          return {
-            id: center.id,
-            name: center.name,
-            description: center.description,
-            color: center.color,
-            position: { x: 0, y: 0 },
-            section: '',
-            dimension: '',
-          };
         }
+
+        return {
+          id: center.id,
+          name: center.name,
+          description: center.description,
+          color: center.color,
+          position: { x: 0, y: 0 },
+          section: '',
+          dimension: '',
+        };
       });
 
       const updateData = {
@@ -478,5 +478,9 @@ export class MandalaService {
         details: { parentId, childId, originalError: errorMessage },
       });
     }
+  }
+
+  async getCharacterList(projectId: string): Promise<CharacterListItemDto[]> {
+    return this.mandalaRepository.findCharacterListByProject(projectId);
   }
 }

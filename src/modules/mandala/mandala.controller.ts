@@ -79,6 +79,7 @@ export class MandalaController {
   @ApiGetAllMandalas()
   async findAll(
     @Query('projectId', new UuidValidationPipe()) projectId: string,
+    @Query('fields') fields: string | undefined,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
     page: number,
     @Query(
@@ -89,7 +90,14 @@ export class MandalaController {
       new MaxValuePipe(100),
     )
     limit: number,
-  ): Promise<PaginatedResponse<MandalaDto>> {
+  ): Promise<
+    PaginatedResponse<MandalaDto> | DataResponse<CharacterListItemDto[]>
+  > {
+    if (fields === 'characterList') {
+      const characters = await this.mandalaService.getCharacterList(projectId);
+      return { data: characters };
+    }
+
     return await this.mandalaService.findAllPaginated(projectId, page, limit);
   }
 
