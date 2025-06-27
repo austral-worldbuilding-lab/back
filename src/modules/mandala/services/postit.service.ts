@@ -326,11 +326,11 @@ export class PostitService {
     return plainPostit;
   }
 
-  async deletePostit(
+    async deletePostit(
     projectId: string,
     mandalaId: string,
     postitId: string,
-  ): Promise<PostitWithCoordinates[]> {
+  ): Promise<void> {
     const currentDocument = (await this.firebaseDataService.getDocument(
       projectId,
       mandalaId,
@@ -341,7 +341,7 @@ export class PostitService {
     }
 
     const postits = currentDocument.postits || [];
-
+    
     const result = deletePostitFromTree(postits, postitId);
     if (!result.found) {
       throw new BusinessLogicException('Postit not found', { postitId });
@@ -355,7 +355,5 @@ export class PostitService {
       },
       mandalaId,
     );
-
-    return result.postits;
   }
 }
