@@ -51,7 +51,11 @@ export class PostitService {
           allCoordinates,
         );
         if (coordinates) {
-          postitsWithCoordinates.push({ ...postit, coordinates });
+          postitsWithCoordinates.push({ 
+            ...postit, 
+            coordinates,
+            childrens: postit.childrens as PostitWithCoordinates[]
+          });
           coordinatesBySection[sectionKey].push(coordinates);
           allCoordinates.push(coordinates);
         }
@@ -100,7 +104,7 @@ export class PostitService {
         section: aiPostit.section,
         tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
         // TODO: linkedToId is not used in the mandala generation by AI yet
-        parentId: aiPostit.parentId || null,
+        childrens: [],
       }),
     );
   }
@@ -264,8 +268,11 @@ export class PostitService {
       throw new BusinessLogicException('Mandala not found', { mandalaId });
     }
 
+    const newPostitId = randomUUID();
+
     // Convert DTO to plain object to avoid Firestore serialization issues
     const plainPostit = {
+      id: newPostitId,
       content: postit.content,
       dimension: postit.dimension,
       section: postit.section,
@@ -273,7 +280,7 @@ export class PostitService {
         name: tag.name,
         color: tag.color,
       })),
-      parentId: postit.parentId || null,
+      childrens: [], // Initialize empty children array
       coordinates: {
         x: postit.coordinates.x,
         y: postit.coordinates.y,
@@ -282,24 +289,34 @@ export class PostitService {
       },
     };
 
-    const postitWithId = {
-      id: randomUUID(),
-      ...plainPostit,
-    };
+    const postits = currentDocument.postits || [];
 
-    const existingPostits = currentDocument.postits || [];
-    const updatedPostits = [...existingPostits, postitWithId];
+    // If the postit has a parent, add the complete postit object to the parent's children array
+    if (postit.parentId) {
+      const parentPostit = findPostitRecursively(postits, postit.parentId);
+      
+      if (!parentPostit) {
+        throw new BusinessLogicException('Parent postit not found', { 
+          parentId: postit.parentId 
+        });
+      }
+
+      // Update the parent postit to include the new child postit object
+      parentPostit.childrens.push(plainPostit);
+    } else {
+      postits.push(plainPostit);
+    }
 
     await this.firebaseDataService.updateDocument(
       projectId,
       {
-        postits: updatedPostits,
+        postits: postits,
         updatedAt: new Date(),
       },
       mandalaId,
     );
 
-    return postitWithId;
+    return plainPostit;
   }
 
   async deletePostit(
@@ -317,19 +334,8 @@ export class PostitService {
     }
 
     const postits = currentDocument.postits || [];
-
-    // Find the postit to be deleted
-    const postitToDelete = postits.find((p) => p.id === postitId);
-    if (!postitToDelete) {
-      throw new BusinessLogicException('Postit not found', { postitId });
-    }
-    // Find all children post-its to be deleted
-    const childrenPostitsToDelete = this.findChildrenPostits(postits, postitId);
-
-    // Delete the postit to be deleted and all its children
-    const postitsToDelete = [postitToDelete, ...childrenPostitsToDelete];
-    const postitIdsToDelete = new Set(postitsToDelete.map((p) => p.id));
-    const updatedPostits = postits.filter((p) => !postitIdsToDelete.has(p.id));
+    
+    const updatedPostits = deletePostitsRecursively(postits, postitId);
 
     await this.firebaseDataService.updateDocument(
       projectId,
@@ -340,46 +346,23 @@ export class PostitService {
       mandalaId,
     );
 
-    return postitsToDelete;
+    return updatedPostits;
   }
+}
 
-  /**
-   * Recursively finds all children post-its that should be deleted when removing a parent post-it.
-   * This includes all descendants in the hierarchy (children, grandchildren, etc.).
-   *
-   * @param postits - Array of all post-its in the mandala document
-   * @param parentId - ID of the parent post-it whose children should be deleted
-   * @returns Array of post-its that should be deleted (only children, not including parent)
-   *
-   * Example hierarchy:
-   * Postit A (id: "a")
-   * ├── Postit B (fatherId: "a")
-   * │   ├── Postit D (fatherId: "b")
-   * │   └── Postit E (fatherId: "b")
-   * └── Postit C (fatherId: "a")
-   *     └── Postit F (fatherId: "c")
-   *
-   * If we delete Postit A, this method returns: ["b", "d", "e", "c", "f"]
-   * (Postit A is handled separately before calling this method)
-   */
-  private findChildrenPostits(
-    postits: PostitWithCoordinates[],
-    parentId: string,
-  ): PostitWithCoordinates[] {
-    const childrenPostits = [];
+function deletePostitsRecursively(postits: PostitWithCoordinates[], postitId: string): PostitWithCoordinates[] {
+  return postits
+  .filter(p => p.id !== postitId)
+  .map(p => ({
+    ...p,
+    childrens: p.childrens ? deletePostitsRecursively(p.childrens, postitId) : [],
+  }));
+}
 
-    // Find direct children
-    const directChildren = postits.filter(
-      (postit) => postit.parentId === parentId,
-    );
-    childrenPostits.push(...directChildren);
-
-    // Recursively find children of children
-    for (const child of directChildren) {
-      const childIds = this.findChildrenPostits(postits, child.id);
-      childrenPostits.push(...childIds);
-    }
-
-    return childrenPostits;
-  }
+function findPostitRecursively(postits: PostitWithCoordinates[], postitId: string): PostitWithCoordinates | null {
+  return postits.reduce<PostitWithCoordinates | null>((found, node) => {
+    if (found) return found;
+    if (node.id === postitId) return node;
+    return findPostitRecursively(node.childrens, postitId);
+  }, null); 
 }
