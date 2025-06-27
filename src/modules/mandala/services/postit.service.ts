@@ -326,7 +326,7 @@ export class PostitService {
     return plainPostit;
   }
 
-    async deletePostit(
+  async deletePostit(
     projectId: string,
     mandalaId: string,
     postitId: string,
@@ -341,7 +341,7 @@ export class PostitService {
     }
 
     const postits = currentDocument.postits || [];
-    
+
     const result = deletePostitFromTree(postits, postitId);
     if (!result.found) {
       throw new BusinessLogicException('Postit not found', { postitId });
