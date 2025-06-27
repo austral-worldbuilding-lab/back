@@ -15,26 +15,18 @@ import { CreateTagDto } from '@/modules/project/dto/create-tag.dto';
 
 class PostitCoordinatesDto {
   @ApiProperty({
-    description: 'X coordinate of the post-it',
+    description: 'X relative coordinate of the post-it',
     example: 0.5,
   })
   @IsNumber()
   x!: number;
 
   @ApiProperty({
-    description: 'Y coordinate of the post-it',
+    description: 'Y relative coordinate of the post-it',
     example: 0.3,
   })
   @IsNumber()
   y!: number;
-
-  @ApiProperty()
-  @IsNumber()
-  angle!: number;
-
-  @ApiProperty()
-  @IsNumber()
-  percentileDistance!: number;
 }
 
 export class CreatePostitDto {
