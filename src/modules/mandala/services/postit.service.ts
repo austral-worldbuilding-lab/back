@@ -293,16 +293,16 @@ export class PostitService {
 
     // If the postit has a parent, add the complete postit object to the parent's children array
     if (postit.parentId) {
-      const parentPostit = findPostitRecursively(postits, postit.parentId);
+      const parentResult = findPostitFromTree(postits, postit.parentId);
       
-      if (!parentPostit) {
+      if (!parentResult.found || !parentResult.postit) {
         throw new BusinessLogicException('Parent postit not found', { 
           parentId: postit.parentId 
         });
       }
 
       // Update the parent postit to include the new child postit object
-      parentPostit.childrens.push(plainPostit);
+      parentResult.postit.childrens.push(plainPostit);
     } else {
       postits.push(plainPostit);
     }
@@ -335,34 +335,68 @@ export class PostitService {
 
     const postits = currentDocument.postits || [];
     
-    const updatedPostits = deletePostitsRecursively(postits, postitId);
+    const result = deletePostitFromTree(postits, postitId);
+    if (!result.found) {
+      throw new BusinessLogicException('Postit not found', { postitId });
+    }
 
     await this.firebaseDataService.updateDocument(
       projectId,
       {
-        postits: updatedPostits,
+        postits: result.postits,
         updatedAt: new Date(),
       },
       mandalaId,
     );
 
-    return updatedPostits;
+    return result.postits;
   }
 }
 
-function deletePostitsRecursively(postits: PostitWithCoordinates[], postitId: string): PostitWithCoordinates[] {
-  return postits
-  .filter(p => p.id !== postitId)
-  .map(p => ({
-    ...p,
-    childrens: p.childrens ? deletePostitsRecursively(p.childrens, postitId) : [],
-  }));
+function deletePostitFromTree(
+  postits: PostitWithCoordinates[], 
+  postitId: string
+): { found: boolean; postits: PostitWithCoordinates[] } {
+  const originalLength = postits.length;
+  const filteredPostits = postits.filter(p => p.id !== postitId);
+  
+  if (filteredPostits.length < originalLength) {
+    return { found: true, postits: filteredPostits };
+  }
+  
+  for (let i = 0; i < postits.length; i++) {
+    const postit = postits[i];
+    const childResult = deletePostitFromTree(postit.childrens, postitId);
+    
+    if (childResult.found) {
+      const updatedPostits = [...postits];
+      updatedPostits[i] = {
+        ...postit,
+        childrens: childResult.postits
+      };
+      return { found: true, postits: updatedPostits };
+    }
+  }
+  
+  return { found: false, postits };
 }
 
-function findPostitRecursively(postits: PostitWithCoordinates[], postitId: string): PostitWithCoordinates | null {
-  return postits.reduce<PostitWithCoordinates | null>((found, node) => {
-    if (found) return found;
-    if (node.id === postitId) return node;
-    return findPostitRecursively(node.childrens, postitId);
-  }, null); 
+function findPostitFromTree(
+  postits: PostitWithCoordinates[], 
+  postitId: string
+): { found: boolean; postit: PostitWithCoordinates | null } {
+  for (const postit of postits) {
+    if (postit.id === postitId) {
+      return { found: true, postit };
+    }
+  }
+  
+  for (const postit of postits) {
+    const childResult = findPostitFromTree(postit.childrens, postitId);
+    if (childResult.found) {
+      return childResult;
+    }
+  }
+
+  return { found: false, postit: null };
 }
