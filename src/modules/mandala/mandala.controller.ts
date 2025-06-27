@@ -45,12 +45,14 @@ import {
   ApiLinkMandala,
   ApiUnlinkMandala,
   ApiGetAvailableCharacters,
+  ApiUpdatePostit,
 } from './decorators/mandala-swagger.decorators';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
 import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from './types/postits';
+import { UpdatePostitDto } from './dto/postit/update-postit.dto';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -199,6 +201,29 @@ export class MandalaController {
     return {
       message: 'Post-it created successfully',
       data: createdPostit,
+    };
+  }
+
+  @Patch(':mandalaId/postits/:postitId')
+  @UseGuards(MandalaRoleGuard)
+  @ApiUpdatePostit()
+  async updatePostit(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Param('postitId', new UuidValidationPipe()) postitId: string,
+    @Body() updatePostitDto: UpdatePostitDto,
+  ): Promise<MessageResponse<PostitWithCoordinates>> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    const updatedPostit = await this.postitService.updatePostit(
+      mandala.projectId,
+      mandalaId,
+      postitId,
+      updatePostitDto,
+    );
+
+    return {
+      message: 'Post-it updated successfully',
+      data: updatedPostit,
     };
   }
 
