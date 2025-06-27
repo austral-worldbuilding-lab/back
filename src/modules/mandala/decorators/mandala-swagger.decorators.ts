@@ -302,3 +302,42 @@ export const ApiGetAvailableCharacters = () =>
       description: 'Prohibido - No tienes acceso a este proyecto',
     }),
   );
+
+export const ApiUpdatePostit = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Actualizar un post-it existente',
+      description:
+        'Actualiza el contenido y tags de un post-it existente. ' +
+        'Este endpoint se utiliza exclusivamente cuando se abre el modal de edición de un post-it. ' +
+        'Su propósito principal es permitir la modificación de los tags, aunque también se permite actualizar el texto. ' +
+        'Sin embargo, la lógica de modificación del texto del post-it continúa siendo responsabilidad del frontend. ',
+    }),
+    ApiParam({
+      name: 'mandalaId',
+      description: 'ID del mandala donde se encuentra el post-it',
+      type: String,
+    }),
+    ApiParam({
+      name: 'postitId',
+      description: 'ID del post-it a actualizar',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'El post-it ha sido actualizado exitosamente',
+      type: PostitResponseDto,
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'No autorizado - Usuario no autenticado',
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala o post-it no encontrado',
+    }),
+  );
