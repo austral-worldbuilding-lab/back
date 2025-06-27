@@ -1,0 +1,11 @@
+branch=$(git symbolic-ref HEAD | sed 's!refs/heads/!!')
+if [ "$branch" = "main" ] || [ "$branch" = "master" ] || [ "$branch" = "dev" ]; then
+  echo "Cannot push directly to '$branch'."
+  exit 1
+fi
+
+npm run build || { echo "Build failed, please fix the errors and try again"; exit 1; }
+npm run lint:check || { echo "Lint failed, please run 'npm run lint' to fix the errors and try again"; exit 1; }
+#npm run test || { echo "Tests failed, please fix the errors and try again"; exit 1; }
+
+echo "All checks passed, pushing..."
