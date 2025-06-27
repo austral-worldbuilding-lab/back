@@ -16,6 +16,7 @@ import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 import { randomUUID } from 'crypto';
 import { CreatePostitDto } from '../dto/postit/create-postit.dto';
+import { addPostitToParent, deletePostitFromTree } from '../utils/postit-tree.utils';
 
 @Injectable()
 export class PostitService {
@@ -289,28 +290,27 @@ export class PostitService {
       },
     };
 
-    const postits = currentDocument.postits || [];
+    const currentPostits = currentDocument.postits || [];
+    let updatedPostits: PostitWithCoordinates[];
 
-    // If the postit has a parent, add the complete postit object to the parent's children array
     if (postit.parentId) {
-      const parentResult = findPostitFromTree(postits, postit.parentId);
+      const result = addPostitToParent(currentPostits, postit.parentId, plainPostit);
       
-      if (!parentResult.found || !parentResult.postit) {
+      if (!result.found) {
         throw new BusinessLogicException('Parent postit not found', { 
           parentId: postit.parentId 
         });
       }
 
-      // Update the parent postit to include the new child postit object
-      parentResult.postit.childrens.push(plainPostit);
+      updatedPostits = result.postits;
     } else {
-      postits.push(plainPostit);
+      updatedPostits = [...currentPostits, plainPostit];
     }
 
     await this.firebaseDataService.updateDocument(
       projectId,
       {
-        postits: postits,
+        postits: updatedPostits,
         updatedAt: new Date(),
       },
       mandalaId,
@@ -351,52 +351,4 @@ export class PostitService {
 
     return result.postits;
   }
-}
-
-function deletePostitFromTree(
-  postits: PostitWithCoordinates[], 
-  postitId: string
-): { found: boolean; postits: PostitWithCoordinates[] } {
-  const originalLength = postits.length;
-  const filteredPostits = postits.filter(p => p.id !== postitId);
-  
-  if (filteredPostits.length < originalLength) {
-    return { found: true, postits: filteredPostits };
-  }
-  
-  for (let i = 0; i < postits.length; i++) {
-    const postit = postits[i];
-    const childResult = deletePostitFromTree(postit.childrens, postitId);
-    
-    if (childResult.found) {
-      const updatedPostits = [...postits];
-      updatedPostits[i] = {
-        ...postit,
-        childrens: childResult.postits
-      };
-      return { found: true, postits: updatedPostits };
-    }
-  }
-  
-  return { found: false, postits };
-}
-
-function findPostitFromTree(
-  postits: PostitWithCoordinates[], 
-  postitId: string
-): { found: boolean; postit: PostitWithCoordinates | null } {
-  for (const postit of postits) {
-    if (postit.id === postitId) {
-      return { found: true, postit };
-    }
-  }
-  
-  for (const postit of postits) {
-    const childResult = findPostitFromTree(postit.childrens, postitId);
-    if (childResult.found) {
-      return childResult;
-    }
-  }
-
-  return { found: false, postit: null };
 }
