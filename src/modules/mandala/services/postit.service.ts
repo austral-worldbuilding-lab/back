@@ -16,6 +16,7 @@ import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 import { randomUUID } from 'crypto';
 import { CreatePostitDto } from '../dto/postit/create-postit.dto';
+import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
 
 @Injectable()
 export class PostitService {
@@ -277,8 +278,6 @@ export class PostitService {
       coordinates: {
         x: postit.coordinates.x,
         y: postit.coordinates.y,
-        angle: postit.coordinates.angle,
-        percentileDistance: postit.coordinates.percentileDistance,
       },
     };
 
@@ -300,6 +299,53 @@ export class PostitService {
     );
 
     return postitWithId;
+  }
+
+  async updatePostit(
+    projectId: string,
+    mandalaId: string,
+    postitId: string,
+    updateData: UpdatePostitDto,
+  ): Promise<PostitWithCoordinates> {
+    const currentDocument = (await this.firebaseDataService.getDocument(
+      projectId,
+      mandalaId,
+    )) as FirestoreMandalaDocument | null;
+
+    if (!currentDocument) {
+      throw new BusinessLogicException('Mandala not found', { mandalaId });
+    }
+
+    const postits = currentDocument.postits || [];
+    const postitIndex = postits.findIndex((p) => p.id === postitId);
+
+    if (postitIndex === -1) {
+      throw new BusinessLogicException('Postit not found', { postitId });
+    }
+
+    const existingPostit = postits[postitIndex];
+    const updatedPostit = {
+      ...existingPostit,
+      content: updateData.content,
+      tags: updateData.tags.map((tag) => ({
+        name: tag.name,
+        color: tag.color,
+      })),
+    };
+
+    const updatedPostits = [...postits];
+    updatedPostits[postitIndex] = updatedPostit;
+
+    await this.firebaseDataService.updateDocument(
+      projectId,
+      {
+        postits: updatedPostits,
+        updatedAt: new Date(),
+      },
+      mandalaId,
+    );
+
+    return updatedPostit;
   }
 
   async deletePostit(
