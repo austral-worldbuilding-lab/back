@@ -16,7 +16,10 @@ import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 import { randomUUID } from 'crypto';
 import { CreatePostitDto } from '../dto/postit/create-postit.dto';
-import { addPostitToParent, deletePostitFromTree } from '../utils/postit-tree.utils';
+import {
+  addPostitToParent,
+  deletePostitFromTree,
+} from '../utils/postit-tree.utils';
 
 @Injectable()
 export class PostitService {
@@ -52,10 +55,10 @@ export class PostitService {
           allCoordinates,
         );
         if (coordinates) {
-          postitsWithCoordinates.push({ 
-            ...postit, 
+          postitsWithCoordinates.push({
+            ...postit,
             coordinates,
-            childrens: postit.childrens as PostitWithCoordinates[]
+            childrens: postit.childrens as PostitWithCoordinates[],
           });
           coordinatesBySection[sectionKey].push(coordinates);
           allCoordinates.push(coordinates);
@@ -294,11 +297,15 @@ export class PostitService {
     let updatedPostits: PostitWithCoordinates[];
 
     if (postit.parentId) {
-      const result = addPostitToParent(currentPostits, postit.parentId, plainPostit);
-      
+      const result = addPostitToParent(
+        currentPostits,
+        postit.parentId,
+        plainPostit,
+      );
+
       if (!result.found) {
-        throw new BusinessLogicException('Parent postit not found', { 
-          parentId: postit.parentId 
+        throw new BusinessLogicException('Parent postit not found', {
+          parentId: postit.parentId,
         });
       }
 
@@ -334,7 +341,7 @@ export class PostitService {
     }
 
     const postits = currentDocument.postits || [];
-    
+
     const result = deletePostitFromTree(postits, postitId);
     if (!result.found) {
       throw new BusinessLogicException('Postit not found', { postitId });
