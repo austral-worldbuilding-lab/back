@@ -104,7 +104,10 @@ export class MandalaRepository {
     skip: number,
     take: number,
   ): Promise<[MandalaDto[], number]> {
-    const where = { projectId };
+    const where = {
+      projectId,
+      isActive: true,
+    };
     const [mandalas, total] = await this.prisma.$transaction([
       this.prisma.mandala.findMany({
         where,
@@ -123,8 +126,11 @@ export class MandalaRepository {
   }
 
   async findOne(id: string): Promise<MandalaDto | null> {
-    const mandala = await this.prisma.mandala.findUnique({
-      where: { id },
+    const mandala = await this.prisma.mandala.findFirst({
+      where: {
+        id,
+        isActive: true,
+      },
       include: {
         children: { select: { id: true } },
         parent: { select: { id: true } },
@@ -157,8 +163,12 @@ export class MandalaRepository {
   }
 
   async remove(id: string): Promise<MandalaDto> {
-    const mandala = await this.prisma.mandala.delete({
+    const mandala = await this.prisma.mandala.update({
       where: { id },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
       include: {
         children: { select: { id: true } },
         parent: { select: { id: true } },
@@ -176,6 +186,7 @@ export class MandalaRepository {
       where: {
         projectId,
         id: { not: mandalaId },
+        isActive: true,
         parent: {
           none: {
             id: mandalaId,
@@ -199,10 +210,15 @@ export class MandalaRepository {
   async findChildrenMandalasCenters(
     mandalaId: string,
   ): Promise<MandalaCenter[]> {
-    const mandala = await this.prisma.mandala.findUnique({
-      where: { id: mandalaId },
+    const mandala = await this.prisma.mandala.findFirst({
+      where: {
+        id: mandalaId,
+        isActive: true,
+      },
       include: {
-        children: true,
+        children: {
+          where: { isActive: true },
+        },
       },
     });
 
@@ -259,7 +275,10 @@ export class MandalaRepository {
     projectId: string,
   ): Promise<CharacterListItemDto[]> {
     const mandalas = await this.prisma.mandala.findMany({
-      where: { projectId },
+      where: {
+        projectId,
+        isActive: true,
+      },
       select: {
         id: true,
         configuration: true,
