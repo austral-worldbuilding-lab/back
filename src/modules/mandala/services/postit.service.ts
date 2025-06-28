@@ -20,6 +20,7 @@ import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
 import {
   addPostitToParent,
   deletePostitFromTree,
+  updatePostitInTree,
 } from '../utils/postit-tree.utils';
 
 @Injectable()
@@ -341,15 +342,8 @@ export class PostitService {
     }
 
     const postits = currentDocument.postits || [];
-    const postitIndex = postits.findIndex((p) => p.id === postitId);
 
-    if (postitIndex === -1) {
-      throw new BusinessLogicException('Postit not found', { postitId });
-    }
-
-    const existingPostit = postits[postitIndex];
-    const updatedPostit = {
-      ...existingPostit,
+    const updateDataForTree = {
       content: updateData.content,
       tags: updateData.tags.map((tag) => ({
         name: tag.name,
@@ -357,19 +351,22 @@ export class PostitService {
       })),
     };
 
-    const updatedPostits = [...postits];
-    updatedPostits[postitIndex] = updatedPostit;
+    const result = updatePostitInTree(postits, postitId, updateDataForTree);
+
+    if (!result.found) {
+      throw new BusinessLogicException('Postit not found', { postitId });
+    }
 
     await this.firebaseDataService.updateDocument(
       projectId,
       {
-        postits: updatedPostits,
+        postits: result.postits,
         updatedAt: new Date(),
       },
       mandalaId,
     );
 
-    return updatedPostit;
+    return result.updatedPostit!;
   }
 
   async deletePostit(
