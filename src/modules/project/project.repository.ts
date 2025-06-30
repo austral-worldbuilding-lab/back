@@ -153,12 +153,33 @@ export class ProjectRepository {
   }
 
   async createTag(projectId: string, dto: CreateTagDto): Promise<TagDto> {
-    return this.prisma.tag.create({
-      data: {
-        name: dto.name,
-        color: dto.color,
-        projectId,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const existingSoftDeletedTag = await tx.tag.findFirst({
+        where: {
+          name: dto.name,
+          projectId,
+          isActive: false,
+        },
+      });
+
+      if (existingSoftDeletedTag) {
+        return tx.tag.update({
+          where: { id: existingSoftDeletedTag.id },
+          data: {
+            isActive: true,
+            deletedAt: null,
+            color: dto.color,
+          },
+        });
+      }
+
+      return tx.tag.create({
+        data: {
+          name: dto.name,
+          color: dto.color,
+          projectId,
+        },
+      });
     });
   }
 
