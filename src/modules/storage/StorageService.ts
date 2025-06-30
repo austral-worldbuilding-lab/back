@@ -1,5 +1,5 @@
-import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { PresignedUrl } from '@common/types/presigned-url';
+import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 
 export interface StorageService {

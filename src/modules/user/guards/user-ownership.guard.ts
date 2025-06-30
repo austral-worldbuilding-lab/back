@@ -1,6 +1,6 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { ForbiddenException } from '@common/exceptions/custom-exceptions';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 
 @Injectable()
 export class UserOwnershipGuard implements CanActivate {

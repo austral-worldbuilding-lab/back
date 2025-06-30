@@ -1,3 +1,6 @@
+import { ForbiddenException } from '@common/exceptions/custom-exceptions';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { PrismaService } from '@modules/prisma/prisma.service';
 import {
   Injectable,
   SetMetadata,
@@ -5,9 +8,6 @@ import {
   CanActivate,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ForbiddenException } from '@common/exceptions/custom-exceptions';
-import { PrismaService } from '@modules/prisma/prisma.service';
-import { RequestWithUser } from '@modules/auth/types/auth.types';
 
 export const REQUIRED_PROJECT_ROLES_KEY = 'requiredProjectRoles';
 export const RequireProjectRoles = (...roles: string[]) =>

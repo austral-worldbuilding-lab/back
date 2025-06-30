@@ -1,14 +1,15 @@
-import { Module } from '@nestjs/common';
-import { MandalaService } from './mandala.service';
-import { MandalaController } from './mandala.controller';
-import { PrismaModule } from '@modules/prisma/prisma.module';
-import { MandalaRepository } from './mandala.repository';
+import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FirebaseModule } from '@modules/firebase/firebase.module';
-import { AiModule } from '@modules/ai/ai.module';
-import { PostitService } from './services/postit.service';
+import { PrismaModule } from '@modules/prisma/prisma.module';
 import { ProjectModule } from '@modules/project/project.module';
+import { Module } from '@nestjs/common';
+
 import { MandalaRoleGuard } from './guards/mandala-role.guard';
+import { MandalaController } from './mandala.controller';
+import { MandalaRepository } from './mandala.repository';
+import { MandalaService } from './mandala.service';
+import { PostitService } from './services/postit.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, FirebaseModule, AiModule, ProjectModule],

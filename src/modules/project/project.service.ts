@@ -1,15 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { ProjectRepository } from './project.repository';
-import { ProjectDto } from './dto/project.dto';
-import { PaginatedResponse } from '@common/types/responses';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { DimensionDto } from '@common/dto/dimension.dto';
-import { TagDto } from './dto/tag.dto';
+import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { ProjectDto } from './dto/project.dto';
+import { TagDto } from './dto/tag.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { ProjectRepository } from './project.repository';
+import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 
 @Injectable()
 export class ProjectService {

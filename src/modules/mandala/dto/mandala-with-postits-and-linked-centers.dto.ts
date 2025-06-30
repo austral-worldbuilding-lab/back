@@ -1,5 +1,6 @@
-import { MandalaDto } from './mandala.dto';
 import { PostitWithCoordinates } from '../types/postits';
+
+import { MandalaDto } from './mandala.dto';
 
 export class MandalaWithPostitsAndLinkedCentersDto {
   mandala!: MandalaDto;

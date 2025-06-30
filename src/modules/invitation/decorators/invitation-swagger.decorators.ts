@@ -1,7 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { InvitationDto } from '../dto/invitation.dto';
 import { InvitationStatus } from '@prisma/client';
+
+import { InvitationDto } from '../dto/invitation.dto';
 
 export const ApiCreateInvitation = () =>
   applyDecorators(

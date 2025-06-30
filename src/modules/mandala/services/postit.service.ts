@@ -1,4 +1,16 @@
+import { randomUUID } from 'crypto';
+
+import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
+import { AiService } from '@modules/ai/ai.service';
+import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
+import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
+import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
+import { TagDto } from '@modules/project/dto/tag.dto';
+import { ProjectService } from '@modules/project/project.service';
 import { Injectable } from '@nestjs/common';
+
+import { CreatePostitDto } from '../dto/postit/create-postit.dto';
+import { MandalaRepository } from '../mandala.repository';
 import {
   Postit,
   PostitCoordinates,
@@ -6,17 +18,8 @@ import {
   PostitTag,
   AiPostitResponse,
 } from '../types/postits';
-import { AiService } from '@modules/ai/ai.service';
-import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
-import { MandalaRepository } from '../mandala.repository';
-import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
-import { ProjectService } from '@modules/project/project.service';
-import { TagDto } from '@modules/project/dto/tag.dto';
-import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
+
 import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
-import { randomUUID } from 'crypto';
-import { CreatePostitDto } from '../dto/postit/create-postit.dto';
-import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
 
 @Injectable()
 export class PostitService {

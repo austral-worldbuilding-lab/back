@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@modules/prisma/prisma.service';
-import { UpdateMandalaDto } from './dto/update-mandala.dto';
-import { MandalaDto } from './dto/mandala.dto';
-import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
-import { Prisma } from '@prisma/client';
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
-import { MandalaCenter } from '@/modules/mandala/types/mandala-center.type';
+import { PrismaService } from '@modules/prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+
 import { CharacterListItemDto } from './dto/character-list-item.dto';
+import { MandalaDto } from './dto/mandala.dto';
+import { UpdateMandalaDto } from './dto/update-mandala.dto';
+import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
+
+import { MandalaCenter } from '@/modules/mandala/types/mandala-center.type';
 
 type MandalaWithRelations = Prisma.MandalaGetPayload<{
   include: {

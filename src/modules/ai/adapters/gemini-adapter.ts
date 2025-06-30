@@ -1,13 +1,14 @@
+import { GoogleGenAI } from '@google/genai';
+import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+import { AiPostitResponse } from '@modules/mandala/types/postits';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenAI } from '@google/genai';
-import { PostitsResponse } from '../resources/dto/generate-postits.dto';
-import { AiProvider } from '../interfaces/ai-provider.interface';
-import { AiPostitResponse } from '@modules/mandala/types/postits';
-import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { AiRequestValidator } from '../validators/ai-request.validator';
+
 import { AiValidationException } from '../exceptions/ai-validation.exception';
+import { AiProvider } from '../interfaces/ai-provider.interface';
+import { PostitsResponse } from '../resources/dto/generate-postits.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
+import { AiRequestValidator } from '../validators/ai-request.validator';
 
 interface GeminiUploadedFile {
   uri: string;

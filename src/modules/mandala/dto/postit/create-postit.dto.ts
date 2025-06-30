@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -10,7 +11,7 @@ import {
   IsArray,
   ValidateIf,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+
 import { CreateTagDto } from '@/modules/project/dto/create-tag.dto';
 
 class PostitCoordinatesDto {

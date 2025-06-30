@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { ProjectConfiguration } from '@modules/project/types/project-configuration.type';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class ProjectDto {
   @ApiProperty({

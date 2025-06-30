@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import {
   AiValidationConfig,
   getAiValidationConfig,
 } from '@config/ai-validation.config';
+import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+import { Injectable, Logger } from '@nestjs/common';
 
 export interface ValidationResult {
   isValid: boolean;
