@@ -1,6 +1,41 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  IsArray,
+  IsOptional,
+  ArrayMinSize,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { DimensionDto } from '@common/dto/dimension.dto';
+import { Type } from 'class-transformer';
 
+export class CreateMandalaCenterDto {
+  @ApiProperty({
+    description: 'Nombre del personaje central',
+    example: 'Estudiante',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @ApiProperty({
+    description: 'Descripción del personaje central',
+    example: 'Alumno de 23 años que estudia en la universidad',
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'Color del personaje central en formato hexadecimal',
+    example: '#3B82F6',
+  })
+  @IsString()
+  @IsNotEmpty()
+  color!: string;
+}
 export class CreateMandalaDto {
   @ApiProperty({
     description: 'Nombre del mandala',
@@ -16,4 +51,57 @@ export class CreateMandalaDto {
   @IsUUID()
   @IsNotEmpty()
   projectId!: string;
+
+  @ApiProperty({
+    description: 'Personaje central del mandala',
+    example: {
+      name: 'Estudiante',
+      description: 'Alumno de 23 años que estudia en la universidad',
+      color: '#3B82F6',
+    },
+  })
+  @ValidateNested()
+  @Type(() => CreateMandalaCenterDto)
+  @IsNotEmpty()
+  center!: CreateMandalaCenterDto;
+
+  @ApiProperty({
+    description: 'Dimensiones del mandala',
+    example: [
+      { name: 'Recursos', color: '#FF0000' },
+      { name: 'Cultura', color: '#00FF00' },
+      { name: 'Infraestructura', color: '#0000FF' },
+      { name: 'Economía', color: '#FFFF00' },
+      { name: 'Gobierno', color: '#FF00FF' },
+      { name: 'Ecología', color: '#00FFFF' },
+    ],
+    required: false,
+  })
+  @IsArray()
+  @IsOptional()
+  @ArrayMinSize(1, {
+    message: 'Las dimensiones no pueden estar vacías si se proporcionan',
+  })
+  dimensions?: DimensionDto[];
+
+  @ApiProperty({
+    description: 'Escalas del mandala',
+    example: ['Persona', 'Comunidad', 'Institución'],
+    required: false,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  @ArrayMinSize(1, {
+    message: 'Las escalas no pueden estar vacías si se proporcionan',
+  })
+  scales?: string[];
+
+  @ApiProperty({
+    description: 'ID del mandala padre al que está vinculado este mandala',
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  parentId?: string | null = null;
 }

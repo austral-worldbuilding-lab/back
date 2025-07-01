@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { CreateMandalaConfiguration } from '../types/mandala-configuration.type';
 
 export class MandalaDto {
   @ApiProperty({
@@ -16,4 +17,57 @@ export class MandalaDto {
     description: 'ID del proyecto al que pertenece el mandala',
   })
   projectId!: string;
+
+  @ApiProperty({
+    description: 'Centro del mandala',
+    example: {
+      name: 'Estudiante',
+      description: 'Alumno de 23 años que estudia en la universidad',
+      color: '#3B82F6',
+    },
+  })
+  @ApiProperty({
+    description: 'Configuración del mandala',
+    example: {
+      center: {
+        name: 'Estudiante',
+        description: 'Alumno de 23 años que estudia en la universidad',
+        color: '#3B82F6',
+      },
+      dimensions: [
+        { name: 'Recursos', color: '#FF0000' },
+        { name: 'Cultura', color: '#00FF00' },
+        { name: 'Infraestructura', color: '#0000FF' },
+        { name: 'Economía', color: '#FFFF00' },
+        { name: 'Gobierno', color: '#FF00FF' },
+        { name: 'Ecología', color: '#00FFFF' },
+      ],
+      scales: ['Persona', 'Comunidad', 'Institución'],
+    },
+  })
+  configuration!: CreateMandalaConfiguration;
+
+  @ApiProperty({
+    description:
+      'IDs de mandalas hijos (mandalas que son personajes en este mandala)',
+    type: [String],
+  })
+  childrenIds!: string[];
+
+  @ApiProperty({
+    description:
+      'IDs de mandalas padre (mandalas en las que esta es un personaje)',
+    type: [String],
+  })
+  parentIds!: string[];
+
+  @ApiProperty({
+    description: 'Fecha de creación del mandala',
+  })
+  createdAt!: Date;
+
+  @ApiProperty({
+    description: 'Fecha de última actualización del mandala',
+  })
+  updatedAt!: Date;
 }

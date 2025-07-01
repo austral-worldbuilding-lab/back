@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GoogleGenAI } from '@google/genai';
 import { ConfigService } from '@nestjs/config';
-import { AiProvider } from '../interfaces/ai-provider.interface';
+import { GoogleGenAI } from '@google/genai';
 import { PostitsResponse } from '../resources/dto/generate-postits.dto';
-import { FileService } from '@modules/files/file.service';
+import { AiProvider } from '../interfaces/ai-provider.interface';
+import { AiPostitResponse } from '@modules/mandala/types/postits';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { Postit } from '@modules/mandala/types/postits';
-import * as fs from 'fs';
+import { AiRequestValidator } from '../validators/ai-request.validator';
+import { AiValidationException } from '../exceptions/ai-validation.exception';
+import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 
 interface GeminiUploadedFile {
   uri: string;
@@ -20,7 +21,8 @@ export class GeminiAdapter implements AiProvider {
 
   constructor(
     private configService: ConfigService,
-    private fileService: FileService,
+    private readonly validator: AiRequestValidator,
+    private readonly utilsService: AiAdapterUtilsService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -32,37 +34,87 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log('Gemini Adapter initialized');
   }
 
-  async generatePostits(projectId: string): Promise<Postit[]> {
+  async generatePostits(
+    projectId: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    tags: string[],
+  ): Promise<AiPostitResponse[]> {
+    this.logger.log(`Starting postit generation for project: ${projectId}`);
+
+    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
+
+    const promptFilePath =
+      './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt';
+    const systemInstruction = await this.utilsService.preparePrompt(
+      dimensions,
+      scales,
+      centerCharacter,
+      centerCharacterDescription,
+      tags,
+      promptFilePath,
+    );
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      dimensions,
+      scales,
+    );
+
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const responseText = await this.generateWithGemini(
+      model,
+      systemInstruction,
+      geminiFiles,
+    );
+
+    return this.parseAndValidateResponse(responseText, projectId);
+  }
+
+  private async uploadFilesToGemini(
+    fileBuffers: FileBuffer[],
+  ): Promise<GeminiUploadedFile[]> {
+    this.logger.debug(`Uploading ${fileBuffers.length} files to Gemini...`);
+
+    const uploadedFiles = await Promise.all(
+      fileBuffers.map(async (fileBuffer, index) => {
+        this.logger.debug(
+          `Uploading file ${fileBuffer.fileName} (${index + 1}/${fileBuffers.length})`,
+        );
+
+        const blob = new Blob([fileBuffer.buffer], {
+          type: fileBuffer.mimeType,
+        });
+
+        const file = await this.ai.files.upload({
+          file: blob,
+          config: {
+            mimeType: fileBuffer.mimeType,
+            displayName: fileBuffer.fileName,
+          },
+        });
+
+        return {
+          uri: file.uri,
+          mimeType: file.mimeType,
+        } as GeminiUploadedFile;
+      }),
+    );
+
     this.logger.log(
-      `Processing files for project ${projectId} for postit generation`,
+      `Successfully uploaded ${uploadedFiles.length} files to Gemini`,
     );
+    return uploadedFiles;
+  }
 
-    // Get buffers with metadata from file service
-    const fileBuffers =
-      await this.fileService.readAllFilesAsBuffersWithMetadata(projectId);
-
-    if (fileBuffers.length === 0) {
-      throw new Error('No files found for project');
-    }
-
-    const geminiFiles = await this.uploadFiles(fileBuffers);
-    this.logger.log(
-      `Successfully uploaded ${geminiFiles.length} files to Gemini`,
-    );
-
-    const systemInstruction = fs.readFileSync(
-      './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt',
-      'utf-8',
-    );
-    this.logger.log('Loaded system instruction from prompt file');
-
-    const model = this.configService.get<string>('GEMINI_MODEL');
-    if (!model) {
-      throw new Error(
-        'GEMINI_MODEL is not configured in environment variables',
-      );
-    }
-    this.logger.log(`Using Gemini model: ${model}`);
+  private async generateWithGemini(
+    model: string,
+    systemInstruction: string,
+    geminiFiles: GeminiUploadedFile[],
+  ): Promise<string | undefined> {
+    this.logger.debug('Preparing Gemini API request...');
 
     const config = {
       responseMimeType: 'application/json',
@@ -92,52 +144,46 @@ export class GeminiAdapter implements AiProvider {
 
     this.logger.log('Generation completed successfully');
 
-    if (!response.text) {
+    return response.text;
+  }
+
+  private parseAndValidateResponse(
+    responseText: string | undefined,
+    projectId: string,
+  ): AiPostitResponse[] {
+    if (!responseText) {
       throw new Error('No response text received from Gemini API');
     }
 
     try {
-      const postits = JSON.parse(response.text) as Postit[];
+      const postits = JSON.parse(responseText) as AiPostitResponse[];
       this.logger.log(
         `Successfully parsed ${postits.length} postits from AI response`,
       );
+
+      const config = this.validator.getConfig();
+      if (postits.length > config.maxPostitsPerRequest) {
+        this.logger.error(`Generated postits count exceeds limit`, {
+          projectId,
+          generatedCount: postits.length,
+          maxAllowed: config.maxPostitsPerRequest,
+          timestamp: new Date().toISOString(),
+        });
+        throw new AiValidationException(
+          [
+            `Generated ${postits.length} postits, but maximum allowed is ${config.maxPostitsPerRequest}`,
+          ],
+          projectId,
+        );
+      }
+
       return postits;
     } catch (error) {
+      if (error instanceof AiValidationException) {
+        throw error;
+      }
       this.logger.error('Failed to parse AI response as JSON:', error);
       throw new Error('Invalid JSON response from Gemini API');
     }
-  }
-
-  async uploadFiles(fileBuffers: FileBuffer[]): Promise<GeminiUploadedFile[]> {
-    this.logger.log(
-      `Starting upload of ${fileBuffers.length} file buffers to Gemini`,
-    );
-    const uploadedFiles = await Promise.all(
-      fileBuffers.map(async (fileBuffer, index) => {
-        this.logger.debug(
-          `Uploading file ${fileBuffer.fileName} (${index + 1}/${fileBuffers.length})`,
-        );
-
-        // Convert Buffer to Blob for Gemini upload using the actual MIME type
-        const blob = new Blob([fileBuffer.buffer], {
-          type: fileBuffer.mimeType,
-        });
-
-        const file = await this.ai.files.upload({
-          file: blob,
-          config: {
-            mimeType: fileBuffer.mimeType,
-            displayName: fileBuffer.fileName,
-          },
-        });
-        // Ensure the returned object matches GeminiUploadedFile
-        return {
-          uri: file.uri,
-          mimeType: file.mimeType,
-        } as GeminiUploadedFile;
-      }),
-    );
-    this.logger.log('All file buffers uploaded successfully');
-    return uploadedFiles;
   }
 }

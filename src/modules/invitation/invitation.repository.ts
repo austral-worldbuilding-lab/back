@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { Invitation } from './entities/invitation.entity';
 import { PrismaService } from '@modules/prisma/prisma.service';
-import { InvitationStatus, Project, User, Role } from '@prisma/client';
+import { InvitationStatus, Project, User } from '@prisma/client';
 
 @Injectable()
 export class InvitationRepository {
   constructor(private prisma: PrismaService) {}
 
   async findProjectById(id: string): Promise<Project | null> {
-    return this.prisma.project.findUnique({
-      where: { id },
+    return this.prisma.project.findFirst({
+      where: {
+        id,
+        isActive: true,
+      },
     });
   }
 
@@ -86,26 +89,6 @@ export class InvitationRepository {
     return this.prisma.invitation.delete({
       where: { id },
     });
-  }
-
-  async findRoleByName(name: string): Promise<Role | null> {
-    return this.prisma.role.findUnique({
-      where: { name },
-    });
-  }
-
-  async createRole(name: string): Promise<Role> {
-    return this.prisma.role.create({
-      data: { name },
-    });
-  }
-
-  async findOrCreateRole(name: string): Promise<Role> {
-    const role = await this.findRoleByName(name);
-    if (role) {
-      return role;
-    }
-    return this.createRole(name);
   }
 
   async acceptInvitationAndAddUser(

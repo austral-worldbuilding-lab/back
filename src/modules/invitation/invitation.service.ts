@@ -10,10 +10,14 @@ import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { InvitationRepository } from './invitation.repository';
 import { InvitationStatus } from '@prisma/client';
 import { InvitationDto } from './dto/invitation.dto';
+import { RoleService } from '@modules/role/role.service';
 
 @Injectable()
 export class InvitationService {
-  constructor(private invitationRepository: InvitationRepository) {}
+  constructor(
+    private invitationRepository: InvitationRepository,
+    private roleService: RoleService,
+  ) {}
 
   async create(
     createInvitationDto: CreateInvitationDto,
@@ -121,8 +125,7 @@ export class InvitationService {
       });
     }
 
-    const memberRole =
-      await this.invitationRepository.findOrCreateRole('member');
+    const memberRole = await this.roleService.findOrCreate('member');
 
     const updatedInvitation =
       await this.invitationRepository.acceptInvitationAndAddUser(
