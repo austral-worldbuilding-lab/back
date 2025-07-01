@@ -36,8 +36,11 @@ export class MandalaRoleGuard extends BaseProjectRoleGuard {
       (request.query as { mandalaId?: string })?.mandalaId;
 
     if (mandalaId) {
-      const mandala = await this.prisma.mandala.findUnique({
-        where: { id: mandalaId },
+      const mandala = await this.prisma.mandala.findFirst({
+        where: {
+          id: mandalaId,
+          isActive: true,
+        },
         select: { projectId: true },
       });
 

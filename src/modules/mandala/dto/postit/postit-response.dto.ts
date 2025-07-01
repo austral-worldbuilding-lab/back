@@ -11,7 +11,7 @@ export class PostitResponseDto {
   dimension!: string;
   section!: string;
   tags!: TagResponseDto[];
-  parentId?: string | null;
+  childrens!: PostitResponseDto[];
 }
 
 export function toPostitResponseDto(
@@ -23,6 +23,6 @@ export function toPostitResponseDto(
     dimension: postit.dimension,
     section: postit.section,
     tags: postit.tags.map(toTagResponseDto),
-    parentId: postit.parentId,
+    childrens: postit.childrens.map(toPostitResponseDto),
   };
 }

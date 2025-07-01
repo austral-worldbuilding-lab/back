@@ -9,8 +9,11 @@ export class InvitationRepository {
   constructor(private prisma: PrismaService) {}
 
   async findProjectById(id: string): Promise<Project | null> {
-    return this.prisma.project.findUnique({
-      where: { id },
+    return this.prisma.project.findFirst({
+      where: {
+        id,
+        isActive: true,
+      },
     });
   }
 

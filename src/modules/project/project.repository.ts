@@ -88,19 +88,23 @@ export class ProjectRepository {
   ): Promise<[ProjectDto[], number]> {
     const [projects, total] = await this.prisma.$transaction([
       this.prisma.project.findMany({
+        where: { isActive: true },
         skip,
         take,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.project.count(),
+      this.prisma.project.count({ where: { isActive: true } }),
     ]);
 
     return [projects.map((project) => this.parseToProjectDto(project)), total];
   }
 
   async findOne(id: string): Promise<ProjectDto | null> {
-    const project = await this.prisma.project.findUnique({
-      where: { id },
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id,
+        isActive: true,
+      },
     });
 
     if (!project) {
@@ -111,8 +115,12 @@ export class ProjectRepository {
   }
 
   async remove(id: string): Promise<ProjectDto> {
-    const project = await this.prisma.project.delete({
+    const project = await this.prisma.project.update({
       where: { id },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
     });
 
     return this.parseToProjectDto(project);
@@ -138,7 +146,10 @@ export class ProjectRepository {
 
   async getProjectTags(projectId: string): Promise<TagDto[]> {
     return this.prisma.tag.findMany({
-      where: { projectId },
+      where: {
+        projectId,
+        isActive: true,
+      },
     });
   }
 
@@ -157,6 +168,7 @@ export class ProjectRepository {
       where: {
         id: tagId,
         projectId: projectId,
+        isActive: true,
       },
     });
   }
@@ -167,6 +179,7 @@ export class ProjectRepository {
         where: {
           id: tagId,
           projectId: projectId,
+          isActive: true,
         },
       });
 
@@ -174,8 +187,12 @@ export class ProjectRepository {
         throw new ResourceNotFoundException('Tag', tagId);
       }
 
-      const deleted = await tx.tag.delete({
+      const deleted = await tx.tag.update({
         where: { id: tagId },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+        },
       });
 
       return this.parseToTagDto(deleted);

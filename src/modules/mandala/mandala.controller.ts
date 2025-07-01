@@ -20,6 +20,7 @@ import {
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
@@ -230,22 +231,18 @@ export class MandalaController {
   @Delete(':mandalaId/postits/:postitId')
   @UseGuards(MandalaRoleGuard)
   @ApiDeletePostit()
+  @HttpCode(204)
   async deletePostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
     @Param('postitId', new UuidValidationPipe()) postitId: string,
-  ): Promise<MessageResponse<PostitWithCoordinates[]>> {
+  ): Promise<void> {
     const mandala = await this.mandalaService.findOne(mandalaId);
 
-    const deletedPostits = await this.postitService.deletePostit(
+    await this.postitService.deletePostit(
       mandala.projectId,
       mandalaId,
       postitId,
     );
-
-    return {
-      message: 'Post-it/s deleted successfully',
-      data: deletedPostits,
-    };
   }
 
   @Post(':id/link/:childId')
