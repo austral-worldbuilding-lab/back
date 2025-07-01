@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsString, IsNotEmpty, IsArray, ValidateNested } from 'class-validator';
+
 import { CreateTagDto } from '@/modules/project/dto/create-tag.dto';
 
 export class UpdatePostitDto {

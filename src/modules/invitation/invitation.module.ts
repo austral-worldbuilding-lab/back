@@ -1,12 +1,13 @@
+import { AuthModule } from '@modules/auth/auth.module';
+import { PrismaModule } from '@modules/prisma/prisma.module';
+import { RoleModule } from '@modules/role/role.module';
 import { Module } from '@nestjs/common';
-import { InvitationService } from './invitation.service';
+
+import { InvitationAccessGuard } from './guards/invitation-access.guard';
+import { InvitationRoleGuard } from './guards/invitation-role.guard';
 import { InvitationController } from './invitation.controller';
 import { InvitationRepository } from './invitation.repository';
-import { PrismaModule } from '@modules/prisma/prisma.module';
-import { AuthModule } from '@modules/auth/auth.module';
-import { RoleModule } from '@modules/role/role.module';
-import { InvitationRoleGuard } from './guards/invitation-role.guard';
-import { InvitationAccessGuard } from './guards/invitation-access.guard';
+import { InvitationService } from './invitation.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, RoleModule],

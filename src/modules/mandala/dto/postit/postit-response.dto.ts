@@ -1,8 +1,9 @@
+import { PostitWithCoordinates } from '../../types/postits';
+
 import {
   TagResponseDto,
   toTagResponseDto,
 } from '@/modules/project/dto/tag-response.dto';
-import { PostitWithCoordinates } from '../../types/postits';
 
 export class PostitResponseDto {
   id!: string;

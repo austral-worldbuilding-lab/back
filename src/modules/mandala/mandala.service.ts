@@ -1,26 +1,28 @@
-import { Injectable, Logger } from '@nestjs/common';
 import {
   BadRequestException,
   ResourceNotFoundException,
   InternalServerErrorException,
   ExternalServiceException,
 } from '@common/exceptions/custom-exceptions';
-import { CreateMandalaDto } from './dto/create-mandala.dto';
-import { UpdateMandalaDto } from './dto/update-mandala.dto';
-import { MandalaRepository } from './mandala.repository';
-import { MandalaDto } from './dto/mandala.dto';
 import { PaginatedResponse } from '@common/types/responses';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
-import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { ProjectService } from '@modules/project/project.service';
-import { FilterSectionDto } from './dto/filter-option.dto';
+import { Injectable, Logger } from '@nestjs/common';
+
 import {
   FirestoreMandalaDocument,
   FirestoreCharacter,
 } from '../firebase/types/firestore-character.type';
+
 import { CharacterListItemDto } from './dto/character-list-item.dto';
+import { CreateMandalaDto } from './dto/create-mandala.dto';
+import { FilterSectionDto } from './dto/filter-option.dto';
+import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
+import { MandalaDto } from './dto/mandala.dto';
+import { UpdateMandalaDto } from './dto/update-mandala.dto';
+import { MandalaRepository } from './mandala.repository';
+import { PostitService } from './services/postit.service';
 
 @Injectable()
 export class MandalaService {

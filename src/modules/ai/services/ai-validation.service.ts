@@ -1,6 +1,7 @@
+import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+
 import {
   AiValidationConfig,
   ValidationResult,

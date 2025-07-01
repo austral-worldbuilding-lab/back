@@ -1,3 +1,6 @@
+import { DimensionDto } from '@common/dto/dimension.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsString,
@@ -6,9 +9,6 @@ import {
   ArrayMinSize,
   IsOptional,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { DimensionDto } from '@common/dto/dimension.dto';
 
 export class CreateProjectDto {
   @ApiProperty({

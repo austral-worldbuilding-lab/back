@@ -1,9 +1,10 @@
-import { ConfigService } from '@nestjs/config';
 import { FileService } from '@modules/files/file.service';
+import { ConfigService } from '@nestjs/config';
+
 import { GeminiAdapter } from '../adapters/gemini-adapter';
 import { AiProvider } from '../interfaces/ai-provider.interface';
-import { AiRequestValidator } from '../validators/ai-request.validator';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
+import { AiRequestValidator } from '../validators/ai-request.validator';
 
 export const AI_PROVIDER = 'AI_PROVIDER';
 

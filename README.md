@@ -15,11 +15,7 @@ $ cd worldbuilding-lab/back
 
 ### 2. Configurar los Git Hooks
 
-Para asegurarte de que el código cumpla con los estándares antes de subirlo, configuraremos los git hooks. Ejecuta el script de inicialización:
-
-```bash
-$ bash git-hooks/init.sh
-```
+Para asegurarte de que el código cumpla con los estándares antes de subirlo, utilizamos **Husky** para gestionar los git hooks. Los hooks se configuran automáticamente cuando instalas las dependencias.
 
 ### 3. Instalar las Dependencias
 

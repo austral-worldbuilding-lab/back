@@ -1,5 +1,5 @@
-import { InvitationStatus } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
+import { InvitationStatus } from '@prisma/client';
 
 export class InvitationDto {
   @ApiProperty({

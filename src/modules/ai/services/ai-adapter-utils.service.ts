@@ -1,11 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { promises as fs } from 'fs';
+
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+import { AiValidationException } from '../exceptions/ai-validation.exception';
 import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
 import { AiRequestValidator } from '../validators/ai-request.validator';
-import { AiValidationException } from '../exceptions/ai-validation.exception';
-import { promises as fs } from 'fs';
 
 @Injectable()
 export class AiAdapterUtilsService {

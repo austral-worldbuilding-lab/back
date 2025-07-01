@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import { PaginatedResponse } from '@common/types/responses';
+import { Injectable } from '@nestjs/common';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserRepository } from './user.repository';
 import { UserDto } from './dto/user.dto';
-import { PaginatedResponse } from '@common/types/responses';
+import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService {
