@@ -9,6 +9,7 @@ import {
   IsOptional,
   ArrayMinSize,
   ValidateNested,
+  IsHexColor,
 } from 'class-validator';
 
 export class CreateMandalaCenterDto {
@@ -23,6 +24,7 @@ export class CreateMandalaCenterDto {
   @ApiProperty({
     description: 'Descripción del personaje central',
     example: 'Alumno de 23 años que estudia en la universidad',
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -32,7 +34,7 @@ export class CreateMandalaCenterDto {
     description: 'Color del personaje central en formato hexadecimal',
     example: '#3B82F6',
   })
-  @IsString()
+  @IsHexColor()
   @IsNotEmpty()
   color!: string;
 }
@@ -47,6 +49,7 @@ export class CreateMandalaDto {
 
   @ApiProperty({
     description: 'ID del proyecto al que pertenece el mandala',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
   })
   @IsUUID()
   @IsNotEmpty()
@@ -54,11 +57,7 @@ export class CreateMandalaDto {
 
   @ApiProperty({
     description: 'Personaje central del mandala',
-    example: {
-      name: 'Estudiante',
-      description: 'Alumno de 23 años que estudia en la universidad',
-      color: '#3B82F6',
-    },
+    type: CreateMandalaCenterDto,
   })
   @ValidateNested()
   @Type(() => CreateMandalaCenterDto)
@@ -67,18 +66,13 @@ export class CreateMandalaDto {
 
   @ApiProperty({
     description: 'Dimensiones del mandala',
-    example: [
-      { name: 'Recursos', color: '#FF0000' },
-      { name: 'Cultura', color: '#00FF00' },
-      { name: 'Infraestructura', color: '#0000FF' },
-      { name: 'Economía', color: '#FFFF00' },
-      { name: 'Gobierno', color: '#FF00FF' },
-      { name: 'Ecología', color: '#00FFFF' },
-    ],
+    type: [DimensionDto],
     required: false,
   })
   @IsArray()
   @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => DimensionDto)
   @ArrayMinSize(1, {
     message: 'Las dimensiones no pueden estar vacías si se proporcionan',
   })
@@ -100,8 +94,9 @@ export class CreateMandalaDto {
   @ApiProperty({
     description: 'ID del mandala padre al que está vinculado este mandala',
     required: false,
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
   })
   @IsUUID()
   @IsOptional()
-  parentId?: string | null = null;
+  parentId?: string | null;
 }

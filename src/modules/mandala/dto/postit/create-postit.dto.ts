@@ -14,7 +14,7 @@ import {
 
 import { CreateTagDto } from '@/modules/project/dto/create-tag.dto';
 
-class PostitCoordinatesDto {
+export class PostitCoordinatesDto {
   @ApiProperty({
     description: 'X relative coordinate of the post-it',
     example: 0.5,
