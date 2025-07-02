@@ -1,5 +1,10 @@
 import { FirebaseConfig } from '@config/firebase.config';
 import { Injectable } from '@nestjs/common';
+import type {
+  DocumentData,
+  UpdateData,
+  WithFieldValue,
+} from 'firebase-admin/firestore';
 
 @Injectable()
 export class FirebaseDataService {
@@ -11,7 +16,7 @@ export class FirebaseDataService {
 
   async createDocument(
     collectionPath: string,
-    data: any,
+    data: WithFieldValue<DocumentData>,
     documentId?: string,
   ): Promise<void> {
     const db = this.firebaseConfig.getDB();
@@ -22,17 +27,20 @@ export class FirebaseDataService {
     await docRef.set(data);
   }
 
-  async getDocument(collectionPath: string, documentId: string): Promise<any> {
+  async getDocument(
+    collectionPath: string,
+    documentId: string,
+  ): Promise<DocumentData | undefined> {
     const db = this.firebaseConfig.getDB();
     const docRef = db.collection(collectionPath).doc(documentId);
     const doc = await docRef.get();
 
-    return doc.exists ? doc.data() : null;
+    return doc.exists ? doc.data() : undefined;
   }
 
   async updateDocument(
     collectionPath: string,
-    data: any,
+    data: UpdateData<DocumentData>,
     documentId: string,
   ): Promise<void> {
     const db = this.firebaseConfig.getDB();

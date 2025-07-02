@@ -24,6 +24,7 @@ export class TagDto {
     example: '#3B82F6',
   })
   @IsString()
+  @IsNotEmpty()
   @IsHexColor()
   color!: string;
 

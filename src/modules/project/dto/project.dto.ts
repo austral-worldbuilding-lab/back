@@ -1,36 +1,42 @@
 import { ProjectConfiguration } from '@modules/project/types/project-configuration.type';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsDate,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
 export class ProjectDto {
   @ApiProperty({
     description: 'ID único del proyecto',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
   })
+  @IsUUID()
   id!: string;
 
   @ApiProperty({
     description: 'Nombre del proyecto',
     example: 'Proyecto Comedor Austral',
   })
+  @IsString()
+  @IsNotEmpty()
   name!: string;
 
   @ApiProperty({
     description: 'Configuración del proyecto',
-    example: {
-      dimensions: [
-        { name: 'Recursos', color: '#FF0000' },
-        { name: 'Cultura', color: '#00FF00' },
-        { name: 'Infraestructura', color: '#0000FF' },
-        { name: 'Economía', color: '#FFFF00' },
-        { name: 'Gobierno', color: '#FF00FF' },
-        { name: 'Ecología', color: '#00FFFF' },
-      ],
-      scales: ['Persona', 'Comunidad', 'Institución'],
-    },
+    type: ProjectConfiguration,
   })
+  @ValidateNested()
+  @Type(() => ProjectConfiguration)
   configuration!: ProjectConfiguration;
 
   @ApiProperty({
     description: 'Fecha de creación del proyecto',
+    example: '2023-01-01T12:00:00.000Z',
   })
+  @IsDate()
   createdAt!: Date;
 }
