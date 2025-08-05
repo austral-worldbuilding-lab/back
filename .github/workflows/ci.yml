@@ -46,7 +46,7 @@ jobs:
       # Upload build artifacts for deployment (only when called from main branch)
       - name: Upload artifact for deployment job
         id: upload
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         uses: actions/upload-artifact@v4
         with:
           name: node-app-${{ github.sha }}
