@@ -7,6 +7,10 @@ on:
     branches: [ '*' ]
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
@@ -24,6 +28,9 @@ jobs:
     needs: ci
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/azure-deploy.yml
+    permissions:
+      id-token: write
+      contents: read
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
