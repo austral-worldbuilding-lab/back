@@ -52,6 +52,5 @@ jobs:
           name: node-app-${{ github.sha }}
           path: |
             .
-            !node_modules
             !.git
           retention-days: 1
