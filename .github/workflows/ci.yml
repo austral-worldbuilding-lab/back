@@ -1,34 +1,57 @@
 name: Continuous Integration
 
 on:
-  push:
-    branches: [ '*' ]
-  pull_request:
-    branches: [ '*' ]
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: '22.x'
+    outputs:
+      artifact-id:
+        description: "Artifact ID for deployment"
+        value: ${{ jobs.build.outputs.artifact-id }}
 
 jobs:
   build:
     name: Build & Lint
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [22.x]
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js ${{ inputs.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ inputs.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run linting
-        run: npm run lint
+        run: npm run lint:check
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Build
         run: npm run build
+
+      - name: Run tests
+        run: npm run test --if-present
+
+      # Upload build artifacts for deployment (only when called from main branch)
+      - name: Upload artifact for deployment job
+        id: upload
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app-${{ github.sha }}
+          path: |
+            .
+            !node_modules
+            !.git
+          retention-days: 1
