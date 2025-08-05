@@ -38,3 +38,4 @@ jobs:
           app-name: 'wbl-app'
           slot-name: 'Production'
           package: .
+          enable-oryx-build: true

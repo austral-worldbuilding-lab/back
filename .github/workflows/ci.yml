@@ -51,6 +51,8 @@ jobs:
         with:
           name: node-app-${{ github.sha }}
           path: |
-            .
-            !.git
+            dist/**
+            prisma/**
+            package.json
+            package-lock.json
           retention-days: 1
