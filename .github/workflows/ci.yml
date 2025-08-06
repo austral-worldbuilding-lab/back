@@ -55,4 +55,5 @@ jobs:
             prisma/**
             package.json
             package-lock.json
+            deploy.js
           retention-days: 1
