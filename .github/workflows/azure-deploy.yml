@@ -38,7 +38,6 @@ jobs:
           app-name: 'wbl-app'
           slot-name: 'Production'
           package: .
-          startup-command: 'node deploy.js'
         env:
           SCM_DO_BUILD_DURING_DEPLOYMENT: true
           WEBSITE_NODE_DEFAULT_VERSION: '22'
