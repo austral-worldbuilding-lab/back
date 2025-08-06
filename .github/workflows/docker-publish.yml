@@ -1,16 +1,15 @@
-name: Continuous Deployment
+name: Docker Publish
 
 on:
-  workflow_run:
-    workflows: ["Continuous Integration"]
-    branches: [dev, main]
-    types:
-      - completed
+  workflow_call:
+    secrets:
+      PAT:
+        required: true
 
 jobs:
   publish:
+    name: Build & Publish Docker Image
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
