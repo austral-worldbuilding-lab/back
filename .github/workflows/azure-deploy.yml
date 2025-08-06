@@ -38,4 +38,4 @@ jobs:
           app-name: 'wbl-app'
           slot-name: 'Production'
           package: .
-          startup-command: 'npm run start:prod'
+          startup-command: 'npm ci && npm run start:prod'
