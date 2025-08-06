@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
-import { FirebaseService } from './firebase/firebase.service';
 import { PrismaModule } from '@modules/prisma/prisma.module';
+import { Module } from '@nestjs/common';
+
 import { AuthService } from './auth.service';
+import { FirebaseService } from './firebase/firebase.service';
 
 @Module({
   imports: [PrismaModule],

@@ -1,7 +1,8 @@
+import { PresignedUrl } from '@common/types/presigned-url';
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+
 import { CreateFileDto } from '../dto/create-file.dto';
-import { PresignedUrl } from '@common/types/presigned-url';
 
 export const ApiGetFiles = () =>
   applyDecorators(

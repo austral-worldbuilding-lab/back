@@ -1,8 +1,9 @@
-import { Controller, Post, Param, Body } from '@nestjs/common';
-import { AiService } from './ai.service';
-import { AiPostitResponse } from '@modules/mandala/types/postits';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { AiPostitResponse } from '@modules/mandala/types/postits';
+import { Controller, Post, Param, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+
+import { AiService } from './ai.service';
 
 interface AiRequestBody {
   dimensions: string[];

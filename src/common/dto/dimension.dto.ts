@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsHexColor, IsNotEmpty, IsString } from 'class-validator';
 
 export class DimensionDto {
   @ApiProperty({
@@ -14,7 +14,7 @@ export class DimensionDto {
     description: 'Color de la dimensión en formato hexadecimal',
     example: '#FF0000',
   })
+  @IsHexColor()
   @IsNotEmpty()
-  @IsString()
   color!: string;
 }

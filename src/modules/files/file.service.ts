@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
-import { CreateFileDto } from './dto/create-file.dto';
 import { PresignedUrl } from '@common/types/presigned-url';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
+import { Injectable } from '@nestjs/common';
+
+import { CreateFileDto } from './dto/create-file.dto';
 import { FileBuffer } from './types/file-buffer.interface';
 
 @Injectable()

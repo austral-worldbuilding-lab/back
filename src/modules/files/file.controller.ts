@@ -1,3 +1,7 @@
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { PresignedUrl } from '@common/types/presigned-url';
+import { DataResponse, MessageOnlyResponse } from '@common/types/responses';
+import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import {
   Controller,
   Get,
@@ -7,20 +11,17 @@ import {
   UseGuards,
   Delete,
 } from '@nestjs/common';
-import { FileService } from './file.service';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { CreateFileDto } from './dto/create-file.dto';
-import { DataResponse, MessageOnlyResponse } from '@common/types/responses';
-import { PresignedUrl } from '@common/types/presigned-url';
-import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
-import { FileRoleGuard } from './guards/file-role.guard';
+
 import {
   ApiGetFiles,
   ApiUploadFiles,
   ApiGetFileBuffers,
   ApiDeleteFile,
 } from './decorators/file-swagger.decorators';
-import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { CreateFileDto } from './dto/create-file.dto';
+import { FileService } from './file.service';
+import { FileRoleGuard } from './guards/file-role.guard';
 
 @ApiTags('Files')
 @Controller('files')

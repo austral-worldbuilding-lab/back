@@ -1,7 +1,8 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
-import { AiProvider } from './interfaces/ai-provider.interface';
-import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiPostitResponse } from '@modules/mandala/types/postits';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+
+import { AI_PROVIDER } from './factories/ai-provider.factory';
+import { AiProvider } from './interfaces/ai-provider.interface';
 
 @Injectable()
 export class AiService {

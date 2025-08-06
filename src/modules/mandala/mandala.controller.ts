@@ -1,3 +1,13 @@
+import { MaxValuePipe } from '@common/pipes/max-value.pipe';
+import { MinValuePipe } from '@common/pipes/min-value.pipe';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import {
+  MessageResponse,
+  DataResponse,
+  PaginatedResponse,
+  MessageOnlyResponse,
+} from '@common/types/responses';
+import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import {
   Controller,
   Get,
@@ -12,26 +22,8 @@ import {
   ParseIntPipe,
   HttpCode,
 } from '@nestjs/common';
-import { MandalaService } from './mandala.service';
-import { CreateMandalaDto } from './dto/create-mandala.dto';
-import { UpdateMandalaDto } from './dto/update-mandala.dto';
-import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
-import { MandalaDto } from './dto/mandala.dto';
-import {
-  MessageResponse,
-  DataResponse,
-  PaginatedResponse,
-  MessageOnlyResponse,
-} from '@common/types/responses';
-import { MinValuePipe } from '@common/pipes/min-value.pipe';
-import { MaxValuePipe } from '@common/pipes/max-value.pipe';
-import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { FilterSectionDto } from './dto/filter-option.dto';
-import {
-  MandalaRoleGuard,
-  RequireProjectRoles,
-} from './guards/mandala-role.guard';
+
 import {
   ApiCreateMandala,
   ApiGetAllMandalas,
@@ -47,12 +39,21 @@ import {
   ApiGetAvailableCharacters,
   ApiUpdatePostit,
 } from './decorators/mandala-swagger.decorators';
-import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
+import { CreateMandalaDto } from './dto/create-mandala.dto';
+import { FilterSectionDto } from './dto/filter-option.dto';
+import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
+import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
+import { UpdatePostitDto } from './dto/postit/update-postit.dto';
+import { UpdateMandalaDto } from './dto/update-mandala.dto';
+import {
+  MandalaRoleGuard,
+  RequireProjectRoles,
+} from './guards/mandala-role.guard';
+import { MandalaService } from './mandala.service';
 import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from './types/postits';
-import { UpdatePostitDto } from './dto/postit/update-postit.dto';
 
 @ApiTags('Mandalas')
 @Controller('mandala')

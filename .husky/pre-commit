@@ -1,0 +1,10 @@
+# Escaneo de secretos en staged
+npm run scan-secrets
+if [ $? -ne 0 ]; then
+  echo "Secrets detected. Aborting commit."
+  exit 1
+fi
+
+# Formateo de archivos staged
+echo "Formatting staged files..."
+npm run format

@@ -1,3 +1,13 @@
+import { MaxValuePipe } from '@common/pipes/max-value.pipe';
+import { MinValuePipe } from '@common/pipes/min-value.pipe';
+import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import {
+  MessageResponse,
+  DataResponse,
+  PaginatedResponse,
+} from '@common/types/responses';
+import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
 import {
   Controller,
   Get,
@@ -12,24 +22,8 @@ import {
   Patch,
   Req,
 } from '@nestjs/common';
-import { ProjectService } from './project.service';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { MinValuePipe } from '@common/pipes/min-value.pipe';
-import { MaxValuePipe } from '@common/pipes/max-value.pipe';
-import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
-import {
-  ProjectRoleGuard,
-  RequireProjectRoles,
-} from './guards/project-role.guard';
-import { ProjectDto } from './dto/project.dto';
-import {
-  MessageResponse,
-  DataResponse,
-  PaginatedResponse,
-} from '@common/types/responses';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { RequestWithUser } from '@modules/auth/types/auth.types';
-import { TagDto } from './dto/tag.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+
 import {
   ApiCreateProject,
   ApiGetAllProjects,
@@ -40,9 +34,16 @@ import {
   ApiCreateProjectTag,
   ApiDeleteProjectTag,
 } from './decorators/project-swagger.decorators';
+import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { ProjectDto } from './dto/project.dto';
+import { TagDto } from './dto/tag.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import {
+  ProjectRoleGuard,
+  RequireProjectRoles,
+} from './guards/project-role.guard';
+import { ProjectService } from './project.service';
 
 @ApiTags('Projects')
 @Controller('project')

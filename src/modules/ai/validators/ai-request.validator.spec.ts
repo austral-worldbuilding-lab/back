@@ -1,5 +1,6 @@
-import { AiRequestValidator } from './ai-request.validator';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+
+import { AiRequestValidator } from './ai-request.validator';
 
 describe('AiRequestValidator', () => {
   let validator: AiRequestValidator;

@@ -1,10 +1,12 @@
-import { IsNotEmpty, IsEmail, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsEmail, IsBoolean, IsString } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({
-    description: 'ID único del usuario',
+    description: 'ID único del usuario de Firebase',
+    example: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8',
   })
+  @IsString()
   @IsNotEmpty()
   firebaseUid!: string;
 
@@ -12,6 +14,7 @@ export class CreateUserDto {
     description: 'Nombre de usuario',
     example: 'johndoe',
   })
+  @IsString()
   @IsNotEmpty()
   username!: string;
 

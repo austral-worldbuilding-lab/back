@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PrismaService } from '@modules/prisma/prisma.service';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { ProjectDto } from './dto/project.dto';
+import { Injectable } from '@nestjs/common';
 import { Prisma, Project, Tag } from '@prisma/client';
+
+import { CreateProjectDto } from './dto/create-project.dto';
+import { CreateTagDto } from './dto/create-tag.dto';
+import { ProjectDto } from './dto/project.dto';
+import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
-import { TagDto } from './dto/tag.dto';
-import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
-import { CreateTagDto } from './dto/create-tag.dto';
 
 @Injectable()
 export class ProjectRepository {

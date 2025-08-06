@@ -1,5 +1,5 @@
-import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
 import { BadRequestException } from '@common/exceptions/custom-exceptions';
+import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
 
 @Injectable()
 export class EnumValidationPipe implements PipeTransform<unknown, unknown> {

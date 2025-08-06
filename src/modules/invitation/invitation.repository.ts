@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { Invitation } from './entities/invitation.entity';
 import { PrismaService } from '@modules/prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
 import { InvitationStatus, Project, User } from '@prisma/client';
+
+import { Invitation } from './entities/invitation.entity';
 
 @Injectable()
 export class InvitationRepository {

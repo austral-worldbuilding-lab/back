@@ -16,6 +16,7 @@ export class CreateTagDto {
     example: '#3B82F6',
   })
   @IsString()
+  @IsNotEmpty()
   @IsHexColor()
   color!: string;
 }

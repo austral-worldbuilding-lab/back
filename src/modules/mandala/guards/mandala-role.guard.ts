@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { ForbiddenException } from '@common/exceptions/custom-exceptions';
-import { PrismaService } from '@modules/prisma/prisma.service';
-import { RequestWithUser } from '@modules/auth/types/auth.types';
 import {
   BaseProjectRoleGuard,
   RequireProjectRoles,
 } from '@common/guards/base-project-role.guard';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { PrismaService } from '@modules/prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 
 export { RequireProjectRoles };
 

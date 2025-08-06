@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+
 import { FirebaseDataService } from './firebase-data.service';
 
 @Module({

@@ -3,15 +3,16 @@ import {
   BlobServiceClient,
   StorageSharedKeyCredential,
 } from '@azure/storage-blob';
-import { StorageService } from './StorageService';
-import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { CreateFileDto } from '@modules/files/dto/create-file.dto';
-import { PresignedUrl } from '@common/types/presigned-url';
 import {
   ExternalServiceException,
   ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
+import { PresignedUrl } from '@common/types/presigned-url';
+import { CreateFileDto } from '@modules/files/dto/create-file.dto';
+import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Logger } from '@nestjs/common';
+
+import { StorageService } from './StorageService';
 
 export class AzureBlobStorageService implements StorageService {
   private readonly logger = new Logger(AzureBlobStorageService.name);

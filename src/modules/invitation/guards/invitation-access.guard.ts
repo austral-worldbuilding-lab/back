@@ -1,3 +1,7 @@
+import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { Invitation } from '@modules/invitation/entities/invitation.entity';
+import { User } from '@modules/user/entities/user.entity';
 import {
   Injectable,
   CanActivate,
@@ -6,11 +10,8 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+
 import { InvitationRepository } from '../invitation.repository';
-import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
-import { RequestWithUser } from '@modules/auth/types/auth.types';
-import { User } from '@modules/user/entities/user.entity';
-import { Invitation } from '@modules/invitation/entities/invitation.entity';
 
 export const REQUIRED_INVITATION_ACCESS_KEY = 'requiredInvitationAccess';
 export const RequireInvitationAccess = (

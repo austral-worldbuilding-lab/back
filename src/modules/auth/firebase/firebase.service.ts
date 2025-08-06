@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
 import { ExternalServiceException } from '@common/exceptions/custom-exceptions';
 import { FirebaseConfig } from '@config/firebase.config';
+import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 
 @Injectable()

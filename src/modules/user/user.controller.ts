@@ -1,3 +1,12 @@
+import { FirebaseUidValidationPipe } from '@common/pipes/firebase-uid-validation.pipe';
+import { MaxValuePipe } from '@common/pipes/max-value.pipe';
+import { MinValuePipe } from '@common/pipes/min-value.pipe';
+import {
+  MessageResponse,
+  DataResponse,
+  PaginatedResponse,
+} from '@common/types/responses';
+import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import {
   Controller,
   Get,
@@ -11,20 +20,8 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
-import { UserOwnershipGuard } from './guards/user-ownership.guard';
-import { UserDto } from './dto/user.dto';
-import {
-  MessageResponse,
-  DataResponse,
-  PaginatedResponse,
-} from '@common/types/responses';
-import { MinValuePipe } from '@common/pipes/min-value.pipe';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { MaxValuePipe } from '@common/pipes/max-value.pipe';
+
 import {
   ApiCreateUser,
   ApiGetAllUsers,
@@ -32,7 +29,11 @@ import {
   ApiUpdateUser,
   ApiDeleteUser,
 } from './decorators/user-swagger.decorators';
-import { FirebaseUidValidationPipe } from '@common/pipes/firebase-uid-validation.pipe';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
+import { UserOwnershipGuard } from './guards/user-ownership.guard';
+import { UserService } from './user.service';
 
 @ApiTags('Users')
 @Controller('user')

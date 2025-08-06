@@ -1,15 +1,68 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
+
+import { PostitWithCoordinates } from '../../types/postits';
+
 import {
   TagResponseDto,
   toTagResponseDto,
 } from '@/modules/project/dto/tag-response.dto';
-import { PostitWithCoordinates } from '../../types/postits';
 
 export class PostitResponseDto {
+  @ApiProperty({
+    description: 'ID único del post-it',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  })
+  @IsUUID()
   id!: string;
+
+  @ApiProperty({
+    description: 'Contenido del post-it',
+    example: 'Contenido de ejemplo',
+  })
+  @IsString()
+  @IsNotEmpty()
   content!: string;
+
+  @ApiProperty({
+    description: 'Dimensión a la que pertenece el post-it',
+    example: 'Cultura',
+  })
+  @IsString()
+  @IsNotEmpty()
   dimension!: string;
+
+  @ApiProperty({
+    description: 'Sección a la que pertenece el post-it',
+    example: 'Comunidad',
+  })
+  @IsString()
+  @IsNotEmpty()
   section!: string;
+
+  @ApiProperty({
+    description: 'Tags asociados al post-it',
+    type: [TagResponseDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TagResponseDto)
   tags!: TagResponseDto[];
+
+  @ApiProperty({
+    description: 'Post-its hijos',
+    type: () => [PostitResponseDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PostitResponseDto)
   childrens!: PostitResponseDto[];
 }
 
