@@ -2,6 +2,11 @@ name: Azure Web App Deploy
 
 on:
   workflow_call:
+    inputs:
+      app-name:
+        required: true
+        type: string
+        description: 'Name of the Azure Web App to deploy to'
     secrets:
       AZURE_CLIENT_ID:
         required: true
@@ -35,7 +40,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'wbl-app'
+          app-name: ${{ inputs.app-name }}
           slot-name: 'Production'
           package: .
         env:
