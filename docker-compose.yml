@@ -15,7 +15,6 @@ services:
   awbl-app:
     build:
       context: .
-    image: ghcr.io/tu-usuario/awbl-back:latest
     container_name: awbl-app
     restart: always
     ports:

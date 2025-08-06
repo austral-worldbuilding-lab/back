@@ -24,7 +24,23 @@ jobs:
     secrets:
       PAT: ${{ secrets.PAT }}
 
-  azure-deploy:
+  # Development deployment
+  azure-deploy-dev:
+    needs: ci
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    uses: ./.github/workflows/azure-deploy.yml
+    permissions:
+      id-token: write
+      contents: read
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    with:
+      app-name: 'wbl-app-dev'
+
+  # Production deployment
+  azure-deploy-prod:
     needs: ci
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/azure-deploy.yml
@@ -35,3 +51,5 @@ jobs:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    with:
+      app-name: 'wbl-app'
