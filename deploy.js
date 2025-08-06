@@ -7,8 +7,8 @@ async function deploy() {
     console.log('🚀 Starting deployment process...');
     console.log('📦 Installing production dependencies...');
     
-    const { stdout: npmOutput } = await execPromise('npm ci --production --prefer-offline --no-audit', { 
-      timeout: 180000 // 3 minutes timeout for npm install
+    const { stdout: npmOutput } = await execPromise('npm ci --omit=dev --prefer-offline --no-audit --no-optional', { 
+      timeout: 300000 // 5 minutes timeout for npm install
     });
     console.log('✅ Dependencies installed successfully');
     
