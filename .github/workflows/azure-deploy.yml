@@ -39,3 +39,5 @@ jobs:
           slot-name: 'Production'
           package: .
           enable-oryx-build: true
+        env:
+          SCM_DO_BUILD_DURING_DEPLOYMENT: true
