@@ -38,6 +38,4 @@ jobs:
           app-name: 'wbl-app'
           slot-name: 'Production'
           package: .
-          enable-oryx-build: true
-        env:
-          SCM_DO_BUILD_DURING_DEPLOYMENT: true
+          startup-command: 'npm ci && npx prisma generate && npx prisma migrate deploy && npm run start:prod'
