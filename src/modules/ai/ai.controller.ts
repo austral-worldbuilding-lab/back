@@ -70,6 +70,9 @@ export class AiController {
       mandalaId,
       aiRequestBody.dimensions,
       aiRequestBody.scales,
+      aiRequestBody.tags,
+      aiRequestBody.centerCharacter,
+      aiRequestBody.centerCharacterDescription,
     );
   }
 }

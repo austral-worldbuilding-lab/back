@@ -53,17 +53,22 @@ export class AiService {
     );
   }
 
-  /**
-   * Generates questions for a project based on mandala configuration and files
-   */
   async generateQuestions(
     mandalaId: string,
     dimensions: string[],
     scales: string[],
+    tags: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
   ): Promise<AiQuestionResponse[]> {
-    this.logger.log(
-      `generateQuestions called for mandala ${mandalaId}`,
+    this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
+    return this.aiProvider.generateQuestions(
+      mandalaId,
+      dimensions,
+      scales,
+      tags,
+      centerCharacter,
+      centerCharacterDescription,
     );
-    return [];
   }
 }

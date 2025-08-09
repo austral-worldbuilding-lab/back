@@ -189,14 +189,19 @@ export class GeminiAdapter implements AiProvider {
     }
   }
 
+  // TODO: Implement this
   async generateQuestions(
     mandalaId: string,
     dimensions: string[],
     scales: string[],
+    tags: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(
-      `generateQuestions called for mandala ${mandalaId}`,
+      `generateQuestions called for mandala ${mandalaId}, with dimensions ${dimensions.join(', ')}, scales ${scales.join(', ')}, centerCharacter ${centerCharacter}, centerCharacterDescription ${centerCharacterDescription}, tags ${tags.join(', ')}`,
     );
+    await Promise.resolve();
     return [];
   }
 }
