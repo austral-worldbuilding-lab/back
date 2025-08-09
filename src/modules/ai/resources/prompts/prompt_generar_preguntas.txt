@@ -18,15 +18,8 @@ Procesamiento de la información
 • Asocia cada idea a la dimensión y escala que mejor describa su impacto sobre el personaje.
 
 Reglas de las preguntas  
+• Preguntas en primera persona, dirigidas al personaje central que esta tratando de completar su mandala.
 • Concisas y claras, dirigidas a descubrir puntos de dolor, contradicciones o áreas poco exploradas.  
 • Enfoque en estimular investigación, reflexión crítica, iteración de la Mandala y el punto de vista del personaje.  
 • Variedad de tipos: clarificación, profundización, contradicción, fragilidad y consistencia.  
 • Cada pregunta debe ayudar al equipo a identificar qué post-its faltan o qué aspectos del mundo requieren más datos.
-
-Usá este formato EXACTO para cada pregunta
-
-{
-    "question": "Pregunta Sugerida",
-    "relevantSection": "Sección(es)",
-    "relevantScale": "Escala(s)"
-}

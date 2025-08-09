@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -17,6 +18,7 @@ export class AiAdapterUtilsService {
     private configService: ConfigService,
     private fileService: FileService,
     private validator: AiRequestValidator,
+    private prisma: PrismaService,
   ) {}
 
   validateConfiguration(modelConfigKey: string): string {
@@ -98,5 +100,32 @@ export class AiAdapterUtilsService {
 
     this.logger.debug(`File validation passed for project ${projectId}`);
     return fileBuffers;
+  }
+
+  // TODO: Remove this methods when we migrate this to the mandala service, for example, if we need to save questions in the mandala, by now, we have a pure AI service without any collateral effect in the mandala service
+  async resolveProjectIdByMandalaId(mandalaId: string): Promise<string> {
+    this.logger.debug(`Resolving projectId for mandala: ${mandalaId}`);
+    const mandala = await this.prisma.mandala.findFirst({
+      where: { id: mandalaId, isActive: true },
+      select: { projectId: true },
+    });
+
+    if (!mandala) {
+      throw new Error(`Mandala not found or inactive: ${mandalaId}`);
+    }
+
+    this.logger.debug(
+      `Resolved projectId ${mandala.projectId} for mandala ${mandalaId}`,
+    );
+    return mandala.projectId;
+  }
+
+  async getProjectTagNames(projectId: string): Promise<string[]> {
+    this.logger.debug(`Loading tags for project: ${projectId}`);
+    const tags = await this.prisma.tag.findMany({
+      where: { projectId, isActive: true },
+      select: { name: true },
+    });
+    return tags.map((t) => t.name);
   }
 }
