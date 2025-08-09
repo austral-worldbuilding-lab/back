@@ -5,6 +5,7 @@ import { Controller, Post, Param, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 
 import { AiService } from './ai.service';
+import { QuestionsResponse } from './resources/dto/generate-questions.dto';
 
 interface AiRequestBody {
   dimensions: string[];
@@ -56,7 +57,7 @@ export class AiController {
   @ApiResponse({
     status: 200,
     description: 'Successfully generated questions',
-    type: [Object],
+    schema: QuestionsResponse,
   })
   @ApiParam({
     name: 'mandalaId',
