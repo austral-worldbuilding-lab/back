@@ -1,3 +1,4 @@
+import { AiQuestionResponse } from '@/modules/mandala/types/questions';
 import { AiPostitResponse } from '@modules/mandala/types/postits';
 
 export interface AiProvider {
@@ -19,4 +20,17 @@ export interface AiProvider {
     centerCharacterDescription: string,
     tags: string[],
   ): Promise<AiPostitResponse[]>;
+
+  /**
+   * Generates questions for a mandala
+   * @param mandalaId - The ID of the mandala to generate questions for
+   * @param dimensions - Array of dimensions
+   * @param scales - Array of scales
+   * @returns An array of AiQuestionResponse objects
+   */
+  generateQuestions(
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+  ): Promise<AiQuestionResponse[]>;
 }

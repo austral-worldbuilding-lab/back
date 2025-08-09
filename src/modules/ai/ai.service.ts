@@ -1,4 +1,5 @@
 import { AiPostitResponse } from '@modules/mandala/types/postits';
+import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
@@ -50,5 +51,19 @@ export class AiService {
       centerCharacterDescription,
       tags,
     );
+  }
+
+  /**
+   * Generates questions for a project based on mandala configuration and files
+   */
+  async generateQuestions(
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+  ): Promise<AiQuestionResponse[]> {
+    this.logger.log(
+      `generateQuestions called for mandala ${mandalaId}`,
+    );
+    return [];
   }
 }
