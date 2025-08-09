@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { AiPostitResponse } from '@modules/mandala/types/postits';
+import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -186,5 +187,21 @@ export class GeminiAdapter implements AiProvider {
       this.logger.error('Failed to parse AI response as JSON:', error);
       throw new Error('Invalid JSON response from Gemini API');
     }
+  }
+
+  // TODO: Implement this
+  async generateQuestions(
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+    tags: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+  ): Promise<AiQuestionResponse[]> {
+    this.logger.log(
+      `generateQuestions called for mandala ${mandalaId}, with dimensions ${dimensions.join(', ')}, scales ${scales.join(', ')}, centerCharacter ${centerCharacter}, centerCharacterDescription ${centerCharacterDescription}, tags ${tags.join(', ')}`,
+    );
+    await Promise.resolve();
+    return [];
   }
 }

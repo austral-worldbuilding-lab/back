@@ -1,4 +1,5 @@
 import { AiPostitResponse } from '@modules/mandala/types/postits';
+import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
@@ -49,6 +50,25 @@ export class AiService {
       centerCharacter,
       centerCharacterDescription,
       tags,
+    );
+  }
+
+  async generateQuestions(
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+    tags: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+  ): Promise<AiQuestionResponse[]> {
+    this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
+    return this.aiProvider.generateQuestions(
+      mandalaId,
+      dimensions,
+      scales,
+      tags,
+      centerCharacter,
+      centerCharacterDescription,
     );
   }
 }
