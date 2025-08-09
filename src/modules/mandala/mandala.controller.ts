@@ -22,7 +22,7 @@ import {
   ParseIntPipe,
   HttpCode,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 
 import {
   ApiCreateMandala,
@@ -54,6 +54,8 @@ import {
 import { MandalaService } from './mandala.service';
 import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from './types/postits';
+import { AiQuestionResponse } from './types/questions';
+import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -272,6 +274,36 @@ export class MandalaController {
     await this.mandalaService.unlinkMandala(parentId, childId);
     return {
       message: 'Mandala unlinked successfully',
+    };
+  }
+
+  @Post(':id/generate-questions')
+  @UseGuards(MandalaRoleGuard)
+  @ApiOperation({
+    summary: 'Generate questions using AI',
+    description: 'Generate guiding questions for a mandala using AI based on mandala configuration and project files',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully generated questions',
+    type: [Object],
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Mandala ID to generate questions for',
+  })
+  async generateQuestions(
+    @Param('id', new UuidValidationPipe()) mandalaId: string,
+    @Body() generateQuestionsDto: GenerateQuestionsDto,
+  ): Promise<DataResponse<AiQuestionResponse[]>> {
+    const questions = await this.mandalaService.generateQuestions(
+      mandalaId,
+      generateQuestionsDto.dimensions,
+      generateQuestionsDto.scales,
+    );
+    
+    return {
+      data: questions,
     };
   }
 }
