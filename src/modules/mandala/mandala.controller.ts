@@ -22,7 +22,13 @@ import {
   ParseIntPipe,
   HttpCode,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+} from '@nestjs/swagger';
 
 import {
   ApiCreateMandala,
@@ -42,6 +48,7 @@ import {
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
+import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
@@ -55,7 +62,6 @@ import { MandalaService } from './mandala.service';
 import { PostitService } from './services/postit.service';
 import { PostitWithCoordinates } from './types/postits';
 import { AiQuestionResponse } from './types/questions';
-import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -281,7 +287,8 @@ export class MandalaController {
   @UseGuards(MandalaRoleGuard)
   @ApiOperation({
     summary: 'Generate questions using AI',
-    description: 'Generate guiding questions for a mandala using AI based on mandala configuration and project files',
+    description:
+      'Generate guiding questions for a mandala using AI based on mandala configuration and project files',
   })
   @ApiResponse({
     status: 200,
@@ -301,7 +308,7 @@ export class MandalaController {
       generateQuestionsDto.dimensions,
       generateQuestionsDto.scales,
     );
-    
+
     return {
       data: questions,
     };

@@ -45,6 +45,4 @@ export class AiController {
       aiRequestBody.tags,
     );
   }
-
-
 }

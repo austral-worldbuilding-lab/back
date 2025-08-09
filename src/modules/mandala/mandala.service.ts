@@ -493,30 +493,29 @@ export class MandalaService {
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
-
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
-    
+
     const mandala = await this.findOne(mandalaId);
-    
+
     // Auto-fill missing values from mandala configuration
-    const effectiveDimensions = dimensions && dimensions.length > 0 
-      ? dimensions 
-      : mandala.configuration.dimensions.map(d => d.name);
-    
-    const effectiveScales = scales && scales.length > 0 
-      ? scales 
-      : mandala.configuration.scales;
+    const effectiveDimensions =
+      dimensions && dimensions.length > 0
+        ? dimensions
+        : mandala.configuration.dimensions.map((d) => d.name);
+
+    const effectiveScales =
+      scales && scales.length > 0 ? scales : mandala.configuration.scales;
 
     const centerCharacter = mandala.configuration.center.name;
     const centerCharacterDescription = mandala.configuration.center.description;
     const tags = await this.projectService.getProjectTags(mandala.projectId);
-    
+
     return this.aiService.generateQuestions(
       mandalaId,
       effectiveDimensions,
       effectiveScales,
-      tags.map(tag => tag.name),
+      tags.map((tag) => tag.name),
       centerCharacter,
       centerCharacterDescription || '',
     );
