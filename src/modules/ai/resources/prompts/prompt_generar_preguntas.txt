@@ -11,6 +11,9 @@ Configuración del proyecto
 • Escalas habilitadas: ${scales}  
 • Etiquetas disponibles: ${tags}  
 
+Estado actual de la Mandala  
+• Contenido existente: ${mandalaDocument}
+
 Procesamiento de la información  
 • Leé entrevistas, encuestas, informes y demás archivos.  
 • Extraé ideas o datos relevantes al personaje central.  

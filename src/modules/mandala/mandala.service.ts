@@ -510,14 +510,20 @@ export class MandalaService {
     const centerCharacter = mandala.configuration.center.name;
     const centerCharacterDescription = mandala.configuration.center.description;
     const tags = await this.projectService.getProjectTags(mandala.projectId);
+    const mandalaDocument = await this.firebaseDataService.getDocument(
+      mandala.projectId,
+      mandalaId,
+    );
 
     return this.aiService.generateQuestions(
+      mandala.projectId,
       mandalaId,
+      mandalaDocument as FirestoreMandalaDocument,
       effectiveDimensions,
       effectiveScales,
       tags.map((tag) => tag.name),
       centerCharacter,
-      centerCharacterDescription || '',
+      centerCharacterDescription || 'No content',
     );
   }
 }

@@ -11,6 +11,7 @@ import { PostitsResponse } from '../resources/dto/generate-postits.dto';
 import { QuestionsResponse } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
+import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 
 interface GeminiUploadedFile {
   uri: string;
@@ -193,7 +194,9 @@ export class GeminiAdapter implements AiProvider {
   }
 
   async generateQuestions(
+    projectId: string,
     mandalaId: string,
+    mandala: FirestoreMandalaDocument,
     dimensions: string[],
     scales: string[],
     tags: string[],
@@ -206,6 +209,7 @@ export class GeminiAdapter implements AiProvider {
 
     const promptFilePath =
       './src/modules/ai/resources/prompts/prompt_generar_preguntas.txt';
+    const mandalaJson = JSON.stringify(mandala, null, 2);
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
       scales,
@@ -213,14 +217,14 @@ export class GeminiAdapter implements AiProvider {
       centerCharacterDescription,
       tags,
       promptFilePath,
+      mandalaJson,
     );
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
-      await this.utilsService.resolveProjectIdByMandalaId(mandalaId),
+      projectId,
       dimensions,
       scales,
     );
-    // TODO: add mandala json to the prompt
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
     const responseText = await this.generateWithGemini(
