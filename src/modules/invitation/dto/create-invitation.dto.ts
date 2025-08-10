@@ -17,12 +17,4 @@ export class CreateInvitationDto {
   @IsUUID()
   @IsNotEmpty()
   projectId!: string;
-
-  @ApiProperty({
-    description: 'ID del usuario que realiza la invitación',
-    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  invitedById!: string;
 }

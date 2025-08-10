@@ -22,6 +22,7 @@ export class InvitationService {
 
   async create(
     createInvitationDto: CreateInvitationDto,
+    userId: string,
   ): Promise<InvitationDto> {
     const existingInvitation = await this.invitationRepository.findByEmail(
       createInvitationDto.email,
@@ -52,21 +53,16 @@ export class InvitationService {
     }
 
     // Validate inviter exists
-    const inviter = await this.invitationRepository.findUserById(
-      createInvitationDto.invitedById,
-    );
+    const inviter = await this.invitationRepository.findUserById(userId);
 
     if (!inviter) {
-      throw new ResourceNotFoundException(
-        'User',
-        createInvitationDto.invitedById,
-      );
+      throw new ResourceNotFoundException('User', userId);
     }
 
     const invitation = await this.invitationRepository.create(
       createInvitationDto.email,
       createInvitationDto.projectId,
-      createInvitationDto.invitedById,
+      userId,
     );
 
     return this.mapToInvitationDto(invitation);

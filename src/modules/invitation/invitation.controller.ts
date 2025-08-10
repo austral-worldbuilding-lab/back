@@ -58,8 +58,12 @@ export class InvitationController {
   @ApiCreateInvitation()
   async create(
     @Body() createInvitationDto: CreateInvitationDto,
+    @Request() req: RequestWithUser,
   ): Promise<MessageResponse<InvitationDto>> {
-    const invitation = await this.invitationService.create(createInvitationDto);
+    const invitation = await this.invitationService.create(
+      createInvitationDto,
+      req.user.id,
+    );
     return {
       message: 'Invitation sent successfully',
       data: invitation,
