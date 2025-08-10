@@ -1,5 +1,6 @@
 import { AiPostitResponse } from '@modules/mandala/types/postits';
 
+import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 import { AiQuestionResponse } from '@/modules/mandala/types/questions';
 
 export interface AiProvider {
@@ -35,7 +36,9 @@ export interface AiProvider {
    * @returns An array of AiQuestionResponse objects
    */
   generateQuestions(
+    projectId: string,
     mandalaId: string,
+    mandala: FirestoreMandalaDocument,
     dimensions: string[],
     scales: string[],
     tags: string[],

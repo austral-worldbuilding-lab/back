@@ -8,8 +8,11 @@ import { ConfigService } from '@nestjs/config';
 import { AiValidationException } from '../exceptions/ai-validation.exception';
 import { AiProvider } from '../interfaces/ai-provider.interface';
 import { PostitsResponse } from '../resources/dto/generate-postits.dto';
+import { QuestionsResponse } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
+
+import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 
 interface GeminiUploadedFile {
   uri: string;
@@ -70,9 +73,10 @@ export class GeminiAdapter implements AiProvider {
       model,
       systemInstruction,
       geminiFiles,
+      PostitsResponse,
     );
 
-    return this.parseAndValidateResponse(responseText, projectId);
+    return this.parseAndValidatePostitResponse(responseText, projectId);
   }
 
   private async uploadFilesToGemini(
@@ -115,12 +119,13 @@ export class GeminiAdapter implements AiProvider {
     model: string,
     systemInstruction: string,
     geminiFiles: GeminiUploadedFile[],
+    responseSchema: unknown,
   ): Promise<string | undefined> {
     this.logger.debug('Preparing Gemini API request...');
 
     const config = {
       responseMimeType: 'application/json',
-      responseSchema: PostitsResponse,
+      responseSchema: responseSchema,
       systemInstruction: systemInstruction,
     };
 
@@ -149,7 +154,7 @@ export class GeminiAdapter implements AiProvider {
     return response.text;
   }
 
-  private parseAndValidateResponse(
+  private parseAndValidatePostitResponse(
     responseText: string | undefined,
     projectId: string,
   ): AiPostitResponse[] {
@@ -189,19 +194,90 @@ export class GeminiAdapter implements AiProvider {
     }
   }
 
-  // TODO: Implement this
   async generateQuestions(
+    projectId: string,
     mandalaId: string,
+    mandala: FirestoreMandalaDocument,
     dimensions: string[],
     scales: string[],
     tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
   ): Promise<AiQuestionResponse[]> {
-    this.logger.log(
-      `generateQuestions called for mandala ${mandalaId}, with dimensions ${dimensions.join(', ')}, scales ${scales.join(', ')}, centerCharacter ${centerCharacter}, centerCharacterDescription ${centerCharacterDescription}, tags ${tags.join(', ')}`,
+    this.logger.log(`Starting questions generation for mandala: ${mandalaId}`);
+
+    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
+
+    const promptFilePath =
+      './src/modules/ai/resources/prompts/prompt_generar_preguntas.txt';
+    const mandalaJson = JSON.stringify(mandala, null, 2);
+    const systemInstruction = await this.utilsService.preparePrompt(
+      dimensions,
+      scales,
+      centerCharacter,
+      centerCharacterDescription,
+      tags,
+      promptFilePath,
+      mandalaJson,
     );
-    await Promise.resolve();
-    return [];
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      dimensions,
+      scales,
+    );
+
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const responseText = await this.generateWithGemini(
+      model,
+      systemInstruction,
+      geminiFiles,
+      QuestionsResponse,
+    );
+
+    return this.parseAndValidateQuestionResponse(responseText, mandalaId);
+  }
+
+  private parseAndValidateQuestionResponse(
+    responseText: string | undefined,
+    mandalaId: string,
+  ): AiQuestionResponse[] {
+    if (!responseText) {
+      throw new Error('No response text received from Gemini API');
+    }
+
+    try {
+      const questions = JSON.parse(responseText) as AiQuestionResponse[];
+      this.logger.log(
+        `Successfully parsed ${questions.length} questions from AI response`,
+      );
+
+      const config = this.validator.getConfig();
+      if (questions.length > config.maxQuestionsPerRequest) {
+        this.logger.error(`Generated questions count exceeds limit`, {
+          mandalaId,
+          generatedCount: questions.length,
+          maxAllowed: config.maxQuestionsPerRequest,
+          timestamp: new Date().toISOString(),
+        });
+        throw new AiValidationException(
+          [
+            `Generated ${questions.length} questions, but maximum allowed is ${config.maxQuestionsPerRequest}`,
+          ],
+          mandalaId,
+        );
+      }
+
+      return questions;
+    } catch (error) {
+      if (error instanceof AiValidationException) {
+        throw error;
+      }
+      this.logger.error(
+        'Failed to parse AI questions response as JSON:',
+        error,
+      );
+      throw new Error('Invalid JSON response from Gemini API');
+    }
   }
 }
