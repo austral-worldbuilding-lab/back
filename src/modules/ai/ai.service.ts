@@ -2,9 +2,10 @@ import { AiPostitResponse } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
+import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
+
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
-import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
 
 @Injectable()
 export class AiService {

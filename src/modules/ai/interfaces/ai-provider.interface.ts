@@ -1,7 +1,7 @@
 import { AiPostitResponse } from '@modules/mandala/types/postits';
 
-import { AiQuestionResponse } from '@/modules/mandala/types/questions';
 import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
+import { AiQuestionResponse } from '@/modules/mandala/types/questions';
 
 export interface AiProvider {
   /**

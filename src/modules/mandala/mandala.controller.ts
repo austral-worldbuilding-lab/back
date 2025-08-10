@@ -60,7 +60,7 @@ import {
 } from './guards/mandala-role.guard';
 import { MandalaService } from './mandala.service';
 import { PostitService } from './services/postit.service';
-import { Postit, PostitWithCoordinates } from './types/postits';
+import { PostitWithCoordinates } from './types/postits';
 import { AiQuestionResponse } from './types/questions';
 
 @ApiTags('Mandalas')
