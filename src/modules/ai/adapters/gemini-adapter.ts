@@ -262,7 +262,7 @@ export class GeminiAdapter implements AiProvider {
         });
         throw new AiValidationException(
           [
-            `Generated ${questions.length} questions, but maximum allowed is ${config.maxPostitsPerRequest}`,
+            `Generated ${questions.length} questions, but maximum allowed is ${config.maxQuestionsPerRequest}`,
           ],
           mandalaId,
         );
