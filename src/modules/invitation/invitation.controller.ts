@@ -23,7 +23,6 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   Request,
-  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { InvitationStatus } from '@prisma/client';
@@ -59,7 +58,7 @@ export class InvitationController {
   @ApiCreateInvitation()
   async create(
     @Body() createInvitationDto: CreateInvitationDto,
-    @Req() req: RequestWithUser,
+    @Request() req: RequestWithUser,
   ): Promise<MessageResponse<InvitationDto>> {
     const invitation = await this.invitationService.create(
       createInvitationDto,
