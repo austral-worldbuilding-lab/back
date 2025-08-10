@@ -70,7 +70,8 @@ export class InvitationService {
 
     await this.mailService.sendInvitationEmail({
       to: createInvitationDto.email,
-      inviteeName: inviter.username,
+      inviteeName: createInvitationDto.email,
+      invitedByName: inviter.username,
       projectName: project.name,
       token: invitation.id,
     });
