@@ -12,6 +12,7 @@ import { Module } from '@nestjs/common';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AppService } from './app.service';
     FileModule,
     AiModule,
     RoleModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
