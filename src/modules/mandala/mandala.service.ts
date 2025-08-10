@@ -5,8 +5,10 @@ import {
   ExternalServiceException,
 } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
+import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
+import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { ProjectService } from '@modules/project/project.service';
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -33,6 +35,7 @@ export class MandalaService {
     private firebaseDataService: FirebaseDataService,
     private postitService: PostitService,
     private projectService: ProjectService,
+    private aiService: AiService,
   ) {}
 
   private async completeMissingVariables(
@@ -484,5 +487,43 @@ export class MandalaService {
 
   async getCharacterList(projectId: string): Promise<CharacterListItemDto[]> {
     return this.mandalaRepository.findCharacterListByProject(projectId);
+  }
+
+  async generateQuestions(
+    mandalaId: string,
+    dimensions?: string[],
+    scales?: string[],
+  ): Promise<AiQuestionResponse[]> {
+    this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
+
+    const mandala = await this.findOne(mandalaId);
+
+    // Auto-fill missing values from mandala configuration
+    const effectiveDimensions =
+      dimensions && dimensions.length > 0
+        ? dimensions
+        : mandala.configuration.dimensions.map((d) => d.name);
+
+    const effectiveScales =
+      scales && scales.length > 0 ? scales : mandala.configuration.scales;
+
+    const centerCharacter = mandala.configuration.center.name;
+    const centerCharacterDescription = mandala.configuration.center.description;
+    const tags = await this.projectService.getProjectTags(mandala.projectId);
+    const mandalaDocument = await this.firebaseDataService.getDocument(
+      mandala.projectId,
+      mandalaId,
+    );
+
+    return this.aiService.generateQuestions(
+      mandala.projectId,
+      mandalaId,
+      mandalaDocument as FirestoreMandalaDocument,
+      effectiveDimensions,
+      effectiveScales,
+      tags.map((tag) => tag.name),
+      centerCharacter,
+      centerCharacterDescription || 'No content',
+    );
   }
 }

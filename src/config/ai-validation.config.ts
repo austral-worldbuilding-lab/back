@@ -4,6 +4,7 @@ export interface AiValidationConfig {
   maxFileSize: number; // in bytes
   maxInputSize: number; // in bytes
   maxPostitsPerRequest: number;
+  maxQuestionsPerRequest: number;
 }
 
 /**
@@ -52,4 +53,7 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
   maxPostitsPerRequest: parseInt(
     process.env.AI_MAX_POSTITS_PER_REQUEST || '100',
   ), // 100 default
+  maxQuestionsPerRequest: parseInt(
+    process.env.AI_MAX_QUESTIONS_PER_REQUEST || '20',
+  ), // 20 default
 });
