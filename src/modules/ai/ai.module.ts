@@ -1,6 +1,5 @@
 import { FileModule } from '@modules/files/file.module';
 import { FileService } from '@modules/files/file.service';
-import { PrismaModule } from '@modules/prisma/prisma.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -30,7 +29,7 @@ import { AiRequestValidator } from './validators/ai-request.validator';
     },
   ],
   controllers: [AiController],
-  imports: [ConfigModule, FileModule, PrismaModule],
+  imports: [ConfigModule, FileModule],
   exports: [AiService],
 })
 export class AiModule {}
