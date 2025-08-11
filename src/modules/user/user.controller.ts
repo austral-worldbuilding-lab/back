@@ -21,6 +21,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import {
   ApiCreateUser,
@@ -40,6 +41,7 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 900000 } })
   @Post()
   @ApiCreateUser()
   async create(
