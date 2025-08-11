@@ -85,15 +85,26 @@ export class ProjectRepository {
   async findAllPaginated(
     skip: number,
     take: number,
+    userId: string,
   ): Promise<[ProjectDto[], number]> {
+    const whereClause = {
+      isActive: true,
+      userRoles: {
+        some: {
+          userId: userId,
+        },
+      },
+    };
     const [projects, total] = await this.prisma.$transaction([
       this.prisma.project.findMany({
-        where: { isActive: true },
+        where: whereClause,
         skip,
         take,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.project.count({ where: { isActive: true } }),
+      this.prisma.project.count({ 
+        where: whereClause,
+      }),
     ]);
 
     return [projects.map((project) => this.parseToProjectDto(project)), total];
