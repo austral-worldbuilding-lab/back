@@ -8,6 +8,8 @@ import { RoleService } from '@modules/role/role.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus } from '@prisma/client';
 
+import { MailService } from '../mail/mail.service';
+
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { InvitationDto } from './dto/invitation.dto';
 import { Invitation } from './entities/invitation.entity';
@@ -18,6 +20,7 @@ export class InvitationService {
   constructor(
     private invitationRepository: InvitationRepository,
     private roleService: RoleService,
+    private mailService: MailService,
   ) {}
 
   async create(
@@ -64,6 +67,14 @@ export class InvitationService {
       createInvitationDto.projectId,
       userId,
     );
+
+    await this.mailService.sendInvitationEmail({
+      to: createInvitationDto.email,
+      inviteeName: createInvitationDto.email,
+      invitedByName: inviter.username,
+      projectName: project.name,
+      token: invitation.id,
+    });
 
     return this.mapToInvitationDto(invitation);
   }
