@@ -18,7 +18,7 @@ export class MailService {
     token: string;
   }) {
     const baseUrl = process.env.FRONTEND_BASE_URL ?? 'http://localhost:5173';
-    const acceptUrl = `${baseUrl}/app/my-invitations/${encodeURIComponent(params.token)}`;
+    const acceptUrl = `${baseUrl}/app/invitation/${encodeURIComponent(params.token)}`;
 
     const from = this.config.get<string>('mail.from');
     const subject = `Invitación a un proyecto: ${params.projectName}`;
