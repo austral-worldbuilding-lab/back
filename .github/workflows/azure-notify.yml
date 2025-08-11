@@ -1,0 +1,23 @@
+name: Azure Web App Deployment Notification
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: 'Environment to deploy to (dev or prod)'
+    secrets:
+      AZURE_WEBAPP_WEBHOOK_URL:
+        required: true
+        description: 'Webhook URL for the specific environment'
+
+jobs:
+  notify-azure:
+    name: Notify Azure Web App (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Trigger Azure Web App Deployment
+        run: |
+          curl -X POST "${{ secrets.AZURE_WEBAPP_WEBHOOK_URL }}"
