@@ -2,7 +2,6 @@ import { promises as fs } from 'fs';
 
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -18,7 +17,6 @@ export class AiAdapterUtilsService {
     private configService: ConfigService,
     private fileService: FileService,
     private validator: AiRequestValidator,
-    private prisma: PrismaService,
   ) {}
 
   validateConfiguration(modelConfigKey: string): string {
