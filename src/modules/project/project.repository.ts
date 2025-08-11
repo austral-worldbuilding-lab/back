@@ -102,7 +102,7 @@ export class ProjectRepository {
         take,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.project.count({ 
+      this.prisma.project.count({
         where: whereClause,
       }),
     ]);
