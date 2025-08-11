@@ -2,6 +2,7 @@ import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
 import { AiPostitResponse } from '@modules/mandala/types/postits';
 import { Controller, Post, Param, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { AiService } from './ai.service';
 
@@ -18,6 +19,7 @@ interface AiRequestBody {
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
+  @Throttle({ default: { limit: 100, ttl: 3600000 } })
   @Post('generate-postits/:projectId')
   @ApiOperation({
     summary: 'Generate postits using AI',
