@@ -19,3 +19,23 @@ jobs:
     uses: ./.github/workflows/docker-publish.yml
     secrets:
       PAT: ${{ secrets.PAT }}
+
+  # Development deployment
+  azure-deploy-dev:
+    needs: docker-publish
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    uses: ./.github/workflows/azure-notify.yml
+    with:
+      environment: 'dev'
+    secrets:
+      AZURE_WEBAPP_WEBHOOK_URL: ${{ secrets.AZURE_WEBAPP_WEBHOOK_URL_DEV }}
+
+  # Production deployment
+  azure-deploy-prod:
+    needs: docker-publish
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    uses: ./.github/workflows/azure-notify.yml
+    with:
+      environment: 'prod'
+    secrets:
+      AZURE_WEBAPP_WEBHOOK_URL: ${{ secrets.AZURE_WEBAPP_WEBHOOK_URL_PROD }}
