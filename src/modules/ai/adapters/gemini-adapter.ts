@@ -74,7 +74,9 @@ export class GeminiAdapter implements AiProvider {
       PostitsResponse,
     );
 
-    return this.parseAndValidatePostitResponse(responseText, projectId);
+    const result = this.parseAndValidatePostitResponse(responseText, projectId);
+    this.logger.log(`Postit generation completed for project: ${projectId}`);
+    return result;
   }
 
   private async uploadFilesToGemini(
@@ -202,15 +204,16 @@ export class GeminiAdapter implements AiProvider {
     centerCharacter: string,
     centerCharacterDescription: string,
   ): Promise<AiQuestionResponse[]> {
-    this.logger.log(`Starting questions generation for mandala: ${mandalaId}`);
+    this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
 
     const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
 
     const promptFilePath =
       './src/modules/ai/resources/prompts/prompt_generar_preguntas.txt';
 
-    this.logger.debug('Received mandala text summary for AI processing', {
+    this.logger.debug('Processing mandala text summary:', {
       summaryLength: mandalaTextSummary.length,
+      model,
     });
 
     const systemInstruction = await this.utilsService.preparePrompt(
@@ -237,7 +240,12 @@ export class GeminiAdapter implements AiProvider {
       QuestionsResponse,
     );
 
-    return this.parseAndValidateQuestionResponse(responseText, mandalaId);
+    const result = this.parseAndValidateQuestionResponse(
+      responseText,
+      mandalaId,
+    );
+    this.logger.log(`Question generation completed for mandala: ${mandalaId}`);
+    return result;
   }
 
   private parseAndValidateQuestionResponse(

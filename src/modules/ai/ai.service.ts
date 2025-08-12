@@ -41,7 +41,7 @@ export class AiService {
   ): Promise<AiPostitResponse[]> {
     this.logger.log(`Starting postit generation for project: ${projectId}`);
 
-    this.logger.log('Configuration:', {
+    this.logger.debug('Postit generation configuration:', {
       dimensions: dimensions.length,
       scales: scales.length,
       centerCharacter,
@@ -49,7 +49,7 @@ export class AiService {
       tags: tags.length,
     });
 
-    return this.aiProvider.generatePostits(
+    const result = await this.aiProvider.generatePostits(
       projectId,
       dimensions,
       scales,
@@ -57,6 +57,11 @@ export class AiService {
       centerCharacterDescription,
       tags,
     );
+
+    this.logger.log(
+      `Generated ${result.length} postits for project: ${projectId}`,
+    );
+    return result;
   }
 
   async generateQuestions(
@@ -69,15 +74,27 @@ export class AiService {
     centerCharacter: string,
     centerCharacterDescription: string,
   ): Promise<AiQuestionResponse[]> {
-    this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
+    this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
 
     // Transform raw mandala document into AI-readable summary
     const mandalaAiSummary = createMandalaAiSummary(mandala);
 
+    this.logger.debug('Mandala summary created:', {
+      totalPostits: mandalaAiSummary.totalPostits,
+      dimensions: mandalaAiSummary.dimensions.length,
+      scales: mandalaAiSummary.scales.length,
+      centerCharacter: mandalaAiSummary.centerCharacter.name,
+    });
+
     // Generate formatted summary for better AI understanding with natural language
     const mandalaTextSummary = generateTextualSummary(mandalaAiSummary);
 
-    return this.aiProvider.generateQuestions(
+    this.logger.debug(
+      'Generated text summary length:',
+      mandalaTextSummary.length,
+    );
+
+    const result = await this.aiProvider.generateQuestions(
       projectId,
       mandalaId,
       mandalaTextSummary,
@@ -87,5 +104,10 @@ export class AiService {
       centerCharacter,
       centerCharacterDescription,
     );
+
+    this.logger.log(
+      `Generated ${result.length} questions for mandala: ${mandalaId}`,
+    );
+    return result;
   }
 }
