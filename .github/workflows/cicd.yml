@@ -7,10 +7,6 @@ on:
     branches: [ '*' ]
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
@@ -26,30 +22,20 @@ jobs:
 
   # Development deployment
   azure-deploy-dev:
-    needs: ci
+    needs: docker-publish
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    uses: ./.github/workflows/azure-deploy.yml
-    permissions:
-      id-token: write
-      contents: read
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    uses: ./.github/workflows/azure-notify.yml
     with:
-      app-name: 'wbl-app-dev'
+      environment: 'dev'
+    secrets:
+      AZURE_WEBAPP_WEBHOOK_URL: ${{ secrets.AZURE_WEBAPP_WEBHOOK_URL_DEV }}
 
   # Production deployment
   azure-deploy-prod:
-    needs: ci
+    needs: docker-publish
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    uses: ./.github/workflows/azure-deploy.yml
-    permissions:
-      id-token: write
-      contents: read
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    uses: ./.github/workflows/azure-notify.yml
     with:
-      app-name: 'wbl-app'
+      environment: 'prod'
+    secrets:
+      AZURE_WEBAPP_WEBHOOK_URL: ${{ secrets.AZURE_WEBAPP_WEBHOOK_URL_PROD }}

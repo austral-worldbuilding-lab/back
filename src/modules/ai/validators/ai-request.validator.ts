@@ -34,6 +34,7 @@ export class AiRequestValidator {
     });
   }
 
+  // TODO: Split file validation into postits, questions and mandala configuration
   /**
    * Main validation method - runs all checks before sending request to AI API
    */

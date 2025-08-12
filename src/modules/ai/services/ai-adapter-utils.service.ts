@@ -40,6 +40,7 @@ export class AiAdapterUtilsService {
     centerCharacterDescription: string,
     tags: string[],
     promptFilePath: string,
+    mandalaDocument?: string,
   ): Promise<string> {
     this.logger.debug(`Preparing prompt template...`);
 
@@ -53,6 +54,7 @@ export class AiAdapterUtilsService {
         centerCharacter,
         centerCharacterDescription,
         tags,
+        mandalaDocument,
       );
 
       this.logger.debug(`Prompt template prepared successfully`);

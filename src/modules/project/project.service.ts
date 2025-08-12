@@ -49,11 +49,13 @@ export class ProjectService {
   async findAllPaginated(
     page: number,
     limit: number,
+    userId: string,
   ): Promise<PaginatedResponse<ProjectDto>> {
     const skip = (page - 1) * limit;
     const [projects, total] = await this.projectRepository.findAllPaginated(
       skip,
       limit,
+      userId,
     );
 
     return {

@@ -81,8 +81,9 @@ export class ProjectController {
       new MaxValuePipe(100),
     )
     limit: number,
+    @Req() req: RequestWithUser,
   ): Promise<PaginatedResponse<ProjectDto>> {
-    return await this.projectService.findAllPaginated(page, limit);
+    return await this.projectService.findAllPaginated(page, limit, req.user.id);
   }
 
   @Get(':id')

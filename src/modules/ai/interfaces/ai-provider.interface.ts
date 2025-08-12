@@ -1,5 +1,8 @@
 import { AiPostitResponse } from '@modules/mandala/types/postits';
 
+import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
+import { AiQuestionResponse } from '@/modules/mandala/types/questions';
+
 export interface AiProvider {
   /**
    * Generates postits for a project
@@ -19,4 +22,27 @@ export interface AiProvider {
     centerCharacterDescription: string,
     tags: string[],
   ): Promise<AiPostitResponse[]>;
+
+  /**
+   * Generates questions for a project based on mandala configuration and files
+   * @param mandalaId - The ID of the mandala to generate questions for
+   * Project configuration:
+   * @param dimensions - Array of dimensions to generate questions for
+   * @param scales - Array of scales to generate questions for
+   * @param tags - Array of tags to be used for connecting postits across dimensions
+   * Mandala configuration:
+   * @param centerCharacter - The center character
+   * @param centerCharacterDescription - The center character description
+   * @returns An array of AiQuestionResponse objects
+   */
+  generateQuestions(
+    projectId: string,
+    mandalaId: string,
+    mandala: FirestoreMandalaDocument,
+    dimensions: string[],
+    scales: string[],
+    tags: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+  ): Promise<AiQuestionResponse[]>;
 }

@@ -1,5 +1,8 @@
 import { AiPostitResponse } from '@modules/mandala/types/postits';
+import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { Injectable, Logger, Inject } from '@nestjs/common';
+
+import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
@@ -49,6 +52,29 @@ export class AiService {
       centerCharacter,
       centerCharacterDescription,
       tags,
+    );
+  }
+
+  async generateQuestions(
+    projectId: string,
+    mandalaId: string,
+    mandala: FirestoreMandalaDocument,
+    dimensions: string[],
+    scales: string[],
+    tags: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+  ): Promise<AiQuestionResponse[]> {
+    this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
+    return this.aiProvider.generateQuestions(
+      projectId,
+      mandalaId,
+      mandala,
+      dimensions,
+      scales,
+      tags,
+      centerCharacter,
+      centerCharacterDescription,
     );
   }
 }

@@ -1,3 +1,5 @@
+import * as process from 'node:process';
+
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
@@ -9,9 +11,12 @@ import { ProjectModule } from '@modules/project/project.module';
 import { RoleModule } from '@modules/role/role.module';
 import { UserModule } from '@modules/user/user.module';
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -24,8 +29,25 @@ import { AppService } from './app.service';
     FileModule,
     AiModule,
     RoleModule,
+    MailModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000'),
+          limit: parseInt(process.env.RATE_LIMIT_LIMIT || '100'),
+        },
+      ],
+    }),
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [
+    AppService,
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
+  exports: [PrismaService],
 })
 export class AppModule {}
