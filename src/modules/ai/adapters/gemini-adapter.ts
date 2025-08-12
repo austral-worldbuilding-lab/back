@@ -12,8 +12,6 @@ import { QuestionsResponse } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
-import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
-
 interface GeminiUploadedFile {
   uri: string;
   mimeType: string;
@@ -197,7 +195,7 @@ export class GeminiAdapter implements AiProvider {
   async generateQuestions(
     projectId: string,
     mandalaId: string,
-    mandala: FirestoreMandalaDocument,
+    mandalaTextSummary: string,
     dimensions: string[],
     scales: string[],
     tags: string[],
@@ -210,7 +208,12 @@ export class GeminiAdapter implements AiProvider {
 
     const promptFilePath =
       './src/modules/ai/resources/prompts/prompt_generar_preguntas.txt';
-    const mandalaJson = JSON.stringify(mandala, null, 2);
+
+    this.logger.debug('Received mandala text summary for AI processing', {
+      summaryLength: mandalaTextSummary.length,
+    });
+    this.logger.log(mandalaTextSummary);
+
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
       scales,
@@ -218,7 +221,7 @@ export class GeminiAdapter implements AiProvider {
       centerCharacterDescription,
       tags,
       promptFilePath,
-      mandalaJson,
+      mandalaTextSummary,
     );
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
