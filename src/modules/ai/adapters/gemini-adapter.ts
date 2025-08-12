@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { AiPostitResponse } from '@modules/mandala/types/postits';
@@ -49,8 +51,10 @@ export class GeminiAdapter implements AiProvider {
 
     const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
 
-    const promptFilePath =
-      './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt';
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_mandala_inicial.txt',
+    );
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
       scales,
@@ -208,14 +212,15 @@ export class GeminiAdapter implements AiProvider {
 
     const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
 
-    const promptFilePath =
-      './src/modules/ai/resources/prompts/prompt_generar_preguntas.txt';
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_preguntas.txt',
+    );
 
     this.logger.debug('Processing mandala text summary:', {
       summaryLength: mandalaTextSummary.length,
       model,
     });
-
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
       scales,
