@@ -14,14 +14,14 @@ interface MandalaCenter {
   color: string;
 }
 
-interface MandalaDirection {
+interface MandalaDimension {
   name: string;
   color: string;
 }
 
 interface MandalaConfiguration {
   center: MandalaCenter;
-  dimensions: MandalaDirection[];
+  dimensions: MandalaDimension[];
   scales: string[];
 }
 
@@ -48,13 +48,13 @@ export function createMandalaAiSummary(
     childrenCount: postit.childrens?.length || 0,
   }));
 
-  const configuredDimensions: MandalaDirection[] =
+  const configuredDimensions: MandalaDimension[] =
     mandala?.configuration?.dimensions || [];
   const configuredScales: string[] = mandala?.configuration?.scales || [];
 
   // Create dimensions with their post-its
   const dimensions: DimensionSummary[] = configuredDimensions.map(
-    (dimension: MandalaDirection) => {
+    (dimension: MandalaDimension) => {
       const dimensionPostits = postitSummaries.filter(
         (p) => p.dimension === dimension.name,
       );
