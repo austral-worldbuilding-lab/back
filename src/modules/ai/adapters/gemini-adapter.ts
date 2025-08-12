@@ -14,6 +14,8 @@ import { AiRequestValidator } from '../validators/ai-request.validator';
 
 import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 
+import * as path from 'node:path';
+
 interface GeminiUploadedFile {
   uri: string;
   mimeType: string;
@@ -51,8 +53,10 @@ export class GeminiAdapter implements AiProvider {
 
     const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
 
-    const promptFilePath =
-      './src/modules/ai/resources/prompts/prompt_mandala_inicial.txt';
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_mandala_inicial.txt',
+    );
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
       scales,
@@ -208,8 +212,10 @@ export class GeminiAdapter implements AiProvider {
 
     const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
 
-    const promptFilePath =
-      './src/modules/ai/resources/prompts/prompt_generar_preguntas.txt';
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_preguntas.txt',
+    );
     const mandalaJson = JSON.stringify(mandala, null, 2);
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
