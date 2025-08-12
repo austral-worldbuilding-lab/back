@@ -7,17 +7,38 @@ import {
   ScaleSummary,
 } from '../types/mandala-summary.interface';
 
+// Types for mandala configuration structure
+interface MandalaCenter {
+  name: string;
+  description?: string;
+  color: string;
+}
+
+interface MandalaDirection {
+  name: string;
+  color: string;
+}
+
+interface MandalaConfiguration {
+  center: MandalaCenter;
+  dimensions: MandalaDirection[];
+  scales: string[];
+}
+
+interface MandalaData {
+  configuration?: MandalaConfiguration;
+  name?: string;
+}
+
 /**
  * Transforms a raw FirestoreMandalaDocument into a clean, AI-readable summary
  * Removes technical details like coordinates and IDs while preserving semantic information
  */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 export function createMandalaAiSummary(
   document: FirestoreMandalaDocument,
 ): MandalaAiSummary {
   const postits = document.postits || [];
-
-  const mandala: any = document.mandala || {};
+  const mandala = document.mandala as MandalaData | undefined;
 
   // Extract post-it summaries without coordinates and technical IDs
   const postitSummaries: PostitSummary[] = postits.map((postit) => ({
@@ -27,19 +48,18 @@ export function createMandalaAiSummary(
     childrenCount: postit.childrens?.length || 0,
   }));
 
-  const configuredDimensions: any[] = mandala.configuration?.dimensions || [];
-
-  const configuredScales: string[] = mandala.configuration?.scales || [];
+  const configuredDimensions: MandalaDirection[] =
+    mandala?.configuration?.dimensions || [];
+  const configuredScales: string[] = mandala?.configuration?.scales || [];
 
   // Create dimensions with their post-its
   const dimensions: DimensionSummary[] = configuredDimensions.map(
-    (dimension: any) => {
-      const dimensionName: string = dimension.name || dimension;
+    (dimension: MandalaDirection) => {
       const dimensionPostits = postitSummaries.filter(
-        (p) => p.dimension === dimensionName,
+        (p) => p.dimension === dimension.name,
       );
       return {
-        name: dimensionName,
+        name: dimension.name,
         postits: dimensionPostits,
         totalPostits: dimensionPostits.length,
       };
@@ -58,17 +78,14 @@ export function createMandalaAiSummary(
 
   return {
     centerCharacter: {
-      name:
-        (mandala.configuration?.center?.name as string) || 'Unnamed Character',
-
-      description: (mandala.configuration?.center?.description as string) || '',
+      name: mandala?.configuration?.center?.name || 'Unnamed Character',
+      description: mandala?.configuration?.center?.description || '',
     },
     dimensions,
     scales,
     totalPostits: postitSummaries.length,
   };
 }
-/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 
 /**
  * Generates a human-readable text summary for AI consumption
