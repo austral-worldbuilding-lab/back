@@ -77,12 +77,6 @@ export class AiService {
     // Generate formatted summary for better AI understanding with natural language
     const mandalaTextSummary = generateTextualSummary(mandalaAiSummary);
 
-    this.logger.log('Mandala summary created', {
-      totalPostits: mandalaAiSummary.totalPostits,
-      dimensions: mandalaAiSummary.dimensions.length,
-      scales: mandalaAiSummary.scales.length,
-    });
-
     return this.aiProvider.generateQuestions(
       projectId,
       mandalaId,

@@ -212,7 +212,6 @@ export class GeminiAdapter implements AiProvider {
     this.logger.debug('Received mandala text summary for AI processing', {
       summaryLength: mandalaTextSummary.length,
     });
-    this.logger.log(mandalaTextSummary);
 
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
