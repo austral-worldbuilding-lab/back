@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { AiPostitResponse } from '@modules/mandala/types/postits';
@@ -13,8 +15,6 @@ import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
 import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
-
-import * as path from 'node:path';
 
 interface GeminiUploadedFile {
   uri: string;
