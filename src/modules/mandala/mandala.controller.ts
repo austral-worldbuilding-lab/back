@@ -49,6 +49,7 @@ import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
+import { GeneratePostitsDto } from './dto/generate-postits.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
@@ -311,6 +312,37 @@ export class MandalaController {
 
     return {
       data: questions,
+    };
+  }
+
+  @Post(':id/generate-postits')
+  @UseGuards(MandalaRoleGuard)
+  @ApiOperation({
+    summary: 'Generate postits using AI',
+    description:
+      'Generate postits for a mandala using AI based on mandala configuration and project files',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully generated postits',
+    type: [Object],
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Mandala ID to generate postits for',
+  })
+  async generatePostits(
+    @Param('id', new UuidValidationPipe()) mandalaId: string,
+    @Body() generatePostitsDto: GeneratePostitsDto,
+  ): Promise<DataResponse<PostitWithCoordinates[]>> {
+    const postits = await this.mandalaService.generatePostits(
+      mandalaId,
+      generatePostitsDto.dimensions,
+      generatePostitsDto.scales,
+    );
+
+    return {
+      data: postits,
     };
   }
 
