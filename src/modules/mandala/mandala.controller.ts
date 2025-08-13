@@ -45,6 +45,7 @@ import {
   ApiGetAvailableCharacters,
   ApiUpdatePostit,
 } from './decorators/mandala-swagger.decorators';
+import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { CreateMandalaDto } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
@@ -53,6 +54,7 @@ import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
+import { PostitWithCoordinatesDto } from './dto/postit/postit-with-coordinates.dto';
 import { UpdatePostitDto } from './dto/postit/update-postit.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import {
@@ -294,7 +296,7 @@ export class MandalaController {
   @ApiResponse({
     status: 200,
     description: 'Successfully generated questions',
-    type: [Object],
+    type: [AiQuestionResponseDto],
   })
   @ApiParam({
     name: 'id',
@@ -325,7 +327,7 @@ export class MandalaController {
   @ApiResponse({
     status: 200,
     description: 'Successfully generated postits',
-    type: [Object],
+    type: [PostitWithCoordinatesDto],
   })
   @ApiParam({
     name: 'id',
