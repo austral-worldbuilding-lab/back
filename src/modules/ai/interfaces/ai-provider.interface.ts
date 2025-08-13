@@ -1,6 +1,5 @@
 import { AiPostitResponse } from '@modules/mandala/types/postits';
 
-import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
 import { AiQuestionResponse } from '@/modules/mandala/types/questions';
 
 export interface AiProvider {
@@ -26,6 +25,7 @@ export interface AiProvider {
   /**
    * Generates questions for a project based on mandala configuration and files
    * @param mandalaId - The ID of the mandala to generate questions for
+   * @param mandalaTextSummary - Clean textual summary of the mandala without technical details
    * Project configuration:
    * @param dimensions - Array of dimensions to generate questions for
    * @param scales - Array of scales to generate questions for
@@ -38,7 +38,7 @@ export interface AiProvider {
   generateQuestions(
     projectId: string,
     mandalaId: string,
-    mandala: FirestoreMandalaDocument,
+    mandalaTextSummary: string,
     dimensions: string[],
     scales: string[],
     tags: string[],

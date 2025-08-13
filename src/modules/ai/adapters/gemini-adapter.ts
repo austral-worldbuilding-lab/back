@@ -14,8 +14,6 @@ import { QuestionsResponse } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
-import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-character.type';
-
 interface GeminiUploadedFile {
   uri: string;
   mimeType: string;
@@ -80,7 +78,9 @@ export class GeminiAdapter implements AiProvider {
       PostitsResponse,
     );
 
-    return this.parseAndValidatePostitResponse(responseText, projectId);
+    const result = this.parseAndValidatePostitResponse(responseText, projectId);
+    this.logger.log(`Postit generation completed for project: ${projectId}`);
+    return result;
   }
 
   private async uploadFilesToGemini(
@@ -201,14 +201,14 @@ export class GeminiAdapter implements AiProvider {
   async generateQuestions(
     projectId: string,
     mandalaId: string,
-    mandala: FirestoreMandalaDocument,
+    mandalaTextSummary: string,
     dimensions: string[],
     scales: string[],
     tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
   ): Promise<AiQuestionResponse[]> {
-    this.logger.log(`Starting questions generation for mandala: ${mandalaId}`);
+    this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
 
     const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
 
@@ -216,7 +216,11 @@ export class GeminiAdapter implements AiProvider {
       __dirname,
       '../resources/prompts/prompt_generar_preguntas.txt',
     );
-    const mandalaJson = JSON.stringify(mandala, null, 2);
+
+    this.logger.debug('Processing mandala text summary:', {
+      summaryLength: mandalaTextSummary.length,
+      model,
+    });
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,
       scales,
@@ -224,7 +228,7 @@ export class GeminiAdapter implements AiProvider {
       centerCharacterDescription,
       tags,
       promptFilePath,
-      mandalaJson,
+      mandalaTextSummary,
     );
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
@@ -241,7 +245,12 @@ export class GeminiAdapter implements AiProvider {
       QuestionsResponse,
     );
 
-    return this.parseAndValidateQuestionResponse(responseText, mandalaId);
+    const result = this.parseAndValidateQuestionResponse(
+      responseText,
+      mandalaId,
+    );
+    this.logger.log(`Question generation completed for mandala: ${mandalaId}`);
+    return result;
   }
 
   private parseAndValidateQuestionResponse(

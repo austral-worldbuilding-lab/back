@@ -526,4 +526,31 @@ export class MandalaService {
       centerCharacterDescription || 'No content',
     );
   }
+
+  async getFirestoreDocument(
+    projectId: string,
+    mandalaId: string,
+  ): Promise<FirestoreMandalaDocument | null> {
+    this.logger.log(`Getting Firestore document for mandala ${mandalaId}`);
+
+    try {
+      const document = await this.firebaseDataService.getDocument(
+        projectId,
+        mandalaId,
+      );
+
+      return document as FirestoreMandalaDocument | null;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Failed to retrieve Firestore document for mandala ${mandalaId}: ${errorMessage}`,
+      );
+      throw new ExternalServiceException(
+        'Firebase',
+        'Failed to retrieve Firestore document',
+        { mandalaId, originalError: errorMessage },
+      );
+    }
+  }
 }
