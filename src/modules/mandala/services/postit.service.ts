@@ -37,9 +37,12 @@ export class PostitService {
 
   async generatePostitsForMandala(
     mandalaId: string,
+    dimensions: string[],
+    scales: string[],
   ): Promise<PostitWithCoordinates[]> {
     const mandala = await this.getMandalaOrThrow(mandalaId);
-    const postits = await this.generatePostits(mandala);
+
+    const postits = await this.generatePostits(mandala, dimensions, scales);
 
     const postitsBySection = this.groupPostitsBySection(postits);
 
@@ -54,8 +57,8 @@ export class PostitService {
         const coordinates = this.findOptimalCoordinates(
           dimension,
           section,
-          mandala.configuration.dimensions.map((dim) => dim.name),
-          mandala.configuration.scales,
+          dimensions,
+          scales,
           coordinatesBySection[sectionKey],
           allCoordinates,
         );
@@ -89,7 +92,11 @@ export class PostitService {
     return mandala;
   }
 
-  private async generatePostits(mandala: MandalaDto): Promise<Postit[]> {
+  private async generatePostits(
+    mandala: MandalaDto,
+    dimensions: string[],
+    scales: string[],
+  ): Promise<Postit[]> {
     const projectTags = await this.projectService.getProjectTags(
       mandala.projectId,
     );
@@ -98,8 +105,8 @@ export class PostitService {
 
     const aiResponse: AiPostitResponse[] = await this.aiService.generatePostits(
       mandala.projectId,
-      mandala.configuration.dimensions.map((dim) => dim.name),
-      mandala.configuration.scales,
+      dimensions,
+      scales,
       mandala.configuration.center.name,
       mandala.configuration.center.description || 'N/A',
       tagNames,

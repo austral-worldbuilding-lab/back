@@ -25,6 +25,7 @@ import { MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
+import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
 
 @Injectable()
 export class MandalaService {
@@ -311,7 +312,11 @@ export class MandalaService {
 
     try {
       const postits: PostitWithCoordinates[] =
-        await this.postitService.generatePostitsForMandala(mandala.id);
+        await this.postitService.generatePostitsForMandala(
+          mandala.id,
+          mandala.configuration.dimensions.map((d) => d.name),
+          mandala.configuration.scales,
+        );
 
       const childrenCenter = (
         await this.mandalaRepository.findChildrenMandalasCenters(mandala.id)
@@ -498,14 +503,8 @@ export class MandalaService {
 
     const mandala = await this.findOne(mandalaId);
 
-    // Auto-fill missing values from mandala configuration
-    const effectiveDimensions =
-      dimensions && dimensions.length > 0
-        ? dimensions
-        : mandala.configuration.dimensions.map((d) => d.name);
-
-    const effectiveScales =
-      scales && scales.length > 0 ? scales : mandala.configuration.scales;
+    const { effectiveDimensions, effectiveScales } =
+      getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
     const centerCharacter = mandala.configuration.center.name;
     const centerCharacterDescription = mandala.configuration.center.description;
@@ -524,6 +523,25 @@ export class MandalaService {
       tags.map((tag) => tag.name),
       centerCharacter,
       centerCharacterDescription || 'No content',
+    );
+  }
+
+  async generatePostits(
+    mandalaId: string,
+    dimensions?: string[],
+    scales?: string[],
+  ): Promise<PostitWithCoordinates[]> {
+    this.logger.log(`generatePostits called for mandala ${mandalaId}`);
+
+    const mandala = await this.findOne(mandalaId);
+
+    const { effectiveDimensions, effectiveScales } =
+      getEffectiveDimensionsAndScales(mandala, dimensions, scales);
+
+    return this.postitService.generatePostitsForMandala(
+      mandalaId,
+      effectiveDimensions,
+      effectiveScales,
     );
   }
 
