@@ -53,7 +53,7 @@ export class GeminiAdapter implements AiProvider {
 
     const promptFilePath = path.resolve(
       __dirname,
-      '../resources/prompts/prompt_mandala_inicial.txt',
+      '../resources/prompts/prompt_generar_postits.txt',
     );
     const systemInstruction = await this.utilsService.preparePrompt(
       dimensions,

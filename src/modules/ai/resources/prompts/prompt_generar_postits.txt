@@ -23,6 +23,7 @@ Reglas de los post-its
 • Un solo concepto claro por post-it.
 • Sin explicaciones ni combinaciones de ideas.
 • Enfoque: experiencia, necesidad o percepción concreta del personaje.
+• Al generar post-its, procura que ninguna dimensión o escala concentre más del 30 % del total, salvo que no haya suficiente información para las demás. En ese caso, distribuye el resto proporcionalmente entre las dimensiones y escalas con datos relevantes. Si no hay datos para una dimensión o escala, omítela sin inventar información.
 
 Uso de etiquetas
 • Seleccioná entre 0 a todas de las etiquetas de la lista proporcionada que sean relevantes al contenido del post-it.
