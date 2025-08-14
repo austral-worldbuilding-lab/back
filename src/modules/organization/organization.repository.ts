@@ -91,7 +91,7 @@ export class OrganizationRepository {
     const org = await this.prisma.organization.update({
       where: { id },
       data: {
-        name: dto.name,
+        ...dto,
       },
     });
 
