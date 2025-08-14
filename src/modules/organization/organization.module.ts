@@ -1,8 +1,8 @@
 import { AuthModule } from '@modules/auth/auth.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
+import { ProjectRepository } from '@modules/project/project.repository';
 import { RoleModule } from '@modules/role/role.module';
 import { Module } from '@nestjs/common';
-import { ProjectRepository } from '@modules/project/project.repository';
 
 import { OrganizationRoleGuard } from './guards/organization-role.guard';
 import { OrganizationController } from './organization.controller';
