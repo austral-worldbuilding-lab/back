@@ -1,8 +1,8 @@
+import { ProjectDto } from '@modules/project/dto/project.dto';
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
 import { OrganizationDto } from '../dto/organization.dto';
-import { ProjectDto } from '@modules/project/dto/project.dto';
 
 export const ApiCreateOrganization = () =>
   applyDecorators(

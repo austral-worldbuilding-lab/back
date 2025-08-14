@@ -8,7 +8,5 @@ export class CreateOrganizationDto {
   })
   @IsString()
   @IsNotEmpty()
-  @MinLength(1)
-  @MaxLength(100)
   name!: string;
 }
