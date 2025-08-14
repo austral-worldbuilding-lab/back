@@ -8,6 +8,7 @@ import {
   ValidateNested,
   ArrayMinSize,
   IsOptional,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateProjectDto {
@@ -43,4 +44,13 @@ export class CreateProjectDto {
   @IsOptional()
   @ArrayMinSize(1)
   scales?: string[];
+
+  @ApiProperty({
+    description: 'ID de la organización a la que pertenece el proyecto',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  organizationId?: string;
 }

@@ -17,6 +17,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MailModule } from './modules/mail/mail.module';
+import { OrganizationModule } from './modules/organization/organization.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MailModule } from './modules/mail/mail.module';
     AiModule,
     RoleModule,
     MailModule,
+    OrganizationModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
