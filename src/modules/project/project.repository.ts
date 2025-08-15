@@ -67,6 +67,9 @@ export class ProjectRepository {
             dimensions: createProjectDto.dimensions!,
             scales: createProjectDto.scales!,
           }),
+          ...(createProjectDto.organizationId
+            ? { organizationId: createProjectDto.organizationId }
+            : {}),
         },
       });
 
@@ -149,6 +152,9 @@ export class ProjectRepository {
           dimensions: updateProjectDto.dimensions!,
           scales: updateProjectDto.scales!,
         }),
+        ...(updateProjectDto.organizationId
+          ? { organizationId: updateProjectDto.organizationId }
+          : {}),
       },
     });
 
@@ -229,5 +235,28 @@ export class ProjectRepository {
 
       return this.parseToTagDto(deleted);
     });
+  }
+
+  async findAllByOrganizationPaginated(
+    organizationId: string,
+    skip: number,
+    take: number,
+  ): Promise<[ProjectDto[], number]> {
+    const whereClause: Prisma.ProjectWhereInput = {
+      isActive: true,
+      organizationId,
+    };
+
+    const [projects, total] = await this.prisma.$transaction([
+      this.prisma.project.findMany({
+        where: whereClause,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.project.count({ where: whereClause }),
+    ]);
+
+    return [projects.map((project) => this.parseToProjectDto(project)), total];
   }
 }

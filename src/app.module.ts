@@ -4,7 +4,9 @@ import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
 import { InvitationModule } from '@modules/invitation/invitation.module';
+import { MailModule } from '@modules/mail/mail.module';
 import { MandalaModule } from '@modules/mandala/mandala.module';
+import { OrganizationModule } from '@modules/organization/organization.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectModule } from '@modules/project/project.module';
@@ -16,7 +18,6 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MailModule } from './modules/mail/mail.module';
     AiModule,
     RoleModule,
     MailModule,
+    OrganizationModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
