@@ -9,12 +9,13 @@ datasource db {
 }
 
 model User {
-  id           String            @id
-  username     String            @unique
-  email        String            @unique
-  is_active    Boolean           @default(true)
+  id           String                  @id
+  username     String                  @unique
+  email        String                  @unique
+  is_active    Boolean                 @default(true)
   projectRoles UserProjectRole[]
   Invitation   Invitation[]
+  organizationRoles UserOrganizationRole[]
 }
 
 model Project {
@@ -28,12 +29,16 @@ model Project {
   mandalas      Mandala[]         @relation("ProjectToMandalas")
   Invitation    Invitation[]      @relation("ProjectToInvitations")
   tags          Tag[]
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
 }
 
 model Role {
   id        String            @id @default(uuid())
   name      String            @unique
   userRoles UserProjectRole[]
+  organizationRoles UserOrganizationRole[]
 }
 
 model UserProjectRole {
@@ -95,4 +100,27 @@ model Tag {
   deletedAt DateTime?
 
   @@unique([name, projectId, isActive])
+}
+
+model Organization {
+  id        String  @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  isActive  Boolean @default(true)
+  deletedAt DateTime?
+
+  projects  Project[]
+  userRoles UserOrganizationRole[]
+}
+
+model UserOrganizationRole {
+  id             String       @id @default(uuid())
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  role           Role         @relation(fields: [roleId], references: [id])
+  roleId         String
+
+  @@unique([userId, organizationId])
 }
