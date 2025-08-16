@@ -73,7 +73,7 @@ export class InvitationService {
       inviteeName: createInvitationDto.email,
       invitedByName: inviter.username,
       projectName: project.name,
-      token: invitation.id,
+      token: invitation.token,
     });
 
     return this.mapToInvitationDto(invitation);
@@ -180,7 +180,9 @@ export class InvitationService {
     return {
       id: invitation.id,
       email: invitation.email,
+      token: invitation.token,
       status: invitation.status,
+      expiresAt: invitation.expiresAt,
       projectId: invitation.projectId,
     };
   }

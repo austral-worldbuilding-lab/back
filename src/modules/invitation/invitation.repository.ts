@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus, Project, User } from '@prisma/client';
@@ -28,11 +30,19 @@ export class InvitationRepository {
     projectId: string,
     invitedById: string,
   ): Promise<Invitation> {
+    const token = randomUUID();
+
+    // Set expiration date to current date + 7 days (604800 seconds)
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + 604800);
+
     return this.prisma.invitation.create({
       data: {
         email,
         projectId,
         invitedById,
+        token,
+        expiresAt,
       },
     });
   }

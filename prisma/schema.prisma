@@ -71,7 +71,9 @@ model Mandala {
 model Invitation {
   id        String           @id @default(uuid())
   email     String
+  token     String           @unique
   status    InvitationStatus @default(PENDING)
+  expiresAt DateTime
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
@@ -88,6 +90,7 @@ enum InvitationStatus {
   PENDING
   ACCEPTED
   REJECTED
+  EXPIRED
 }
 
 model Tag {
