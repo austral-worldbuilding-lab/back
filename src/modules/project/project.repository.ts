@@ -42,7 +42,7 @@ export class ProjectRepository {
     return {
       id: project.id,
       name: project.name,
-      description: project.description,
+      description: project.description || undefined,
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
     };
