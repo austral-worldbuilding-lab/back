@@ -31,6 +31,7 @@ export class InvitationRepository {
     email: string,
     projectId: string,
     invitedById: string,
+    roleId?: string,
   ): Promise<Invitation> {
     const token = randomUUID();
 
@@ -45,6 +46,7 @@ export class InvitationRepository {
         invitedById,
         token,
         expiresAt,
+        ...(roleId && { roleId }),
       },
     });
   }

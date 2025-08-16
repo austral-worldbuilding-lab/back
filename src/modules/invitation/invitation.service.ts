@@ -62,10 +62,24 @@ export class InvitationService {
       throw new ResourceNotFoundException('User', userId);
     }
 
+    let roleId: string | undefined;
+    if (createInvitationDto.role) {
+      const role = await this.roleService.findByName(createInvitationDto.role);
+      if (!role) {
+        throw new ResourceNotFoundException('Role', createInvitationDto.role);
+      }
+      roleId = role.id;
+    } else {
+      // Default role is 'member'
+      const defaultRole = await this.roleService.findOrCreate('member');
+      roleId = defaultRole.id;
+    }
+
     const invitation = await this.invitationRepository.create(
       createInvitationDto.email,
       createInvitationDto.projectId,
       userId,
+      roleId,
     );
 
     await this.mailService.sendInvitationEmail({
@@ -76,7 +90,7 @@ export class InvitationService {
       token: invitation.token,
     });
 
-    return this.mapToInvitationDto(invitation);
+    return await this.mapToInvitationDto(invitation);
   }
 
   async findAllPaginated(
@@ -95,7 +109,9 @@ export class InvitationService {
       );
 
     return {
-      data: invitations.map((inv) => this.mapToInvitationDto(inv)),
+      data: await Promise.all(
+        invitations.map((inv) => this.mapToInvitationDto(inv)),
+      ),
       meta: {
         total,
         page,
@@ -116,7 +132,7 @@ export class InvitationService {
       throw new ResourceNotFoundException('Invitation', id);
     }
 
-    return this.mapToInvitationDto(invitation);
+    return await this.mapToInvitationDto(invitation);
   }
 
   async remove(id: string): Promise<void> {
@@ -133,13 +149,24 @@ export class InvitationService {
       });
     }
 
-    const memberRole = await this.roleService.findOrCreate('member');
+    const invitationFromDb = await this.invitationRepository.findById(id);
+    if (!invitationFromDb) {
+      throw new ResourceNotFoundException('Invitation', id);
+    }
+
+    let roleId: string;
+    if (invitationFromDb.roleId) {
+      roleId = invitationFromDb.roleId;
+    } else {
+      const memberRole = await this.roleService.findOrCreate('member');
+      roleId = memberRole.id;
+    }
 
     const updatedInvitation =
       await this.invitationRepository.acceptInvitationAndAddUser(
         id,
         userId,
-        memberRole.id,
+        roleId,
       );
 
     if (!updatedInvitation) {
@@ -149,7 +176,7 @@ export class InvitationService {
       });
     }
 
-    return this.mapToInvitationDto(updatedInvitation);
+    return await this.mapToInvitationDto(updatedInvitation);
   }
 
   async reject(id: string): Promise<InvitationDto> {
@@ -173,10 +200,19 @@ export class InvitationService {
       });
     }
 
-    return this.mapToInvitationDto(updatedInvitation);
+    return await this.mapToInvitationDto(updatedInvitation);
   }
 
-  private mapToInvitationDto(invitation: Invitation): InvitationDto {
+  private async mapToInvitationDto(
+    invitation: Invitation,
+  ): Promise<InvitationDto> {
+    let roleName: string | undefined;
+
+    if (invitation.roleId) {
+      const role = await this.roleService.findById(invitation.roleId);
+      roleName = role?.name;
+    }
+
     return {
       id: invitation.id,
       email: invitation.email,
@@ -184,6 +220,7 @@ export class InvitationService {
       status: invitation.status,
       expiresAt: invitation.expiresAt,
       projectId: invitation.projectId,
+      role: roleName,
     };
   }
 }

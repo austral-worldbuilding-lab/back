@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  const roles = ['owner', 'member'];
+  const roles = ['owner', 'admin', 'member', 'viewer'];
   console.log('📝 Seeding roles:', roles);
 
   for (const name of roles) {

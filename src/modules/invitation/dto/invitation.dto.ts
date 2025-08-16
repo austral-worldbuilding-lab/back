@@ -6,6 +6,8 @@ import {
   IsNotEmpty,
   IsUUID,
   IsDateString,
+  IsOptional,
+  IsString,
 } from 'class-validator';
 
 export class InvitationDto {
@@ -56,4 +58,13 @@ export class InvitationDto {
   @IsUUID()
   @IsNotEmpty()
   projectId!: string;
+
+  @ApiProperty({
+    description: 'Rol que tendrá el usuario invitado en el proyecto',
+    example: 'member',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  role?: string;
 }
