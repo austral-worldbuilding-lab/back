@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { InvitationStatus } from '@prisma/client';
-import { IsEmail, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsUUID,
+  IsDateString,
+} from 'class-validator';
 
 export class InvitationDto {
   @ApiProperty({
@@ -19,6 +25,14 @@ export class InvitationDto {
   email!: string;
 
   @ApiProperty({
+    description: 'Token único de la invitación',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  token!: string;
+
+  @ApiProperty({
     description: 'Estado actual de la invitación',
     enum: InvitationStatus,
     example: InvitationStatus.PENDING,
@@ -26,6 +40,14 @@ export class InvitationDto {
   @IsEnum(InvitationStatus)
   @IsNotEmpty()
   status!: InvitationStatus;
+
+  @ApiProperty({
+    description: 'Fecha de expiración de la invitación',
+    example: '2024-08-23T17:40:08.000Z',
+  })
+  @IsDateString()
+  @IsNotEmpty()
+  expiresAt!: Date;
 
   @ApiProperty({
     description: 'ID del proyecto al que se invita',
