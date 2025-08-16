@@ -42,6 +42,7 @@ export class ProjectRepository {
     return {
       id: project.id,
       name: project.name,
+      description: project.description || undefined,
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
     };
@@ -63,6 +64,7 @@ export class ProjectRepository {
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
+          description: createProjectDto.description,
           configuration: this.parseToJson({
             dimensions: createProjectDto.dimensions!,
             scales: createProjectDto.scales!,
@@ -148,6 +150,7 @@ export class ProjectRepository {
       where: { id },
       data: {
         name: updateProjectDto.name,
+        description: updateProjectDto.description,
         configuration: this.parseToJson({
           dimensions: updateProjectDto.dimensions!,
           scales: updateProjectDto.scales!,
