@@ -90,7 +90,7 @@ export class InvitationService {
       token: invitation.token,
     });
 
-    return await this.mapToInvitationDto(invitation);
+    return this.mapToInvitationDto(invitation);
   }
 
   async findAllPaginated(
