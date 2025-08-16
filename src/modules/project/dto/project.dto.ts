@@ -34,7 +34,7 @@ export class ProjectDto {
   })
   @IsString()
   @IsOptional()
-  description?: string | null;
+  description?: string;
 
   @ApiProperty({
     description: 'Configuración del proyecto',
