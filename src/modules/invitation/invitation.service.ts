@@ -108,6 +108,7 @@ export class InvitationService {
         projectId,
         status,
       );
+
     const roleIds = invitations
       .map((inv) => inv.roleId)
       .filter((id): id is string => id !== null && id !== undefined);
@@ -115,19 +116,9 @@ export class InvitationService {
     const roles = await this.invitationRepository.findRolesByIds(roleIds);
     const roleMap = new Map(roles.map((role) => [role.id, role.name]));
 
-    // Map invitations with role names efficiently
-    const invitationDtos = invitations.map((inv) => {
-      const roleName = inv.roleId ? roleMap.get(inv.roleId) : undefined;
-      return {
-        id: inv.id,
-        email: inv.email,
-        token: inv.token,
-        status: inv.status,
-        expiresAt: inv.expiresAt,
-        projectId: inv.projectId,
-        role: roleName,
-      };
-    });
+    const invitationDtos = invitations.map((inv) =>
+      this.mapToInvitationDtoSync(inv, roleMap),
+    );
 
     return {
       data: invitationDtos,
@@ -237,6 +228,29 @@ export class InvitationService {
     } else if (invitation.roleId) {
       const role = await this.roleService.findById(invitation.roleId);
       roleName = role?.name;
+    }
+
+    return {
+      id: invitation.id,
+      email: invitation.email,
+      token: invitation.token,
+      status: invitation.status,
+      expiresAt: invitation.expiresAt,
+      projectId: invitation.projectId,
+      role: roleName,
+    };
+  }
+
+  private mapToInvitationDtoSync(
+    invitation: Invitation,
+    roleMap: Map<string, string>,
+  ): InvitationDto {
+    let roleName: string | undefined;
+
+    if (invitation.role) {
+      roleName = invitation.role.name;
+    } else if (invitation.roleId) {
+      roleName = roleMap.get(invitation.roleId);
     }
 
     return {
