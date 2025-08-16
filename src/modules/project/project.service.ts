@@ -9,6 +9,7 @@ import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectDto } from './dto/project.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectRepository } from './project.repository';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 
@@ -126,5 +127,34 @@ export class ProjectService {
     }
 
     return this.projectRepository.removeTag(projectId, tagId);
+  }
+
+  async updateUserRole(
+    projectId: string,
+    userId: string,
+    roleName: string,
+    requestingUserId: string,
+  ): Promise<UserRoleResponseDto> {
+    // Verificar que el proyecto existe
+    const project = await this.projectRepository.findOne(projectId);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', projectId);
+    }
+
+    // Prevenir que un usuario cambie su propio rol
+    if (userId === requestingUserId) {
+      throw new NotFoundException(
+        'No puedes cambiar tu propio rol en el proyecto',
+      );
+    }
+
+    // Obtener el rol por nombre
+    const role = await this.roleService.findByName(roleName);
+    if (!role) {
+      throw new NotFoundException(`Role '${roleName}' not found`);
+    }
+
+    // Actualizar el rol del usuario
+    return this.projectRepository.updateUserRole(projectId, userId, role.id);
   }
 }
