@@ -108,11 +108,29 @@ export class InvitationService {
         projectId,
         status,
       );
+    const roleIds = invitations
+      .map((inv) => inv.roleId)
+      .filter((id): id is string => id !== null && id !== undefined);
+
+    const roles = await this.invitationRepository.findRolesByIds(roleIds);
+    const roleMap = new Map(roles.map((role) => [role.id, role.name]));
+
+    // Map invitations with role names efficiently
+    const invitationDtos = invitations.map((inv) => {
+      const roleName = inv.roleId ? roleMap.get(inv.roleId) : undefined;
+      return {
+        id: inv.id,
+        email: inv.email,
+        token: inv.token,
+        status: inv.status,
+        expiresAt: inv.expiresAt,
+        projectId: inv.projectId,
+        role: roleName,
+      };
+    });
 
     return {
-      data: await Promise.all(
-        invitations.map((inv) => this.mapToInvitationDto(inv)),
-      ),
+      data: invitationDtos,
       meta: {
         total,
         page,
@@ -213,7 +231,10 @@ export class InvitationService {
   ): Promise<InvitationDto> {
     let roleName: string | undefined;
 
-    if (invitation.roleId) {
+    // If role data is already loaded, use it; otherwise fetch individually
+    if (invitation.role) {
+      roleName = invitation.role.name;
+    } else if (invitation.roleId) {
       const role = await this.roleService.findById(invitation.roleId);
       roleName = role?.name;
     }

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsUUID, IsOptional, IsIn } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateInvitationDto {
   @ApiProperty({
@@ -21,10 +27,15 @@ export class CreateInvitationDto {
   @ApiProperty({
     description: 'Rol que tendrá el usuario invitado en el proyecto',
     example: 'member',
-    enum: ['owner', 'admin', 'member', 'viewer'],
+    examples: {
+      owner: { value: 'owner', description: 'Propietario del proyecto' },
+      admin: { value: 'admin', description: 'Administrador del proyecto' },
+      member: { value: 'member', description: 'Miembro del proyecto' },
+      viewer: { value: 'viewer', description: 'Solo lectura' },
+    },
     required: false,
   })
   @IsOptional()
-  @IsIn(['owner', 'admin', 'member', 'viewer'])
+  @IsString()
   role?: string;
 }

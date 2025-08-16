@@ -14,5 +14,5 @@ export class Invitation {
   role?: {
     id: string;
     name: string;
-  };
+  } | null;
 }
