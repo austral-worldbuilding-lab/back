@@ -6,6 +6,8 @@ import { InvitationStatus, Project, User } from '@prisma/client';
 
 import { Invitation } from './entities/invitation.entity';
 
+const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
+
 @Injectable()
 export class InvitationRepository {
   constructor(private prisma: PrismaService) {}
@@ -32,9 +34,9 @@ export class InvitationRepository {
   ): Promise<Invitation> {
     const token = randomUUID();
 
-    // Set expiration date to current date + 7 days (604800 seconds)
+    // Set expiration date to current date + 7 days
     const expiresAt = new Date();
-    expiresAt.setSeconds(expiresAt.getSeconds() + 604800);
+    expiresAt.setSeconds(expiresAt.getSeconds() + SEVEN_DAYS_IN_SECONDS);
 
     return this.prisma.invitation.create({
       data: {
