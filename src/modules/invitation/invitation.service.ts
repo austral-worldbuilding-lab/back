@@ -112,7 +112,7 @@ export class InvitationService {
     return {
       data: await Promise.all(
         invitations.map((inv) => this.mapToInvitationDto(inv)),
-      data: invitations.map((inv) => this.mapToInvitationDto(inv)),
+      ),
       meta: {
         total,
         page,
