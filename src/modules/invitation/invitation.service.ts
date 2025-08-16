@@ -132,7 +132,7 @@ export class InvitationService {
       throw new ResourceNotFoundException('Invitation', id);
     }
 
-    return await this.mapToInvitationDto(invitation);
+    return this.mapToInvitationDto(invitation);
   }
 
   async remove(id: string): Promise<void> {
