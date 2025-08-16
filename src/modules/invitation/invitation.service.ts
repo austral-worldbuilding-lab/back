@@ -176,7 +176,7 @@ export class InvitationService {
       });
     }
 
-    return await this.mapToInvitationDto(updatedInvitation);
+    return this.mapToInvitationDto(updatedInvitation);
   }
 
   async reject(id: string): Promise<InvitationDto> {
