@@ -4,6 +4,7 @@ import {
   BusinessLogicException,
   StateConflictException,
 } from '@common/exceptions/custom-exceptions';
+import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus } from '@prisma/client';
@@ -90,7 +91,7 @@ export class InvitationService {
       token: invitation.token,
     });
 
-    return await this.mapToInvitationDto(invitation);
+    return this.mapToInvitationDto(invitation);
   }
 
   async findAllPaginated(
@@ -98,7 +99,7 @@ export class InvitationService {
     limit: number,
     projectId?: string,
     status?: InvitationStatus,
-  ) {
+  ): Promise<PaginatedResponse<InvitationDto>> {
     const skip = (page - 1) * limit;
     const [invitations, total] =
       await this.invitationRepository.findAllPaginated(
@@ -109,7 +110,9 @@ export class InvitationService {
       );
 
     return {
-      data: invitations.map((inv) => this.mapToInvitationDto(inv)),
+      data: await Promise.all(
+        invitations.map((inv) => this.mapToInvitationDto(inv)),
+      ),
       meta: {
         total,
         page,
@@ -119,8 +122,12 @@ export class InvitationService {
     };
   }
 
-  async findByProject(projectId: string, page: number, limit: number) {
-    return await this.findAllPaginated(page, limit, projectId);
+  async findByProject(
+    projectId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<InvitationDto>> {
+    return this.findAllPaginated(page, limit, projectId);
   }
 
   async findOne(id: string): Promise<InvitationDto> {
@@ -130,7 +137,7 @@ export class InvitationService {
       throw new ResourceNotFoundException('Invitation', id);
     }
 
-    return await this.mapToInvitationDto(invitation);
+    return this.mapToInvitationDto(invitation);
   }
 
   async remove(id: string): Promise<void> {
@@ -174,7 +181,7 @@ export class InvitationService {
       });
     }
 
-    return await this.mapToInvitationDto(updatedInvitation);
+    return this.mapToInvitationDto(updatedInvitation);
   }
 
   async reject(id: string): Promise<InvitationDto> {
@@ -198,7 +205,7 @@ export class InvitationService {
       });
     }
 
-    return await this.mapToInvitationDto(updatedInvitation);
+    return this.mapToInvitationDto(updatedInvitation);
   }
 
   private async mapToInvitationDto(
