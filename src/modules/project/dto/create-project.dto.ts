@@ -28,7 +28,7 @@ export class CreateProjectDto {
   })
   @IsString()
   @IsOptional()
-  description?: string | null;
+  description?: string;
 
   @ApiProperty({
     description:
