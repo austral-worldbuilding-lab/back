@@ -200,7 +200,7 @@ export class InvitationService {
       });
     }
 
-    return await this.mapToInvitationDto(updatedInvitation);
+    return this.mapToInvitationDto(updatedInvitation);
   }
 
   private async mapToInvitationDto(
