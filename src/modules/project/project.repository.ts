@@ -8,6 +8,7 @@ import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectDto } from './dto/project.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
 
 @Injectable()
@@ -215,29 +216,78 @@ export class ProjectRepository {
   }
 
   async removeTag(projectId: string, tagId: string): Promise<TagDto> {
-    return this.prisma.$transaction(async (tx) => {
-      const tag = await tx.tag.findFirst({
-        where: {
-          id: tagId,
-          projectId: projectId,
-          isActive: true,
-        },
-      });
-
-      if (!tag) {
-        throw new ResourceNotFoundException('Tag', tagId);
-      }
-
-      const deleted = await tx.tag.update({
-        where: { id: tagId },
-        data: {
-          isActive: false,
-          deletedAt: new Date(),
-        },
-      });
-
-      return this.parseToTagDto(deleted);
+    const deletedTag = await this.prisma.tag.update({
+      where: {
+        id: tagId,
+        projectId: projectId,
+      },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
     });
+
+    return this.parseToTagDto(deletedTag);
+  }
+
+  async updateUserRole(
+    projectId: string,
+    userId: string,
+    roleId: string,
+  ): Promise<UserRoleResponseDto> {
+    // Verificar que el usuario existe en el proyecto
+    const existingUserRole = await this.prisma.userProjectRole.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+          },
+        },
+        role: true,
+      },
+    });
+
+    if (!existingUserRole) {
+      throw new ResourceNotFoundException('User', userId, 'en el proyecto');
+    }
+
+    // Actualizar el rol del usuario
+    const updatedUserRole = await this.prisma.userProjectRole.update({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+      data: {
+        roleId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+          },
+        },
+        role: true,
+      },
+    });
+
+    return {
+      userId: updatedUserRole.userId,
+      projectId: updatedUserRole.projectId,
+      role: updatedUserRole.role.name,
+      user: updatedUserRole.user,
+    };
   }
 
   async findAllByOrganizationPaginated(

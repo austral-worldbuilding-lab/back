@@ -1,5 +1,14 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiForbiddenResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 import { ProjectDto } from '../dto/project.dto';
 import { TagDto } from '../dto/tag.dto';
@@ -141,3 +150,105 @@ export const ApiDeleteProjectTag = () =>
       description: 'Prohibido - El usuario no tiene permiso para eliminar tags',
     }),
   );
+
+export function ApiUpdateUserRole() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Actualizar rol de usuario en proyecto',
+      description:
+        'Permite a administradores y owners modificar el rol de un usuario en un proyecto específico',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: 'string',
+      format: 'uuid',
+    }),
+    ApiParam({
+      name: 'userId',
+      description: 'ID del usuario cuyo rol se quiere modificar',
+      type: 'string',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Rol de usuario actualizado exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Rol de usuario actualizado exitosamente',
+          },
+          data: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string' },
+              projectId: { type: 'string' },
+              role: { type: 'string' },
+              user: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  username: { type: 'string' },
+                  email: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiBadRequestResponse({
+      description: 'Datos de entrada inválidos',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'array',
+            items: { type: 'string' },
+            example: ['El rol debe ser uno de: owner, admin, member, viewer'],
+          },
+          error: { type: 'string', example: 'Bad Request' },
+          statusCode: { type: 'number', example: 400 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Unauthorized' },
+          statusCode: { type: 'number', example: 401 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description: 'Sin permisos para realizar esta acción',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example:
+              'No tienes los permisos necesarios para realizar esta acción',
+          },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Usuario o proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Usuario no encontrado en el proyecto',
+          },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+  );
+}

@@ -21,6 +21,7 @@ import {
   UseGuards,
   Patch,
   Req,
+  Put,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
@@ -33,12 +34,15 @@ import {
   ApiGetProjectTags,
   ApiCreateProjectTag,
   ApiDeleteProjectTag,
+  ApiUpdateUserRole,
 } from './decorators/project-swagger.decorators';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectDto } from './dto/project.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import {
   ProjectRoleGuard,
   RequireProjectRoles,
@@ -166,6 +170,28 @@ export class ProjectController {
     return {
       message: 'Tag deleted successfully',
       data: tag,
+    };
+  }
+
+  @Put(':projectId/users/:userId/role')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin')
+  @ApiUpdateUserRole()
+  async updateUserRole(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('userId') userId: string,
+    @Body() updateUserRoleDto: UpdateUserRoleDto,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<UserRoleResponseDto>> {
+    const userRole = await this.projectService.updateUserRole(
+      projectId,
+      userId,
+      updateUserRoleDto.role,
+      req.user.id,
+    );
+    return {
+      message: 'Rol de usuario actualizado exitosamente',
+      data: userRole,
     };
   }
 }
