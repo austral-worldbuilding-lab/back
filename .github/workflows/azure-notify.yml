@@ -18,6 +18,29 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Trigger Azure Web App Deployment
+      - name: Trigger Azure Web App Deployment (verbose)
+        shell: bash
+        env:
+          WEBHOOK: ${{ secrets.AZURE_WEBAPP_WEBHOOK_URL }}
         run: |
-          curl -X POST "${{ secrets.AZURE_WEBAPP_WEBHOOK_URL }}"
+          set -euo pipefail
+
+          # Show host only (mask credentials)
+          host="$(printf '%s\n' "$WEBHOOK" | sed -E 's#.*@([^/]+)/.*#\1#')"
+          echo "Posting to Azure Kudu webhook host: $host"
+
+          resp="$(mktemp)"
+          code="$(curl -sS -i -X POST "$WEBHOOK" -o "$resp" -w '%{http_code}')"
+
+          echo "::group::Webhook response headers"
+          sed -n '1,/^$/p' "$resp"
+          echo "::endgroup::"
+
+          echo "::group::Webhook response body"
+          sed -n '/^$/,$p' "$resp"
+          echo "::endgroup::"
+
+          echo "HTTP status: $code"
+          if [[ "$code" -lt 200 || "$code" -ge 300 ]]; then
+            echo "Webhook failed (status=$code)"; exit 1
+          fi
