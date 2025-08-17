@@ -12,6 +12,12 @@ export class RoleService {
     });
   }
 
+  async findById(id: string): Promise<Role | null> {
+    return this.prisma.role.findUnique({
+      where: { id },
+    });
+  }
+
   async create(name: string): Promise<Role> {
     return this.prisma.role.create({
       data: { name },

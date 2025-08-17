@@ -31,6 +31,7 @@ export class InvitationRepository {
     email: string,
     projectId: string,
     invitedById: string,
+    roleId?: string,
   ): Promise<Invitation> {
     const token = randomUUID();
 
@@ -45,6 +46,7 @@ export class InvitationRepository {
         invitedById,
         token,
         expiresAt,
+        ...(roleId && { roleId }),
       },
     });
   }
@@ -71,6 +73,17 @@ export class InvitationRepository {
     ]);
 
     return [invitations, total];
+  }
+
+  async findRolesByIds(
+    roleIds: string[],
+  ): Promise<Array<{ id: string; name: string }>> {
+    if (roleIds.length === 0) return [];
+
+    return this.prisma.role.findMany({
+      where: { id: { in: roleIds } },
+      select: { id: true, name: true },
+    });
   }
 
   async findById(id: string): Promise<Invitation | null> {

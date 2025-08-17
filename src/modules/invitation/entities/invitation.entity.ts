@@ -10,4 +10,9 @@ export class Invitation {
   updatedAt!: Date;
   projectId!: string;
   invitedById!: string;
+  roleId?: string | null;
+  role?: {
+    id: string;
+    name: string;
+  } | null;
 }
