@@ -21,6 +21,16 @@ export class CreateProjectDto {
   name!: string;
 
   @ApiProperty({
+    description: 'Descripción del proyecto',
+    example:
+      'Este proyecto busca mejorar la experiencia del comedor universitario mediante el análisis de las necesidades de los usuarios.',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
     description:
       'Dimensiones del proyecto. En caso de no tener dimensiones, se usarán las dimensiones por defecto.',
     type: [DimensionDto],
