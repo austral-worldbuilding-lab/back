@@ -16,6 +16,6 @@ export class AppController {
   @Get('health')
   @ApiExcludeEndpoint()
   getHealth(): string {
-    return 'health is ok!';
+    return 'health is ok! :)';
   }
 }
