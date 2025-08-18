@@ -258,7 +258,8 @@ export const ApiGetProjectUsers = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Obtener todos los usuarios de un proyecto',
-      description: 'Retorna la lista de usuarios asociados al proyecto, incluyendo su rol',
+      description:
+        'Retorna la lista de usuarios asociados al proyecto, incluyendo su rol',
     }),
     ApiParam({
       name: 'projectId',
@@ -310,7 +311,8 @@ export const ApiRemoveUserFromProject = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Eliminar un usuario de un proyecto',
-      description: 'Elimina al usuario especificado del proyecto. Requiere permisos de administrador.',
+      description:
+        'Elimina al usuario especificado del proyecto. Requiere permisos de administrador.',
     }),
     ApiParam({
       name: 'projectId',
@@ -359,7 +361,8 @@ export const ApiRemoveUserFromProject = () =>
         properties: {
           message: {
             type: 'string',
-            example: 'No tienes los permisos necesarios para realizar esta acción',
+            example:
+              'No tienes los permisos necesarios para realizar esta acción',
           },
           statusCode: { type: 'number', example: 403 },
         },

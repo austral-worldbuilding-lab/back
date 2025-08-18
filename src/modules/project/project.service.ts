@@ -2,7 +2,11 @@ import { DimensionDto } from '@common/dto/dimension.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
