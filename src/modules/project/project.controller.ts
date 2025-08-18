@@ -35,10 +35,13 @@ import {
   ApiCreateProjectTag,
   ApiDeleteProjectTag,
   ApiUpdateUserRole,
+  ApiGetProjectUsers,
+  ApiRemoveUserFromProject,
 } from './decorators/project-swagger.decorators';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProjectUserDto } from './dto/project-user.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
@@ -192,6 +195,38 @@ export class ProjectController {
     return {
       message: 'Rol de usuario actualizado exitosamente',
       data: userRole,
+    };
+  }
+
+  @Get(':projectId/users')
+  @UseGuards(ProjectRoleGuard)
+  @ApiGetProjectUsers()
+  async getProjectUsers(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<ProjectUserDto[]>> {
+    const users = await this.projectService.getProjectUsers(projectId);
+    return {
+      data: users,
+    };
+  }
+
+  @Delete(':projectId/users/:userId')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin')
+  @ApiRemoveUserFromProject()
+  async removeUserFromProject(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('userId') userId: string,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<ProjectUserDto>> {
+    const removedUser = await this.projectService.removeUserFromProject(
+      projectId,
+      userId,
+      req.user.id,
+    );
+    return {
+      message: 'Usuario eliminado del proyecto exitosamente',
+      data: removedUser,
     };
   }
 }

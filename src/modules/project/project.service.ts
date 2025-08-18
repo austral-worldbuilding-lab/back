@@ -2,11 +2,12 @@ import { DimensionDto } from '@common/dto/dimension.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProjectUserDto } from './dto/project-user.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
@@ -156,5 +157,33 @@ export class ProjectService {
 
     // Actualizar el rol del usuario
     return this.projectRepository.updateUserRole(projectId, userId, role.id);
+  }
+
+  async getProjectUsers(projectId: string): Promise<ProjectUserDto[]> {
+    const project = await this.projectRepository.findOne(projectId);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', projectId);
+    }
+
+    return this.projectRepository.getProjectUsers(projectId);
+  }
+
+  async removeUserFromProject(
+    projectId: string,
+    userId: string,
+    requestingUserId: string,
+  ): Promise<ProjectUserDto> {
+    const project = await this.projectRepository.findOne(projectId);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', projectId);
+    }
+
+    if (userId === requestingUserId) {
+      throw new ForbiddenException(
+        'No puedes eliminarte a ti mismo del proyecto',
+      );
+    }
+
+    return this.projectRepository.removeUserFromProject(projectId, userId);
   }
 }

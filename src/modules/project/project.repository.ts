@@ -6,6 +6,7 @@ import { Prisma, Project, Tag } from '@prisma/client';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProjectUserDto } from './dto/project-user.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
@@ -287,6 +288,94 @@ export class ProjectRepository {
       projectId: updatedUserRole.projectId,
       role: updatedUserRole.role.name,
       user: updatedUserRole.user,
+    };
+  }
+
+  async getProjectUsers(projectId: string): Promise<ProjectUserDto[]> {
+    const userRoles = await this.prisma.userProjectRole.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            is_active: true,
+          },
+        },
+        role: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        user: {
+          username: 'asc',
+        },
+      },
+    });
+
+    return userRoles.map((userRole) => ({
+      id: userRole.user.id,
+      username: userRole.user.username,
+      email: userRole.user.email,
+      role: userRole.role.name,
+      isActive: userRole.user.is_active,
+    }));
+  }
+
+  async removeUserFromProject(
+    projectId: string,
+    userId: string,
+  ): Promise<ProjectUserDto> {
+    // Verificar que el usuario existe en el proyecto
+    const existingUserRole = await this.prisma.userProjectRole.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            is_active: true,
+          },
+        },
+        role: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!existingUserRole) {
+      throw new ResourceNotFoundException('User', userId, 'en el proyecto');
+    }
+
+    // Eliminar la relación usuario-proyecto
+    await this.prisma.userProjectRole.delete({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+    });
+
+    return {
+      id: existingUserRole.user.id,
+      username: existingUserRole.user.username,
+      email: existingUserRole.user.email,
+      role: existingUserRole.role.name,
+      isActive: existingUserRole.user.is_active,
     };
   }
 

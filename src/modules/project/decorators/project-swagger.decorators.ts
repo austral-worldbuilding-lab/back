@@ -10,6 +10,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { TagDto } from '../dto/tag.dto';
 
@@ -252,3 +253,126 @@ export function ApiUpdateUserRole() {
     }),
   );
 }
+
+export const ApiGetProjectUsers = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener todos los usuarios de un proyecto',
+      description: 'Retorna la lista de usuarios asociados al proyecto, incluyendo su rol',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: 'string',
+      format: 'uuid',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de usuarios del proyecto obtenida exitosamente',
+      type: [ProjectUserDto],
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Proyecto no encontrado' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description: 'Sin permisos para acceder a este proyecto',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'No tienes acceso a este proyecto',
+          },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Unauthorized' },
+          statusCode: { type: 'number', example: 401 },
+        },
+      },
+    }),
+  );
+
+export const ApiRemoveUserFromProject = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Eliminar un usuario de un proyecto',
+      description: 'Elimina al usuario especificado del proyecto. Requiere permisos de administrador.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: 'string',
+      format: 'uuid',
+    }),
+    ApiParam({
+      name: 'userId',
+      description: 'ID del usuario a eliminar del proyecto',
+      type: 'string',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Usuario eliminado del proyecto exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Usuario eliminado del proyecto exitosamente',
+          },
+          data: {
+            $ref: '#/components/schemas/ProjectUserDto',
+          },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Usuario o proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Usuario no encontrado en el proyecto',
+          },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description: 'Sin permisos para realizar esta acción',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'No tienes los permisos necesarios para realizar esta acción',
+          },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Unauthorized' },
+          statusCode: { type: 'number', example: 401 },
+        },
+      },
+    }),
+  );
