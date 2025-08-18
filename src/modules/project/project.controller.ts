@@ -40,8 +40,8 @@ import {
 } from './decorators/project-swagger.decorators';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
-import { ProjectDto } from './dto/project.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
+import { ProjectDto } from './dto/project.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
