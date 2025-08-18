@@ -1,8 +1,12 @@
+import { randomUUID } from 'crypto';
+
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus, Project, User } from '@prisma/client';
 
 import { Invitation } from './entities/invitation.entity';
+
+const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
 @Injectable()
 export class InvitationRepository {
@@ -27,12 +31,22 @@ export class InvitationRepository {
     email: string,
     projectId: string,
     invitedById: string,
+    roleId?: string,
   ): Promise<Invitation> {
+    const token = randomUUID();
+
+    // Set expiration date to current date + 7 days
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + SEVEN_DAYS_IN_SECONDS);
+
     return this.prisma.invitation.create({
       data: {
         email,
         projectId,
         invitedById,
+        token,
+        expiresAt,
+        ...(roleId && { roleId }),
       },
     });
   }
@@ -59,6 +73,17 @@ export class InvitationRepository {
     ]);
 
     return [invitations, total];
+  }
+
+  async findRolesByIds(
+    roleIds: string[],
+  ): Promise<Array<{ id: string; name: string }>> {
+    if (roleIds.length === 0) return [];
+
+    return this.prisma.role.findMany({
+      where: { id: { in: roleIds } },
+      select: { id: true, name: true },
+    });
   }
 
   async findById(id: string): Promise<Invitation | null> {

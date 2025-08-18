@@ -4,6 +4,7 @@ import {
   BusinessLogicException,
   StateConflictException,
 } from '@common/exceptions/custom-exceptions';
+import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus } from '@prisma/client';
@@ -62,10 +63,24 @@ export class InvitationService {
       throw new ResourceNotFoundException('User', userId);
     }
 
+    let roleId: string | undefined;
+    if (createInvitationDto.role) {
+      const role = await this.roleService.findByName(createInvitationDto.role);
+      if (!role) {
+        throw new ResourceNotFoundException('Role', createInvitationDto.role);
+      }
+      roleId = role.id;
+    } else {
+      // Default role is 'member'
+      const defaultRole = await this.roleService.findOrCreate('member');
+      roleId = defaultRole.id;
+    }
+
     const invitation = await this.invitationRepository.create(
       createInvitationDto.email,
       createInvitationDto.projectId,
       userId,
+      roleId,
     );
 
     await this.mailService.sendInvitationEmail({
@@ -73,7 +88,7 @@ export class InvitationService {
       inviteeName: createInvitationDto.email,
       invitedByName: inviter.username,
       projectName: project.name,
-      token: invitation.id,
+      token: invitation.token,
     });
 
     return this.mapToInvitationDto(invitation);
@@ -84,7 +99,7 @@ export class InvitationService {
     limit: number,
     projectId?: string,
     status?: InvitationStatus,
-  ) {
+  ): Promise<PaginatedResponse<InvitationDto>> {
     const skip = (page - 1) * limit;
     const [invitations, total] =
       await this.invitationRepository.findAllPaginated(
@@ -94,8 +109,19 @@ export class InvitationService {
         status,
       );
 
+    const roleIds = invitations
+      .map((inv) => inv.roleId)
+      .filter((id): id is string => id !== null && id !== undefined);
+
+    const roles = await this.invitationRepository.findRolesByIds(roleIds);
+    const roleMap = new Map(roles.map((role) => [role.id, role.name]));
+
+    const invitationDtos = invitations.map((inv) =>
+      this.mapToInvitationDtoSync(inv, roleMap),
+    );
+
     return {
-      data: invitations.map((inv) => this.mapToInvitationDto(inv)),
+      data: invitationDtos,
       meta: {
         total,
         page,
@@ -105,8 +131,12 @@ export class InvitationService {
     };
   }
 
-  async findByProject(projectId: string, page: number, limit: number) {
-    return await this.findAllPaginated(page, limit, projectId);
+  async findByProject(
+    projectId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<InvitationDto>> {
+    return this.findAllPaginated(page, limit, projectId);
   }
 
   async findOne(id: string): Promise<InvitationDto> {
@@ -133,13 +163,24 @@ export class InvitationService {
       });
     }
 
-    const memberRole = await this.roleService.findOrCreate('member');
+    const invitationFromDb = await this.invitationRepository.findById(id);
+    if (!invitationFromDb) {
+      throw new ResourceNotFoundException('Invitation', id);
+    }
+
+    let roleId: string;
+    if (invitationFromDb.roleId) {
+      roleId = invitationFromDb.roleId;
+    } else {
+      const memberRole = await this.roleService.findOrCreate('member');
+      roleId = memberRole.id;
+    }
 
     const updatedInvitation =
       await this.invitationRepository.acceptInvitationAndAddUser(
         id,
         userId,
-        memberRole.id,
+        roleId,
       );
 
     if (!updatedInvitation) {
@@ -176,12 +217,50 @@ export class InvitationService {
     return this.mapToInvitationDto(updatedInvitation);
   }
 
-  private mapToInvitationDto(invitation: Invitation): InvitationDto {
+  private async mapToInvitationDto(
+    invitation: Invitation,
+  ): Promise<InvitationDto> {
+    let roleName: string | undefined;
+
+    // If role data is already loaded, use it; otherwise fetch individually
+    if (invitation.role) {
+      roleName = invitation.role.name;
+    } else if (invitation.roleId) {
+      const role = await this.roleService.findById(invitation.roleId);
+      roleName = role?.name;
+    }
+
     return {
       id: invitation.id,
       email: invitation.email,
+      token: invitation.token,
       status: invitation.status,
+      expiresAt: invitation.expiresAt,
       projectId: invitation.projectId,
+      role: roleName,
+    };
+  }
+
+  private mapToInvitationDtoSync(
+    invitation: Invitation,
+    roleMap: Map<string, string>,
+  ): InvitationDto {
+    let roleName: string | undefined;
+
+    if (invitation.role) {
+      roleName = invitation.role.name;
+    } else if (invitation.roleId) {
+      roleName = roleMap.get(invitation.roleId);
+    }
+
+    return {
+      id: invitation.id,
+      email: invitation.email,
+      token: invitation.token,
+      status: invitation.status,
+      expiresAt: invitation.expiresAt,
+      projectId: invitation.projectId,
+      role: roleName,
     };
   }
 }

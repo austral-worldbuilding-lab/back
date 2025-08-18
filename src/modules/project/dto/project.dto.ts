@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 import {
   IsDate,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   ValidateNested,
@@ -24,6 +25,16 @@ export class ProjectDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
+
+  @ApiProperty({
+    description: 'Descripción del proyecto',
+    example:
+      'Este proyecto busca mejorar la experiencia del comedor universitario mediante el análisis de las necesidades de los usuarios.',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @ApiProperty({
     description: 'Configuración del proyecto',
