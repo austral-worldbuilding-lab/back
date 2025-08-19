@@ -1,27 +1,58 @@
 /*
-  Warnings:
-
-  - A unique constraint covering the columns `[token]` on the table `Invitation` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `expiresAt` to the `Invitation` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `token` to the `Invitation` table without a default value. This is not possible if the table is not empty.
-
+  Safe migration that handles existing data and enum values
 */
--- AlterEnum
-ALTER TYPE "InvitationStatus" ADD VALUE 'EXPIRED';
 
--- AlterTable
-ALTER TABLE "Invitation" ADD COLUMN     "expiresAt" TIMESTAMP(3) NOT NULL,
-ADD COLUMN     "roleId" TEXT,
-ADD COLUMN     "token" TEXT NOT NULL;
+-- Add enum value only if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type t 
+    JOIN pg_enum e ON t.oid = e.enumtypid 
+    WHERE t.typname = 'InvitationStatus' AND e.enumlabel = 'EXPIRED'
+  ) THEN
+    ALTER TYPE "InvitationStatus" ADD VALUE 'EXPIRED';
+  END IF;
+END$$;
 
--- AlterTable
-ALTER TABLE "Project" ADD COLUMN     "description" TEXT;
+-- Add columns as nullable first
+ALTER TABLE "Invitation" ADD COLUMN IF NOT EXISTS "expiresAt" TIMESTAMP(3);
+ALTER TABLE "Invitation" ADD COLUMN IF NOT EXISTS "roleId" TEXT;
+ALTER TABLE "Invitation" ADD COLUMN IF NOT EXISTS "token" TEXT;
 
--- AlterTable
+-- Backfill existing rows
+UPDATE "Invitation" 
+SET 
+  "expiresAt" = COALESCE("expiresAt", "createdAt" + interval '7 days'),
+  "token" = COALESCE("token", md5(random()::text || clock_timestamp()::text))
+WHERE "expiresAt" IS NULL OR "token" IS NULL;
+
+-- Now make required columns NOT NULL
+ALTER TABLE "Invitation" 
+  ALTER COLUMN "expiresAt" SET NOT NULL,
+  ALTER COLUMN "token" SET NOT NULL;
+
+-- Add Project description
+ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "description" TEXT;
+
+-- Update Tag color default
 ALTER TABLE "Tag" ALTER COLUMN "color" SET DEFAULT '#' || lpad(to_hex((random() * 16777215)::int), 6, '0');
 
--- CreateIndex
-CREATE UNIQUE INDEX "Invitation_token_key" ON "Invitation"("token");
+-- Create unique index if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'Invitation_token_key') THEN
+    CREATE UNIQUE INDEX "Invitation_token_key" ON "Invitation"("token");
+  END IF;
+END$$;
 
--- AddForeignKey
-ALTER TABLE "Invitation" ADD CONSTRAINT "Invitation_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- Add foreign key if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE table_name='Invitation' AND constraint_name='Invitation_roleId_fkey'
+  ) THEN
+    ALTER TABLE "Invitation" ADD CONSTRAINT "Invitation_roleId_fkey" 
+    FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END$$;
