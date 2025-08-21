@@ -49,22 +49,81 @@ Reglas de las preguntas
 • Cada pregunta debe ayudar al equipo a identificar qué post-its faltan o qué aspectos del mundo requieren más datos.
 
 Un ejemplo específico de un mundo en pandemia y cuarentena por COVID-19 en Buenos Aires son:
-• Cultura (escala comunidad): “¿Qué costumbres cotidianas de tu barrio cambiaron durante la cuarentena?”
-• Economía (escala ciudad): “¿Cómo afectó el cierre de comercios a las relaciones de confianza en tu zona?”
-• Gobernanza (escala global): “¿Qué rol tuvo la OMS en las reglas que hoy condicionan tu vida diaria?”
-• Infraestructura (escala hospital): “¿Cómo se sintió cuando el sistema de salud colapsó y faltaban insumos?”
-• Recursos (escala familiar): “¿Cómo consiguieron alimentos o medicinas cuando la distribución falló?”
-• Ecología (escala global): “¿Qué viste que cambió en la naturaleza mientras la ciudad estaba en pausa?”
+  {
+    question: "¿Qué costumbres cotidianas de tu barrio cambiaron durante la cuarentena?",
+    dimension: "Cultura",
+    scale: "Comunidad"
+  }
 
+  {
+    question: "¿Cómo afectó el cierre de comercios a las relaciones de confianza en tu zona?",
+    dimension: "Economía",
+    scale: "Ciudad"
+  }
+
+  {
+    question: "¿Qué rol tuvo la OMS en las reglas que hoy condicionan tu vida diaria?",
+    dimension: "Gobernanza",
+    scale: "Global"
+  }
+  
+  {
+    question: "¿Cómo se sintió cuando el sistema de salud colapsó y faltaban insumos?",
+    dimension: "Infraestructura",
+    scale: "Hospital"
+  }
+  
+  {
+    question: "¿Cómo consiguieron alimentos o medicinas cuando la distribución falló?",
+    dimension: "Recursos",
+    scale: "Familiar"
+  }
+
+  {
+    question: "¿Qué viste que cambió en la naturaleza mientras la ciudad estaba en pausa?",
+    dimension: "Ecología",
+    scale: "Global"
+  }
+  
 Estas preguntas deben servir como disparadores que abren nuevas provocaciones y permiten repreguntar para profundizar.
 
-Inspiración de preguntas disparadoras (ejemplos del manual):
-• Gobernanza: ¿Cuál es el orden, quién gobierna? ¿Cómo se toman las decisiones y quiénes participan?
-• Economía: ¿Cuáles son los principales factores económicos que afectan y cómo impactan en la vida diaria?
-• Cultura: ¿Qué sistema de creencias existe? ¿Cómo se entretiene la gente? ¿Qué historias cuentan?
-• Infraestructura: ¿Qué infraestructuras globales sostienen la conexión entre países? ¿Qué sistemas son esenciales en la comunidad?
-• Ecología: ¿Qué ecosistemas se pueden descubrir? ¿Cuáles son los principales desafíos ambientales y cómo se abordan?
-• Recursos: ¿Qué recursos son más demandados y cómo se gestionan? ¿De dónde provienen los recursos básicos y cómo se distribuyen?
+Inspiración de preguntas disparadoras:
+  {
+    question: "¿Cuál es el orden, quién gobierna? ¿Cómo se toman las decisiones y quiénes participan?",
+    dimension: "Gobernanza",
+    scale: "Mundo / ciudad"
+  }
+  
+  {
+    question: "¿Cuáles son los principales factores económicos que afectan y cómo impactan en la vida diaria?",
+    dimension: "Economía",
+    scale: "Mundo / ciudad"
+  }
+
+  {
+    question: "¿Qué sistema de creencias existe? ¿Cómo se entretiene la gente? ¿Qué historias cuentan?",
+    dimension: "Cultura",
+    scale: "Mundo / ciudad"
+  }
+
+  {
+    question: "¿Qué infraestructuras globales sostienen la conexión entre países? ¿Qué sistemas son esenciales en la comunidad?",
+    dimension: "Infraestructura",
+    scale: "Mundo / ciudad"
+  }
+
+  {
+    question: "¿Qué ecosistemas se pueden descubrir? ¿Cuáles son los principales desafíos ambientales y cómo se abordan?",
+    dimension: "Ecología",
+    scale: "Mundo / ciudad"
+  }
+
+  {
+    question: "¿Qué recursos son más demandados y cómo se gestionan? ¿De dónde provienen los recursos básicos y cómo se distribuyen?",
+    dimension: "Recursos",
+    scale: "Mundo / ciudad"
+  }
+
 
 Estas preguntas son modelos a seguir, no listas cerradas. Tu tarea como IA es usarlas como inspiración para generar nuevas preguntas, adaptadas al personaje central, su contexto y los vacíos en la mandala.
 
