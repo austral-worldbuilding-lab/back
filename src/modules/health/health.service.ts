@@ -154,18 +154,20 @@ export class HealthService {
       if (!this.aiService) {
         throw new Error('AI Service not initialized');
       }
+
       const responseTime = Date.now() - startTime;
       return {
         status: 'healthy',
         responseTime,
-        details: 'AI service initialized and ready',
+        details: 'AI service initialized and configured',
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
+
       return {
         status: 'unhealthy',
         responseTime,
-        details: 'AI service not available',
+        details: 'AI service not available or misconfigured',
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
