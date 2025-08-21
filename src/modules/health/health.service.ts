@@ -19,7 +19,6 @@ export class HealthService {
     private readonly prismaService: PrismaService,
     private readonly firebaseDataService: FirebaseDataService,
     private readonly aiService: AiService,
-    private readonly azureBlobStorageService: AzureBlobStorageService,
   ) {}
 
   async checkHealth(): Promise<HealthCheckResult> {
@@ -116,7 +115,8 @@ export class HealthService {
     const startTime = Date.now();
 
     try {
-      await this.azureBlobStorageService.getFiles('health-check-test');
+      const azureBlobStorageService = new AzureBlobStorageService();
+      await azureBlobStorageService.getFiles('health-check-test');
       const responseTime = Date.now() - startTime;
 
       return {
