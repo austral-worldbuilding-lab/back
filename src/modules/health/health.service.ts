@@ -129,7 +129,7 @@ export class HealthService {
       if (
         error instanceof Error &&
         (error.message.includes('ContainerNotFound') ||
-          error.message.includes('The specified container does not exist'))
+        (error && typeof error === 'object' && 'code' in error && error.code === 'ContainerNotFound')
       ) {
         return {
           status: 'healthy',
