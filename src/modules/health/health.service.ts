@@ -116,7 +116,7 @@ export class HealthService {
 
     try {
       const azureBlobService = new AzureBlobStorageService();
-      await azureBlobService.getFiles('health-check-test');
+      await this.azureBlobStorageService.getFiles('health-check-test');
       const responseTime = Date.now() - startTime;
 
       return {
