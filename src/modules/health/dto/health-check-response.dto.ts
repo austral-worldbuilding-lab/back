@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { HealthStatus } from '../types/health-status.types';
+
 import { ServiceStatusDto } from './service-status.dto';
 
 class ServicesHealthDto {

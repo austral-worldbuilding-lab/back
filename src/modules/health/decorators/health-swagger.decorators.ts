@@ -34,7 +34,8 @@ export const ApiSimpleHealthCheck = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Simple Health Check',
-      description: 'Returns a simple "OK" response for basic availability check',
+      description:
+        'Returns a simple "OK" response for basic availability check',
     }),
     ApiResponse({
       status: 200,

@@ -7,11 +7,7 @@ import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
 
 @Module({
-  imports: [
-    PrismaModule,
-    FirebaseModule, 
-    AiModule,
-  ],
+  imports: [PrismaModule, FirebaseModule, AiModule],
   controllers: [HealthController],
   providers: [HealthService],
   exports: [HealthService],

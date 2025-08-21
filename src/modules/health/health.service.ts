@@ -4,7 +4,11 @@ import { PrismaService } from '@modules/prisma/prisma.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { HealthCheckResult, HealthStatus, ServiceHealth } from './types/health-status.types';
+import {
+  HealthCheckResult,
+  HealthStatus,
+  ServiceHealth,
+} from './types/health-status.types';
 
 @Injectable()
 export class HealthService {
@@ -51,12 +55,12 @@ export class HealthService {
 
   private async checkDatabase(): Promise<ServiceHealth> {
     const startTime = Date.now();
-    
+
     try {
       await this.prismaService.$queryRaw`SELECT 1`;
-      
+
       const responseTime = Date.now() - startTime;
-      
+
       return {
         status: 'healthy',
         responseTime,
@@ -64,7 +68,7 @@ export class HealthService {
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      
+
       return {
         status: 'unhealthy',
         responseTime,
@@ -76,7 +80,7 @@ export class HealthService {
 
   private async checkFirebase(): Promise<ServiceHealth> {
     const startTime = Date.now();
-    
+
     try {
       await this.firebaseDataService.getDocument('health-check', 'test-doc');
       const responseTime = Date.now() - startTime;
@@ -87,14 +91,17 @@ export class HealthService {
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+      if (
+        error instanceof Error &&
+        error.message.includes('Missing or insufficient permissions')
+      ) {
         return {
           status: 'healthy',
           responseTime,
           details: 'Firebase operational (permission-based response)',
         };
       }
-      
+
       return {
         status: 'unhealthy',
         responseTime,
@@ -106,12 +113,12 @@ export class HealthService {
 
   private async checkAzureStorage(): Promise<ServiceHealth> {
     const startTime = Date.now();
-    
+
     try {
       const azureBlobService = new AzureBlobStorageService();
       await azureBlobService.getFiles('health-check-test');
       const responseTime = Date.now() - startTime;
-      
+
       return {
         status: 'healthy',
         responseTime,
@@ -119,17 +126,18 @@ export class HealthService {
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      if (error instanceof Error && (
-        error.message.includes('ContainerNotFound') || 
-        error.message.includes('The specified container does not exist')
-      )) {
+      if (
+        error instanceof Error &&
+        (error.message.includes('ContainerNotFound') ||
+          error.message.includes('The specified container does not exist'))
+      ) {
         return {
           status: 'healthy',
           responseTime,
           details: 'Azure Storage operational (container-based response)',
         };
       }
-      
+
       return {
         status: 'unhealthy',
         responseTime,
@@ -139,9 +147,9 @@ export class HealthService {
     }
   }
 
-  private async checkAI(): Promise<ServiceHealth> {
+  private checkAI(): ServiceHealth {
     const startTime = Date.now();
-    
+
     try {
       if (!this.aiService) {
         throw new Error('AI Service not initialized');
@@ -174,21 +182,26 @@ export class HealthService {
       status: 'unhealthy',
       responseTime: 0,
       details: `${serviceName} check failed`,
-      error: result.reason?.message || 'Unknown error',
+      error:
+        result.reason instanceof Error
+          ? result.reason.message
+          : 'Unknown error',
     };
   }
 
-  private calculateOverallStatus(services: Record<string, ServiceHealth>): HealthStatus {
-    const statuses = Object.values(services).map(service => service.status);
-    
-    if (statuses.every(status => status === 'healthy')) {
+  private calculateOverallStatus(
+    services: Record<string, ServiceHealth>,
+  ): HealthStatus {
+    const statuses = Object.values(services).map((service) => service.status);
+
+    if (statuses.every((status) => status === 'healthy')) {
       return 'healthy';
     }
-    
-    if (statuses.some(status => status === 'unhealthy')) {
+
+    if (statuses.some((status) => status === 'unhealthy')) {
       return 'unhealthy';
     }
-    
+
     return 'degraded';
   }
 }
