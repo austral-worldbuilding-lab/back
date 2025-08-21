@@ -147,7 +147,7 @@ export class HealthService {
     }
   }
 
-  private checkAI(): ServiceHealth {
+  private async checkAI(): Promise<ServiceHealth> {
     const startTime = Date.now();
 
     try {
