@@ -19,6 +19,7 @@ export class HealthService {
     private readonly prismaService: PrismaService,
     private readonly firebaseDataService: FirebaseDataService,
     private readonly aiService: AiService,
+    private readonly azureBlobStorageService: AzureBlobStorageService,
   ) {}
 
   async checkHealth(): Promise<HealthCheckResult> {
@@ -115,7 +116,6 @@ export class HealthService {
     const startTime = Date.now();
 
     try {
-      const azureBlobService = new AzureBlobStorageService();
       await this.azureBlobStorageService.getFiles('health-check-test');
       const responseTime = Date.now() - startTime;
 
@@ -129,7 +129,7 @@ export class HealthService {
       if (
         error instanceof Error &&
         (error.message.includes('ContainerNotFound') ||
-        (error && typeof error === 'object' && 'code' in error && error.code === 'ContainerNotFound')
+          error.message.includes('The specified container does not exist'))
       ) {
         return {
           status: 'healthy',
@@ -154,6 +154,8 @@ export class HealthService {
       if (!this.aiService) {
         throw new Error('AI Service not initialized');
       }
+
+      await Promise.resolve();
 
       const responseTime = Date.now() - startTime;
       return {
