@@ -3,6 +3,7 @@ import * as process from 'node:process';
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
+import { HealthModule } from '@modules/health/health.module';
 import { InvitationModule } from '@modules/invitation/invitation.module';
 import { MailModule } from '@modules/mail/mail.module';
 import { MandalaModule } from '@modules/mandala/mandala.module';
@@ -32,6 +33,7 @@ import { AppService } from './app.service';
     RoleModule,
     MailModule,
     OrganizationModule,
+    HealthModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
