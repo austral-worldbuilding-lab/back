@@ -1,9 +1,9 @@
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
+import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { ProjectRepository } from '@modules/project/project.repository';
 import { RoleService } from '@modules/role/role.service';
-import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 
 import { CreateOrganizationDto } from './dto/create-organization.dto';
