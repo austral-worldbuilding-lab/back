@@ -3,6 +3,7 @@ import { PaginatedResponse } from '@common/types/responses';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { ProjectRepository } from '@modules/project/project.repository';
 import { RoleService } from '@modules/role/role.service';
+import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -16,6 +17,7 @@ export class OrganizationService {
     private organizationRepository: OrganizationRepository,
     private roleService: RoleService,
     private projectRepository: ProjectRepository,
+    private prisma: PrismaService,
   ) {}
 
   async create(
@@ -74,6 +76,48 @@ export class OrganizationService {
     if (!org) {
       throw new ResourceNotFoundException('Organization', id);
     }
+
+    // Implementar soft delete en cascada
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Buscar todos los proyectos activos de la organización
+      const activeProjects = await tx.project.findMany({
+        where: {
+          organizationId: id,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+
+      // 2. Soft delete de todas las mandalas de esos proyectos
+      if (activeProjects.length > 0) {
+        const projectIds = activeProjects.map((p) => p.id);
+
+        await tx.mandala.updateMany({
+          where: {
+            projectId: { in: projectIds },
+            isActive: true,
+          },
+          data: {
+            isActive: false,
+            deletedAt: new Date(),
+          },
+        });
+
+        // 3. Soft delete de todos los proyectos de la organización
+        await tx.project.updateMany({
+          where: {
+            organizationId: id,
+            isActive: true,
+          },
+          data: {
+            isActive: false,
+            deletedAt: new Date(),
+          },
+        });
+      }
+    });
+
+    // 4. Finalmente, soft delete de la organización
     return this.organizationRepository.remove(id);
   }
 

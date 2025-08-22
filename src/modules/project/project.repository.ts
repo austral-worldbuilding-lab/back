@@ -71,9 +71,7 @@ export class ProjectRepository {
             dimensions: createProjectDto.dimensions!,
             scales: createProjectDto.scales!,
           }),
-          ...(createProjectDto.organizationId
-            ? { organizationId: createProjectDto.organizationId }
-            : {}),
+          organizationId: createProjectDto.organizationId,
         },
       });
 

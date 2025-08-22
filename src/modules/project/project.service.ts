@@ -1,6 +1,7 @@
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
+import { PrismaService } from '@modules/prisma/prisma.service';
 import { RoleService } from '@modules/role/role.service';
 import {
   Injectable,
@@ -23,6 +24,7 @@ export class ProjectService {
   constructor(
     private projectRepository: ProjectRepository,
     private roleService: RoleService,
+    private prisma: PrismaService,
   ) {}
 
   private getDimensions(dimensions?: DimensionDto[]): DimensionDto[] {
@@ -88,6 +90,20 @@ export class ProjectService {
     if (!project) {
       throw new ResourceNotFoundException('Project', id);
     }
+
+    // Implementar soft delete en cascada para mandalas
+    await this.prisma.mandala.updateMany({
+      where: {
+        projectId: id,
+        isActive: true,
+      },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
+    });
+
+    // Finalmente, soft delete del proyecto
     return this.projectRepository.remove(id);
   }
 
