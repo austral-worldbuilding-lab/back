@@ -109,4 +109,46 @@ export class OrganizationRepository {
 
     return this.parseToOrganizationDto(org);
   }
+
+  async removeWithCascade(id: string): Promise<OrganizationDto> {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Soft delete all mandalas from active projects in the organization
+      await tx.mandala.updateMany({
+        where: {
+          project: {
+            organizationId: id,
+            isActive: true,
+          },
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+        },
+      });
+
+      // 2. Soft delete all projects in the organization
+      await tx.project.updateMany({
+        where: {
+          organizationId: id,
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+        },
+      });
+
+      // 3. Soft delete the organization itself
+      const org = await tx.organization.update({
+        where: { id },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+        },
+      });
+
+      return this.parseToOrganizationDto(org);
+    });
+  }
 }
