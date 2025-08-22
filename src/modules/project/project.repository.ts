@@ -71,9 +71,7 @@ export class ProjectRepository {
             dimensions: createProjectDto.dimensions!,
             scales: createProjectDto.scales!,
           }),
-          ...(createProjectDto.organizationId
-            ? { organizationId: createProjectDto.organizationId }
-            : {}),
+          organizationId: createProjectDto.organizationId,
         },
       });
 
@@ -142,6 +140,33 @@ export class ProjectRepository {
     });
 
     return this.parseToProjectDto(project);
+  }
+
+  async removeWithCascade(id: string): Promise<ProjectDto> {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Soft delete all mandalas in the project
+      await tx.mandala.updateMany({
+        where: {
+          projectId: id,
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+        },
+      });
+
+      // 2. Soft delete the project itself
+      const project = await tx.project.update({
+        where: { id },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+        },
+      });
+
+      return this.parseToProjectDto(project);
+    });
   }
 
   async update(

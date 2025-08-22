@@ -88,7 +88,8 @@ export class ProjectService {
     if (!project) {
       throw new ResourceNotFoundException('Project', id);
     }
-    return this.projectRepository.remove(id);
+
+    return this.projectRepository.removeWithCascade(id);
   }
 
   async update(
