@@ -30,15 +30,15 @@ export class MandalaDto {
   name!: string;
 
   @ApiProperty({
-    description: 'Tipo de mandala según su función en el sistema',
+    description: 'Type of mandala based on its function in the system',
     enum: MandalaType,
-    example: MandalaType.UNIFICADA,
+    example: MandalaType.UNIFIED,
   })
   @IsEnum(MandalaType)
-  tipo!: MandalaType;
+  type!: MandalaType;
 
   @ApiProperty({
-    description: 'ID del proyecto al que pertenece el mandala',
+    description: 'ID of the project to which the mandala belongs',
     example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
   })
   @IsUUID()
@@ -46,7 +46,7 @@ export class MandalaDto {
   projectId!: string;
 
   @ApiProperty({
-    description: 'Configuración del mandala',
+    description: 'Mandala configuration',
     type: CreateMandalaConfiguration,
   })
   @ValidateNested()
@@ -55,7 +55,7 @@ export class MandalaDto {
 
   @ApiProperty({
     description:
-      'IDs de mandalas hijos (mandalas que son personajes en este mandala)',
+      'IDs of child mandalas (mandalas that are characters in this mandala)',
     type: [String],
     example: [
       'a1b2c3d4-e5f6-7890-1234-567890abcdef',
@@ -68,7 +68,7 @@ export class MandalaDto {
 
   @ApiProperty({
     description:
-      'IDs de mandalas padre (mandalas en las que esta es un personaje)',
+      'IDs of parent mandalas (mandalas in which this one is a character)',
     type: [String],
     example: [
       'c3d4e5f6-a7b8-9012-3456-7890abcdef12',
@@ -80,14 +80,14 @@ export class MandalaDto {
   parentIds!: string[];
 
   @ApiProperty({
-    description: 'Fecha de creación del mandala',
+    description: 'Mandala creation date',
     example: '2023-01-01T12:00:00.000Z',
   })
   @IsDate()
   createdAt!: Date;
 
   @ApiProperty({
-    description: 'Fecha de última actualización del mandala',
+    description: 'Mandala last update date',
     example: '2023-01-02T12:00:00.000Z',
   })
   @IsDate()

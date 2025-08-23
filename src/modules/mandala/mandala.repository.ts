@@ -60,13 +60,13 @@ export class MandalaRepository {
     );
 
     const parentIds = mandala.parent?.map((parent) => parent.id) || [];
-    const tipo =
-      parentIds.length > 0 ? MandalaType.PERSONAJE : MandalaType.UNIFICADA;
+    const type =
+      parentIds.length > 0 ? MandalaType.CHARACTER : MandalaType.UNIFIED;
 
     return {
       id: mandala.id,
       name: mandala.name,
-      tipo,
+      type,
       projectId: mandala.projectId,
       configuration: {
         center: configuration.center,
