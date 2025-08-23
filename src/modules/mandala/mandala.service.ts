@@ -608,10 +608,29 @@ export class MandalaService {
             mandala.projectId,
             mandala.id,
           )) as FirestoreMandalaDocument | null;
-          return document?.postits || [];
+          
+          // Add metadata about which mandala each postit came from
+          const postits = document?.postits || [];
+          const postitsWithMetadata = postits.map(postit => ({
+            ...postit,
+            from: {
+              name: mandala.name,
+              id: mandala.id
+            }
+          }));
+          
+          this.logger.log(
+            `Retrieved ${postitsWithMetadata.length} postits from mandala "${mandala.name}" (${mandala.id})`
+          );
+          
+          return postitsWithMetadata;
         }),
       );
       const flattenedPostits = allPostits.flat();
+      
+      this.logger.log(
+        `Total postits to overlap: ${flattenedPostits.length}`
+      );
 
       const overlappedConfiguration =
         this.overlapMandalaConfigurations(mandalas);
