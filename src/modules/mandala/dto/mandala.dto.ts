@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDate,
+  IsEnum,
   IsNotEmpty,
   IsString,
   IsUUID,
@@ -10,6 +11,7 @@ import {
 } from 'class-validator';
 
 import { CreateMandalaConfiguration } from '../types/mandala-configuration.type';
+import { MandalaType } from '../types/mandala-type.enum';
 
 export class MandalaDto {
   @ApiProperty({
@@ -26,6 +28,14 @@ export class MandalaDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
+
+  @ApiProperty({
+    description: 'Tipo de mandala según su función en el sistema',
+    enum: MandalaType,
+    example: MandalaType.UNIFICADA,
+  })
+  @IsEnum(MandalaType)
+  tipo!: MandalaType;
 
   @ApiProperty({
     description: 'ID del proyecto al que pertenece el mandala',

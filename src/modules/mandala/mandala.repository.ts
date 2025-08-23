@@ -7,6 +7,7 @@ import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
+import { MandalaType } from './types/mandala-type.enum';
 
 import { MandalaCenter } from '@/modules/mandala/types/mandala-center.type';
 
@@ -58,9 +59,14 @@ export class MandalaRepository {
       mandala.configuration,
     );
 
+    const parentIds = mandala.parent?.map((parent) => parent.id) || [];
+    const tipo =
+      parentIds.length > 0 ? MandalaType.PERSONAJE : MandalaType.UNIFICADA;
+
     return {
       id: mandala.id,
       name: mandala.name,
+      tipo,
       projectId: mandala.projectId,
       configuration: {
         center: configuration.center,
@@ -68,7 +74,7 @@ export class MandalaRepository {
         scales: configuration.scales,
       },
       childrenIds: mandala.children?.map((child) => child.id) || [],
-      parentIds: mandala.parent?.map((parent) => parent.id) || [],
+      parentIds,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
     };
