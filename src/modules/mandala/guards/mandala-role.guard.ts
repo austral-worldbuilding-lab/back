@@ -32,14 +32,14 @@ export class MandalaRoleGuard extends BaseProjectRoleGuard {
     const overlapBody = request.body as { mandalas?: string[] };
     if (overlapBody?.mandalas && overlapBody.mandalas.length > 0) {
       const mandalaIds = overlapBody.mandalas;
-      
+
       // Find all mandalas to validate access
       const mandalas = await this.prisma.mandala.findMany({
-        where: { 
-          id: { in: mandalaIds }, 
-          isActive: true 
+        where: {
+          id: { in: mandalaIds },
+          isActive: true,
         },
-        select: { id: true, projectId: true }
+        select: { id: true, projectId: true },
       });
 
       if (mandalas.length !== mandalaIds.length) {
@@ -60,7 +60,7 @@ export class MandalaRoleGuard extends BaseProjectRoleGuard {
 
         if (!userRole) {
           throw new ForbiddenException(
-            `No tienes acceso al proyecto ${mandala.projectId} (mandala: ${mandala.id})`
+            `No tienes acceso al proyecto ${mandala.projectId} (mandala: ${mandala.id})`,
           );
         }
       }
