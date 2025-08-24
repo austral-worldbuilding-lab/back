@@ -7,7 +7,8 @@ import { OverlapMandalaCenterDto } from './overlap-mandala-center.dto';
 
 export class OverlapResultDto {
   @ApiProperty({
-    description: 'El nuevo mandala creado a partir de la unión de todos los mandalas de entrada',
+    description:
+      'El nuevo mandala creado a partir de la unión de todos los mandalas de entrada',
     type: MandalaDto,
   })
   @ValidateNested()
@@ -15,7 +16,8 @@ export class OverlapResultDto {
   mandala!: MandalaDto;
 
   @ApiProperty({
-    description: 'Todos los caracteres centrales originales de los mandalas superpuestos',
+    description:
+      'Todos los caracteres centrales originales de los mandalas superpuestos',
     type: OverlapMandalaCenterDto,
   })
   @ValidateNested()
