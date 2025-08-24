@@ -9,15 +9,15 @@ import {
 
 export class OverlapMandalasDto {
   @ApiProperty({
-    description: 'Name of the new overlapped mandala',
-    example: 'Overlapped Mandala',
+    description: 'Nombre del nuevo mandala superpuesto',
+    example: 'Mandala Superpuesto',
   })
   @IsString()
   @IsNotEmpty()
   name!: string;
   @ApiProperty({
     description:
-      'Array of mandala IDs to overlap (minimum 2). All mandalas must have the same dimensions and scales. The new overlapped mandala will be saved in the project of the first mandala in the list.',
+      'Array de IDs de mandalas para superponer (mínimo 2). Todos los mandalas deben tener las mismas dimensiones y escalas. El nuevo mandala superpuesto se guardará en el proyecto del primer mandala de la lista.',
     type: [String],
     example: [
       'a1b2c3d4-e5f6-7890-1234-567890abcdef',
@@ -27,11 +27,11 @@ export class OverlapMandalasDto {
   })
   @IsArray()
   @ArrayMinSize(2, {
-    message: 'At least 2 mandala IDs are required for overlap',
+    message: 'Se requieren al menos 2 IDs de mandalas para la superposición',
   })
   @IsUUID(undefined, {
     each: true,
-    message: 'Each mandala ID must be a valid UUID',
+    message: 'Cada ID de mandala debe ser un UUID válido',
   })
   mandalas!: string[];
 }
