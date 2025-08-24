@@ -1,7 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsUUID, ArrayMinSize } from 'class-validator';
+import {
+  IsArray,
+  IsUUID,
+  ArrayMinSize,
+  IsNotEmpty,
+  IsString,
+} from 'class-validator';
 
 export class OverlapMandalasDto {
+  @ApiProperty({
+    description: 'Name of the new overlapped mandala',
+    example: 'Overlapped Mandala',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
   @ApiProperty({
     description:
       'Array of mandala IDs to overlap (minimum 2). All mandalas must have the same dimensions and scales. The new overlapped mandala will be saved in the project of the first mandala in the list.',
