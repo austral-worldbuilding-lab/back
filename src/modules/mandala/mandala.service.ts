@@ -602,6 +602,7 @@ export class MandalaService {
       );
       this.validateMandalaCompatibility(mandalas);
 
+      // Extract all postits from source mandalas	
       const allPostits = await Promise.all(
         mandalas.map(async (mandala) => {
           const document = (await this.firebaseDataService.getDocument(
@@ -628,7 +629,34 @@ export class MandalaService {
       );
       const flattenedPostits = allPostits.flat();
 
+      // Extract all characters from source mandalas
+      const allCharacters = await Promise.all(
+        mandalas.map(async (mandala) => {
+          const document = (await this.firebaseDataService.getDocument(
+            mandala.projectId,
+            mandala.id,
+          )) as FirestoreMandalaDocument | null;
+
+          const characters = document?.characters || [];
+          const charactersWithMetadata = characters.map((character) => ({
+            ...character,
+            from: {
+              name: mandala.name,
+              id: mandala.id,
+            },
+          }));
+
+          this.logger.log(
+            `Retrieved ${charactersWithMetadata.length} characters from mandala "${mandala.name}" (${mandala.id})`,
+          );
+
+          return charactersWithMetadata;
+        }),
+      );
+      const flattenedCharacters = allCharacters.flat();
+
       this.logger.log(`Total postits to overlap: ${flattenedPostits.length}`);
+      this.logger.log(`Total characters to overlap: ${flattenedCharacters.length}`);
 
       const overlappedConfiguration =
         this.overlapMandalaConfigurations(mandalas);
@@ -666,7 +694,7 @@ export class MandalaService {
         {
           mandala: newMandala,
           postits: flattenedPostits,
-          characters: [],
+          characters: flattenedCharacters,
         },
         newMandala.id,
       );
