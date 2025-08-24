@@ -50,4 +50,11 @@ export class ProjectDto {
   })
   @IsDate()
   createdAt!: Date;
+
+  @ApiProperty({
+    description: 'ID de la organización a la que pertenece el proyecto',
+    example: 'b2c3d4e5-f6a7-8901-2345-67890abcdef1',
+  })
+  @IsUUID()
+  organizationId!: string;
 }
