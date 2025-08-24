@@ -351,45 +351,6 @@ export class MandalaController {
     };
   }
 
-  @Get(':id/firestore-document')
-  @UseGuards(MandalaRoleGuard)
-  @ApiOperation({
-    summary: '[TESTING ONLY] Get Firestore Mandala Document',
-    description:
-      'Retrieves the raw Firestore document for testing purposes. This endpoint is for development/testing only and should not be used in production.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully retrieved Firestore document',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'object',
-          description: 'The raw Firestore Mandala Document',
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 404, description: 'Mandala not found' })
-  @ApiResponse({
-    status: 403,
-    description: 'Prohibited - No access to this project',
-  })
-  async getFirestoreDocument(
-    @Param('id', new UuidValidationPipe()) id: string,
-  ): Promise<DataResponse<any>> {
-    const mandala = await this.mandalaService.findOne(id);
-    const firestoreDocument = await this.mandalaService.getFirestoreDocument(
-      mandala.projectId,
-      id,
-    );
-
-    return {
-      data: firestoreDocument,
-    };
-  }
-
   @Post('overlap')
   @UseGuards(MandalaRoleGuard)
   @ApiOverlapMandalas()
