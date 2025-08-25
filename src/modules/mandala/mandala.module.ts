@@ -3,6 +3,7 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { FirebaseModule } from '@modules/firebase/firebase.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { ProjectModule } from '@modules/project/project.module';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { Module } from '@nestjs/common';
 
 import { MandalaRoleGuard } from './guards/mandala-role.guard';
@@ -19,6 +20,7 @@ import { PostitService } from './services/postit.service';
     MandalaRepository,
     PostitService,
     MandalaRoleGuard,
+    AzureBlobStorageService,
   ],
   exports: [MandalaService],
 })
