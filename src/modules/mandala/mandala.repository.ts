@@ -1,7 +1,7 @@
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma, $Enums } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { MandalaDto } from './dto/mandala.dto';
@@ -34,6 +34,7 @@ export class MandalaRepository {
         color: dim.color,
       })),
       scales: parsedConfig.scales,
+      type: parsedConfig.type,
     };
   }
 
@@ -51,6 +52,7 @@ export class MandalaRepository {
         color: dim.color,
       })),
       scales: config.scales,
+      type: config.type,
     } as Prisma.InputJsonValue;
   }
 
@@ -72,6 +74,7 @@ export class MandalaRepository {
         center: configuration.center,
         dimensions: configuration.dimensions,
         scales: configuration.scales,
+        type: configuration.type,
       },
       childrenIds: mandala.children?.map((child) => child.id) || [],
       parentIds,
@@ -80,11 +83,15 @@ export class MandalaRepository {
     };
   }
 
-  async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
+  async create(
+    createMandalaDto: CreateMandalaDto,
+    type: MandalaType,
+  ): Promise<MandalaDto> {
     const configuration: CreateMandalaConfiguration = {
       center: createMandalaDto.center,
       dimensions: createMandalaDto.dimensions!,
       scales: createMandalaDto.scales!,
+      type,
     };
 
     const mandala = await this.prisma.mandala.create({
@@ -92,9 +99,6 @@ export class MandalaRepository {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
         configuration: this.parseToJson(configuration),
-        type: createMandalaDto.parentId
-          ? $Enums.MandalaType.CHARACTER
-          : $Enums.MandalaType.OVERLAP,
         ...(createMandalaDto.parentId && {
           parent: {
             connect: { id: createMandalaDto.parentId },
