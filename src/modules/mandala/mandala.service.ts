@@ -43,7 +43,7 @@ import {
 
 import { DimensionDto } from '@/common/dto/dimension.dto';
 
-const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 } as const;
+const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
 const DEFAULT_CHARACTER_SECTION = '';
 const DEFAULT_CHARACTER_DIMENSION = '';
 
@@ -313,21 +313,7 @@ export class MandalaService {
             section: DEFAULT_CHARACTER_SECTION,
             dimension: DEFAULT_CHARACTER_DIMENSION,
           });
-      if (
-        newChildId &&
-        childrenCenterMap.has(newChildId) &&
-        !existingCharactersMap.has(newChildId)
-      ) {
-        const newCenter = childrenCenterMap.get(newChildId);
-        updatedCharacters.push({
-          id: newCenter.id,
-          name: newCenter.name,
-          description: newCenter.description,
-          color: newCenter.color,
-          position: DEFAULT_CHARACTER_POSITION,
-          section: DEFAULT_CHARACTER_SECTION,
-          dimension: DEFAULT_CHARACTER_DIMENSION,
-        });
+        }
       }
 
       const updateData = {
