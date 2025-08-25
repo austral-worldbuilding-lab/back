@@ -33,7 +33,6 @@ export class OverlapMandalasDto {
     ],
     minItems: 2,
   })
-  
   @IsArray()
   @ArrayMinSize(2, {
     message: 'Se requieren al menos 2 IDs de mandalas para la superposición',
