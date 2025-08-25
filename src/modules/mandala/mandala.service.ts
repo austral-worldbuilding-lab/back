@@ -696,16 +696,6 @@ export class MandalaService {
 
       const newMandala = await this.create(createMandalaDto);
 
-      for (const postit of flattenedPostits) {
-        await this.postitService.createPostit(targetProjectId, newMandala.id, {
-          content: postit.content,
-          coordinates: postit.coordinates,
-          dimension: postit.dimension,
-          section: postit.section,
-          tags: postit.tags,
-        });
-      }
-
       await this.firebaseDataService.createDocument(
         targetProjectId,
         {
