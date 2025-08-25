@@ -43,7 +43,7 @@ import {
 
 import { DimensionDto } from '@/common/dto/dimension.dto';
 
-const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
+const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 } as const;
 const DEFAULT_CHARACTER_SECTION = '';
 const DEFAULT_CHARACTER_DIMENSION = '';
 
