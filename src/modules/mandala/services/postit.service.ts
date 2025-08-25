@@ -32,14 +32,13 @@ import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-cha
 
 @Injectable()
 export class PostitService {
-  private storageService = new AzureBlobStorageService();
-
   constructor(
     private aiService: AiService,
     private mandalaRepository: MandalaRepository,
     private projectService: ProjectService,
     private firebaseDataService: FirebaseDataService,
     private prisma: PrismaService,
+    private storageService: AzureBlobStorageService,
   ) {}
 
   async generatePostitsForMandala(
@@ -304,8 +303,14 @@ export class PostitService {
         },
       });
 
-      if (!mandala || !mandala.project.organizationId) {
+      if (!mandala) {
         throw new BusinessLogicException('Mandala not found', { mandalaId });
+      }
+
+      if (!mandala.project.organizationId) {
+        throw new BusinessLogicException('Organization not found for mandala', {
+          mandalaId,
+        });
       }
 
       const fileScope: FileScope = {
