@@ -679,24 +679,40 @@ export class MandalaService {
       };
 
       // Create the mandala with a composite center for database compatibility
+      // TODO: handle the center as a list of centers when mandala type is OVERLAP
+      const compositeCenter: CreateMandalaCenterDto = {
+        name: createOverlappedMandalaDto.centers
+          .map((c) => c.name)
+          .join(' + '),
+        description: `Overlapped centers: ${createOverlappedMandalaDto.centers
+          .map((c) => c.name)
+          .join(', ')}`,
+        color: overlapDto.color,
+      };
+
       const createMandalaDto: CreateMandalaDto = {
         name: createOverlappedMandalaDto.name,
         projectId: createOverlappedMandalaDto.projectId,
-        center: {
-          name: `Centro Compuesto (${mandalas.length} personajes)`,
-          description: `Combinación de personajes centrales de ${mandalas.length} mandalas`,
-          color: overlapDto.color,
-        },
+        center: compositeCenter,
         dimensions: createOverlappedMandalaDto.dimensions,
         scales: createOverlappedMandalaDto.scales,
       };
 
       const newMandala = await this.create(createMandalaDto);
 
+      // Persist full centers list in Firestore mandala document for overlapped mandalas
+      const mandalaWithCenters = {
+        ...newMandala,
+        configuration: {
+          ...newMandala.configuration,
+          centers: createOverlappedMandalaDto.centers,
+        },
+      };
+
       await this.firebaseDataService.createDocument(
         targetProjectId,
         {
-          mandala: newMandala,
+          mandala: mandalaWithCenters,
           postits: flattenedPostits,
           characters: flattenedCharacters,
         },
