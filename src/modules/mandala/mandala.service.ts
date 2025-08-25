@@ -43,6 +43,10 @@ import {
 
 import { DimensionDto } from '@/common/dto/dimension.dto';
 
+const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
+const DEFAULT_CHARACTER_SECTION = '';
+const DEFAULT_CHARACTER_DIMENSION = '';
+
 @Injectable()
 export class MandalaService {
   private readonly logger = new Logger(MandalaService.name);
@@ -84,9 +88,9 @@ export class MandalaService {
         name: center.name,
         description: center.description,
         color: center.color,
-        position: { x: 0, y: 0 },
-        section: '',
-        dimension: '',
+        position: DEFAULT_CHARACTER_POSITION,
+        section: DEFAULT_CHARACTER_SECTION,
+        dimension: DEFAULT_CHARACTER_DIMENSION,
       }));
 
       const firestoreData = {
@@ -305,9 +309,9 @@ export class MandalaService {
             name: newCenter.name,
             description: newCenter.description,
             color: newCenter.color,
-            position: { x: 0, y: 0 },
-            section: '',
-            dimension: '',
+            position: DEFAULT_CHARACTER_POSITION,
+            section: DEFAULT_CHARACTER_SECTION,
+            dimension: DEFAULT_CHARACTER_DIMENSION,
           });
         }
       }
@@ -357,9 +361,9 @@ export class MandalaService {
         name: center.name,
         description: center.description,
         color: center.color,
-        position: { x: 0, y: 0 },
-        section: '',
-        dimension: '',
+        position: DEFAULT_CHARACTER_POSITION,
+        section: DEFAULT_CHARACTER_SECTION,
+        dimension: DEFAULT_CHARACTER_DIMENSION,
       }));
 
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
