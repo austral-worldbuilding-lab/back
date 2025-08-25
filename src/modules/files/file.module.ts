@@ -13,11 +13,11 @@ import { ProjectFileRoleGuard } from './guards/project-file-role.guard';
   imports: [PrismaModule, AuthModule],
   controllers: [FileController],
   providers: [
-    FileService, 
-    FileRoleGuard, 
-    OrganizationFileRoleGuard, 
-    ProjectFileRoleGuard, 
-    MandalaFileRoleGuard
+    FileService,
+    FileRoleGuard,
+    OrganizationFileRoleGuard,
+    ProjectFileRoleGuard,
+    MandalaFileRoleGuard,
   ],
   exports: [FileService],
 })
