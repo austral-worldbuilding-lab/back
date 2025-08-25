@@ -640,7 +640,7 @@ export class MandalaService {
         ...newMandala,
         configuration: {
           ...newMandala.configuration,
-          center: overlappedConfiguration.center,
+          centers: overlappedConfiguration.center,
         },
       };
 
@@ -727,11 +727,17 @@ export class MandalaService {
   }
 
   private overlapMandalaConfigurations(mandalas: MandalaDto[]): {
-    center: CreateMandalaCenterDto[];
+    center: (CreateMandalaCenterDto & { from: { id: string; name: string } })[];
     dimensions: DimensionDto[];
     scales: string[];
   } {
-    const allCenterCharacters = mandalas.map((m) => m.configuration.center);
+    const allCenterCharacters = mandalas.map((m) => ({
+      ...m.configuration.center,
+      from: {
+        id: m.id,
+        name: m.name,
+      },
+    }));
 
     const firstMandala = mandalas[0];
     const dimensions = firstMandala.configuration.dimensions;
