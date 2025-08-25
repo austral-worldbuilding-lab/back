@@ -58,7 +58,7 @@ model UserProjectRole {
 model Mandala {
   id            String      @id @default(uuid())
   name          String
-  type          MandalaType
+  type          MandalaType @default(CHARACTER)
   configuration Json        // Contains centerCharacter, dimensions[] and scales[]
   project       Project     @relation("ProjectToMandalas", fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
