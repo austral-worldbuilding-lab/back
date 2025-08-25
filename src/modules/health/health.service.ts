@@ -1,4 +1,5 @@
 import { AiService } from '@modules/ai/ai.service';
+import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
@@ -116,7 +117,8 @@ export class HealthService {
 
     try {
       const azureBlobStorageService = new AzureBlobStorageService();
-      await azureBlobStorageService.getFiles('health-check-test');
+      const healthCheckScope: FileScope = { orgId: 'health-check-test' };
+      await azureBlobStorageService.getFiles(healthCheckScope);
       const responseTime = Date.now() - startTime;
 
       return {
