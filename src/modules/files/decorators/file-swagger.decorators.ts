@@ -190,7 +190,8 @@ export const ApiGetOrganizationFiles = () =>
     }),
     ApiResponse({
       status: 200,
-      description: 'Lista de archivos organizacionales obtenida exitosamente (incluye información de herencia)',
+      description:
+        'Lista de archivos organizacionales obtenida exitosamente (incluye información de herencia)',
       type: [EffectiveFileDto],
     }),
     ApiResponse({
@@ -229,7 +230,8 @@ export const ApiUploadOrganizationFiles = () =>
             },
             {
               file_name: 'codigo-conducta.docx',
-              file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              file_type:
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             },
           ],
         },
@@ -237,7 +239,8 @@ export const ApiUploadOrganizationFiles = () =>
     }),
     ApiResponse({
       status: 201,
-      description: 'URLs firmadas para archivos organizacionales generadas exitosamente',
+      description:
+        'URLs firmadas para archivos organizacionales generadas exitosamente',
       type: [PresignedUrl],
     }),
     ApiResponse({
@@ -310,7 +313,8 @@ export const ApiGetProjectFilesWithInheritance = () =>
     }),
     ApiResponse({
       status: 200,
-      description: 'Lista de archivos con herencia obtenida exitosamente (incluye archivos de organización + proyecto)',
+      description:
+        'Lista de archivos con herencia obtenida exitosamente (incluye archivos de organización + proyecto)',
       type: [EffectiveFileDto],
     }),
     ApiResponse({
@@ -345,11 +349,13 @@ export const ApiUploadProjectFiles = () =>
           value: [
             {
               file_name: 'especificaciones-proyecto.docx',
-              file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              file_type:
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             },
             {
               file_name: 'cronograma.xlsx',
-              file_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              file_type:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             },
           ],
         },
@@ -357,7 +363,8 @@ export const ApiUploadProjectFiles = () =>
     }),
     ApiResponse({
       status: 201,
-      description: 'URLs firmadas para archivos del proyecto generadas exitosamente',
+      description:
+        'URLs firmadas para archivos del proyecto generadas exitosamente',
       type: [PresignedUrl],
     }),
     ApiResponse({
@@ -430,7 +437,8 @@ export const ApiGetMandalaFiles = () =>
     }),
     ApiResponse({
       status: 200,
-      description: 'Lista de archivos con herencia completa obtenida exitosamente (incluye archivos de organización + proyecto + mandala)',
+      description:
+        'Lista de archivos con herencia completa obtenida exitosamente (incluye archivos de organización + proyecto + mandala)',
       type: [EffectiveFileDto],
     }),
     ApiResponse({
@@ -477,7 +485,8 @@ export const ApiUploadMandalaFiles = () =>
     }),
     ApiResponse({
       status: 201,
-      description: 'URLs firmadas para archivos del mandala generadas exitosamente',
+      description:
+        'URLs firmadas para archivos del mandala generadas exitosamente',
       type: [PresignedUrl],
     }),
     ApiResponse({
@@ -550,7 +559,8 @@ export const ApiGetMandalaBuffers = () =>
     }),
     ApiResponse({
       status: 200,
-      description: 'Buffers de archivos con herencia completa obtenidos exitosamente',
+      description:
+        'Buffers de archivos con herencia completa obtenidos exitosamente',
       schema: {
         type: 'object',
         properties: {
@@ -559,7 +569,8 @@ export const ApiGetMandalaBuffers = () =>
             items: {
               type: 'string',
               format: 'binary',
-              description: 'Contenido binario de archivos de org + proyecto + mandala',
+              description:
+                'Contenido binario de archivos de org + proyecto + mandala',
             },
           },
         },
@@ -599,7 +610,8 @@ export const ApiGetProjectBuffers = () =>
             items: {
               type: 'string',
               format: 'binary',
-              description: 'Contenido binario de archivos de organización + proyecto',
+              description:
+                'Contenido binario de archivos de organización + proyecto',
             },
           },
         },
