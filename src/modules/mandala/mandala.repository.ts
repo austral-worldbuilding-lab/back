@@ -1,7 +1,7 @@
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, $Enums } from '@prisma/client';
 
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { MandalaDto } from './dto/mandala.dto';
@@ -61,7 +61,7 @@ export class MandalaRepository {
 
     const parentIds = mandala.parent?.map((parent) => parent.id) || [];
     const type =
-      parentIds.length > 0 ? MandalaType.CHARACTER : MandalaType.UNIFIED;
+      parentIds.length > 0 ? MandalaType.CHARACTER : MandalaType.OVERLAP;
 
     return {
       id: mandala.id,
@@ -92,6 +92,9 @@ export class MandalaRepository {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
         configuration: this.parseToJson(configuration),
+        type: createMandalaDto.parentId
+          ? $Enums.MandalaType.CHARACTER
+          : $Enums.MandalaType.OVERLAP,
         ...(createMandalaDto.parentId && {
           parent: {
             connect: { id: createMandalaDto.parentId },
@@ -104,7 +107,7 @@ export class MandalaRepository {
       },
     });
 
-    return this.parseToMandalaDto(mandala);
+    return this.parseToMandalaDto(mandala as MandalaWithRelations);
   }
 
   async findAllPaginated(

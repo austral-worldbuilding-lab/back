@@ -1,4 +1,4 @@
 export enum MandalaType {
-  CHARACTER = 'character',
-  UNIFIED = 'unified',
+  CHARACTER = 'CHARACTER',
+  OVERLAP = 'OVERLAP',
 }
