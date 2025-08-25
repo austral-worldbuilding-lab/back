@@ -5,6 +5,7 @@ import {
   ArrayMinSize,
   IsNotEmpty,
   IsString,
+  IsHexColor,
 } from 'class-validator';
 
 export class OverlapMandalasDto {
@@ -25,6 +26,13 @@ export class OverlapMandalasDto {
     ],
     minItems: 2,
   })
+  @ApiProperty({
+    description: 'Color del personaje central en formato hexadecimal',
+    example: '#3B82F6',
+  })
+  @IsHexColor()
+  @IsNotEmpty()
+  color!: string;
   @IsArray()
   @ArrayMinSize(2, {
     message: 'Se requieren al menos 2 IDs de mandalas para la superposición',

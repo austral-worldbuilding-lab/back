@@ -35,7 +35,6 @@ import { OverlapResultDto } from './dto/overlap-result.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
-import { calculateAverageColor } from './utils/color-utils';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
 import {
   validateSameDimensions,
@@ -686,9 +685,7 @@ export class MandalaService {
         center: {
           name: `Centro Compuesto (${mandalas.length} personajes)`,
           description: `Combinación de personajes centrales de ${mandalas.length} mandalas`,
-          color: calculateAverageColor(
-            mandalas.map((m) => m.configuration.center.color),
-          ),
+          color: overlapDto.color,
         },
         dimensions: createOverlappedMandalaDto.dimensions,
         scales: createOverlappedMandalaDto.scales,
