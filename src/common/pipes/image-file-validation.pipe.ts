@@ -2,7 +2,13 @@ import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 
 @Injectable()
 export class ImageFileValidationPipe implements PipeTransform {
-  private readonly allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+  private readonly allowedExtensions = [
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.webp',
+  ];
 
   transform(value: string): string {
     if (!value) {
@@ -10,10 +16,10 @@ export class ImageFileValidationPipe implements PipeTransform {
     }
 
     const extension = this.getFileExtension(value);
-    
+
     if (!this.allowedExtensions.includes(extension)) {
       throw new BadRequestException(
-        `Invalid image file extension. Allowed extensions: ${this.allowedExtensions.join(', ')}`
+        `Invalid image file extension. Allowed extensions: ${this.allowedExtensions.join(', ')}`,
       );
     }
 
