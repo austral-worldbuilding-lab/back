@@ -153,7 +153,7 @@ export const ApiCreatePostit = () =>
     ApiOperation({
       summary: 'Crear un nuevo post-it en un mandala',
       description:
-        'Crea un nuevo post-it en el mandala especificado con coordenadas, dimensiones, sección y tags',
+        'Crea un nuevo post-it en el mandala especificado con coordenadas, dimensiones, sección y tags. Si se proporciona imageFileName, también genera una URL firmada para subir la imagen.',
     }),
     ApiParam({
       name: 'mandalaId',
@@ -162,7 +162,8 @@ export const ApiCreatePostit = () =>
     }),
     ApiResponse({
       status: 201,
-      description: 'El post-it ha sido creado exitosamente',
+      description:
+        'El post-it ha sido creado exitosamente. Incluye URL firmada si se proporcionó imageFileName.',
       type: PostitResponseDto,
     }),
     ApiResponse({

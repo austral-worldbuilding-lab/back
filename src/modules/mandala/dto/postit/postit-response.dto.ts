@@ -64,6 +64,24 @@ export class PostitResponseDto {
   @ValidateNested({ each: true })
   @Type(() => PostitResponseDto)
   childrens!: PostitResponseDto[];
+
+  @ApiProperty({
+    description: 'Nombre del archivo de imagen asociado al post-it (opcional)',
+    required: false,
+    example: 'image.jpg',
+  })
+  @IsString()
+  imageFileName?: string;
+
+  @ApiProperty({
+    description:
+      'URL firmada para subir la imagen (solo presente cuando se proporciona imageFileName)',
+    required: false,
+    example:
+      'https://storageaccount.blob.core.windows.net/container/path/image.jpg?sv=...',
+  })
+  @IsString()
+  presignedUrl?: string;
 }
 
 export function toPostitResponseDto(
@@ -76,5 +94,7 @@ export function toPostitResponseDto(
     section: postit.section,
     tags: postit.tags.map(toTagResponseDto),
     childrens: postit.childrens.map(toPostitResponseDto),
+    ...(postit.imageFileName && { imageFileName: postit.imageFileName }),
+    ...(postit.presignedUrl && { presignedUrl: postit.presignedUrl }),
   };
 }
