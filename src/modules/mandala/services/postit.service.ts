@@ -35,6 +35,32 @@ export class PostitService {
     private firebaseDataService: FirebaseDataService,
   ) {}
 
+  async collectPostitsWithSource(
+    mandalas: MandalaDto[],
+  ): Promise<
+    (PostitWithCoordinates & { from: { name: string; id: string } })[]
+  > {
+    const allPostits = await Promise.all(
+      mandalas.map(async (mandala) => {
+        const document = (await this.firebaseDataService.getDocument(
+          mandala.projectId,
+          mandala.id,
+        )) as FirestoreMandalaDocument | null;
+
+        const postits = document?.postits || [];
+        return postits.map((postit) => ({
+          ...postit,
+          from: {
+            name: mandala.name,
+            id: mandala.id,
+          },
+        }));
+      }),
+    );
+
+    return allPostits.flat();
+  }
+
   async generatePostitsForMandala(
     mandalaId: string,
     dimensions: string[],
