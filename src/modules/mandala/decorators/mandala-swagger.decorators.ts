@@ -5,6 +5,7 @@ import { CharacterListItemDto } from '../dto/character-list-item.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from '../dto/mandala.dto';
+import { OverlapResultDto } from '../dto/overlap-result.dto';
 import { PostitResponseDto } from '../dto/postit/postit-response.dto';
 
 export const ApiCreateMandala = () =>
@@ -340,5 +341,37 @@ export const ApiUpdatePostit = () =>
     ApiResponse({
       status: 404,
       description: 'Mandala o post-it no encontrado',
+    }),
+  );
+
+export const ApiOverlapMandalas = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Unir mandalas',
+      description:
+        'Crea una nueva mandala que es la unión de dos o más mandalas existentes, incluyendo todos sus post-its. ' +
+        'Todas las mandalas deben tener las mismas dimensiones y escalas para poder ser superpuestas. ' +
+        'La nueva mandala se guardará en el proyecto de la primera mandala de la lista, ' +
+        'permitiendo superponer mandalas de diferentes proyectos. ' +
+        'El centro de la nueva mandala contendrá todos los personajes centrales originales. ' +
+        'Todos los post-its serán copiados a la nueva mandala.',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Mandala unida creada exitosamente',
+      type: OverlapResultDto,
+    }),
+    ApiResponse({
+      status: 400,
+      description:
+        'Solicitud inválida - Las mandalas deben tener las mismas dimensiones y escalas',
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a uno o más proyectos',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Una o más mandalas no encontradas',
     }),
   );

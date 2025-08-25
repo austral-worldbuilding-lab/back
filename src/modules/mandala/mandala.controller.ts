@@ -44,6 +44,7 @@ import {
   ApiUnlinkMandala,
   ApiGetAvailableCharacters,
   ApiUpdatePostit,
+  ApiOverlapMandalas,
 } from './decorators/mandala-swagger.decorators';
 import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
@@ -53,6 +54,8 @@ import { GeneratePostitsDto } from './dto/generate-postits.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
+import { OverlapMandalasDto } from './dto/overlap-mandalas.dto';
+import { OverlapResultDto } from './dto/overlap-result.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
 import { PostitWithCoordinatesDto } from './dto/postit/postit-with-coordinates.dto';
 import { UpdatePostitDto } from './dto/postit/update-postit.dto';
@@ -348,42 +351,15 @@ export class MandalaController {
     };
   }
 
-  @Get(':id/firestore-document')
+  @Post('overlap')
   @UseGuards(MandalaRoleGuard)
-  @ApiOperation({
-    summary: '[TESTING ONLY] Get Firestore Mandala Document',
-    description:
-      'Retrieves the raw Firestore document for testing purposes. This endpoint is for development/testing only and should not be used in production.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully retrieved Firestore document',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'object',
-          description: 'The raw Firestore Mandala Document',
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 404, description: 'Mandala not found' })
-  @ApiResponse({
-    status: 403,
-    description: 'Prohibited - No access to this project',
-  })
-  async getFirestoreDocument(
-    @Param('id', new UuidValidationPipe()) id: string,
-  ): Promise<DataResponse<any>> {
-    const mandala = await this.mandalaService.findOne(id);
-    const firestoreDocument = await this.mandalaService.getFirestoreDocument(
-      mandala.projectId,
-      id,
-    );
-
+  @ApiOverlapMandalas()
+  async overlapMandalas(
+    @Body() overlapDto: OverlapMandalasDto,
+  ): Promise<DataResponse<OverlapResultDto>> {
+    const result = await this.mandalaService.overlapMandalas(overlapDto);
     return {
-      data: firestoreDocument,
+      data: result,
     };
   }
 }
