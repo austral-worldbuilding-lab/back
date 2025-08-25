@@ -47,6 +47,7 @@ export class ProjectRepository {
       description: project.description ?? undefined,
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
+      organizationId: project.organizationId,
     };
   }
 

@@ -17,15 +17,32 @@ import {
   FirestoreCharacter,
 } from '../firebase/types/firestore-character.type';
 
+import {
+  OVERLAP_ERROR_MESSAGES,
+  OVERLAP_ERROR_TYPES,
+} from './constants/overlap-error-messages';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
-import { CreateMandalaDto } from './dto/create-mandala.dto';
+import {
+  CreateMandalaCenterDto,
+  CreateMandalaDto,
+} from './dto/create-mandala.dto';
+import { CreateOverlappedMandalaDto } from './dto/create-overlapped-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
+import { OverlapMandalasDto } from './dto/overlap-mandalas.dto';
+import { OverlapResultDto } from './dto/overlap-result.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
+import {
+  validateSameDimensions,
+  validateSameScales,
+  getTargetProjectId,
+} from './utils/overlap-validation.utils';
+
+import { DimensionDto } from '@/common/dto/dimension.dto';
 
 @Injectable()
 export class MandalaService {
@@ -570,5 +587,212 @@ export class MandalaService {
         { mandalaId, originalError: errorMessage },
       );
     }
+  }
+
+  async overlapMandalas(
+    overlapDto: OverlapMandalasDto,
+  ): Promise<OverlapResultDto> {
+    this.logger.log(
+      `Starting overlap operation for ${overlapDto.mandalas.length} mandalas`,
+    );
+
+    try {
+      const mandalas = await this.validateAndRetrieveMandalas(
+        overlapDto.mandalas,
+      );
+      this.validateMandalaCompatibility(mandalas);
+
+      // Extract all postits from source mandalas
+      const allPostits = await Promise.all(
+        mandalas.map(async (mandala) => {
+          const document = (await this.firebaseDataService.getDocument(
+            mandala.projectId,
+            mandala.id,
+          )) as FirestoreMandalaDocument | null;
+
+          // Add metadata about which mandala each postit came from
+          const postits = document?.postits || [];
+          const postitsWithMetadata = postits.map((postit) => ({
+            ...postit,
+            from: {
+              name: mandala.name,
+              id: mandala.id,
+            },
+          }));
+
+          this.logger.log(
+            `Retrieved ${postitsWithMetadata.length} postits from mandala "${mandala.name}" (${mandala.id})`,
+          );
+
+          return postitsWithMetadata;
+        }),
+      );
+      const flattenedPostits = allPostits.flat();
+
+      // Extract all characters from source mandalas
+      const allCharacters = await Promise.all(
+        mandalas.map(async (mandala) => {
+          const document = (await this.firebaseDataService.getDocument(
+            mandala.projectId,
+            mandala.id,
+          )) as FirestoreMandalaDocument | null;
+
+          const characters = document?.characters || [];
+          const charactersWithMetadata = characters.map((character) => ({
+            ...character,
+            from: {
+              name: mandala.name,
+              id: mandala.id,
+            },
+          }));
+
+          this.logger.log(
+            `Retrieved ${charactersWithMetadata.length} characters from mandala "${mandala.name}" (${mandala.id})`,
+          );
+
+          return charactersWithMetadata;
+        }),
+      );
+      const flattenedCharacters = allCharacters.flat();
+
+      this.logger.log(`Total postits to overlap: ${flattenedPostits.length}`);
+      this.logger.log(
+        `Total characters to overlap: ${flattenedCharacters.length}`,
+      );
+
+      const overlappedConfiguration =
+        this.overlapMandalaConfigurations(mandalas);
+
+      this.logger.log(
+        `Total centers to overlap: ${overlappedConfiguration.center.length}`,
+      );
+
+      const targetProjectId = getTargetProjectId(mandalas);
+
+      // Create the overlapped mandala DTO with all centers
+      const createOverlappedMandalaDto: CreateOverlappedMandalaDto = {
+        name: overlapDto.name,
+        projectId: targetProjectId,
+        centers: overlappedConfiguration.center,
+        dimensions: overlappedConfiguration.dimensions,
+        scales: overlappedConfiguration.scales,
+      };
+
+      // Create the mandala with a composite center for database compatibility
+      const createMandalaDto: CreateMandalaDto = {
+        name: createOverlappedMandalaDto.name,
+        projectId: createOverlappedMandalaDto.projectId,
+        center: {
+          name: `Centro Compuesto (${mandalas.length} personajes)`,
+          description: `Combinación de personajes centrales de ${mandalas.length} mandalas`,
+          color: overlapDto.color,
+        },
+        dimensions: createOverlappedMandalaDto.dimensions,
+        scales: createOverlappedMandalaDto.scales,
+      };
+
+      const newMandala = await this.create(createMandalaDto);
+
+      await this.firebaseDataService.createDocument(
+        targetProjectId,
+        {
+          mandala: newMandala,
+          postits: flattenedPostits,
+          characters: flattenedCharacters,
+        },
+        newMandala.id,
+      );
+
+      this.logger.log(
+        `Successfully created overlapped mandala ${newMandala.id}`,
+      );
+
+      return {
+        mandala: newMandala,
+        centers: {
+          centers: createOverlappedMandalaDto.centers,
+        },
+        mergedCount: mandalas.length,
+        sourceMandalaIds: overlapDto.mandalas,
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to overlap mandalas: ${errorMessage}`, error);
+      throw new InternalServerErrorException({
+        message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
+        error: OVERLAP_ERROR_TYPES.OVERLAP_OPERATION_ERROR,
+        details: {
+          mandalaIds: overlapDto.mandalas,
+          originalError: errorMessage,
+        },
+      });
+    }
+  }
+
+  /**
+   * Validates and retrieves all mandalas for overlap operation
+   * @param mandalaIds - Array of mandala IDs to validate and retrieve
+   * @returns Array of validated MandalaDto objects
+   * @throws BadRequestException if mandalas don't exist
+   */
+  private async validateAndRetrieveMandalas(
+    mandalaIds: string[],
+  ): Promise<MandalaDto[]> {
+    // Validate that all mandalas exist
+    const mandalas = await Promise.all(
+      mandalaIds.map((id) => this.findOne(id)),
+    );
+
+    // Log project information for transparency
+    const projectIds = [...new Set(mandalas.map((m) => m.projectId))];
+    if (projectIds.length > 1) {
+      this.logger.log(
+        `Overlapping mandalas from ${projectIds.length} different projects: ${projectIds.join(', ')}. ` +
+          `New mandala will be saved in project: ${projectIds[0]}`,
+      );
+    } else {
+      this.logger.log(
+        `All ${mandalas.length} mandalas belong to project: ${projectIds[0]}`,
+      );
+    }
+
+    return mandalas;
+  }
+
+  /**
+   * Validates that all mandalas have the same dimensions and scales
+   * @param mandalas - Array of mandalas to validate
+   * @throws BadRequestException if mandalas have different dimensions or scales
+   */
+  private validateMandalaCompatibility(mandalas: MandalaDto[]): void {
+    validateSameDimensions(mandalas);
+    validateSameScales(mandalas);
+
+    const firstMandala = mandalas[0];
+    const dimensions = firstMandala.configuration.dimensions.map((d) => d.name);
+    const scales = firstMandala.configuration.scales;
+
+    this.logger.log(
+      `Validation successful: All ${mandalas.length} mandalas have matching dimensions [${dimensions.join(', ')}] and scales [${scales.join(', ')}]`,
+    );
+  }
+
+  private overlapMandalaConfigurations(mandalas: MandalaDto[]): {
+    center: CreateMandalaCenterDto[];
+    dimensions: DimensionDto[];
+    scales: string[];
+  } {
+    const allCenterCharacters = mandalas.map((m) => m.configuration.center);
+
+    const firstMandala = mandalas[0];
+    const dimensions = firstMandala.configuration.dimensions;
+    const scales = firstMandala.configuration.scales;
+
+    return {
+      center: allCenterCharacters,
+      dimensions: dimensions,
+      scales: scales,
+    };
   }
 }

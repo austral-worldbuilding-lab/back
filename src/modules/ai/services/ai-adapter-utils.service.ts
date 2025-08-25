@@ -74,8 +74,10 @@ export class AiAdapterUtilsService {
   ): Promise<FileBuffer[]> {
     this.logger.debug(`Loading files for project: ${projectId}`);
 
+    // Use hierarchy resolution to get org + project files for better AI context
+    const scope = await this.fileService.resolveScope('project', projectId);
     const fileBuffers =
-      await this.fileService.readAllFilesAsBuffersWithMetadata(projectId);
+      await this.fileService.readAllFilesAsBuffersWithMetadata(scope);
 
     if (fileBuffers.length === 0) {
       throw new Error('No files found for project');
