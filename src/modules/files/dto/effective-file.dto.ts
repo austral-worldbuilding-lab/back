@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { FileSource } from '../types/file-scope.type';
 
 export class EffectiveFileDto {
