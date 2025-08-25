@@ -275,14 +275,16 @@ export class MandalaService {
         existingCharacters.map((char) => [char.id, char]),
       );
 
+      const childrenCenterMap = new Map(
+        childrenCenter.map((center) => [center.id, center]),
+      );
+
       const childrenIds = new Set(childrenCenter.map((center) => center.id));
       const updatedCharacters: FirestoreCharacter[] = [];
 
       existingCharacters.forEach((existingChar) => {
         if (childrenIds.has(existingChar.id)) {
-          const centerData = childrenCenter.find(
-            (c) => c.id === existingChar.id,
-          );
+          const centerData = childrenCenterMap.get(existingChar.id);
           if (centerData) {
             updatedCharacters.push({
               ...existingChar,
@@ -296,10 +298,8 @@ export class MandalaService {
 
       // Add only the specific new character if provided (when linking)
       if (newChildId) {
-        const newCenter = childrenCenter.find(
-          (center) => center.id === newChildId,
-        );
-        if (newCenter && !existingCharactersMap.has(newCenter.id)) {
+        const newCenter = childrenCenterMap.get(newChildId);
+        if (newCenter && !existingCharactersMap.has(newChildId)) {
           updatedCharacters.push({
             id: newCenter.id,
             name: newCenter.name,
