@@ -66,6 +66,7 @@ import {
 } from './guards/mandala-role.guard';
 import { MandalaService } from './mandala.service';
 import { PostitService } from './services/postit.service';
+import { MandalaType } from './types/mandala-type.enum';
 import { PostitWithCoordinates } from './types/postits';
 import { AiQuestionResponse } from './types/questions';
 
@@ -85,7 +86,10 @@ export class MandalaController {
   async create(
     @Body() createMandalaDto: CreateMandalaDto,
   ): Promise<MessageResponse<MandalaDto>> {
-    const mandala = await this.mandalaService.create(createMandalaDto);
+    const mandala = await this.mandalaService.create(
+      createMandalaDto,
+      MandalaType.CHARACTER,
+    );
     return {
       message: 'Mandala created successfully',
       data: mandala,

@@ -34,6 +34,7 @@ import { OverlapResultDto } from './dto/overlap-result.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
+import { MandalaType } from './types/mandala-type.enum';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
 import {
   validateSameDimensions,
@@ -70,11 +71,16 @@ export class MandalaService {
     return createMandalaDto;
   }
 
-  async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
+  async create(
+    createMandalaDto: CreateMandalaDto,
+    type: MandalaType,
+  ): Promise<MandalaDto> {
     const completeDto: CreateMandalaDto =
       await this.completeMissingVariables(createMandalaDto);
-    const mandala: MandalaDto =
-      await this.mandalaRepository.create(completeDto);
+    const mandala: MandalaDto = await this.mandalaRepository.create(
+      completeDto,
+      type,
+    );
 
     try {
       const childrenCenter = (
@@ -93,6 +99,7 @@ export class MandalaService {
         mandala,
         postits: [],
         characters: childrenCenter,
+        type,
       };
 
       await this.firebaseDataService.createDocument(
@@ -324,7 +331,10 @@ export class MandalaService {
       );
     }
 
-    const mandala: MandalaDto = await this.create(createMandalaDto);
+    const mandala: MandalaDto = await this.create(
+      createMandalaDto,
+      MandalaType.CHARACTER,
+    );
 
     try {
       const postits: PostitWithCoordinates[] =
@@ -618,8 +628,8 @@ export class MandalaService {
       // Create the mandala with a composite center for database compatibility
       // TODO: handle properly the center in the DB only as list of centers when mandala type is OVERLAP
       const compositeCenter: CreateMandalaCenterDto = {
-        name: overlappedConfiguration.center.map((c) => c.name).join(' + '),
-        description: `Overlapped centers: ${overlappedConfiguration.center
+        name: overlapDto.name,
+        description: `Mandala unificada: ${overlappedConfiguration.center
           .map((c) => c.name)
           .join(', ')}`,
         color: overlapDto.color,
@@ -633,14 +643,17 @@ export class MandalaService {
         scales: overlappedConfiguration.scales,
       };
 
-      const newMandala = await this.create(createMandalaDto);
+      const newMandala = await this.create(
+        createMandalaDto,
+        MandalaType.OVERLAP,
+      );
 
       // TODO: handle properly the center in the DB only as list of centers when mandala type is OVERLAP, here we are overwriting the center with the list into Firestore
       const mandalaWithCenters = {
         ...newMandala,
         configuration: {
           ...newMandala.configuration,
-          centers: overlappedConfiguration.center,
+          characters: overlappedConfiguration.center,
         },
       };
 

@@ -1,7 +1,15 @@
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+
+import { MandalaType } from './mandala-type.enum';
 
 import { CreateMandalaCenterDto } from '@/modules/mandala/dto/create-mandala.dto';
 
@@ -31,4 +39,12 @@ export class CreateMandalaConfiguration {
   @IsArray()
   @IsString({ each: true })
   scales!: string[];
+
+  @ApiProperty({
+    description: 'Tipo de mandala',
+    example: 'CHARACTER',
+  })
+  @IsEnum(MandalaType)
+  @IsNotEmpty()
+  type!: MandalaType;
 }

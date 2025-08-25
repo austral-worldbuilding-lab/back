@@ -29,7 +29,7 @@ export class OverlapMandalaConfigurationDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateMandalaCenterDto)
-  centers!: CreateMandalaCenterDto[];
+  characters!: CreateMandalaCenterDto[];
 
   @ApiProperty({
     description: 'Dimensiones del mandala',
