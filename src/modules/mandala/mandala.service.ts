@@ -26,7 +26,6 @@ import {
   CreateMandalaCenterDto,
   CreateMandalaDto,
 } from './dto/create-mandala.dto';
-import { CreateOverlappedMandalaDto } from './dto/create-overlapped-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
@@ -602,63 +601,10 @@ export class MandalaService {
       );
       this.validateMandalaCompatibility(mandalas);
 
-      // Extract all postits from source mandalas
-      const allPostits = await Promise.all(
-        mandalas.map(async (mandala) => {
-          const document = (await this.firebaseDataService.getDocument(
-            mandala.projectId,
-            mandala.id,
-          )) as FirestoreMandalaDocument | null;
-
-          // Add metadata about which mandala each postit came from
-          const postits = document?.postits || [];
-          const postitsWithMetadata = postits.map((postit) => ({
-            ...postit,
-            from: {
-              name: mandala.name,
-              id: mandala.id,
-            },
-          }));
-
-          this.logger.log(
-            `Retrieved ${postitsWithMetadata.length} postits from mandala "${mandala.name}" (${mandala.id})`,
-          );
-
-          return postitsWithMetadata;
-        }),
-      );
-      const flattenedPostits = allPostits.flat();
-
-      // Extract all characters from source mandalas
-      const allCharacters = await Promise.all(
-        mandalas.map(async (mandala) => {
-          const document = (await this.firebaseDataService.getDocument(
-            mandala.projectId,
-            mandala.id,
-          )) as FirestoreMandalaDocument | null;
-
-          const characters = document?.characters || [];
-          const charactersWithMetadata = characters.map((character) => ({
-            ...character,
-            from: {
-              name: mandala.name,
-              id: mandala.id,
-            },
-          }));
-
-          this.logger.log(
-            `Retrieved ${charactersWithMetadata.length} characters from mandala "${mandala.name}" (${mandala.id})`,
-          );
-
-          return charactersWithMetadata;
-        }),
-      );
-      const flattenedCharacters = allCharacters.flat();
+      const flattenedPostits =
+        await this.postitService.collectPostitsWithSource(mandalas);
 
       this.logger.log(`Total postits to overlap: ${flattenedPostits.length}`);
-      this.logger.log(
-        `Total characters to overlap: ${flattenedCharacters.length}`,
-      );
 
       const overlappedConfiguration =
         this.overlapMandalaConfigurations(mandalas);
@@ -669,43 +615,32 @@ export class MandalaService {
 
       const targetProjectId = getTargetProjectId(mandalas);
 
-      // Create the overlapped mandala DTO with all centers
-      const createOverlappedMandalaDto: CreateOverlappedMandalaDto = {
-        name: overlapDto.name,
-        projectId: targetProjectId,
-        centers: overlappedConfiguration.center,
-        dimensions: overlappedConfiguration.dimensions,
-        scales: overlappedConfiguration.scales,
-      };
-
       // Create the mandala with a composite center for database compatibility
-      // TODO: handle the center as a list of centers when mandala type is OVERLAP
+      // TODO: handle properly the center in the DB only as list of centers when mandala type is OVERLAP
       const compositeCenter: CreateMandalaCenterDto = {
-        name: createOverlappedMandalaDto.centers
-          .map((c) => c.name)
-          .join(' + '),
-        description: `Overlapped centers: ${createOverlappedMandalaDto.centers
+        name: overlappedConfiguration.center.map((c) => c.name).join(' + '),
+        description: `Overlapped centers: ${overlappedConfiguration.center
           .map((c) => c.name)
           .join(', ')}`,
         color: overlapDto.color,
       };
 
       const createMandalaDto: CreateMandalaDto = {
-        name: createOverlappedMandalaDto.name,
-        projectId: createOverlappedMandalaDto.projectId,
+        name: overlapDto.name,
+        projectId: targetProjectId,
         center: compositeCenter,
-        dimensions: createOverlappedMandalaDto.dimensions,
-        scales: createOverlappedMandalaDto.scales,
+        dimensions: overlappedConfiguration.dimensions,
+        scales: overlappedConfiguration.scales,
       };
 
       const newMandala = await this.create(createMandalaDto);
 
-      // Persist full centers list in Firestore mandala document for overlapped mandalas
+      // TODO: handle properly the center in the DB only as list of centers when mandala type is OVERLAP, here we are overwriting the center with the list into Firestore
       const mandalaWithCenters = {
         ...newMandala,
         configuration: {
           ...newMandala.configuration,
-          centers: createOverlappedMandalaDto.centers,
+          center: overlappedConfiguration.center,
         },
       };
 
@@ -714,7 +649,7 @@ export class MandalaService {
         {
           mandala: mandalaWithCenters,
           postits: flattenedPostits,
-          characters: flattenedCharacters,
+          characters: [],
         },
         newMandala.id,
       );
@@ -724,10 +659,7 @@ export class MandalaService {
       );
 
       return {
-        mandala: newMandala,
-        centers: {
-          centers: createOverlappedMandalaDto.centers,
-        },
+        mandala: mandalaWithCenters,
         mergedCount: mandalas.length,
         sourceMandalaIds: overlapDto.mandalas,
       };
