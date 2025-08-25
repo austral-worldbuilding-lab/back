@@ -20,7 +20,16 @@ export class OverlapMandalaConfigurationDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateMandalaCenterDto)
-  center!: CreateMandalaCenterDto[];
+  center!: CreateMandalaCenterDto;
+
+  @ApiProperty({
+    description: 'Centros del mandala superpuesto',
+    type: [CreateMandalaCenterDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMandalaCenterDto)
+  centers!: CreateMandalaCenterDto[];
 
   @ApiProperty({
     description: 'Dimensiones del mandala',
