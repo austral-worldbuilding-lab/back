@@ -18,6 +18,17 @@ import {
   ApiUploadFiles,
   ApiGetFileBuffers,
   ApiDeleteFile,
+  ApiGetOrganizationFiles,
+  ApiUploadOrganizationFiles,
+  ApiDeleteOrganizationFile,
+  ApiGetProjectFilesWithInheritance,
+  ApiUploadProjectFiles,
+  ApiDeleteProjectFile,
+  ApiGetMandalaFiles,
+  ApiUploadMandalaFiles,
+  ApiDeleteMandalaFile,
+  ApiGetMandalaBuffers,
+  ApiGetProjectBuffers,
 } from './decorators/file-swagger.decorators';
 import { CreateFileDto } from './dto/create-file.dto';
 import { FileService } from './file.service';
@@ -83,7 +94,7 @@ export class FileController {
 
   @Post('organization/:orgId')
   @UseGuards(OrganizationFileRoleGuard)
-  @ApiUploadFiles()
+  @ApiUploadOrganizationFiles()
   async uploadOrganizationFiles(
     @Param('orgId', new UuidValidationPipe()) orgId: string,
     @Body() body: CreateFileDto[],
@@ -95,7 +106,7 @@ export class FileController {
 
   @Get('organization/:orgId')
   @UseGuards(OrganizationFileRoleGuard)
-  @ApiGetFiles()
+  @ApiGetOrganizationFiles()
   async getOrganizationFiles(
     @Param('orgId', new UuidValidationPipe()) orgId: string,
   ): Promise<DataResponse<EffectiveFile[]>> {
@@ -106,7 +117,7 @@ export class FileController {
 
   @Delete('organization/:orgId/:fileName')
   @UseGuards(OrganizationFileRoleGuard)
-  @ApiDeleteFile()
+  @ApiDeleteOrganizationFile()
   async deleteOrganizationFile(
     @Param('orgId', new UuidValidationPipe()) orgId: string,
     @Param('fileName') fileName: string,
@@ -118,7 +129,7 @@ export class FileController {
 
   @Post('project/:projectId')
   @UseGuards(ProjectFileRoleGuard)
-  @ApiUploadFiles()
+  @ApiUploadProjectFiles()
   async uploadProjectFiles(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() body: CreateFileDto[],
@@ -130,7 +141,7 @@ export class FileController {
 
   @Get('project/:projectId')
   @UseGuards(ProjectFileRoleGuard)
-  @ApiGetFiles()
+  @ApiGetProjectFilesWithInheritance()
   async getProjectFilesWithInheritance(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
   ): Promise<DataResponse<EffectiveFile[]>> {
@@ -141,7 +152,7 @@ export class FileController {
 
   @Delete('project/:projectId/:fileName')
   @UseGuards(ProjectFileRoleGuard)
-  @ApiDeleteFile()
+  @ApiDeleteProjectFile()
   async deleteProjectFile(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Param('fileName') fileName: string,
@@ -153,7 +164,7 @@ export class FileController {
 
   @Post('mandala/:mandalaId')
   @UseGuards(MandalaFileRoleGuard)
-  @ApiUploadFiles()
+  @ApiUploadMandalaFiles()
   async uploadMandalaFiles(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
     @Body() body: CreateFileDto[],
@@ -165,7 +176,7 @@ export class FileController {
 
   @Get('mandala/:mandalaId')
   @UseGuards(MandalaFileRoleGuard)
-  @ApiGetFiles()
+  @ApiGetMandalaFiles()
   async getMandalaFiles(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
   ): Promise<DataResponse<EffectiveFile[]>> {
@@ -176,7 +187,7 @@ export class FileController {
 
   @Delete('mandala/:mandalaId/:fileName')
   @UseGuards(MandalaFileRoleGuard)
-  @ApiDeleteFile()
+  @ApiDeleteMandalaFile()
   async deleteMandalaFile(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
     @Param('fileName') fileName: string,
@@ -188,7 +199,7 @@ export class FileController {
 
   @Get('mandala/:mandalaId/buffers')
   @UseGuards(MandalaFileRoleGuard)
-  @ApiGetFileBuffers()
+  @ApiGetMandalaBuffers()
   async getMandalaFileBuffers(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
   ): Promise<DataResponse<Buffer[]>> {
@@ -199,7 +210,7 @@ export class FileController {
 
   @Get('project/:projectId/buffers')
   @UseGuards(ProjectFileRoleGuard)
-  @ApiGetFileBuffers()
+  @ApiGetProjectBuffers()
   async getProjectFileBuffers(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
   ): Promise<DataResponse<Buffer[]>> {
