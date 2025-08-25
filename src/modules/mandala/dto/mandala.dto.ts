@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDate,
+  IsEnum,
   IsNotEmpty,
   IsString,
   IsUUID,
@@ -10,6 +11,7 @@ import {
 } from 'class-validator';
 
 import { CreateMandalaConfiguration } from '../types/mandala-configuration.type';
+import { MandalaType } from '../types/mandala-type.enum';
 
 export class MandalaDto {
   @ApiProperty({
@@ -26,6 +28,14 @@ export class MandalaDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
+
+  @ApiProperty({
+    description: 'Tipo de mandala según su función en el sistema',
+    enum: MandalaType,
+    example: MandalaType.OVERLAP,
+  })
+  @IsEnum(MandalaType)
+  type!: MandalaType;
 
   @ApiProperty({
     description: 'ID del proyecto al que pertenece el mandala',
@@ -45,7 +55,7 @@ export class MandalaDto {
 
   @ApiProperty({
     description:
-      'IDs de mandalas hijos (mandalas que son personajes en este mandala)',
+      'IDs de los mandalas hijos (mandalas que son personajes en este mandala)',
     type: [String],
     example: [
       'a1b2c3d4-e5f6-7890-1234-567890abcdef',
@@ -58,7 +68,7 @@ export class MandalaDto {
 
   @ApiProperty({
     description:
-      'IDs de mandalas padre (mandalas en las que esta es un personaje)',
+      'IDs de los mandalas padres (mandalas en los que este es un personaje)',
     type: [String],
     example: [
       'c3d4e5f6-a7b8-9012-3456-7890abcdef12',

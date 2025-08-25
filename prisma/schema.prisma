@@ -56,14 +56,15 @@ model UserProjectRole {
 }
 
 model Mandala {
-  id            String    @id @default(uuid())
+  id            String      @id @default(uuid())
   name          String
-  configuration Json // Contains centerCharacter, dimensions[] and scales[]
-  project       Project   @relation("ProjectToMandalas", fields: [projectId], references: [id], onDelete: Cascade)
+  type          MandalaType @default(CHARACTER)
+  configuration Json        // Contains centerCharacter, dimensions[] and scales[]
+  project       Project     @relation("ProjectToMandalas", fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  isActive      Boolean   @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  isActive      Boolean     @default(true)
   deletedAt     DateTime?
 
   children Mandala[] @relation("MandalaToMandala")
@@ -96,6 +97,11 @@ enum InvitationStatus {
   ACCEPTED
   REJECTED
   EXPIRED
+}
+
+enum MandalaType {
+  CHARACTER
+  OVERLAP
 }
 
 model Tag {

@@ -1,12 +1,13 @@
 import { CreateMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, $Enums } from '@prisma/client';
 
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
+import { MandalaType } from './types/mandala-type.enum';
 
 import { MandalaCenter } from '@/modules/mandala/types/mandala-center.type';
 
@@ -58,9 +59,14 @@ export class MandalaRepository {
       mandala.configuration,
     );
 
+    const parentIds = mandala.parent?.map((parent) => parent.id) || [];
+    const type =
+      parentIds.length > 0 ? MandalaType.CHARACTER : MandalaType.OVERLAP;
+
     return {
       id: mandala.id,
       name: mandala.name,
+      type,
       projectId: mandala.projectId,
       configuration: {
         center: configuration.center,
@@ -68,7 +74,7 @@ export class MandalaRepository {
         scales: configuration.scales,
       },
       childrenIds: mandala.children?.map((child) => child.id) || [],
-      parentIds: mandala.parent?.map((parent) => parent.id) || [],
+      parentIds,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
     };
@@ -86,6 +92,9 @@ export class MandalaRepository {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
         configuration: this.parseToJson(configuration),
+        type: createMandalaDto.parentId
+          ? $Enums.MandalaType.CHARACTER
+          : $Enums.MandalaType.OVERLAP,
         ...(createMandalaDto.parentId && {
           parent: {
             connect: { id: createMandalaDto.parentId },
@@ -98,7 +107,7 @@ export class MandalaRepository {
       },
     });
 
-    return this.parseToMandalaDto(mandala);
+    return this.parseToMandalaDto(mandala as MandalaWithRelations);
   }
 
   async findAllPaginated(
