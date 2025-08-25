@@ -43,6 +43,10 @@ import {
 
 import { DimensionDto } from '@/common/dto/dimension.dto';
 
+const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
+const DEFAULT_CHARACTER_SECTION = '';
+const DEFAULT_CHARACTER_DIMENSION = '';
+
 @Injectable()
 export class MandalaService {
   private readonly logger = new Logger(MandalaService.name);
@@ -84,9 +88,9 @@ export class MandalaService {
         name: center.name,
         description: center.description,
         color: center.color,
-        position: { x: 0, y: 0 },
-        section: '',
-        dimension: '',
+        position: DEFAULT_CHARACTER_POSITION,
+        section: DEFAULT_CHARACTER_SECTION,
+        dimension: DEFAULT_CHARACTER_DIMENSION,
       }));
 
       const firestoreData = {
@@ -247,7 +251,10 @@ export class MandalaService {
     }
   }
 
-  async updateParentMandalaDocument(parentMandalaId: string): Promise<void> {
+  async updateParentMandalaDocument(
+    parentMandalaId: string,
+    newChildId?: string,
+  ): Promise<void> {
     const parentMandala = await this.mandalaRepository.findOne(parentMandalaId);
 
     if (!parentMandala) {
@@ -272,28 +279,42 @@ export class MandalaService {
         existingCharacters.map((char) => [char.id, char]),
       );
 
-      const updatedCharacters = childrenCenter.map((center) => {
-        const existingCharacter = existingCharactersMap.get(center.id);
+      const childrenCenterMap = new Map(
+        childrenCenter.map((center) => [center.id, center]),
+      );
 
-        if (existingCharacter) {
-          return {
-            ...existingCharacter,
-            name: center.name,
-            description: center.description,
-            color: center.color,
-          };
+      const childrenIds = new Set(childrenCenter.map((center) => center.id));
+      const updatedCharacters: FirestoreCharacter[] = [];
+
+      existingCharacters.forEach((existingChar) => {
+        if (childrenIds.has(existingChar.id)) {
+          const centerData = childrenCenterMap.get(existingChar.id);
+          if (centerData) {
+            updatedCharacters.push({
+              ...existingChar,
+              name: centerData.name,
+              description: centerData.description,
+              color: centerData.color,
+            });
+          }
         }
-
-        return {
-          id: center.id,
-          name: center.name,
-          description: center.description,
-          color: center.color,
-          position: { x: 0, y: 0 },
-          section: '',
-          dimension: '',
-        };
       });
+
+      // Add only the specific new character if provided (when linking)
+      if (newChildId) {
+        const newCenter = childrenCenterMap.get(newChildId);
+        if (newCenter && !existingCharactersMap.has(newChildId)) {
+          updatedCharacters.push({
+            id: newCenter.id,
+            name: newCenter.name,
+            description: newCenter.description,
+            color: newCenter.color,
+            position: DEFAULT_CHARACTER_POSITION,
+            section: DEFAULT_CHARACTER_SECTION,
+            dimension: DEFAULT_CHARACTER_DIMENSION,
+          });
+        }
+      }
 
       const updateData = {
         characters: updatedCharacters,
@@ -340,9 +361,9 @@ export class MandalaService {
         name: center.name,
         description: center.description,
         color: center.color,
-        position: { x: 0, y: 0 },
-        section: '',
-        dimension: '',
+        position: DEFAULT_CHARACTER_POSITION,
+        section: DEFAULT_CHARACTER_SECTION,
+        dimension: DEFAULT_CHARACTER_DIMENSION,
       }));
 
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
@@ -453,7 +474,7 @@ export class MandalaService {
         childId,
       );
 
-      await this.updateParentMandalaDocument(parentId);
+      await this.updateParentMandalaDocument(parentId, childId);
 
       this.logger.log(
         `Mandala ${childId} successfully linked as child of ${parentId}`,
