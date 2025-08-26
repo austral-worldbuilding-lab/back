@@ -60,8 +60,7 @@ export class MandalaRepository {
     );
 
     const parentIds = mandala.parent?.map((parent) => parent.id) || [];
-    const type =
-      parentIds.length > 0 ? MandalaType.CHARACTER : MandalaType.OVERLAP;
+    const type = mandala.type as MandalaType;
 
     return {
       id: mandala.id,
