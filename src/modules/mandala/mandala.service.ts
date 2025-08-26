@@ -669,12 +669,16 @@ export class MandalaService {
         MandalaType.OVERLAP,
       );
 
-      // TODO: handle properly the center in the DB only as list of centers when mandala type is OVERLAP, here we are overwriting the center with the list into Firestore
+      // Structure with center containing characters inside
       const mandalaWithCenters = {
         ...newMandala,
         configuration: {
           ...newMandala.configuration,
-          characters: overlappedConfiguration.center,
+          center: {
+            ...newMandala.configuration.center,
+            characters: overlappedConfiguration.center,
+          },
+          characters: [],
         },
       };
 
