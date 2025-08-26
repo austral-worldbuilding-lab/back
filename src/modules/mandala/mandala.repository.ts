@@ -34,7 +34,6 @@ export class MandalaRepository {
         color: dim.color,
       })),
       scales: parsedConfig.scales,
-      type: parsedConfig.type,
     };
   }
 
@@ -52,7 +51,6 @@ export class MandalaRepository {
         color: dim.color,
       })),
       scales: config.scales,
-      type: config.type,
     } as Prisma.InputJsonValue;
   }
 
@@ -74,7 +72,6 @@ export class MandalaRepository {
         center: configuration.center,
         dimensions: configuration.dimensions,
         scales: configuration.scales,
-        type: configuration.type,
       },
       childrenIds: mandala.children?.map((child) => child.id) || [],
       parentIds,
@@ -91,13 +88,13 @@ export class MandalaRepository {
       center: createMandalaDto.center,
       dimensions: createMandalaDto.dimensions!,
       scales: createMandalaDto.scales!,
-      type,
     };
 
     const mandala = await this.prisma.mandala.create({
       data: {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
+        type: type,
         configuration: this.parseToJson(configuration),
         ...(createMandalaDto.parentId && {
           parent: {
