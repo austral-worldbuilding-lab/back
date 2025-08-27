@@ -218,6 +218,14 @@ export class MandalaRepository {
     });
   }
 
+  /**
+   * Finds all child mandalas of a given parent mandala and returns their center information.
+   * This is used to populate the characters field in Firestore documents with the centers
+   * of all linked child mandalas, maintaining the hierarchical relationship in the UI.
+   *
+   * @param mandalaId - The ID of the parent mandala
+   * @returns Array of MandalaCenter objects from all child mandalas
+   */
   async findChildrenMandalasCenters(
     mandalaId: string,
   ): Promise<MandalaCenter[]> {

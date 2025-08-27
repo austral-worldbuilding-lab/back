@@ -60,7 +60,7 @@ export class MandalaService {
     private aiService: AiService,
   ) {}
 
-  private async completeMissingVariables(
+  private async completeMissingConfiguration(
     createMandalaDto: CreateMandalaDto,
   ): Promise<CreateMandalaDto> {
     if (!createMandalaDto.dimensions || !createMandalaDto.scales) {
@@ -80,7 +80,7 @@ export class MandalaService {
     type: MandalaType,
   ): Promise<MandalaDto> {
     const completeDto: CreateMandalaDto =
-      await this.completeMissingVariables(createMandalaDto);
+      await this.completeMissingConfiguration(createMandalaDto);
     const mandala: MandalaDto = await this.mandalaRepository.create(
       completeDto,
       type,
