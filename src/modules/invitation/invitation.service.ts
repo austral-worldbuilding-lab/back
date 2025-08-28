@@ -8,6 +8,7 @@ import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus } from '@prisma/client';
+import { randomBytes } from 'crypto';
 
 import { MailService } from '../mail/mail.service';
 
@@ -217,6 +218,91 @@ export class InvitationService {
     return this.mapToInvitationDto(updatedInvitation);
   }
 
+  async createInviteLink(
+    projectId: string,
+    role: string,
+    senderId: string,
+    expiresAt?: Date,
+  ): Promise<InvitationDto & { inviteToken: string }> {
+    const project = await this.invitationRepository.findProjectById(projectId);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', projectId);
+    }
+    const sender = await this.invitationRepository.findUserById(senderId);
+    if (!sender) {
+      throw new ResourceNotFoundException('User', senderId);
+    }
+    let roleId: string;
+    const roleEntity = await this.roleService.findByName(role);
+    if (!roleEntity) {
+      throw new ResourceNotFoundException('Role', role);
+    }
+    roleId = roleEntity.id;
+
+    const inviteToken = this.generateInviteToken();
+    const defaultExpiresAt = expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const invitation = await this.invitationRepository.createWithToken(
+      projectId,
+      senderId,
+      roleId,
+      inviteToken,
+      defaultExpiresAt,
+    );
+
+    const dto = await this.mapToInvitationDto(invitation);
+    return { ...dto, inviteToken };
+  }
+
+  async acceptByToken(
+    token: string,
+    userId: string,
+  ): Promise<{ projectId: string; organizationId?: string }> {
+    const invitation = await this.invitationRepository.findByInviteToken(token);
+    
+    if (!invitation) {
+      throw new ResourceNotFoundException('Invitation', token);
+    }
+    if (invitation.expiresAt && new Date() > invitation.expiresAt) {
+      throw new BusinessLogicException('Invitation has expired', {
+        token,
+        expiresAt: invitation.expiresAt,
+      });
+    }
+    const isAlreadyMember = await this.invitationRepository.isUserProjectMember(
+      userId,
+      invitation.projectId,
+    );
+    
+    if (isAlreadyMember) {
+      throw new ConflictException('User is already a member of this project');
+    }
+
+    let roleId: string;
+    if (invitation.roleId) {
+      roleId = invitation.roleId;
+    } else {
+      const memberRole = await this.roleService.findOrCreate('member');
+      roleId = memberRole.id;
+    }
+
+    await this.invitationRepository.addUserToProject(
+      userId,
+      invitation.projectId,
+      roleId,
+    );
+
+    const project = await this.invitationRepository.findProjectById(invitation.projectId);
+
+    return { 
+      projectId: invitation.projectId,
+      organizationId: project?.organizationId 
+    };
+  }
+
+  private generateInviteToken(): string {
+    return randomBytes(32).toString('hex');
+  }
+
   private async mapToInvitationDto(
     invitation: Invitation,
   ): Promise<InvitationDto> {
@@ -232,12 +318,13 @@ export class InvitationService {
 
     return {
       id: invitation.id,
-      email: invitation.email,
+      email: invitation.email || undefined,
       token: invitation.token,
       status: invitation.status,
       expiresAt: invitation.expiresAt,
       projectId: invitation.projectId,
       role: roleName,
+      inviteToken: invitation.inviteToken || undefined,
     };
   }
 
@@ -255,12 +342,13 @@ export class InvitationService {
 
     return {
       id: invitation.id,
-      email: invitation.email,
+      email: invitation.email || undefined,
       token: invitation.token,
       status: invitation.status,
       expiresAt: invitation.expiresAt,
       projectId: invitation.projectId,
       role: roleName,
+      inviteToken: invitation.inviteToken || undefined,
     };
   }
 }
