@@ -175,21 +175,27 @@ export class InvitationController {
   @RequireOwner()
   @ApiBearerAuth()
   async createInviteLink(
-    @Body() createLinkDto: { projectId: string; role: string; organizationId: string; expiresAt?: Date },
+    @Body()
+    createLinkDto: {
+      projectId: string;
+      role: string;
+      organizationId: string;
+      expiresAt?: Date;
+    },
     @Request() req: RequestWithUser,
   ): Promise<MessageResponse<{ inviteUrl: string; token: string }>> {
     const invitation = await this.invitationService.createInviteLink(
       createLinkDto.projectId,
       createLinkDto.role,
       req.user.id,
-      createLinkDto.expiresAt
+      createLinkDto.expiresAt,
     );
-    
+
     const inviteUrl = `${process.env.FRONTEND_BASE_URL}/invite/${invitation.inviteToken}?org=${createLinkDto.organizationId}&project=${createLinkDto.projectId}`;
-    
+
     return {
       message: 'Invite link created successfully',
-      data: { inviteUrl, token: invitation.inviteToken }
+      data: { inviteUrl, token: invitation.inviteToken },
     };
   }
 
@@ -200,13 +206,16 @@ export class InvitationController {
     @Param('token') token: string,
     @Request() req: RequestWithUser,
   ): Promise<MessageResponse<{ projectId: string; organizationId?: string }>> {
-    const result = await this.invitationService.acceptByToken(token, req.user.id);
+    const result = await this.invitationService.acceptByToken(
+      token,
+      req.user.id,
+    );
     return {
       message: 'Successfully joined project',
-      data: { 
+      data: {
         projectId: result.projectId,
-        organizationId: result.organizationId 
-      }
+        organizationId: result.organizationId,
+      },
     };
   }
 }

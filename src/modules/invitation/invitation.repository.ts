@@ -166,7 +166,7 @@ export class InvitationRepository {
 
   async findByInviteToken(inviteToken: string): Promise<Invitation | null> {
     return this.prisma.invitation.findFirst({
-      where: { 
+      where: {
         inviteToken,
         status: InvitationStatus.PENDING,
       },

@@ -240,7 +240,8 @@ export class InvitationService {
     roleId = roleEntity.id;
 
     const inviteToken = this.generateInviteToken();
-    const defaultExpiresAt = expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const defaultExpiresAt =
+      expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const invitation = await this.invitationRepository.createWithToken(
       projectId,
       senderId,
@@ -258,7 +259,7 @@ export class InvitationService {
     userId: string,
   ): Promise<{ projectId: string; organizationId?: string }> {
     const invitation = await this.invitationRepository.findByInviteToken(token);
-    
+
     if (!invitation) {
       throw new ResourceNotFoundException('Invitation', token);
     }
@@ -272,7 +273,7 @@ export class InvitationService {
       userId,
       invitation.projectId,
     );
-    
+
     if (isAlreadyMember) {
       throw new ConflictException('User is already a member of this project');
     }
@@ -291,11 +292,13 @@ export class InvitationService {
       roleId,
     );
 
-    const project = await this.invitationRepository.findProjectById(invitation.projectId);
+    const project = await this.invitationRepository.findProjectById(
+      invitation.projectId,
+    );
 
-    return { 
+    return {
       projectId: invitation.projectId,
-      organizationId: project?.organizationId 
+      organizationId: project?.organizationId,
     };
   }
 
