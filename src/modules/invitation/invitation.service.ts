@@ -223,6 +223,8 @@ export class InvitationService {
     role: string,
     senderId: string,
     expiresAt?: Date,
+    email?: string,
+    sendEmail?: boolean,
   ): Promise<InvitationDto & { inviteToken: string }> {
     const project = await this.invitationRepository.findProjectById(projectId);
     if (!project) {
@@ -249,6 +251,18 @@ export class InvitationService {
       inviteToken,
       defaultExpiresAt,
     );
+
+    if (email && sendEmail) {
+      await this.mailService.sendInvitationEmail({
+        to: email,
+        inviteeName: email,
+        invitedByName: sender.username,
+        projectName: project.name,
+        token: inviteToken,
+        organizationId: project.organizationId || undefined,
+        projectId: projectId,
+      });
+    }
 
     const dto = await this.mapToInvitationDto(invitation);
     return { ...dto, inviteToken };
@@ -298,7 +312,7 @@ export class InvitationService {
 
     return {
       projectId: invitation.projectId,
-      organizationId: project?.organizationId,
+      organizationId: project?.organizationId || undefined,
     };
   }
 

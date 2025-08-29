@@ -181,6 +181,8 @@ export class InvitationController {
       role: string;
       organizationId: string;
       expiresAt?: Date;
+      email?: string;
+      sendEmail?: boolean;
     },
     @Request() req: RequestWithUser,
   ): Promise<MessageResponse<{ inviteUrl: string; token: string }>> {
@@ -189,12 +191,16 @@ export class InvitationController {
       createLinkDto.role,
       req.user.id,
       createLinkDto.expiresAt,
+      createLinkDto.email,
+      createLinkDto.sendEmail,
     );
 
     const inviteUrl = `${process.env.FRONTEND_BASE_URL}/invite/${invitation.inviteToken}?org=${createLinkDto.organizationId}&project=${createLinkDto.projectId}`;
 
     return {
-      message: 'Invite link created successfully',
+      message: createLinkDto.sendEmail
+        ? 'Invitation sent successfully'
+        : 'Invite link created successfully',
       data: { inviteUrl, token: invitation.inviteToken },
     };
   }
