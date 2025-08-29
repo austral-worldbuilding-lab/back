@@ -48,14 +48,15 @@ import {
 } from './decorators/mandala-swagger.decorators';
 import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
-import { CreateMandalaDto } from './dto/create-mandala.dto';
+import {
+  CreateMandalaDto,
+  CreateOverlappedMandalaDto,
+} from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { GeneratePostitsDto } from './dto/generate-postits.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import { MandalaDto } from './dto/mandala.dto';
-import { OverlapMandalasDto } from './dto/overlap-mandalas.dto';
-import { OverlapResultDto } from './dto/overlap-result.dto';
+import { MandalaDto, OverlappedMandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
 import { PostitWithCoordinatesDto } from './dto/postit/postit-with-coordinates.dto';
 import { UpdatePostitDto } from './dto/postit/update-postit.dto';
@@ -359,8 +360,8 @@ export class MandalaController {
   @UseGuards(MandalaRoleGuard)
   @ApiOverlapMandalas()
   async overlapMandalas(
-    @Body() overlapDto: OverlapMandalasDto,
-  ): Promise<DataResponse<OverlapResultDto>> {
+    @Body() overlapDto: CreateOverlappedMandalaDto,
+  ): Promise<DataResponse<OverlappedMandalaDto>> {
     const result = await this.mandalaService.overlapMandalas(overlapDto);
     return {
       data: result,

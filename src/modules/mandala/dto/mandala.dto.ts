@@ -10,7 +10,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { CreateMandalaConfiguration } from '../types/mandala-configuration.type';
+import {
+  CreateMandalaConfiguration,
+  CreateOverlappedMandalaConfiguration,
+} from '../types/mandala-configuration.type';
 import { MandalaType } from '../types/mandala-type.enum';
 
 export class MandalaDto {
@@ -92,4 +95,14 @@ export class MandalaDto {
   })
   @IsDate()
   updatedAt!: Date;
+}
+
+export class OverlappedMandalaDto extends MandalaDto {
+  @ApiProperty({
+    description: 'Configuración del mandala superpuesto',
+    type: CreateOverlappedMandalaConfiguration,
+  })
+  @ValidateNested()
+  @Type(() => CreateOverlappedMandalaConfiguration)
+  declare configuration: CreateOverlappedMandalaConfiguration;
 }
