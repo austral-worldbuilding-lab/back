@@ -25,12 +25,12 @@ import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaCenterWithOriginDto,
   CreateMandalaDto,
-  CreateOverlappedMandalaCenterDto,
+  CreateMandalaCenterDto,
   CreateOverlappedMandalaDto,
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import { MandalaDto, OverlappedMandalaDto } from './dto/mandala.dto';
+import { MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
@@ -103,7 +103,6 @@ export class MandalaService {
         mandala,
         postits: [],
         characters: childrenCenter,
-        type,
       };
 
       await this.firebaseDataService.createDocument(
@@ -621,7 +620,7 @@ export class MandalaService {
 
   async overlapMandalas(
     createOverlapDto: CreateOverlappedMandalaDto,
-  ): Promise<OverlappedMandalaDto> {
+  ): Promise<MandalaDto> {
     this.logger.log(
       `Starting overlap operation for ${createOverlapDto.mandalas.length} mandalas`,
     );
@@ -642,9 +641,11 @@ export class MandalaService {
 
       const allCenterCharacters: CreateMandalaCenterWithOriginDto[] =
         mandalas.map((m) => ({
-          ...m.configuration.center,
+          description: m.configuration.center.description,
+          color: m.configuration.center.color,
           from: {
             id: m.id,
+            name: m.name,
           },
         }));
 
@@ -654,16 +655,16 @@ export class MandalaService {
 
       const targetProjectId = getTargetProjectId(mandalas);
 
-      const overlapCenter: CreateOverlappedMandalaCenterDto = {
+      const overlapCenter: CreateMandalaCenterDto = {
         name: createOverlapDto.name,
         description: `Mandala unificada: ${allCenterCharacters
-          .map((c) => c.name)
+          .map((c) => c.from.name)
           .join(', ')}`,
         color: createOverlapDto.color,
         characters: allCenterCharacters,
       };
 
-      const createOverlappedMandalaDto = {
+      const createOverlappedMandalaDto: CreateMandalaDto = {
         name: createOverlapDto.name,
         projectId: targetProjectId,
         center: overlapCenter,
@@ -679,9 +680,7 @@ export class MandalaService {
       await this.firebaseDataService.updateDocument(
         targetProjectId,
         {
-          mandala: createOverlappedMandalaDto,
           postits: flattenedPostits,
-          characters: [],
         },
         newMandala.id,
       );
@@ -690,7 +689,7 @@ export class MandalaService {
         `Successfully created overlapped mandala ${newMandala.id}`,
       );
 
-      return newMandala as OverlappedMandalaDto;
+      return newMandala;
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';

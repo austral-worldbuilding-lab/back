@@ -56,7 +56,7 @@ import { FilterSectionDto } from './dto/filter-option.dto';
 import { GeneratePostitsDto } from './dto/generate-postits.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import { MandalaDto, OverlappedMandalaDto } from './dto/mandala.dto';
+import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
 import { PostitWithCoordinatesDto } from './dto/postit/postit-with-coordinates.dto';
 import { UpdatePostitDto } from './dto/postit/update-postit.dto';
@@ -361,9 +361,10 @@ export class MandalaController {
   @ApiOverlapMandalas()
   async overlapMandalas(
     @Body() overlapDto: CreateOverlappedMandalaDto,
-  ): Promise<DataResponse<OverlappedMandalaDto>> {
+  ): Promise<MessageResponse<MandalaDto>> {
     const result = await this.mandalaService.overlapMandalas(overlapDto);
     return {
+      message: 'Mandala superpuesto creado correctamente',
       data: result,
     };
   }

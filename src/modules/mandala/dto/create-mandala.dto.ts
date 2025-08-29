@@ -12,6 +12,38 @@ import {
   IsHexColor,
 } from 'class-validator';
 
+export class CreateMandalaCenterWithOriginDto {
+  @ApiProperty({
+    description: 'Descripción del personaje central',
+    example: 'Alumno de 23 años que estudia en la universidad',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'Color del personaje central en formato hexadecimal',
+    example: '#3B82F6',
+  })
+  @IsHexColor()
+  @IsNotEmpty()
+  color!: string;
+
+  @ApiProperty({
+    description: 'Información del mandala de origen',
+    type: 'object',
+    properties: {
+      id: { type: 'string', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef' },
+      name: { type: 'string', example: 'Mandala de origen' },
+    },
+  })
+  from!: {
+    id: string;
+    name: string;
+  };
+}
+
 export class CreateMandalaCenterDto {
   @ApiProperty({
     description: 'Nombre del personaje central',
@@ -37,20 +69,16 @@ export class CreateMandalaCenterDto {
   @IsHexColor()
   @IsNotEmpty()
   color!: string;
-}
 
-export class CreateMandalaCenterWithOriginDto extends CreateMandalaCenterDto {
   @ApiProperty({
-    description: 'Información del mandala de origen',
-    type: 'object',
-    properties: {
-      id: { type: 'string', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef' },
-    },
+    description: 'Personajes centrales del mandala',
+    type: [CreateMandalaCenterWithOriginDto],
   })
-  from!: {
-    id: string;
-    name: string;
-  };
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMandalaCenterWithOriginDto)
+  characters?: CreateMandalaCenterWithOriginDto[];
 }
 
 export class CreateMandalaDto {
@@ -114,20 +142,6 @@ export class CreateMandalaDto {
   @IsUUID()
   @IsOptional()
   parentId?: string | null;
-}
-
-export class CreateOverlappedMandalaCenterDto extends CreateMandalaCenterDto {
-  @ApiProperty({
-    description:
-      'Lista de todos los personajes centrales originales de las mandalas superpuestas',
-    type: [CreateMandalaCenterWithOriginDto],
-    minItems: 1,
-  })
-  @IsArray()
-  @ArrayMinSize(1, { message: 'At least one center character is required' })
-  @ValidateNested({ each: true })
-  @Type(() => CreateMandalaCenterWithOriginDto)
-  characters!: CreateMandalaCenterWithOriginDto[];
 }
 
 export class CreateOverlappedMandalaDto {
