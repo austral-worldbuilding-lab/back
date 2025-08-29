@@ -9,13 +9,14 @@ datasource db {
 }
 
 model User {
-  id                String                 @id @default(uuid())
-  username          String                 @unique
-  email             String                 @unique
-  is_active         Boolean                @default(true)
-  projectRoles      UserProjectRole[]
-  Invitation        Invitation[]
-  organizationRoles UserOrganizationRole[]
+  id                     String                   @id @default(uuid())
+  username               String                   @unique
+  email                  String                   @unique
+  is_active              Boolean                  @default(true)
+  projectRoles           UserProjectRole[]
+  Invitation             Invitation[]
+  organizationRoles      UserOrganizationRole[]
+  OrganizationInvitation OrganizationInvitation[]
 }
 
 model Project {
@@ -36,11 +37,12 @@ model Project {
 }
 
 model Role {
-  id                String                 @id @default(uuid())
-  name              String                 @unique
-  userRoles         UserProjectRole[]
-  organizationRoles UserOrganizationRole[]
-  invitations       Invitation[]
+  id                      String                   @id @default(uuid())
+  name                    String                   @unique
+  userRoles               UserProjectRole[]
+  organizationRoles       UserOrganizationRole[]
+  invitations             Invitation[]
+  organizationInvitations OrganizationInvitation[]
 }
 
 model UserProjectRole {
@@ -123,8 +125,9 @@ model Organization {
   isActive  Boolean   @default(true)
   deletedAt DateTime?
 
-  projects  Project[]
-  userRoles UserOrganizationRole[]
+  projects                Project[]
+  userRoles               UserOrganizationRole[]
+  organizationInvitations OrganizationInvitation[] @relation("OrganizationToInvitations")
 }
 
 model UserOrganizationRole {
@@ -137,4 +140,25 @@ model UserOrganizationRole {
   roleId         String
 
   @@unique([userId, organizationId])
+}
+
+model OrganizationInvitation {
+  id        String           @id @default(uuid())
+  email     String
+  token     String           @unique
+  status    InvitationStatus @default(PENDING)
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  organization   Organization @relation("OrganizationToInvitations", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+  invitedById String // quien manda la invitación
+
+  role   Role?   @relation(fields: [roleId], references: [id])
+  roleId String? // rol que tendrá el usuario invitado
+
+  @@unique([email, organizationId])
 }

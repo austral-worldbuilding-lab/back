@@ -1,0 +1,149 @@
+import { randomUUID } from 'crypto';
+
+import { PrismaService } from '@modules/prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import {
+  InvitationStatus,
+  Organization,
+  User,
+  OrganizationInvitation,
+} from '@prisma/client';
+
+const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
+
+@Injectable()
+export class OrganizationInvitationRepository {
+  constructor(private prisma: PrismaService) {}
+
+  async findOrganizationById(id: string): Promise<Organization | null> {
+    return this.prisma.organization.findFirst({
+      where: {
+        id,
+        isActive: true,
+      },
+    });
+  }
+
+  async findUserById(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  async create(
+    email: string,
+    organizationId: string,
+    invitedById: string,
+    roleId?: string,
+    expiresAt?: string,
+  ): Promise<OrganizationInvitation> {
+    const token = randomUUID();
+
+    // Si no se pasa fecha de expiración, se setea a +7 días
+    const expiration = expiresAt
+      ? new Date(expiresAt)
+      : new Date(Date.now() + SEVEN_DAYS_IN_SECONDS * 1000);
+
+    return this.prisma.organizationInvitation.create({
+      data: {
+        email,
+        organizationId,
+        invitedById,
+        token,
+        expiresAt: expiration,
+        ...(roleId && { roleId }),
+      },
+    });
+  }
+
+  async findAllPaginated(
+    skip: number,
+    take: number,
+    organizationId?: string,
+    status?: InvitationStatus,
+  ): Promise<[OrganizationInvitation[], number]> {
+    const where = {
+      ...(organizationId && { organizationId }),
+      ...(status && { status }),
+    };
+
+    const [invitations, total] = await this.prisma.$transaction([
+      this.prisma.organizationInvitation.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.organizationInvitation.count({ where }),
+    ]);
+
+    return [invitations, total];
+  }
+
+  async findRolesByIds(
+    roleIds: string[],
+  ): Promise<Array<{ id: string; name: string }>> {
+    if (roleIds.length === 0) return [];
+
+    return this.prisma.role.findMany({
+      where: { id: { in: roleIds } },
+      select: { id: true, name: true },
+    });
+  }
+
+  async findById(id: string): Promise<OrganizationInvitation | null> {
+    return this.prisma.organizationInvitation.findUnique({
+      where: { id },
+    });
+  }
+
+  async findByEmail(
+    email: string,
+    organizationId: string,
+  ): Promise<OrganizationInvitation | null> {
+    return this.prisma.organizationInvitation.findFirst({
+      where: { email, organizationId },
+    });
+  }
+
+  async update(
+    id: string,
+    status: InvitationStatus,
+  ): Promise<OrganizationInvitation | null> {
+    return this.prisma.organizationInvitation.update({
+      where: { id },
+      data: { status },
+    });
+  }
+
+  async delete(id: string): Promise<OrganizationInvitation> {
+    return this.prisma.organizationInvitation.delete({
+      where: { id },
+    });
+  }
+
+  async acceptInvitationAndAddUser(
+    invitationId: string,
+    userId: string,
+    roleId: string,
+  ): Promise<OrganizationInvitation> {
+    return this.prisma.$transaction(async (tx) => {
+      // Update invitation status
+      const invitation = await tx.organizationInvitation.update({
+        where: { id: invitationId },
+        data: { status: InvitationStatus.ACCEPTED },
+      });
+
+      // Add user to organization
+      await tx.userOrganizationRole.create({
+        data: {
+          userId,
+          organizationId: invitation.organizationId,
+          roleId,
+        },
+      });
+
+      return invitation;
+    });
+  }
+}
