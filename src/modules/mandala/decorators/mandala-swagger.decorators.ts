@@ -1,12 +1,13 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
+import { AiQuestionResponseDto } from '../dto/ai-question-response.dto';
 import { CharacterListItemDto } from '../dto/character-list-item.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from '../dto/mandala.dto';
-import { OverlapResultDto } from '../dto/overlap-result.dto';
 import { PostitResponseDto } from '../dto/postit/postit-response.dto';
+import { PostitWithCoordinatesDto } from '../dto/postit/postit-with-coordinates.dto';
 
 export const ApiCreateMandala = () =>
   applyDecorators(
@@ -360,7 +361,7 @@ export const ApiOverlapMandalas = () =>
     ApiResponse({
       status: 200,
       description: 'Mandala unida creada exitosamente',
-      type: OverlapResultDto,
+      type: MandalaDto,
     }),
     ApiResponse({
       status: 400,
@@ -374,5 +375,59 @@ export const ApiOverlapMandalas = () =>
     ApiResponse({
       status: 404,
       description: 'Una o más mandalas no encontradas',
+    }),
+  );
+
+export const ApiGenerateQuestions = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar preguntas usando IA',
+      description:
+        'Genera preguntas guía para un mandala usando IA basándose en la configuración del mandala y archivos del proyecto',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala para generar preguntas',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Preguntas generadas exitosamente',
+      type: [AiQuestionResponseDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiGeneratePostits = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar post-its usando IA',
+      description:
+        'Genera post-its para un mandala usando IA basándose en la configuración del mandala y archivos del proyecto',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala para generar post-its',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Post-its generados exitosamente',
+      type: [PostitWithCoordinatesDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
     }),
   );
