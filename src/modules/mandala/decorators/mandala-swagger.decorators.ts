@@ -1,12 +1,12 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
+import { AiQuestionResponseDto } from '../dto/ai-question-response.dto';
 import { CharacterListItemDto } from '../dto/character-list-item.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from '../dto/mandala.dto';
 import { PostitResponseDto } from '../dto/postit/postit-response.dto';
-import { AiQuestionResponseDto } from '../dto/ai-question-response.dto';
 import { PostitWithCoordinatesDto } from '../dto/postit/postit-with-coordinates.dto';
 
 export const ApiCreateMandala = () =>

@@ -22,13 +22,7 @@ import {
   ParseIntPipe,
   HttpCode,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import {
   ApiCreateMandala,
@@ -48,7 +42,6 @@ import {
   ApiGenerateQuestions,
   ApiGeneratePostits,
 } from './decorators/mandala-swagger.decorators';
-import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaDto,
@@ -60,7 +53,6 @@ import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
-import { PostitWithCoordinatesDto } from './dto/postit/postit-with-coordinates.dto';
 import { UpdatePostitDto } from './dto/postit/update-postit.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import {
