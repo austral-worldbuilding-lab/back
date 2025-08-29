@@ -152,6 +152,7 @@ export class CreateOverlappedMandalaDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
+
   @ApiProperty({
     description:
       'Array de IDs de mandalas para superponer (mínimo 2). Todos los mandalas deben tener las mismas dimensiones y escalas. El nuevo mandala superpuesto se guardará en el proyecto del primer mandala de la lista.',
@@ -162,13 +163,6 @@ export class CreateOverlappedMandalaDto {
     ],
     minItems: 2,
   })
-  @ApiProperty({
-    description: 'Color del personaje central en formato hexadecimal',
-    example: '#3B82F6',
-  })
-  @IsHexColor()
-  @IsNotEmpty()
-  color!: string;
   @IsArray()
   @ArrayMinSize(2, {
     message: 'Se requieren al menos 2 IDs de mandalas para la superposición',
@@ -178,4 +172,12 @@ export class CreateOverlappedMandalaDto {
     message: 'Cada ID de mandala debe ser un UUID válido',
   })
   mandalas!: string[];
+
+  @ApiProperty({
+    description: 'Color del personaje central en formato hexadecimal',
+    example: '#3B82F6',
+  })
+  @IsHexColor()
+  @IsNotEmpty()
+  color!: string;
 }
