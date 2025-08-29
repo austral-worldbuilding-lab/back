@@ -45,6 +45,8 @@ import {
   ApiGetAvailableCharacters,
   ApiUpdatePostit,
   ApiOverlapMandalas,
+  ApiGenerateQuestions,
+  ApiGeneratePostits,
 } from './decorators/mandala-swagger.decorators';
 import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
@@ -296,20 +298,7 @@ export class MandalaController {
 
   @Post(':id/generate-questions')
   @UseGuards(MandalaRoleGuard)
-  @ApiOperation({
-    summary: 'Generate questions using AI',
-    description:
-      'Generate guiding questions for a mandala using AI based on mandala configuration and project files',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully generated questions',
-    type: [AiQuestionResponseDto],
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Mandala ID to generate questions for',
-  })
+  @ApiGenerateQuestions()
   async generateQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generateQuestionsDto: GenerateQuestionsDto,
@@ -327,20 +316,7 @@ export class MandalaController {
 
   @Post(':id/generate-postits')
   @UseGuards(MandalaRoleGuard)
-  @ApiOperation({
-    summary: 'Generate postits using AI',
-    description:
-      'Generate postits for a mandala using AI based on mandala configuration and project files',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully generated postits',
-    type: [PostitWithCoordinatesDto],
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Mandala ID to generate postits for',
-  })
+  @ApiGeneratePostits()
   async generatePostits(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generatePostitsDto: GeneratePostitsDto,
