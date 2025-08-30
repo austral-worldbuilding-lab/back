@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto';
+
 import {
   ConflictException,
   ResourceNotFoundException,
@@ -8,7 +10,6 @@ import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus } from '@prisma/client';
-import { randomBytes } from 'crypto';
 
 import { MailService } from '../mail/mail.service';
 
@@ -234,12 +235,11 @@ export class InvitationService {
     if (!sender) {
       throw new ResourceNotFoundException('User', senderId);
     }
-    let roleId: string;
     const roleEntity = await this.roleService.findByName(role);
     if (!roleEntity) {
       throw new ResourceNotFoundException('Role', role);
     }
-    roleId = roleEntity.id;
+    const roleId = roleEntity.id;
 
     const inviteToken = this.generateInviteToken();
     const defaultExpiresAt =
