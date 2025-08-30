@@ -15,11 +15,11 @@ Reglas para la comparacion
 
 Reglas para los post-its
 • content: Contenido de 3–5 palabras, frase breve o pequeno sintagma con sentido gramatical, incluyendo articulo o preposicion si es necesario para mantener el sentido gramatical.
-• dimension: dimension a la que pertenece el post-it nuevo surgido de encontrar 2 o mas similitudes, diferencias o aspecto unico
-• section: seccion a la que pertenece el post-it nuevo surgido de encontrar 2 o mas similitudes, diferencias o aspecto unico
-• tags: etiquetas pertenecientes a los postits de origen de la comparacion que dio origen a este postit
-• type: ${comparisonType}
-• from: array de los personajes involucrados en la comparacion
+• dimension: debe copiar exactamente la dimensión de los post-its de origen que se están comparando. No inventar dimensiones nuevas.
+• section: debe copiar exactamente la sección de los post-its de origen. No inventar secciones nuevas.
+• tags: deben ser la unión de las etiquetas (tags) de los post-its de origen. No inventar etiquetas nuevas.
+• type: tipo de comparacion realizada: ${comparisonTypes}
+• from: lista de los personajes involucrados en la comparacion
 
 Formato de Salida
 {
@@ -27,11 +27,12 @@ Formato de Salida
   "dimension": "",
   "section": "",
   "tags": ["etiqueta1", "etiqueta2", "etiqueta3"]
-  "type": ""
+  "type": ${comparisonTypes}
   "from": ["character1", "character2", "character3"]
 }
 
-Contenido existente en las mandalas para comparar: ${mandalaDocument}
+Contenido existente en las mandalas para comparar
+${mandalaDocument}
 
 Consideraciones Adicionales:
 • Evita la Reduccion Simplista: El proposito es complejizar la vision sistemica del mundo, no simplificarla. La sintesis debe revelar las capas de informacion.
