@@ -12,6 +12,38 @@ import {
   IsHexColor,
 } from 'class-validator';
 
+export class CreateMandalaCenterWithOriginDto {
+  @ApiProperty({
+    description: 'Descripción del personaje central',
+    example: 'Alumno de 23 años que estudia en la universidad',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'Color del personaje central en formato hexadecimal',
+    example: '#3B82F6',
+  })
+  @IsHexColor()
+  @IsNotEmpty()
+  color!: string;
+
+  @ApiProperty({
+    description: 'Información del mandala de origen',
+    type: 'object',
+    properties: {
+      id: { type: 'string', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef' },
+      name: { type: 'string', example: 'Mandala de origen' },
+    },
+  })
+  from!: {
+    id: string;
+    name: string;
+  };
+}
+
 export class CreateMandalaCenterDto {
   @ApiProperty({
     description: 'Nombre del personaje central',
@@ -37,7 +69,18 @@ export class CreateMandalaCenterDto {
   @IsHexColor()
   @IsNotEmpty()
   color!: string;
+
+  @ApiProperty({
+    description: 'Personajes centrales del mandala',
+    type: [CreateMandalaCenterWithOriginDto],
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMandalaCenterWithOriginDto)
+  characters?: CreateMandalaCenterWithOriginDto[];
 }
+
 export class CreateMandalaDto {
   @ApiProperty({
     description: 'Nombre del mandala',
@@ -99,4 +142,42 @@ export class CreateMandalaDto {
   @IsUUID()
   @IsOptional()
   parentId?: string | null;
+}
+
+export class CreateOverlappedMandalaDto {
+  @ApiProperty({
+    description: 'Nombre del nuevo mandala superpuesto',
+    example: 'Mandala Superpuesto',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @ApiProperty({
+    description:
+      'Array de IDs de mandalas para superponer (mínimo 2). Todos los mandalas deben tener las mismas dimensiones y escalas. El nuevo mandala superpuesto se guardará en el proyecto del primer mandala de la lista.',
+    type: [String],
+    example: [
+      'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+      'b2c3d4e5-f6a7-8901-2345-67890abcdef1',
+    ],
+    minItems: 2,
+  })
+  @IsArray()
+  @ArrayMinSize(2, {
+    message: 'Se requieren al menos 2 IDs de mandalas para la superposición',
+  })
+  @IsUUID(undefined, {
+    each: true,
+    message: 'Cada ID de mandala debe ser un UUID válido',
+  })
+  mandalas!: string[];
+
+  @ApiProperty({
+    description: 'Color del personaje central en formato hexadecimal',
+    example: '#3B82F6',
+  })
+  @IsHexColor()
+  @IsNotEmpty()
+  color!: string;
 }

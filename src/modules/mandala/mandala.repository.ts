@@ -37,21 +37,24 @@ export class MandalaRepository {
     };
   }
 
-  private parseToJson(
+  private parseConfigurationToJson(
     config: CreateMandalaConfiguration,
   ): Prisma.InputJsonValue {
-    return {
+    const configuration: any = {
       center: {
         name: config.center.name,
         description: config.center.description,
         color: config.center.color,
+        characters: config.center.characters || [],
       },
       dimensions: config.dimensions.map((dim) => ({
         name: dim.name,
         color: dim.color,
       })),
       scales: config.scales,
-    } as Prisma.InputJsonValue;
+    };
+
+    return configuration as Prisma.InputJsonValue;
   }
 
   private parseToMandalaDto(mandala: MandalaWithRelations): MandalaDto {
@@ -94,7 +97,7 @@ export class MandalaRepository {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
         type: type,
-        configuration: this.parseToJson(configuration),
+        configuration: this.parseConfigurationToJson(configuration),
         ...(createMandalaDto.parentId && {
           parent: {
             connect: { id: createMandalaDto.parentId },
@@ -218,6 +221,14 @@ export class MandalaRepository {
     });
   }
 
+  /**
+   * Finds all child mandalas of a given parent mandala and returns their center information.
+   * This is used to populate the characters field in Firestore documents with the centers
+   * of all linked child mandalas, maintaining the hierarchical relationship in the UI.
+   *
+   * @param mandalaId - The ID of the parent mandala
+   * @returns Array of MandalaCenter objects from all child mandalas
+   */
   async findChildrenMandalasCenters(
     mandalaId: string,
   ): Promise<MandalaCenter[]> {
