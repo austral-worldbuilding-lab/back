@@ -12,5 +12,8 @@ export interface StorageService {
   readAllFilesAsBuffers(scope: FileScope): Promise<Buffer[]>;
   readAllFilesAsBuffersWithMetadata(scope: FileScope): Promise<FileBuffer[]>;
   deleteFile(scope: FileScope, fileName: string): Promise<void>;
-  generateDownloadUrl(fullPath: string, expirationHours?: number): Promise<string>;
+  generateDownloadUrl(
+    fullPath: string,
+    expirationHours?: number,
+  ): Promise<string>;
 }

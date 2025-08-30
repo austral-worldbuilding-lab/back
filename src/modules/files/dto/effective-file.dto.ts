@@ -30,7 +30,8 @@ export class EffectiveFileDto {
 
   @ApiProperty({
     description: 'URL de descarga del archivo con acceso temporal',
-    example: 'https://storage.blob.core.windows.net/container/org/123/files/documento.pdf?sv=2021-06-08&se=2024-01-01T12:00:00Z&sr=b&sp=r&sig=...',
+    example:
+      'https://storage.blob.core.windows.net/container/org/123/files/documento.pdf?sv=2021-06-08&se=2024-01-01T12:00:00Z&sr=b&sp=r&sig=...',
   })
   url!: string;
 }
