@@ -104,7 +104,7 @@ export class AiService {
       centerCharacter,
       centerCharacterDescription,
     );
-    
+
     this.logger.log(
       `Generated ${result.length} questions for mandala: ${mandalaId}`,
     );
