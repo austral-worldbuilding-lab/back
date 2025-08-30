@@ -150,6 +150,25 @@ export class AzureBlobStorageService implements StorageService {
     }
   }
 
+  async generateDownloadUrl(
+    fullPath: string,
+    expirationHours: number = 24,
+  ): Promise<string> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const blockBlobClient = containerClient.getBlockBlobClient(fullPath);
+
+    const expiresOn = new Date(
+      new Date().valueOf() + expirationHours * 3600 * 1000,
+    );
+
+    return await blockBlobClient.generateSasUrl({
+      permissions: BlobSASPermissions.parse('r'), // read-only permission
+      expiresOn,
+    });
+  }
+
   private handleAzureDeletionError(error: unknown, blobName: string): never {
     const isNativeError = error instanceof Error;
     const stack = isNativeError ? error.stack : undefined;
