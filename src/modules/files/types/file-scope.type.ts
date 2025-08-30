@@ -11,4 +11,5 @@ export type EffectiveFile = {
   file_type: string;
   source_scope: FileSource;
   full_path: string;
+  url: string;
 };

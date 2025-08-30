@@ -77,17 +77,27 @@ export class FileService {
     return scopes;
   }
 
-  private mapToEffectiveFiles(
+  private async mapToEffectiveFiles(
     files: CreateFileDto[],
     source: FileSource,
     scope: FileScope,
-  ): EffectiveFile[] {
-    return files.map((file) => ({
-      file_name: file.file_name,
-      file_type: file.file_type,
-      source_scope: source,
-      full_path: this.buildFilePath(scope, file.file_name),
-    }));
+  ): Promise<EffectiveFile[]> {
+    const effectiveFiles: EffectiveFile[] = [];
+
+    for (const file of files) {
+      const fullPath = this.buildFilePath(scope, file.file_name);
+      const url = await this.storageService.generateDownloadUrl(fullPath);
+
+      effectiveFiles.push({
+        file_name: file.file_name,
+        file_type: file.file_type,
+        source_scope: source,
+        full_path: fullPath,
+        url: url,
+      });
+    }
+
+    return effectiveFiles;
   }
 
   private buildFilePath(scope: FileScope, fileName: string): string {
@@ -108,7 +118,7 @@ export class FileService {
     for (const inheritanceScope of scopes) {
       const files = await this.storageService.getFiles(inheritanceScope);
       const source: FileSource = this.getScopeSource(inheritanceScope);
-      const effectiveFiles = this.mapToEffectiveFiles(
+      const effectiveFiles = await this.mapToEffectiveFiles(
         files,
         source,
         inheritanceScope,
