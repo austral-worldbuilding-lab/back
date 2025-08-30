@@ -50,10 +50,11 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
 
   maxFileSize: parseInt(process.env.AI_MAX_FILE_SIZE || '52428800'), // 50MB default
   maxInputSize: parseInt(process.env.AI_MAX_INPUT_SIZE || '209715200'), // 200MB default
+  // TODO: add this limit into the prompt with placeholder replacement
   maxPostitsPerRequest: parseInt(
     process.env.AI_MAX_POSTITS_PER_REQUEST || '100',
   ), // 100 default
   maxQuestionsPerRequest: parseInt(
-    process.env.AI_MAX_QUESTIONS_PER_REQUEST || '20',
-  ), // 20 default
+    process.env.AI_MAX_QUESTIONS_PER_REQUEST || '100',
+  ), // 100 default
 });
