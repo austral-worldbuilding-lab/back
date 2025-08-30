@@ -28,7 +28,6 @@ import {
 } from './decorators/file-swagger.decorators';
 import { CreateFileDto } from './dto/create-file.dto';
 import { FileService } from './file.service';
-import { FileRoleGuard } from './guards/file-role.guard';
 import { MandalaFileRoleGuard } from './guards/mandala-file-role.guard';
 import { OrganizationFileRoleGuard } from './guards/organization-file-role.guard';
 import { ProjectFileRoleGuard } from './guards/project-file-role.guard';
