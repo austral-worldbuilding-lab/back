@@ -22,13 +22,7 @@ import {
   ParseIntPipe,
   HttpCode,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import {
   ApiCreateMandala,
@@ -45,19 +39,20 @@ import {
   ApiGetAvailableCharacters,
   ApiUpdatePostit,
   ApiOverlapMandalas,
+  ApiGenerateQuestions,
+  ApiGeneratePostits,
 } from './decorators/mandala-swagger.decorators';
-import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
-import { CreateMandalaDto } from './dto/create-mandala.dto';
+import {
+  CreateMandalaDto,
+  CreateOverlappedMandalaDto,
+} from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { GeneratePostitsDto } from './dto/generate-postits.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
-import { OverlapMandalasDto } from './dto/overlap-mandalas.dto';
-import { OverlapResultDto } from './dto/overlap-result.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
-import { PostitWithCoordinatesDto } from './dto/postit/postit-with-coordinates.dto';
 import { UpdatePostitDto } from './dto/postit/update-postit.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import {
@@ -66,6 +61,7 @@ import {
 } from './guards/mandala-role.guard';
 import { MandalaService } from './mandala.service';
 import { PostitService } from './services/postit.service';
+import { MandalaType } from './types/mandala-type.enum';
 import { PostitWithCoordinates } from './types/postits';
 import { AiQuestionResponse } from './types/questions';
 
@@ -85,7 +81,10 @@ export class MandalaController {
   async create(
     @Body() createMandalaDto: CreateMandalaDto,
   ): Promise<MessageResponse<MandalaDto>> {
-    const mandala = await this.mandalaService.create(createMandalaDto);
+    const mandala = await this.mandalaService.create(
+      createMandalaDto,
+      MandalaType.CHARACTER,
+    );
     return {
       message: 'Mandala created successfully',
       data: mandala,
@@ -291,20 +290,7 @@ export class MandalaController {
 
   @Post(':id/generate-questions')
   @UseGuards(MandalaRoleGuard)
-  @ApiOperation({
-    summary: 'Generate questions using AI',
-    description:
-      'Generate guiding questions for a mandala using AI based on mandala configuration and project files',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully generated questions',
-    type: [AiQuestionResponseDto],
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Mandala ID to generate questions for',
-  })
+  @ApiGenerateQuestions()
   async generateQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generateQuestionsDto: GenerateQuestionsDto,
@@ -322,20 +308,7 @@ export class MandalaController {
 
   @Post(':id/generate-postits')
   @UseGuards(MandalaRoleGuard)
-  @ApiOperation({
-    summary: 'Generate postits using AI',
-    description:
-      'Generate postits for a mandala using AI based on mandala configuration and project files',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully generated postits',
-    type: [PostitWithCoordinatesDto],
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Mandala ID to generate postits for',
-  })
+  @ApiGeneratePostits()
   async generatePostits(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generatePostitsDto: GeneratePostitsDto,
@@ -355,10 +328,11 @@ export class MandalaController {
   @UseGuards(MandalaRoleGuard)
   @ApiOverlapMandalas()
   async overlapMandalas(
-    @Body() overlapDto: OverlapMandalasDto,
-  ): Promise<DataResponse<OverlapResultDto>> {
+    @Body() overlapDto: CreateOverlappedMandalaDto,
+  ): Promise<MessageResponse<MandalaDto>> {
     const result = await this.mandalaService.overlapMandalas(overlapDto);
     return {
+      message: 'Mandala superpuesto creado correctamente',
       data: result,
     };
   }

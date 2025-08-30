@@ -11,11 +11,12 @@ import { PresignedUrl } from '@common/types/presigned-url';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { FileScope } from '@modules/files/types/file-scope.type';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { buildPrefix } from './path-builder';
 import { StorageService } from './StorageService';
 
+@Injectable()
 export class AzureBlobStorageService implements StorageService {
   private readonly logger = new Logger(AzureBlobStorageService.name);
   private containerName = process.env.AZURE_STORAGE_CONTAINER_NAME!;
@@ -147,6 +148,25 @@ export class AzureBlobStorageService implements StorageService {
     } catch (rawError: unknown) {
       this.handleAzureDeletionError(rawError, blobName);
     }
+  }
+
+  async generateDownloadUrl(
+    fullPath: string,
+    expirationHours: number = 24,
+  ): Promise<string> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const blockBlobClient = containerClient.getBlockBlobClient(fullPath);
+
+    const expiresOn = new Date(
+      new Date().valueOf() + expirationHours * 3600 * 1000,
+    );
+
+    return await blockBlobClient.generateSasUrl({
+      permissions: BlobSASPermissions.parse('r'), // read-only permission
+      expiresOn,
+    });
   }
 
   private handleAzureDeletionError(error: unknown, blobName: string): never {

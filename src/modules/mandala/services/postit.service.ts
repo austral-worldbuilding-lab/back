@@ -2,11 +2,15 @@ import { randomUUID } from 'crypto';
 
 import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
 import { AiService } from '@modules/ai/ai.service';
+import { CreateFileDto } from '@modules/files/dto/create-file.dto';
+import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
+import { PrismaService } from '@modules/prisma/prisma.service';
 import { TagDto } from '@modules/project/dto/tag.dto';
 import { ProjectService } from '@modules/project/project.service';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { Injectable } from '@nestjs/common';
 
 import { CreatePostitDto } from '../dto/postit/create-postit.dto';
@@ -33,7 +37,35 @@ export class PostitService {
     private mandalaRepository: MandalaRepository,
     private projectService: ProjectService,
     private firebaseDataService: FirebaseDataService,
+    private prisma: PrismaService,
+    private storageService: AzureBlobStorageService,
   ) {}
+
+  async collectPostitsWithSource(
+    mandalas: MandalaDto[],
+  ): Promise<
+    (PostitWithCoordinates & { from: { name: string; id: string } })[]
+  > {
+    const allPostits = await Promise.all(
+      mandalas.map(async (mandala) => {
+        const document = (await this.firebaseDataService.getDocument(
+          mandala.projectId,
+          mandala.id,
+        )) as FirestoreMandalaDocument | null;
+
+        const postits = document?.postits || [];
+        return postits.map((postit) => ({
+          ...postit,
+          from: {
+            name: mandala.name,
+            id: mandala.id,
+          },
+        }));
+      }),
+    );
+
+    return allPostits.flat();
+  }
 
   async generatePostitsForMandala(
     mandalaId: string,
@@ -286,6 +318,45 @@ export class PostitService {
 
     const newPostitId = randomUUID();
 
+    // Generate presigned URL if imageFileName is provided
+    let presignedUrl: string | undefined;
+    if (postit.imageFileName) {
+      const mandala = await this.prisma.mandala.findFirst({
+        where: { id: mandalaId, isActive: true },
+        select: {
+          projectId: true,
+          project: { select: { organizationId: true } },
+        },
+      });
+
+      if (!mandala) {
+        throw new BusinessLogicException('Mandala not found', { mandalaId });
+      }
+
+      if (!mandala.project.organizationId) {
+        throw new BusinessLogicException('Organization not found for mandala', {
+          mandalaId,
+        });
+      }
+
+      const fileScope: FileScope = {
+        orgId: mandala.project.organizationId,
+        projectId: mandala.projectId,
+        mandalaId: mandalaId,
+      };
+
+      const createFileDto: CreateFileDto = {
+        file_name: postit.imageFileName,
+        file_type: 'image/*',
+      };
+
+      const presignedUrls = await this.storageService.uploadFiles(
+        [createFileDto],
+        fileScope,
+      );
+      presignedUrl = presignedUrls[0]?.url;
+    }
+
     // Convert DTO to plain object to avoid Firestore serialization issues
     const plainPostit = {
       id: newPostitId,
@@ -301,6 +372,8 @@ export class PostitService {
         x: postit.coordinates.x,
         y: postit.coordinates.y,
       },
+      ...(postit.imageFileName && { imageFileName: postit.imageFileName }),
+      ...(presignedUrl && { presignedUrl }),
     };
 
     const currentPostits = currentDocument.postits || [];

@@ -7,6 +7,7 @@ import { CharacterListItemDto } from './dto/character-list-item.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
+import { MandalaType } from './types/mandala-type.enum';
 
 import { MandalaCenter } from '@/modules/mandala/types/mandala-center.type';
 
@@ -36,21 +37,24 @@ export class MandalaRepository {
     };
   }
 
-  private parseToJson(
+  private parseConfigurationToJson(
     config: CreateMandalaConfiguration,
   ): Prisma.InputJsonValue {
-    return {
+    const configuration: any = {
       center: {
         name: config.center.name,
         description: config.center.description,
         color: config.center.color,
+        characters: config.center.characters || [],
       },
       dimensions: config.dimensions.map((dim) => ({
         name: dim.name,
         color: dim.color,
       })),
       scales: config.scales,
-    } as Prisma.InputJsonValue;
+    };
+
+    return configuration as Prisma.InputJsonValue;
   }
 
   private parseToMandalaDto(mandala: MandalaWithRelations): MandalaDto {
@@ -58,9 +62,13 @@ export class MandalaRepository {
       mandala.configuration,
     );
 
+    const parentIds = mandala.parent?.map((parent) => parent.id) || [];
+    const type = mandala.type as MandalaType;
+
     return {
       id: mandala.id,
       name: mandala.name,
+      type,
       projectId: mandala.projectId,
       configuration: {
         center: configuration.center,
@@ -68,13 +76,16 @@ export class MandalaRepository {
         scales: configuration.scales,
       },
       childrenIds: mandala.children?.map((child) => child.id) || [],
-      parentIds: mandala.parent?.map((parent) => parent.id) || [],
+      parentIds,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
     };
   }
 
-  async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
+  async create(
+    createMandalaDto: CreateMandalaDto,
+    type: MandalaType,
+  ): Promise<MandalaDto> {
     const configuration: CreateMandalaConfiguration = {
       center: createMandalaDto.center,
       dimensions: createMandalaDto.dimensions!,
@@ -85,7 +96,8 @@ export class MandalaRepository {
       data: {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
-        configuration: this.parseToJson(configuration),
+        type: type,
+        configuration: this.parseConfigurationToJson(configuration),
         ...(createMandalaDto.parentId && {
           parent: {
             connect: { id: createMandalaDto.parentId },
@@ -98,7 +110,7 @@ export class MandalaRepository {
       },
     });
 
-    return this.parseToMandalaDto(mandala);
+    return this.parseToMandalaDto(mandala as MandalaWithRelations);
   }
 
   async findAllPaginated(
@@ -209,6 +221,14 @@ export class MandalaRepository {
     });
   }
 
+  /**
+   * Finds all child mandalas of a given parent mandala and returns their center information.
+   * This is used to populate the characters field in Firestore documents with the centers
+   * of all linked child mandalas, maintaining the hierarchical relationship in the UI.
+   *
+   * @param mandalaId - The ID of the parent mandala
+   * @returns Array of MandalaCenter objects from all child mandalas
+   */
   async findChildrenMandalasCenters(
     mandalaId: string,
   ): Promise<MandalaCenter[]> {

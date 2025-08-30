@@ -77,17 +77,25 @@ export class FileService {
     return scopes;
   }
 
-  private mapToEffectiveFiles(
+  private async mapToEffectiveFiles(
     files: CreateFileDto[],
     source: FileSource,
     scope: FileScope,
-  ): EffectiveFile[] {
-    return files.map((file) => ({
-      file_name: file.file_name,
-      file_type: file.file_type,
-      source_scope: source,
-      full_path: this.buildFilePath(scope, file.file_name),
-    }));
+  ): Promise<EffectiveFile[]> {
+    const effectiveFilesPromises = files.map(async (file) => {
+      const fullPath = this.buildFilePath(scope, file.file_name);
+      const url = await this.storageService.generateDownloadUrl(fullPath);
+
+      return {
+        file_name: file.file_name,
+        file_type: file.file_type,
+        source_scope: source,
+        full_path: fullPath,
+        url: url,
+      };
+    });
+
+    return Promise.all(effectiveFilesPromises);
   }
 
   private buildFilePath(scope: FileScope, fileName: string): string {
@@ -108,7 +116,7 @@ export class FileService {
     for (const inheritanceScope of scopes) {
       const files = await this.storageService.getFiles(inheritanceScope);
       const source: FileSource = this.getScopeSource(inheritanceScope);
-      const effectiveFiles = this.mapToEffectiveFiles(
+      const effectiveFiles = await this.mapToEffectiveFiles(
         files,
         source,
         inheritanceScope,
@@ -171,36 +179,5 @@ export class FileService {
 
   async deleteFile(scope: FileScope, fileName: string): Promise<void> {
     return this.storageService.deleteFile(scope, fileName);
-  }
-
-  // Legacy methods for backward compatibility with existing project-based API
-  async uploadFilesLegacy(
-    files: CreateFileDto[],
-    projectId: string,
-  ): Promise<PresignedUrl[]> {
-    const scope = await this.resolveScope('project', projectId);
-    return this.uploadFiles(files, scope);
-  }
-
-  async getFilesLegacy(projectId: string): Promise<CreateFileDto[]> {
-    const scope = await this.resolveScope('project', projectId);
-    return this.getFilesFromScope(scope);
-  }
-
-  async readAllFilesAsBuffersLegacy(projectId: string): Promise<Buffer[]> {
-    const scope = await this.resolveScope('project', projectId);
-    return this.readAllFilesAsBuffers(scope);
-  }
-
-  async readAllFilesAsBuffersWithMetadataLegacy(
-    projectId: string,
-  ): Promise<FileBuffer[]> {
-    const scope = await this.resolveScope('project', projectId);
-    return this.readAllFilesAsBuffersWithMetadata(scope);
-  }
-
-  async deleteFileLegacy(projectId: string, fileName: string): Promise<void> {
-    const scope = await this.resolveScope('project', projectId);
-    return this.deleteFile(scope, fileName);
   }
 }
