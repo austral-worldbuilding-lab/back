@@ -82,22 +82,20 @@ export class FileService {
     source: FileSource,
     scope: FileScope,
   ): Promise<EffectiveFile[]> {
-    const effectiveFiles: EffectiveFile[] = [];
-
-    for (const file of files) {
+    const effectiveFilesPromises = files.map(async (file) => {
       const fullPath = this.buildFilePath(scope, file.file_name);
       const url = await this.storageService.generateDownloadUrl(fullPath);
 
-      effectiveFiles.push({
+      return {
         file_name: file.file_name,
         file_type: file.file_type,
         source_scope: source,
         full_path: fullPath,
         url: url,
-      });
-    }
+      };
+    });
 
-    return effectiveFiles;
+    return Promise.all(effectiveFilesPromises);
   }
 
   private buildFilePath(scope: FileScope, fileName: string): string {
