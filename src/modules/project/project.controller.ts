@@ -184,7 +184,6 @@ export class ProjectController {
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Param('userId') userId: string,
     @Body() updateUserRoleDto: UpdateUserRoleDto,
-    @Req() req: RequestWithUser,
   ): Promise<MessageResponse<UserRoleResponseDto>> {
     const userRole = await this.projectService.updateUserRole(
       projectId,
