@@ -190,7 +190,6 @@ export class ProjectController {
       projectId,
       userId,
       updateUserRoleDto.role,
-      req.user.id,
     );
     return {
       message: 'Rol de usuario actualizado exitosamente',
