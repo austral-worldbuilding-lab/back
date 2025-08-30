@@ -28,7 +28,6 @@ export class OrganizationInvitationService {
     dto: CreateOrganizationInvitationDto,
     userId: string,
   ): Promise<OrganizationInvitationDto> {
-    // ¿Existe invitación previa para este email en la misma organización?
     const existing = await this.invitationRepository.findByEmail(
       dto.email,
       dto.organizationId,
@@ -44,7 +43,6 @@ export class OrganizationInvitationService {
       );
     }
 
-    // Validar organización
     const organization = await this.invitationRepository.findOrganizationById(
       dto.organizationId,
     );
@@ -52,13 +50,11 @@ export class OrganizationInvitationService {
       throw new ResourceNotFoundException('Organization', dto.organizationId);
     }
 
-    // Validar invitador
     const inviter = await this.invitationRepository.findUserById(userId);
     if (!inviter) {
       throw new ResourceNotFoundException('User', userId);
     }
 
-    // Resolver rol (por nombre, default member)
     let roleId: string;
     if (dto.role) {
       const role = await this.roleService.findByName(dto.role);
@@ -74,16 +70,16 @@ export class OrganizationInvitationService {
       dto.organizationId,
       userId,
       roleId,
-      dto.expiresAt, // opcional ISO; el repo setea default (+7 días) si viene vacío
+      dto.expiresAt,
     );
 
-    // Reusar template de email de proyecto: pasa nombre de la organización
     await this.mailService.sendInvitationEmail({
       to: dto.email,
       inviteeName: dto.email,
       invitedByName: inviter.username,
-      projectName: organization.name, // <- mismo campo que usás en el template
+      projectName: organization.name,
       token: invitation.token,
+      type: 'Organización',
     });
 
     return this.mapToDto(invitation);
@@ -142,7 +138,7 @@ export class OrganizationInvitationService {
   }
 
   async remove(id: string): Promise<void> {
-    const inv = await this.findOne(id); // asegura 404 coherente
+    const inv = await this.findOne(id);
     await this.invitationRepository.delete(inv.id);
   }
 
@@ -160,7 +156,6 @@ export class OrganizationInvitationService {
       throw new ResourceNotFoundException('OrganizationInvitation', id);
     }
 
-    // Resolver rol final
     let roleId: string;
     if (invitationFromDb.roleId) {
       roleId = invitationFromDb.roleId;
@@ -209,14 +204,9 @@ export class OrganizationInvitationService {
     return this.mapToDto(updated);
   }
 
-  // ---------------------
-  // Mapping helpers
-  // ---------------------
   private mapToDto(
     invitation: OrganizationInvitation,
   ): OrganizationInvitationDto {
-    // Si querés exponer nombre de rol (como en ProjectInvitation),
-    // podés buscarlo acá y añadir un campo `role` a tu DTO.
     return {
       id: invitation.id,
       email: invitation.email,

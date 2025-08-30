@@ -56,7 +56,7 @@ export class OrganizationInvitationController {
 
   @Post()
   @UseGuards(OrganizationInvitationRoleGuard)
-  @RequireOwner() // Si tenés un guard específico de ownership de organización, sustituilo acá.
+  @RequireOwner()
   @ApiCreateOrgInvitation()
   async create(
     @Body() dto: CreateOrganizationInvitationDto,
