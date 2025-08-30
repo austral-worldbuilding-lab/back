@@ -14,10 +14,6 @@ import {
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import {
-  ApiGetFiles,
-  ApiUploadFiles,
-  ApiGetFileBuffers,
-  ApiDeleteFile,
   ApiGetOrganizationFiles,
   ApiUploadOrganizationFiles,
   ApiDeleteOrganizationFile,
