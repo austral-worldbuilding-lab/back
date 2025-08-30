@@ -87,35 +87,3 @@ export function createMandalaAiSummary(
   };
 }
 
-/**
- * Generates a human-readable text summary for AI consumption
- */
-export function generateTextualSummary(summary: MandalaAiSummary): string {
-  const lines: string[] = [];
-
-  lines.push(`Center Character: ${summary.centerCharacter.name}`);
-
-  if (summary.centerCharacter.description) {
-    lines.push(`Character Description: ${summary.centerCharacter.description}`);
-  }
-
-  lines.push('');
-
-  // Dimensions analysis with ALL scales shown for each dimension
-  summary.dimensions.forEach((dimension) => {
-    lines.push(`\n${dimension.name}: ${dimension.totalPostits} post-its`);
-
-    // Show ALL scales for this dimension (even with 0 post-its)
-    summary.scales.forEach((scale) => {
-      const scalePostits = dimension.postits.filter(
-        (p) => p.scale === scale.name,
-      );
-      lines.push(`  ${scale.name}: ${scalePostits.length} post-its`);
-      scalePostits.forEach((postit) => {
-        lines.push(`    • ${postit.content}`);
-      });
-    });
-  });
-
-  return lines.join('\n');
-}

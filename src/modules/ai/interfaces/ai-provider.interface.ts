@@ -1,6 +1,7 @@
 import { AiPostitResponse } from '@modules/mandala/types/postits';
 
 import { AiQuestionResponse } from '@/modules/mandala/types/questions';
+import { MandalaAiSummary } from '../types/mandala-summary.interface';
 
 export interface AiProvider {
   /**
@@ -25,7 +26,7 @@ export interface AiProvider {
   /**
    * Generates questions for a project based on mandala configuration and files
    * @param mandalaId - The ID of the mandala to generate questions for
-   * @param mandalaTextSummary - Clean textual summary of the mandala without technical details
+   * @param mandalaAiSummary - AI-readable summary of the mandala
    * Project configuration:
    * @param dimensions - Array of dimensions to generate questions for
    * @param scales - Array of scales to generate questions for
@@ -38,7 +39,7 @@ export interface AiProvider {
   generateQuestions(
     projectId: string,
     mandalaId: string,
-    mandalaTextSummary: string,
+    mandalaAiSummary: MandalaAiSummary,
     dimensions: string[],
     scales: string[],
     tags: string[],

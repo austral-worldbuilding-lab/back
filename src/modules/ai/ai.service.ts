@@ -6,10 +6,7 @@ import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
-import {
-  createMandalaAiSummary,
-  generateTextualSummary,
-} from './utils/mandala-summary.util';
+import { createMandalaAiSummary } from './utils/mandala-summary.util';
 
 @Injectable()
 export class AiService {
@@ -87,17 +84,11 @@ export class AiService {
     });
 
     // Generate formatted summary for better AI understanding with natural language
-    const mandalaTextSummary = generateTextualSummary(mandalaAiSummary);
-
-    this.logger.debug(
-      'Generated text summary length:',
-      mandalaTextSummary.length,
-    );
 
     const result = await this.aiProvider.generateQuestions(
       projectId,
       mandalaId,
-      mandalaTextSummary,
+      mandalaAiSummary,
       dimensions,
       scales,
       tags,
