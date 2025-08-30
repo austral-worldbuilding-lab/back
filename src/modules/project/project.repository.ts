@@ -427,4 +427,23 @@ export class ProjectRepository {
 
     return [projects.map((project) => this.parseToProjectDto(project)), total];
   }
+
+  async getUserRole(
+    projectId: string,
+    userId: string,
+  ): Promise<{ id: string; name: string } | null> {
+    const projectUser = await this.prisma.userProjectRole.findUnique({
+      where: { userId_projectId: { userId, projectId } },
+      include: { role: true },
+    });
+    return projectUser?.role
+      ? { id: projectUser.role.id, name: projectUser.role.name }
+      : null;
+  }
+
+  async countOwners(projectId: string): Promise<number> {
+    return this.prisma.userProjectRole.count({
+      where: { projectId, role: { name: 'owner' } },
+    });
+  }
 }
