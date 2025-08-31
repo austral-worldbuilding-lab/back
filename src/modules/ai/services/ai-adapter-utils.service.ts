@@ -74,12 +74,14 @@ export class AiAdapterUtilsService {
     selectedFiles?: string[],
     mandalaId?: string,
   ): Promise<FileBuffer[]> {
-    this.logger.debug(`Loading files for project: ${projectId}${mandalaId ? `, mandala: ${mandalaId}` : ''}`);
+    this.logger.debug(
+      `Loading files for project: ${projectId}${mandalaId ? `, mandala: ${mandalaId}` : ''}`,
+    );
 
     // Use hierarchy resolution to get appropriate scope files for better AI context
     // If mandalaId is provided, use mandala scope (org + project + mandala)
     // Otherwise, use project scope (org + project)
-    const scope = mandalaId 
+    const scope = mandalaId
       ? await this.fileService.resolveScope('mandala', mandalaId)
       : await this.fileService.resolveScope('project', projectId);
     const allFileBuffers =

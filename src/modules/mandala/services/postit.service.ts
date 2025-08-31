@@ -75,7 +75,12 @@ export class PostitService {
   ): Promise<PostitWithCoordinates[]> {
     const mandala = await this.getMandalaOrThrow(mandalaId);
 
-    const postits = await this.generatePostits(mandala, dimensions, scales, selectedFiles);
+    const postits = await this.generatePostits(
+      mandala,
+      dimensions,
+      scales,
+      selectedFiles,
+    );
 
     const postitsBySection = this.groupPostitsBySection(postits);
 

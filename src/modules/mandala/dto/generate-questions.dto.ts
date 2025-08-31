@@ -25,10 +25,15 @@ export class GenerateQuestionsDto {
   scales?: string[];
 
   @ApiProperty({
-    description: 'Lista opcional de nombres de archivos específicos a usar para el contexto de IA. Si no se proporciona, se usarán todos los archivos disponibles.',
+    description:
+      'Lista opcional de nombres de archivos específicos a usar para el contexto de IA. Si no se proporciona, se usarán todos los archivos disponibles.',
     type: [String],
     required: false,
-    example: ['entrevista_1.pdf', 'encuesta_resultados.docx', 'notas_investigacion.txt'],
+    example: [
+      'entrevista_1.pdf',
+      'encuesta_resultados.docx',
+      'notas_investigacion.txt',
+    ],
   })
   @IsOptional()
   @IsArray()
