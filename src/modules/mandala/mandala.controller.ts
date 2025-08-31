@@ -41,6 +41,7 @@ import {
   ApiOverlapMandalas,
   ApiGenerateQuestions,
   ApiGeneratePostits,
+  ApiOverlapSummary,
 } from './decorators/mandala-swagger.decorators';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
@@ -299,6 +300,7 @@ export class MandalaController {
       mandalaId,
       generateQuestionsDto.dimensions,
       generateQuestionsDto.scales,
+      generateQuestionsDto.selectedFiles,
     );
 
     return {
@@ -317,6 +319,7 @@ export class MandalaController {
       mandalaId,
       generatePostitsDto.dimensions,
       generatePostitsDto.scales,
+      generatePostitsDto.selectedFiles,
     );
 
     return {
@@ -330,9 +333,23 @@ export class MandalaController {
   async overlapMandalas(
     @Body() overlapDto: CreateOverlappedMandalaDto,
   ): Promise<MessageResponse<MandalaDto>> {
-    const result = await this.mandalaService.overlapMandalas(overlapDto);
+    const result = await this.mandalaService.createOverlapMandala(overlapDto);
     return {
       message: 'Mandala superpuesto creado correctamente',
+      data: result,
+    };
+  }
+
+  @Post('overlap/summary')
+  @UseGuards(MandalaRoleGuard)
+  @ApiOverlapSummary()
+  async createOverlapSummary(
+    @Body() overlapDto: CreateOverlappedMandalaDto,
+  ): Promise<MessageResponse<MandalaDto>> {
+    const result = await this.mandalaService.createOverlapSummary(overlapDto);
+    return {
+      message:
+        'Mandala superpuesto de resumen comparativo creado correctamente',
       data: result,
     };
   }

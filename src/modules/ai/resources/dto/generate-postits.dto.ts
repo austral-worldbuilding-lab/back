@@ -13,3 +13,17 @@ export const PostitsResponse = {
     },
   },
 };
+
+export const PostitsComparisonResponse = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      content: { type: 'string' },
+      dimension: { type: 'string' },
+      section: { type: 'string' },
+      type: { type: 'string' },
+      from: { type: 'array', items: { type: 'string' } },
+    },
+  },
+};

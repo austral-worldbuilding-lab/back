@@ -12,6 +12,15 @@ export interface AiPostitResponse {
   imageFileName?: string;
 }
 
+export interface AiPostitComparisonResponse {
+  content: string;
+  dimension: string;
+  section: string;
+  tags: string[];
+  type: string;
+  from: string[];
+}
+
 export interface Postit {
   id: string;
   content: string;
@@ -20,6 +29,11 @@ export interface Postit {
   tags: PostitTag[];
   childrens: Postit[];
   imageFileName?: string;
+}
+
+export interface PostitComparison extends Postit {
+  type: string;
+  from: string[];
 }
 
 export interface PostitCoordinates {

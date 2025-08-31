@@ -1,8 +1,12 @@
-import { AiPostitResponse } from '@modules/mandala/types/postits';
+import {
+  AiPostitComparisonResponse,
+  AiPostitResponse,
+} from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
+import { MandalaDto } from '../mandala/dto/mandala.dto';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
@@ -21,16 +25,6 @@ export class AiService {
     );
   }
 
-  /**
-   * Generates postits for a project
-   * @param projectId - The ID of the project to generate postits for
-   * @param dimensions - Array of dimensions
-   * @param scales - Array of scales
-   * @param centerCharacter
-   * @param centerCharacterDescription
-   * @param tags - Array of tags for connecting postits across dimensions
-   * @returns An array of AiPostitResponse objects
-   */
   async generatePostits(
     projectId: string,
     dimensions: string[],
@@ -38,6 +32,8 @@ export class AiService {
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
+    selectedFiles?: string[],
+    mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
     this.logger.log(`Starting postit generation for project: ${projectId}`);
 
@@ -56,6 +52,8 @@ export class AiService {
       centerCharacter,
       centerCharacterDescription,
       tags,
+      selectedFiles,
+      mandalaId,
     );
 
     this.logger.log(
@@ -73,6 +71,7 @@ export class AiService {
     tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
+    selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
 
@@ -82,7 +81,7 @@ export class AiService {
     this.logger.debug('Mandala summary created:', {
       totalPostits: mandalaAiSummary.totalPostits,
       dimensions: mandalaAiSummary.dimensions.length,
-      scales: mandalaAiSummary.scales.length,
+      sections: mandalaAiSummary.sections.length,
       centerCharacter: mandalaAiSummary.centerCharacter.name,
     });
 
@@ -103,11 +102,46 @@ export class AiService {
       tags,
       centerCharacter,
       centerCharacterDescription,
+      selectedFiles,
     );
 
     this.logger.log(
       `Generated ${result.length} questions for mandala: ${mandalaId}`,
     );
+    return result;
+  }
+
+  async generatePostitsSummary(
+    projectId: string,
+    mandalas: MandalaDto[],
+    mandalasDocument: FirestoreMandalaDocument[],
+  ): Promise<AiPostitComparisonResponse[]> {
+    this.logger.log(
+      `Starting postit summary generation for mandalas: ${mandalas.map((m) => m.id).join(', ')}`,
+    );
+
+    const allDimensions = mandalas.flatMap((m) =>
+      m.configuration.dimensions.map((d) => d.name),
+    );
+    const allScales = mandalas.flatMap((m) => m.configuration.scales);
+    const comparisonTypes = ['SIMILITUD', 'DIFERENCIA', 'UNICO'];
+
+    const mandalasAiSummary = mandalasDocument.map((m) =>
+      createMandalaAiSummary(m),
+    );
+
+    const result = await this.aiProvider.generatePostitsComparison(
+      projectId,
+      allDimensions,
+      allScales,
+      comparisonTypes,
+      mandalasAiSummary.map((m) => JSON.stringify(m)).join('\n'),
+    );
+
+    this.logger.log(
+      `Generated ${result.length} postits summary for mandalas: ${mandalas.map((m) => m.id).join(', ')}`,
+    );
+
     return result;
   }
 }

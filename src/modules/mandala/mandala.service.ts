@@ -357,9 +357,16 @@ export class MandalaService {
     );
 
     try {
-      const postits: PostitWithCoordinates[] =
-        await this.postitService.generatePostitsForMandala(
+      const postits = await this.postitService.generatePostits(
+        mandala,
+        mandala.configuration.dimensions.map((d) => d.name),
+        mandala.configuration.scales,
+        createMandalaDto.selectedFiles,
+      );
+      const postitsWithCoordinates: PostitWithCoordinates[] =
+        this.postitService.transformToPostitsWithCoordinates(
           mandala.id,
+          postits,
           mandala.configuration.dimensions.map((d) => d.name),
           mandala.configuration.scales,
         );
@@ -377,7 +384,7 @@ export class MandalaService {
 
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala: mandala,
-        postits: postits,
+        postits: postitsWithCoordinates,
         childrenCenter,
       };
 
@@ -385,7 +392,7 @@ export class MandalaService {
         createMandalaDto.projectId,
         {
           mandala: mandala,
-          postits: postits,
+          postits: postitsWithCoordinates,
           characters: childrenCenter,
         },
         mandala.id,
@@ -544,6 +551,7 @@ export class MandalaService {
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
+    selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
 
@@ -569,6 +577,7 @@ export class MandalaService {
       tags.map((tag) => tag.name),
       centerCharacter,
       centerCharacterDescription || 'No content',
+      selectedFiles,
     );
   }
 
@@ -576,6 +585,7 @@ export class MandalaService {
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
+    selectedFiles?: string[],
   ): Promise<PostitWithCoordinates[]> {
     this.logger.log(`generatePostits called for mandala ${mandalaId}`);
 
@@ -584,11 +594,21 @@ export class MandalaService {
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
-    return this.postitService.generatePostitsForMandala(
-      mandalaId,
+    const postits = await this.postitService.generatePostits(
+      mandala,
       effectiveDimensions,
       effectiveScales,
+      selectedFiles,
     );
+    const postitsWithCoordinates =
+      this.postitService.transformToPostitsWithCoordinates(
+        mandalaId,
+        postits,
+        effectiveDimensions,
+        effectiveScales,
+      );
+
+    return postitsWithCoordinates;
   }
 
   async getFirestoreDocument(
@@ -618,7 +638,7 @@ export class MandalaService {
     }
   }
 
-  async overlapMandalas(
+  async createOverlapMandala(
     createOverlapDto: CreateOverlappedMandalaDto,
   ): Promise<MandalaDto> {
     this.logger.log(
@@ -681,6 +701,108 @@ export class MandalaService {
         targetProjectId,
         {
           postits: flattenedPostits,
+        },
+        newMandala.id,
+      );
+
+      this.logger.log(
+        `Successfully created overlapped mandala ${newMandala.id}`,
+      );
+
+      return newMandala;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to overlap mandalas: ${errorMessage}`, error);
+      throw new InternalServerErrorException({
+        message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
+        error: OVERLAP_ERROR_TYPES.OVERLAP_OPERATION_ERROR,
+        details: {
+          mandalaIds: createOverlapDto.mandalas,
+          originalError: errorMessage,
+        },
+      });
+    }
+  }
+
+  async createOverlapSummary(
+    createOverlapDto: CreateOverlappedMandalaDto,
+  ): Promise<MandalaDto> {
+    this.logger.log(
+      `Starting overlap summary operation for ${createOverlapDto.mandalas.length} mandalas`,
+    );
+    try {
+      const mandalas = await this.validateAndRetrieveMandalas(
+        createOverlapDto.mandalas,
+      );
+      this.validateMandalaCompatibility(mandalas);
+
+      const overlappedConfiguration =
+        this.overlapMandalaConfigurations(mandalas);
+
+      const allCenterCharacters: CreateMandalaCenterWithOriginDto[] =
+        mandalas.map((m) => ({
+          description: m.configuration.center.description,
+          color: m.configuration.center.color,
+          from: {
+            id: m.id,
+            name: m.name,
+          },
+        }));
+
+      this.logger.log(
+        `Total centers to overlap: ${allCenterCharacters.length}`,
+      );
+
+      const targetProjectId = getTargetProjectId(mandalas);
+
+      const overlapCenter: CreateMandalaCenterDto = {
+        name: createOverlapDto.name,
+        description: `Mandala unificada: ${allCenterCharacters
+          .map((c) => c.from.name)
+          .join(', ')}`,
+        color: createOverlapDto.color,
+        characters: allCenterCharacters,
+      };
+
+      const createOverlappedMandalaDto: CreateMandalaDto = {
+        name: createOverlapDto.name,
+        projectId: targetProjectId,
+        center: overlapCenter,
+        dimensions: overlappedConfiguration.dimensions,
+        scales: overlappedConfiguration.scales,
+      };
+
+      const mandalasDocumentPromises = mandalas.map((m) =>
+        this.firebaseDataService.getDocument(m.projectId, m.id),
+      );
+      const mandalasDocument = (await Promise.all(
+        mandalasDocumentPromises,
+      )) as FirestoreMandalaDocument[];
+
+      const newMandala = await this.create(
+        createOverlappedMandalaDto,
+        MandalaType.OVERLAP,
+      );
+
+      const aiSummaryPostits =
+        await this.postitService.generateComparisonPostits(
+          mandalas,
+          mandalasDocument,
+        );
+
+      const aiSummaryPostitsWithCoordinates =
+        this.postitService.transformToPostitsWithCoordinates(
+          newMandala.id,
+          aiSummaryPostits,
+          overlappedConfiguration.dimensions.map((d) => d.name),
+          overlappedConfiguration.scales,
+        );
+
+      await this.firebaseDataService.updateDocument(
+        targetProjectId,
+        {
+          postits: aiSummaryPostitsWithCoordinates,
         },
         newMandala.id,
       );
