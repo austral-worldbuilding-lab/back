@@ -19,6 +19,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { OrganizationInvitationModule } from './modules/organization-invitation/organization-invitation.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AppService } from './app.service';
     ProjectModule,
     UserModule,
     InvitationModule,
+    OrganizationInvitationModule,
     MandalaModule,
     AuthModule,
     FileModule,

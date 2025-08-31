@@ -25,6 +25,10 @@ export class MailService {
       acceptUrl += `?org=${encodeURIComponent(params.organizationId)}&project=${encodeURIComponent(params.projectId)}`;
     }
 
+    if (!params.projectId) {
+      acceptUrl = `${baseUrl}/organization-invite/${encodeURIComponent(params.token)}${params.organizationId ? `?org=${encodeURIComponent(params.organizationId)}` : ''}`;
+    }
+
     const from = this.config.get<string>('mail.from');
     const subject = `Invitación a un proyecto: ${params.projectName}`;
     const html = this.buildInvitationHtml({ ...params, acceptUrl });
