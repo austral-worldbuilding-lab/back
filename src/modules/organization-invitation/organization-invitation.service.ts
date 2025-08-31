@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import {
   ConflictException,
   ResourceNotFoundException,
@@ -204,18 +206,27 @@ export class OrganizationInvitationService {
     return this.mapToDto(updated);
   }
 
-  private mapToDto(
+  private async mapToDto(
     invitation: OrganizationInvitation,
-  ): OrganizationInvitationDto {
+  ): Promise<OrganizationInvitationDto> {
+    let roleName: string | undefined;
+
+    if (invitation.role) {
+      roleName = invitation.role.name;
+    } else if (invitation.roleId) {
+      const role = await this.roleService.findById(invitation.roleId);
+      roleName = role?.name;
+    }
+
     return {
       id: invitation.id,
-      email: invitation.email,
+      email: invitation.email || undefined,
       token: invitation.token,
       status: invitation.status,
       expiresAt: invitation.expiresAt,
       organizationId: invitation.organizationId,
-      invitedById: invitation.invitedById,
-      roleId: invitation.roleId ?? null,
+      role: roleName,
+      inviteToken: invitation.inviteToken || undefined,
     };
   }
 
@@ -223,15 +234,122 @@ export class OrganizationInvitationService {
     invitation: OrganizationInvitation,
     _roleMap: Map<string, string>,
   ): OrganizationInvitationDto {
+    let roleName: string | undefined;
+
+    if (invitation.role) {
+      roleName = invitation.role.name;
+    } else if (invitation.roleId) {
+      roleName = _roleMap.get(invitation.roleId);
+    }
+
     return {
       id: invitation.id,
-      email: invitation.email,
+      email: invitation.email || undefined,
       token: invitation.token,
       status: invitation.status,
       expiresAt: invitation.expiresAt,
       organizationId: invitation.organizationId,
-      invitedById: invitation.invitedById,
-      roleId: invitation.roleId ?? null,
+      role: roleName,
+      inviteToken: invitation.inviteToken || undefined,
     };
+  }
+
+  async createInviteLink(
+    organizationId: string,
+    role: string,
+    senderId: string,
+    expiresAt?: Date,
+    email?: string,
+    sendEmail?: boolean,
+  ): Promise<OrganizationInvitationDto & { inviteToken: string }> {
+    const organization =
+      await this.invitationRepository.findOrganizationById(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundException('Organization', organizationId);
+    }
+    const sender = await this.invitationRepository.findUserById(senderId);
+    if (!sender) {
+      throw new ResourceNotFoundException('User', senderId);
+    }
+    const roleEntity = await this.roleService.findByName(role);
+    if (!roleEntity) {
+      throw new ResourceNotFoundException('Role', role);
+    }
+    const roleId = roleEntity.id;
+
+    const inviteToken = this.generateInviteToken();
+    const defaultExpiresAt =
+      expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const invitation = await this.invitationRepository.createWithToken(
+      organizationId,
+      senderId,
+      roleId,
+      inviteToken,
+      defaultExpiresAt,
+    );
+
+    if (email && sendEmail) {
+      await this.mailService.sendInvitationEmail({
+        to: email,
+        inviteeName: email,
+        invitedByName: sender.username,
+        projectName: organization.name,
+        token: inviteToken,
+        organizationId: organizationId,
+      });
+    }
+
+    const dto = await this.mapToDto(invitation);
+    return { ...dto, inviteToken };
+  }
+
+  async acceptByToken(
+    token: string,
+    userId: string,
+  ): Promise<{ organizationId: string }> {
+    const invitation = await this.invitationRepository.findByInviteToken(token);
+
+    if (!invitation) {
+      throw new ResourceNotFoundException('Invitation', token);
+    }
+    if (invitation.expiresAt && new Date() > invitation.expiresAt) {
+      throw new BusinessLogicException('Invitation has expired', {
+        token,
+        expiresAt: invitation.expiresAt,
+      });
+    }
+    const isAlreadyMember =
+      await this.invitationRepository.isUserOrganizationMember(
+        userId,
+        invitation.organizationId,
+      );
+
+    if (isAlreadyMember) {
+      throw new ConflictException(
+        'User is already a member of this organization',
+      );
+    }
+
+    let roleId: string;
+    if (invitation.roleId) {
+      roleId = invitation.roleId;
+    } else {
+      const memberRole = await this.roleService.findOrCreate('member');
+      roleId = memberRole.id;
+    }
+
+    await this.invitationRepository.addUserToOrganization(
+      userId,
+      invitation.organizationId,
+      roleId,
+    );
+
+    return {
+      organizationId: invitation.organizationId,
+    };
+  }
+
+  private generateInviteToken(): string {
+    return randomBytes(32).toString('hex');
   }
 }

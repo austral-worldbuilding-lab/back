@@ -145,13 +145,14 @@ model UserOrganizationRole {
 }
 
 model OrganizationInvitation {
-  id        String           @id @default(uuid())
-  email     String
-  token     String           @unique
-  status    InvitationStatus @default(PENDING)
-  expiresAt DateTime
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id          String           @id @default(uuid())
+  email       String?
+  token       String           @unique
+  inviteToken String?          @unique
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   organization   Organization @relation("OrganizationToInvitations", fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
@@ -163,4 +164,5 @@ model OrganizationInvitation {
   roleId String? // rol que tendrá el usuario invitado
 
   @@unique([email, organizationId])
+  @@index([inviteToken])
 }

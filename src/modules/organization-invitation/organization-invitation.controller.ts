@@ -1,4 +1,3 @@
-import { RequireOwner } from '@common/guards/owner.guard';
 import { EnumValidationPipe } from '@common/pipes/enum-validation.pipe';
 import { MaxValuePipe } from '@common/pipes/max-value.pipe';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
@@ -45,8 +44,10 @@ import {
 import { OrganizationInvitationRoleGuard } from './guards/organization-invitation-role.guard';
 import { OrganizationInvitationService } from './organization-invitation.service';
 
+import { RequireOrganizationOwner } from '@/common/guards/organization-owner.guard';
+
 @ApiTags('Organization Invitations')
-@Controller('org-invitation')
+@Controller('organization-invitation')
 @UseGuards(FirebaseAuthGuard)
 @ApiBearerAuth()
 export class OrganizationInvitationController {
@@ -56,7 +57,7 @@ export class OrganizationInvitationController {
 
   @Post()
   @UseGuards(OrganizationInvitationRoleGuard)
-  @RequireOwner()
+  @RequireOrganizationOwner()
   @ApiCreateOrgInvitation()
   async create(
     @Body() dto: CreateOrganizationInvitationDto,
@@ -163,5 +164,55 @@ export class OrganizationInvitationController {
   ): Promise<MessageOnlyResponse> {
     await this.invitationService.remove(id);
     return { message: 'Organization invitation deleted successfully' };
+  }
+
+  @Post('create-link')
+  @UseGuards(OrganizationInvitationRoleGuard)
+  @RequireOrganizationOwner()
+  async createInviteLink(
+    @Body()
+    createLinkDto: {
+      organizationId: string;
+      role: string;
+      expiresAt?: Date;
+      email?: string;
+      sendEmail?: boolean;
+    },
+    @Request() req: RequestWithUser,
+  ): Promise<MessageResponse<{ inviteUrl: string; token: string }>> {
+    const invitation = await this.invitationService.createInviteLink(
+      createLinkDto.organizationId,
+      createLinkDto.role,
+      req.user.id,
+      createLinkDto.expiresAt,
+      createLinkDto.email,
+      createLinkDto.sendEmail,
+    );
+
+    const inviteUrl = `${process.env.FRONTEND_BASE_URL}/organization-invite/${invitation.inviteToken}?org=${createLinkDto.organizationId}`;
+
+    return {
+      message: createLinkDto.sendEmail
+        ? 'Organization invitation sent successfully'
+        : 'Organization invite link created successfully',
+      data: { inviteUrl, token: invitation.inviteToken },
+    };
+  }
+
+  @Get('join/:token')
+  async joinByToken(
+    @Param('token') token: string,
+    @Request() req: RequestWithUser,
+  ): Promise<MessageResponse<{ organizationId: string }>> {
+    const result = await this.invitationService.acceptByToken(
+      token,
+      req.user.id,
+    );
+    return {
+      message: 'Successfully joined organization',
+      data: {
+        organizationId: result.organizationId,
+      },
+    };
   }
 }

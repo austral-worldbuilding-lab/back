@@ -1,32 +1,80 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { InvitationStatus } from '@prisma/client';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsUUID,
+  IsDateString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class OrganizationInvitationDto {
-  @ApiProperty({ example: 'b7e7a9b4-8cdd-4f8e-9a7e-2a5d8b1c3f92' })
+  @ApiProperty({
+    description: 'ID único de la invitación',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  })
+  @IsUUID()
   id!: string;
 
-  @ApiProperty({ example: 'usuario@example.com' })
-  email!: string;
-
-  @ApiProperty({ example: '0b5d7c1a-3f2e-45a6-9f3c-1e2d4f6a8b0c' })
-  token!: string;
-
-  @ApiProperty({ enum: InvitationStatus, example: InvitationStatus.PENDING })
-  status!: InvitationStatus;
-
-  @ApiProperty({ example: '2025-12-31T23:59:59.000Z' })
-  expiresAt!: Date;
-
-  @ApiProperty({ example: '44f1f4a0-2a21-4b6d-bc85-9b2d9b2d1f0e' })
-  organizationId!: string;
-
-  @ApiProperty({ example: 'c51b0a4b-0f2d-4b21-9a2e-6d3f9a8b7c6d' })
-  invitedById!: string;
-
   @ApiProperty({
-    example: 'c9c9a4a1-5c0d-4a1f-9f0a-7b3c2d1e4f5a',
-    nullable: true,
+    description: 'Correo electrónico del usuario invitado',
+    example: 'usuario@example.com',
     required: false,
   })
-  roleId?: string | null;
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiProperty({
+    description: 'Token único de la invitación',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  token!: string;
+
+  @ApiProperty({
+    description: 'Estado actual de la invitación',
+    enum: InvitationStatus,
+    example: InvitationStatus.PENDING,
+  })
+  @IsEnum(InvitationStatus)
+  @IsNotEmpty()
+  status!: InvitationStatus;
+
+  @ApiProperty({
+    description: 'Fecha de expiración de la invitación',
+    example: '2025-12-31T23:59:59.000Z',
+  })
+  @IsDateString()
+  @IsNotEmpty()
+  expiresAt!: Date;
+
+  @ApiProperty({
+    description: 'ID de la organización a la que se invita',
+    example: '44f1f4a0-2a21-4b6d-bc85-9b2d9b2d1f0e',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  organizationId!: string;
+
+  @ApiProperty({
+    description: 'Rol que tendrá el usuario invitado en la organización',
+    example: 'member',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  role?: string;
+
+  @ApiProperty({
+    description: 'Token único para links de invitación compartibles',
+    example: 'abc123def456',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  inviteToken?: string;
 }

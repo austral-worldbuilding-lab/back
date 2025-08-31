@@ -56,7 +56,7 @@ export class OrganizationInvitationAccessGuard implements CanActivate {
       const isSender = invitation.invitedById === user.id;
       const isRecipient =
         !!user.email &&
-        invitation.email.toLowerCase() === user.email.toLowerCase();
+        invitation.email?.toLowerCase() === user.email.toLowerCase();
 
       if (!isSender && !isRecipient) {
         throw new ForbiddenException(
@@ -90,7 +90,7 @@ export class OrganizationInvitationAccessGuard implements CanActivate {
         case 'recipient':
           if (
             !!user.email &&
-            invitation.email.toLowerCase() === user.email.toLowerCase()
+            invitation.email?.toLowerCase() === user.email.toLowerCase()
           )
             return true;
           break;
