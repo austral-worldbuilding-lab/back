@@ -2,14 +2,20 @@ import * as path from 'node:path';
 
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { AiPostitResponse } from '@modules/mandala/types/postits';
+import {
+  AiPostitComparisonResponse,
+  AiPostitResponse,
+} from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { AiValidationException } from '../exceptions/ai-validation.exception';
 import { AiProvider } from '../interfaces/ai-provider.interface';
-import { PostitsResponse } from '../resources/dto/generate-postits.dto';
+import {
+  PostitsComparisonResponse,
+  PostitsResponse,
+} from '../resources/dto/generate-postits.dto';
 import { QuestionsResponse } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
@@ -56,12 +62,12 @@ export class GeminiAdapter implements AiProvider {
       '../resources/prompts/prompt_generar_postits.txt',
     );
     const systemInstruction = await this.utilsService.preparePrompt(
+      promptFilePath,
       dimensions,
       scales,
       centerCharacter,
       centerCharacterDescription,
       tags,
-      promptFilePath,
     );
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
@@ -222,12 +228,12 @@ export class GeminiAdapter implements AiProvider {
       model,
     });
     const systemInstruction = await this.utilsService.preparePrompt(
+      promptFilePath,
       dimensions,
       scales,
       centerCharacter,
       centerCharacterDescription,
       tags,
-      promptFilePath,
       mandalaTextSummary,
     );
 
@@ -290,6 +296,78 @@ export class GeminiAdapter implements AiProvider {
       }
       this.logger.error(
         'Failed to parse AI questions response as JSON:',
+        error,
+      );
+      throw new Error('Invalid JSON response from Gemini API');
+    }
+  }
+
+  async generatePostitsComparison(
+    projectId: string,
+    dimensions: string[],
+    scales: string[],
+    comparisonTypes: string[],
+    mandalasDocument: string,
+  ): Promise<AiPostitComparisonResponse[]> {
+    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
+
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_resumen_postits.txt',
+    );
+    const systemInstruction = await this.utilsService.preparePrompt(
+      promptFilePath,
+      dimensions,
+      scales,
+      '', // centerCharacter
+      '', // centerCharacterDescription
+      [], // tags
+      mandalasDocument,
+      comparisonTypes,
+    );
+
+    this.logger.log('Prompt:', systemInstruction);
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      dimensions,
+      scales,
+    );
+
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const responseText = await this.generateWithGemini(
+      model,
+      systemInstruction,
+      geminiFiles,
+      PostitsComparisonResponse,
+    );
+
+    this.logger.log('responseText', responseText);
+
+    const result = this.parseAndValidateComparisonResponse(responseText);
+    this.logger.log(`Comparison generation completed`);
+    return result;
+  }
+
+  private parseAndValidateComparisonResponse(
+    responseText: string | undefined,
+  ): AiPostitComparisonResponse[] {
+    if (!responseText) {
+      throw new Error('No response text received from Gemini API');
+    }
+
+    try {
+      const comparisons = JSON.parse(
+        responseText,
+      ) as AiPostitComparisonResponse[];
+      this.logger.log(
+        `Successfully parsed ${comparisons.length} comparison responses from AI`,
+      );
+
+      return comparisons;
+    } catch (error) {
+      this.logger.error(
+        'Failed to parse AI comparison response as JSON:',
         error,
       );
       throw new Error('Invalid JSON response from Gemini API');

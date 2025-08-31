@@ -4,7 +4,7 @@ import {
   MandalaAiSummary,
   PostitSummary,
   DimensionSummary,
-  ScaleSummary,
+  SectionSummary,
 } from '../types/mandala-summary.interface';
 
 // Types for mandala configuration structure
@@ -44,7 +44,7 @@ export function createMandalaAiSummary(
   const postitSummaries: PostitSummary[] = postits.map((postit) => ({
     content: postit.content,
     dimension: postit.dimension,
-    scale: postit.section, // section in firestore = scale in our domain
+    section: postit.section,
     childrenCount: postit.childrens?.length || 0,
   }));
 
@@ -66,9 +66,9 @@ export function createMandalaAiSummary(
     },
   );
 
-  // Create scales with their post-its
-  const scales: ScaleSummary[] = configuredScales.map((scale: string) => {
-    const scalePostits = postitSummaries.filter((p) => p.scale === scale);
+  // Create sections with their post-its
+  const sections: SectionSummary[] = configuredScales.map((scale: string) => {
+    const scalePostits = postitSummaries.filter((p) => p.section === scale);
     return {
       name: scale,
       postits: scalePostits,
@@ -82,8 +82,40 @@ export function createMandalaAiSummary(
       description: mandala?.configuration?.center?.description || '',
     },
     dimensions,
-    scales,
+    sections,
     totalPostits: postitSummaries.length,
   };
 }
 
+/**
+ * Generates a human-readable text summary for AI consumption
+ */
+export function generateTextualSummary(summary: MandalaAiSummary): string {
+  const lines: string[] = [];
+
+  lines.push(`Center Character: ${summary.centerCharacter.name}`);
+
+  if (summary.centerCharacter.description) {
+    lines.push(`Character Description: ${summary.centerCharacter.description}`);
+  }
+
+  lines.push('');
+
+  // Dimensions analysis with ALL scales shown for each dimension
+  summary.dimensions.forEach((dimension) => {
+    lines.push(`\n${dimension.name}: ${dimension.totalPostits} post-its`);
+
+    // Show ALL sections for this dimension (even with 0 post-its)
+    summary.sections.forEach((section) => {
+      const sectionPostits = dimension.postits.filter(
+        (p) => p.section === section.name,
+      );
+      lines.push(`  ${section.name}: ${sectionPostits.length} post-its`);
+      sectionPostits.forEach((postit) => {
+        lines.push(`    • ${postit.content}`);
+      });
+    });
+  });
+
+  return lines.join('\n');
+}

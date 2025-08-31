@@ -1,7 +1,7 @@
 export interface PostitSummary {
   content: string;
   dimension: string;
-  scale: string;
+  section: string;
   childrenCount: number;
 }
 
@@ -11,7 +11,7 @@ export interface DimensionSummary {
   totalPostits: number;
 }
 
-export interface ScaleSummary {
+export interface SectionSummary {
   name: string;
   postits: PostitSummary[];
   totalPostits: number;
@@ -23,6 +23,6 @@ export interface MandalaAiSummary {
     description: string;
   };
   dimensions: DimensionSummary[];
-  scales: ScaleSummary[];
+  sections: SectionSummary[];
   totalPostits: number;
 }

@@ -10,8 +10,9 @@ export function replacePromptPlaceholders(
   centerCharacterDescription: string,
   tags: string[],
   mandalaDocument?: string,
+  comparisonTypes?: string[],
 ): string {
-  if (!promptTemplate) throw new Error('Prompt template is required');
+  /* if (!promptTemplate) throw new Error('Prompt template is required');
   if (!dimensions?.length)
     throw new Error('At least one dimension must be provided');
   if (!scales?.length) throw new Error('At least one scale must be provided');
@@ -33,7 +34,7 @@ export function replacePromptPlaceholders(
   tags.forEach((tag, i) => {
     if (!tag?.trim())
       throw new Error(`Tag at index ${i} must be a valid string`);
-  });
+  }); */
 
   const processedPrompt = promptTemplate
     .replace(/\$\{dimensions}/g, dimensions.join(', '))
@@ -41,7 +42,11 @@ export function replacePromptPlaceholders(
     .replace(/\$\{centerCharacter}/g, centerCharacter)
     .replace(/\$\{centerCharacterDescription}/g, centerCharacterDescription)
     .replace(/\$\{tags}/g, tags.join(', '))
-    .replace(/\$\{mandalaDocument}/g, mandalaDocument || 'No content');
+    .replace(/\$\{mandalaDocument}/g, mandalaDocument || 'No content')
+    .replace(
+      /\$\{comparisonTypes}/g,
+      comparisonTypes?.join(', ') || 'No content',
+    );
 
   const remainingPlaceholders = processedPrompt.match(/\$\{[^}]+}/g);
   if (remainingPlaceholders?.length) {

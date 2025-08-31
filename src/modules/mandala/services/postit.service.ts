@@ -7,6 +7,7 @@ import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
+import { AiPostitComparisonResponse } from '@modules/mandala/types/postits';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { TagDto } from '@modules/project/dto/tag.dto';
 import { ProjectService } from '@modules/project/project.service';
@@ -21,6 +22,7 @@ import {
   PostitWithCoordinates,
   PostitTag,
   AiPostitResponse,
+  PostitComparison,
 } from '../types/postits';
 import {
   addPostitToParent,
@@ -67,15 +69,12 @@ export class PostitService {
     return allPostits.flat();
   }
 
-  async generatePostitsForMandala(
+  transformToPostitsWithCoordinates(
     mandalaId: string,
+    postits: Postit[],
     dimensions: string[],
     scales: string[],
-  ): Promise<PostitWithCoordinates[]> {
-    const mandala = await this.getMandalaOrThrow(mandalaId);
-
-    const postits = await this.generatePostits(mandala, dimensions, scales);
-
+  ): PostitWithCoordinates[] {
     const postitsBySection = this.groupPostitsBySection(postits);
 
     const coordinatesBySection: Record<string, PostitCoordinates[]> = {};
@@ -124,7 +123,7 @@ export class PostitService {
     return mandala;
   }
 
-  private async generatePostits(
+  async generatePostits(
     mandala: MandalaDto,
     dimensions: string[],
     scales: string[],
@@ -153,6 +152,35 @@ export class PostitService {
         tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
         // TODO: linkedToId is not used in the mandala generation by AI yet
         childrens: [],
+      }),
+    );
+  }
+
+  async generateComparisonPostits(
+    mandalas: MandalaDto[],
+    mandalasDocument: FirestoreMandalaDocument[],
+  ): Promise<PostitComparison[]> {
+    const projectTags = await this.projectService.getProjectTags(
+      mandalas[0].projectId, // Use first mandala's project for tags
+    );
+
+    const aiResponse: AiPostitComparisonResponse[] =
+      await this.aiService.generatePostitsSummary(
+        mandalas[0].projectId, // TODO update this to use the projectId of all mandalas
+        mandalas,
+        mandalasDocument,
+      );
+
+    return aiResponse.map(
+      (aiPostit: AiPostitComparisonResponse): PostitComparison => ({
+        id: randomUUID(),
+        content: aiPostit.content,
+        dimension: aiPostit.dimension,
+        section: aiPostit.section,
+        tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
+        childrens: [],
+        type: aiPostit.type,
+        from: aiPostit.from,
       }),
     );
   }

@@ -1,7 +1,9 @@
-import { AiPostitResponse } from '@modules/mandala/types/postits';
+import {
+  AiPostitComparisonResponse,
+  AiPostitResponse,
+} from '@modules/mandala/types/postits';
 
 import { AiQuestionResponse } from '@/modules/mandala/types/questions';
-import { MandalaAiSummary } from '../types/mandala-summary.interface';
 
 export interface AiProvider {
   /**
@@ -26,7 +28,7 @@ export interface AiProvider {
   /**
    * Generates questions for a project based on mandala configuration and files
    * @param mandalaId - The ID of the mandala to generate questions for
-   * @param mandalaAiSummary - AI-readable summary of the mandala
+   * @param mandalaTextSummary - Clean textual summary of the mandala without technical details
    * Project configuration:
    * @param dimensions - Array of dimensions to generate questions for
    * @param scales - Array of scales to generate questions for
@@ -39,11 +41,19 @@ export interface AiProvider {
   generateQuestions(
     projectId: string,
     mandalaId: string,
-    mandalaAiSummary: MandalaAiSummary,
+    mandalaAiSummary: string,
     dimensions: string[],
     scales: string[],
     tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
   ): Promise<AiQuestionResponse[]>;
+
+  generatePostitsComparison(
+    projectId: string,
+    dimensions: string[],
+    scales: string[],
+    comparisonTypes: string[],
+    mandalasDocument: string,
+  ): Promise<AiPostitComparisonResponse[]>;
 }

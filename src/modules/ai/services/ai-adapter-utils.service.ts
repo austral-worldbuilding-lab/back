@@ -34,13 +34,14 @@ export class AiAdapterUtilsService {
   }
 
   async preparePrompt(
-    dimensions: string[],
-    scales: string[],
-    centerCharacter: string,
-    centerCharacterDescription: string,
-    tags: string[],
     promptFilePath: string,
+    dimensions?: string[],
+    scales?: string[],
+    centerCharacter?: string,
+    centerCharacterDescription?: string,
+    tags?: string[],
     mandalaDocument?: string,
+    comparisonTypes?: string[],
   ): Promise<string> {
     this.logger.debug(`Preparing prompt template...`);
 
@@ -49,12 +50,13 @@ export class AiAdapterUtilsService {
 
       const systemInstruction = replacePromptPlaceholders(
         promptTemplate,
-        dimensions,
-        scales,
-        centerCharacter,
-        centerCharacterDescription,
-        tags,
+        dimensions || [],
+        scales || [],
+        centerCharacter || '',
+        centerCharacterDescription || '',
+        tags || [],
         mandalaDocument,
+        comparisonTypes,
       );
 
       this.logger.debug(`Prompt template prepared successfully`);
