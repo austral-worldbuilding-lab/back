@@ -12,7 +12,7 @@ import {
   IsHexColor,
 } from 'class-validator';
 
-// This DTO is used to create the mandala center of the characters inside an overlap mandala
+// This DTO is used to create the mandala center of the characters inside an overlap mandala (personaje de origen que fue usado para crear la mandala unificada)
 export class CreateMandalaCenterWithOriginDto {
   @ApiProperty({
     description: 'ID del mandala de origen',
@@ -23,7 +23,7 @@ export class CreateMandalaCenterWithOriginDto {
   id!: string;
 
   @ApiProperty({
-    description: 'Nombre del personaje origin',
+    description: 'Nombre del personaje de origen',
     example: 'Estudiante',
   })
   @IsString()
@@ -31,7 +31,7 @@ export class CreateMandalaCenterWithOriginDto {
   name!: string;
 
   @ApiProperty({
-    description: 'Descripción del personaje origin',
+    description: 'Descripción del personaje de origen',
     example: 'Alumno de 23 años que estudia en la universidad',
     required: false,
   })
@@ -40,7 +40,7 @@ export class CreateMandalaCenterWithOriginDto {
   description?: string;
 
   @ApiProperty({
-    description: 'Color del personaje origin en formato hexadecimal',
+    description: 'Color del personaje de origen en formato hexadecimal',
     example: '#3B82F6',
   })
   @IsHexColor()
