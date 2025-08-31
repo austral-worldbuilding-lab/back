@@ -7,7 +7,6 @@ import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
-import { AiPostitComparisonResponse } from '@modules/mandala/types/postits';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { TagDto } from '@modules/project/dto/tag.dto';
 import { ProjectService } from '@modules/project/project.service';
@@ -22,7 +21,6 @@ import {
   PostitWithCoordinates,
   PostitTag,
   AiPostitResponse,
-  PostitComparison,
 } from '../types/postits';
 import {
   addPostitToParent,
@@ -127,6 +125,7 @@ export class PostitService {
     mandala: MandalaDto,
     dimensions: string[],
     scales: string[],
+    selectedFiles?: string[],
   ): Promise<Postit[]> {
     const projectTags = await this.projectService.getProjectTags(
       mandala.projectId,
@@ -141,6 +140,8 @@ export class PostitService {
       mandala.configuration.center.name,
       mandala.configuration.center.description || 'N/A',
       tagNames,
+      selectedFiles,
+      mandala.id,
     );
 
     return aiResponse.map(

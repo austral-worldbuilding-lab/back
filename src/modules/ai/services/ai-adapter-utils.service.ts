@@ -73,19 +73,37 @@ export class AiAdapterUtilsService {
     projectId: string,
     dimensions: string[],
     scales: string[],
+    selectedFiles?: string[],
+    mandalaId?: string,
   ): Promise<FileBuffer[]> {
-    this.logger.debug(`Loading files for project: ${projectId}`);
+    this.logger.debug(
+      `Loading files for project: ${projectId}${mandalaId ? `, mandala: ${mandalaId}` : ''}`,
+    );
 
-    // Use hierarchy resolution to get org + project files for better AI context
-    const scope = await this.fileService.resolveScope('project', projectId);
-    const fileBuffers =
+    // Use hierarchy resolution to get appropriate scope files for better AI context
+    // If mandalaId is provided, use mandala scope (org + project + mandala)
+    // Otherwise, use project scope (org + project)
+    const scope = mandalaId
+      ? await this.fileService.resolveScope('mandala', mandalaId)
+      : await this.fileService.resolveScope('project', projectId);
+    const allFileBuffers =
       await this.fileService.readAllFilesAsBuffersWithMetadata(scope);
 
+    // Filter files if selectedFiles is provided
+    const fileBuffers = selectedFiles?.length
+      ? allFileBuffers.filter((file) => selectedFiles.includes(file.fileName))
+      : allFileBuffers;
+
     if (fileBuffers.length === 0) {
-      throw new Error('No files found for project');
+      const errorMessage = selectedFiles?.length
+        ? `No files found matching the selected files: ${selectedFiles.join(', ')}`
+        : 'No files found for project';
+      throw new Error(errorMessage);
     }
 
-    this.logger.debug(`Loaded ${fileBuffers.length} files, validating...`);
+    this.logger.debug(
+      `Loaded ${allFileBuffers.length} files, ${selectedFiles?.length ? `filtered to ${fileBuffers.length} selected files, ` : ''}validating...`,
+    );
 
     const validationResult = this.validator.validateAiRequest(
       fileBuffers,

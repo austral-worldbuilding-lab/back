@@ -25,16 +25,6 @@ export class AiService {
     );
   }
 
-  /**
-   * Generates postits for a project
-   * @param projectId - The ID of the project to generate postits for
-   * @param dimensions - Array of dimensions
-   * @param scales - Array of scales
-   * @param centerCharacter
-   * @param centerCharacterDescription
-   * @param tags - Array of tags for connecting postits across dimensions
-   * @returns An array of AiPostitResponse objects
-   */
   async generatePostits(
     projectId: string,
     dimensions: string[],
@@ -42,6 +32,8 @@ export class AiService {
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
+    selectedFiles?: string[],
+    mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
     this.logger.log(`Starting postit generation for project: ${projectId}`);
 
@@ -60,6 +52,8 @@ export class AiService {
       centerCharacter,
       centerCharacterDescription,
       tags,
+      selectedFiles,
+      mandalaId,
     );
 
     this.logger.log(
@@ -77,6 +71,7 @@ export class AiService {
     tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
+    selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
 
@@ -107,6 +102,7 @@ export class AiService {
       tags,
       centerCharacter,
       centerCharacterDescription,
+      selectedFiles,
     );
 
     this.logger.log(

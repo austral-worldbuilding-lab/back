@@ -14,10 +14,6 @@ import {
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import {
-  ApiGetFiles,
-  ApiUploadFiles,
-  ApiGetFileBuffers,
-  ApiDeleteFile,
   ApiGetOrganizationFiles,
   ApiUploadOrganizationFiles,
   ApiDeleteOrganizationFile,
@@ -32,7 +28,6 @@ import {
 } from './decorators/file-swagger.decorators';
 import { CreateFileDto } from './dto/create-file.dto';
 import { FileService } from './file.service';
-import { FileRoleGuard } from './guards/file-role.guard';
 import { MandalaFileRoleGuard } from './guards/mandala-file-role.guard';
 import { OrganizationFileRoleGuard } from './guards/organization-file-role.guard';
 import { ProjectFileRoleGuard } from './guards/project-file-role.guard';
@@ -44,53 +39,6 @@ import { EffectiveFile } from './types/file-scope.type';
 @ApiBearerAuth()
 export class FileController {
   constructor(private readonly fileService: FileService) {}
-
-  @Get(':projectId')
-  @UseGuards(FileRoleGuard)
-  @ApiGetFiles()
-  async getFiles(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-  ): Promise<DataResponse<CreateFileDto[]>> {
-    const response = await this.fileService.getFilesLegacy(projectId);
-    return { data: response };
-  }
-
-  @Post(':projectId')
-  @UseGuards(FileRoleGuard)
-  @ApiUploadFiles()
-  async uploadFiles(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Body() body: CreateFileDto[],
-  ): Promise<DataResponse<PresignedUrl[]>> {
-    const response = await this.fileService.uploadFilesLegacy(body, projectId);
-    return { data: response };
-  }
-
-  @Get(':projectId/buffers')
-  @UseGuards(FileRoleGuard)
-  @ApiGetFileBuffers()
-  async getFileBuffers(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-  ): Promise<DataResponse<Buffer[]>> {
-    const response =
-      await this.fileService.readAllFilesAsBuffersLegacy(projectId);
-    return { data: response };
-  }
-
-  @Delete(':projectId/:fileName')
-  @UseGuards(FileRoleGuard)
-  @ApiDeleteFile()
-  async deleteFile(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Param('fileName') fileName: string,
-  ): Promise<MessageOnlyResponse> {
-    await this.fileService.deleteFileLegacy(projectId, fileName);
-    return {
-      message: 'File deleted successfully',
-    };
-  }
-
-  // === NEW HIERARCHICAL ENDPOINTS ===
 
   @Post('organization/:orgId')
   @UseGuards(OrganizationFileRoleGuard)

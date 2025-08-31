@@ -12,6 +12,8 @@ interface AiRequestBody {
   centerCharacter: string;
   centerCharacterDescription: string;
   tags: string[];
+  selectedFiles?: string[];
+  mandalaId?: string;
 }
 
 @ApiTags('AI')
@@ -45,6 +47,8 @@ export class AiController {
       aiRequestBody.centerCharacter,
       aiRequestBody.centerCharacterDescription,
       aiRequestBody.tags,
+      aiRequestBody.selectedFiles,
+      aiRequestBody.mandalaId,
     );
   }
 }

@@ -300,6 +300,7 @@ export class MandalaController {
       mandalaId,
       generateQuestionsDto.dimensions,
       generateQuestionsDto.scales,
+      generateQuestionsDto.selectedFiles,
     );
 
     return {
@@ -318,6 +319,7 @@ export class MandalaController {
       mandalaId,
       generatePostitsDto.dimensions,
       generatePostitsDto.scales,
+      generatePostitsDto.selectedFiles,
     );
 
     return {
