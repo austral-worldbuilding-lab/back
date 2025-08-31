@@ -47,11 +47,12 @@ import { InvitationService } from './invitation.service';
 
 @ApiTags('Invitations')
 @Controller('invitation')
+@UseGuards(FirebaseAuthGuard)
 export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
   @Post()
-  @UseGuards(FirebaseAuthGuard, InvitationRoleGuard)
+  @UseGuards(InvitationRoleGuard)
   @RequireOwner()
   @ApiBearerAuth()
   @ApiCreateInvitation()
@@ -70,7 +71,6 @@ export class InvitationController {
   }
 
   @Get()
-  @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
   @ApiGetAllInvitations()
   async findAll(
@@ -97,7 +97,6 @@ export class InvitationController {
   }
 
   @Get('project/:projectId')
-  @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
   @ApiGetInvitationsByProject()
   async findByProject(
@@ -117,7 +116,6 @@ export class InvitationController {
   }
 
   @Get(':id')
-  @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
   @ApiGetInvitation()
   async findOne(
@@ -128,7 +126,7 @@ export class InvitationController {
   }
 
   @Post(':id/accept')
-  @UseGuards(FirebaseAuthGuard, InvitationAccessGuard)
+  @UseGuards(InvitationAccessGuard)
   @RequireInvitationAccess('recipient')
   @ApiBearerAuth()
   @ApiAcceptInvitation()
@@ -144,7 +142,7 @@ export class InvitationController {
   }
 
   @Post(':id/reject')
-  @UseGuards(FirebaseAuthGuard, InvitationAccessGuard)
+  @UseGuards(InvitationAccessGuard)
   @RequireInvitationAccess('recipient')
   @ApiBearerAuth()
   @ApiRejectInvitation()
@@ -159,7 +157,7 @@ export class InvitationController {
   }
 
   @Delete(':id')
-  @UseGuards(FirebaseAuthGuard, InvitationAccessGuard)
+  @UseGuards(InvitationAccessGuard)
   @RequireInvitationAccess('sender', 'recipient')
   @ApiBearerAuth()
   @ApiDeleteInvitation()
@@ -171,7 +169,7 @@ export class InvitationController {
   }
 
   @Post('create-link')
-  @UseGuards(FirebaseAuthGuard, InvitationRoleGuard)
+  @UseGuards(InvitationRoleGuard)
   @RequireOwner()
   @ApiBearerAuth()
   async createInviteLink(
@@ -206,7 +204,6 @@ export class InvitationController {
   }
 
   @Get('join/:token')
-  @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
   async joinByToken(
     @Param('token') token: string,
