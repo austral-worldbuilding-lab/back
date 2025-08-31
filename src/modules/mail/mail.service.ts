@@ -2,8 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Transporter } from 'nodemailer';
 
-type InvitationType = 'Organización' | 'Proyecto';
-
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -18,18 +16,18 @@ export class MailService {
     invitedByName: string;
     projectName: string;
     token: string;
-    type?: InvitationType;
+    organizationId?: string;
+    projectId?: string;
   }) {
     const baseUrl = process.env.FRONTEND_BASE_URL ?? 'http://localhost:5173';
-    const acceptUrl = `${baseUrl}/app/invitation/${encodeURIComponent(params.token)}`;
+    let acceptUrl = `${baseUrl}/invite/${encodeURIComponent(params.token)}`;
+    if (params.organizationId && params.projectId) {
+      acceptUrl += `?org=${encodeURIComponent(params.organizationId)}&project=${encodeURIComponent(params.projectId)}`;
+    }
 
     const from = this.config.get<string>('mail.from');
     const subject = `Invitación a un proyecto: ${params.projectName}`;
-    const html = this.buildInvitationHtml({
-      ...params,
-      acceptUrl,
-      type: params.type ?? 'Proyecto',
-    });
+    const html = this.buildInvitationHtml({ ...params, acceptUrl });
 
     try {
       await this.transport.sendMail({
@@ -53,7 +51,6 @@ export class MailService {
     invitedByName: string;
     projectName: string;
     acceptUrl: string;
-    type: InvitationType;
   }) {
     return `
     <!DOCTYPE html>
@@ -61,7 +58,7 @@ export class MailService {
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Invitación ${data.type == 'Proyecto' ? 'al' : 'a la'} ${data.type}</title>
+        <title>Invitación al Proyecto</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -125,15 +122,15 @@ export class MailService {
             <h2>Hola ${data.inviteeName},</h2>
             <p>
               Has sido invitado por <strong>${data.invitedByName}</strong> a colaborar en
-              ${data.type == 'Proyecto' ? 'el' : 'la'} ${data.type.toLowerCase()} <strong>"${data.projectName}"</strong> en la plataforma de
+              el proyecto <strong>"${data.projectName}"</strong> en la plataforma de
               Worldbuilding.
             </p>
             <p>
-              Para aceptar la invitación y comenzar a trabajar en ${data.type == 'Proyecto' ? 'el' : 'la'} ${data.type.toLowerCase()}, hacé
+              Para aceptar la invitación y comenzar a trabajar en el proyecto, hacé
               clic en el botón a continuación:
             </p>
             <a class="button" href="${data.acceptUrl}" target="_blank"
-              >Unirme ${data.type == 'Proyecto' ? 'al' : 'a la'} ${data.type.toLowerCase()}</a
+              >Unirme al proyecto</a
             >
             <p style="margin-top: 32px">
               Si no esperabas este correo, podés ignorarlo.

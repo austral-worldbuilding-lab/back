@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto';
+
 import {
   ConflictException,
   ResourceNotFoundException,
@@ -217,6 +219,107 @@ export class InvitationService {
     return this.mapToInvitationDto(updatedInvitation);
   }
 
+  async createInviteLink(
+    projectId: string,
+    role: string,
+    senderId: string,
+    expiresAt?: Date,
+    email?: string,
+    sendEmail?: boolean,
+  ): Promise<InvitationDto & { inviteToken: string }> {
+    const project = await this.invitationRepository.findProjectById(projectId);
+    if (!project) {
+      throw new ResourceNotFoundException('Project', projectId);
+    }
+    const sender = await this.invitationRepository.findUserById(senderId);
+    if (!sender) {
+      throw new ResourceNotFoundException('User', senderId);
+    }
+    const roleEntity = await this.roleService.findByName(role);
+    if (!roleEntity) {
+      throw new ResourceNotFoundException('Role', role);
+    }
+    const roleId = roleEntity.id;
+
+    const inviteToken = this.generateInviteToken();
+    const defaultExpiresAt =
+      expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const invitation = await this.invitationRepository.createWithToken(
+      projectId,
+      senderId,
+      roleId,
+      inviteToken,
+      defaultExpiresAt,
+    );
+
+    if (email && sendEmail) {
+      await this.mailService.sendInvitationEmail({
+        to: email,
+        inviteeName: email,
+        invitedByName: sender.username,
+        projectName: project.name,
+        token: inviteToken,
+        organizationId: project.organizationId || undefined,
+        projectId: projectId,
+      });
+    }
+
+    const dto = await this.mapToInvitationDto(invitation);
+    return { ...dto, inviteToken };
+  }
+
+  async acceptByToken(
+    token: string,
+    userId: string,
+  ): Promise<{ projectId: string; organizationId?: string }> {
+    const invitation = await this.invitationRepository.findByInviteToken(token);
+
+    if (!invitation) {
+      throw new ResourceNotFoundException('Invitation', token);
+    }
+    if (invitation.expiresAt && new Date() > invitation.expiresAt) {
+      throw new BusinessLogicException('Invitation has expired', {
+        token,
+        expiresAt: invitation.expiresAt,
+      });
+    }
+    const isAlreadyMember = await this.invitationRepository.isUserProjectMember(
+      userId,
+      invitation.projectId,
+    );
+
+    if (isAlreadyMember) {
+      throw new ConflictException('User is already a member of this project');
+    }
+
+    let roleId: string;
+    if (invitation.roleId) {
+      roleId = invitation.roleId;
+    } else {
+      const memberRole = await this.roleService.findOrCreate('member');
+      roleId = memberRole.id;
+    }
+
+    await this.invitationRepository.addUserToProject(
+      userId,
+      invitation.projectId,
+      roleId,
+    );
+
+    const project = await this.invitationRepository.findProjectById(
+      invitation.projectId,
+    );
+
+    return {
+      projectId: invitation.projectId,
+      organizationId: project?.organizationId || undefined,
+    };
+  }
+
+  private generateInviteToken(): string {
+    return randomBytes(32).toString('hex');
+  }
+
   private async mapToInvitationDto(
     invitation: Invitation,
   ): Promise<InvitationDto> {
@@ -232,12 +335,13 @@ export class InvitationService {
 
     return {
       id: invitation.id,
-      email: invitation.email,
+      email: invitation.email || undefined,
       token: invitation.token,
       status: invitation.status,
       expiresAt: invitation.expiresAt,
       projectId: invitation.projectId,
       role: roleName,
+      inviteToken: invitation.inviteToken || undefined,
     };
   }
 
@@ -255,12 +359,13 @@ export class InvitationService {
 
     return {
       id: invitation.id,
-      email: invitation.email,
+      email: invitation.email || undefined,
       token: invitation.token,
       status: invitation.status,
       expiresAt: invitation.expiresAt,
       projectId: invitation.projectId,
       role: roleName,
+      inviteToken: invitation.inviteToken || undefined,
     };
   }
 }

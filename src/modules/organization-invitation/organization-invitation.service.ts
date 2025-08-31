@@ -79,7 +79,7 @@ export class OrganizationInvitationService {
       invitedByName: inviter.username,
       projectName: organization.name,
       token: invitation.token,
-      type: 'Organización',
+      organizationId: organization.id,
     });
 
     return this.mapToDto(invitation);
