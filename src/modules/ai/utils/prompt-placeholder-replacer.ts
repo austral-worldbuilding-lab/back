@@ -4,11 +4,11 @@
  */
 export function replacePromptPlaceholders(
   promptTemplate: string,
-  dimensions: string[],
-  scales: string[],
-  centerCharacter: string,
-  centerCharacterDescription: string,
-  tags: string[],
+  dimensions?: string[],
+  scales?: string[],
+  centerCharacter?: string,
+  centerCharacterDescription?: string,
+  tags?: string[],
   mandalaDocument?: string,
   comparisonTypes?: string[],
 ): string {
@@ -21,27 +21,30 @@ export function replacePromptPlaceholders(
   if (!centerCharacterDescription?.trim())
     throw new Error('Center character description must be provided'); */
 
-  dimensions.forEach((dim, i) => {
+  dimensions?.forEach((dim, i) => {
     if (!dim?.trim())
       throw new Error(`Dimension at index ${i} must be a valid string`);
   });
 
-  scales.forEach((scale, i) => {
+  scales?.forEach((scale, i) => {
     if (!scale?.trim())
       throw new Error(`Scale at index ${i} must be a valid string`);
   });
 
-  tags.forEach((tag, i) => {
+  tags?.forEach((tag, i) => {
     if (!tag?.trim())
       throw new Error(`Tag at index ${i} must be a valid string`);
   });
 
   const processedPrompt = promptTemplate
-    .replace(/\$\{dimensions}/g, dimensions.join(', '))
-    .replace(/\$\{scales}/g, scales.join(', '))
-    .replace(/\$\{centerCharacter}/g, centerCharacter)
-    .replace(/\$\{centerCharacterDescription}/g, centerCharacterDescription)
-    .replace(/\$\{tags}/g, tags.join(', '))
+    .replace(/\$\{dimensions}/g, dimensions?.join(', ') || 'No content')
+    .replace(/\$\{scales}/g, scales?.join(', ') || 'No content')
+    .replace(/\$\{centerCharacter}/g, centerCharacter || 'No content')
+    .replace(
+      /\$\{centerCharacterDescription}/g,
+      centerCharacterDescription || 'No content',
+    )
+    .replace(/\$\{tags}/g, tags?.join(', ') || 'No content')
     .replace(/\$\{mandalaDocument}/g, mandalaDocument || 'No content')
     .replace(
       /\$\{comparisonTypes}/g,
