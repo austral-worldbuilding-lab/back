@@ -661,12 +661,10 @@ export class MandalaService {
 
       const allCenterCharacters: CreateMandalaCenterWithOriginDto[] =
         mandalas.map((m) => ({
+          id: m.id,
+          name: m.name,
           description: m.configuration.center.description,
           color: m.configuration.center.color,
-          from: {
-            id: m.id,
-            name: m.name,
-          },
         }));
 
       this.logger.log(
@@ -678,7 +676,7 @@ export class MandalaService {
       const overlapCenter: CreateMandalaCenterDto = {
         name: createOverlapDto.name,
         description: `Mandala unificada: ${allCenterCharacters
-          .map((c) => c.from.name)
+          .map((c) => c.name)
           .join(', ')}`,
         color: createOverlapDto.color,
         characters: allCenterCharacters,
@@ -742,12 +740,10 @@ export class MandalaService {
 
       const allCenterCharacters: CreateMandalaCenterWithOriginDto[] =
         mandalas.map((m) => ({
+          id: m.id,
+          name: m.name,
           description: m.configuration.center.description,
           color: m.configuration.center.color,
-          from: {
-            id: m.id,
-            name: m.name,
-          },
         }));
 
       this.logger.log(
@@ -759,7 +755,7 @@ export class MandalaService {
       const overlapCenter: CreateMandalaCenterDto = {
         name: createOverlapDto.name,
         description: `Mandala unificada: ${allCenterCharacters
-          .map((c) => c.from.name)
+          .map((c) => c.name)
           .join(', ')}`,
         color: createOverlapDto.color,
         characters: allCenterCharacters,
@@ -782,7 +778,7 @@ export class MandalaService {
 
       const newMandala = await this.create(
         createOverlappedMandalaDto,
-        MandalaType.OVERLAP,
+        MandalaType.OVERLAP_SUMMARY,
       );
 
       const aiSummaryPostits =
