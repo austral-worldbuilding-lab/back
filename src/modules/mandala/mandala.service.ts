@@ -361,6 +361,7 @@ export class MandalaService {
         mandala,
         mandala.configuration.dimensions.map((d) => d.name),
         mandala.configuration.scales,
+        createMandalaDto.selectedFiles,
       );
       const postitsWithCoordinates: PostitWithCoordinates[] =
         this.postitService.transformToPostitsWithCoordinates(
@@ -368,7 +369,6 @@ export class MandalaService {
           postits,
           mandala.configuration.dimensions.map((d) => d.name),
           mandala.configuration.scales,
-          createMandalaDto.selectedFiles,
         );
 
       const childrenCenter = (

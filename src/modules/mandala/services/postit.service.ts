@@ -21,6 +21,8 @@ import {
   PostitWithCoordinates,
   PostitTag,
   AiPostitResponse,
+  AiPostitComparisonResponse,
+  PostitComparison,
 } from '../types/postits';
 import {
   addPostitToParent,
