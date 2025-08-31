@@ -1,4 +1,7 @@
-import { AiPostitResponse } from '@modules/mandala/types/postits';
+import {
+  AiPostitComparisonResponse,
+  AiPostitResponse,
+} from '@modules/mandala/types/postits';
 
 import { AiQuestionResponse } from '@/modules/mandala/types/questions';
 
@@ -44,7 +47,7 @@ export interface AiProvider {
   generateQuestions(
     projectId: string,
     mandalaId: string,
-    mandalaTextSummary: string,
+    mandalaAiSummary: string,
     dimensions: string[],
     scales: string[],
     tags: string[],
@@ -52,4 +55,12 @@ export interface AiProvider {
     centerCharacterDescription: string,
     selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]>;
+
+  generatePostitsComparison(
+    projectId: string,
+    dimensions: string[],
+    scales: string[],
+    comparisonTypes: string[],
+    mandalasDocument: string,
+  ): Promise<AiPostitComparisonResponse[]>;
 }

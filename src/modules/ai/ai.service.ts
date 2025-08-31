@@ -1,8 +1,12 @@
-import { AiPostitResponse } from '@modules/mandala/types/postits';
+import {
+  AiPostitComparisonResponse,
+  AiPostitResponse,
+} from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
+import { MandalaDto } from '../mandala/dto/mandala.dto';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
@@ -77,7 +81,7 @@ export class AiService {
     this.logger.debug('Mandala summary created:', {
       totalPostits: mandalaAiSummary.totalPostits,
       dimensions: mandalaAiSummary.dimensions.length,
-      scales: mandalaAiSummary.scales.length,
+      sections: mandalaAiSummary.sections.length,
       centerCharacter: mandalaAiSummary.centerCharacter.name,
     });
 
@@ -104,6 +108,40 @@ export class AiService {
     this.logger.log(
       `Generated ${result.length} questions for mandala: ${mandalaId}`,
     );
+    return result;
+  }
+
+  async generatePostitsSummary(
+    projectId: string,
+    mandalas: MandalaDto[],
+    mandalasDocument: FirestoreMandalaDocument[],
+  ): Promise<AiPostitComparisonResponse[]> {
+    this.logger.log(
+      `Starting postit summary generation for mandalas: ${mandalas.map((m) => m.id).join(', ')}`,
+    );
+
+    const allDimensions = mandalas.flatMap((m) =>
+      m.configuration.dimensions.map((d) => d.name),
+    );
+    const allScales = mandalas.flatMap((m) => m.configuration.scales);
+    const comparisonTypes = ['SIMILITUD', 'DIFERENCIA', 'UNICO'];
+
+    const mandalasAiSummary = mandalasDocument.map((m) =>
+      createMandalaAiSummary(m),
+    );
+
+    const result = await this.aiProvider.generatePostitsComparison(
+      projectId,
+      allDimensions,
+      allScales,
+      comparisonTypes,
+      mandalasAiSummary.map((m) => JSON.stringify(m)).join('\n'),
+    );
+
+    this.logger.log(
+      `Generated ${result.length} postits summary for mandalas: ${mandalas.map((m) => m.id).join(', ')}`,
+    );
+
     return result;
   }
 }

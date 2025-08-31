@@ -21,6 +21,8 @@ import {
   PostitWithCoordinates,
   PostitTag,
   AiPostitResponse,
+  AiPostitComparisonResponse,
+  PostitComparison,
 } from '../types/postits';
 import {
   addPostitToParent,
@@ -67,21 +69,12 @@ export class PostitService {
     return allPostits.flat();
   }
 
-  async generatePostitsForMandala(
+  transformToPostitsWithCoordinates(
     mandalaId: string,
+    postits: Postit[],
     dimensions: string[],
     scales: string[],
-    selectedFiles?: string[],
-  ): Promise<PostitWithCoordinates[]> {
-    const mandala = await this.getMandalaOrThrow(mandalaId);
-
-    const postits = await this.generatePostits(
-      mandala,
-      dimensions,
-      scales,
-      selectedFiles,
-    );
-
+  ): PostitWithCoordinates[] {
     const postitsBySection = this.groupPostitsBySection(postits);
 
     const coordinatesBySection: Record<string, PostitCoordinates[]> = {};
@@ -130,7 +123,7 @@ export class PostitService {
     return mandala;
   }
 
-  private async generatePostits(
+  async generatePostits(
     mandala: MandalaDto,
     dimensions: string[],
     scales: string[],
@@ -162,6 +155,35 @@ export class PostitService {
         tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
         // TODO: linkedToId is not used in the mandala generation by AI yet
         childrens: [],
+      }),
+    );
+  }
+
+  async generateComparisonPostits(
+    mandalas: MandalaDto[],
+    mandalasDocument: FirestoreMandalaDocument[],
+  ): Promise<PostitComparison[]> {
+    const projectTags = await this.projectService.getProjectTags(
+      mandalas[0].projectId, // Use first mandala's project for tags
+    );
+
+    const aiResponse: AiPostitComparisonResponse[] =
+      await this.aiService.generatePostitsSummary(
+        mandalas[0].projectId, // TODO update this to use the projectId of all mandalas
+        mandalas,
+        mandalasDocument,
+      );
+
+    return aiResponse.map(
+      (aiPostit: AiPostitComparisonResponse): PostitComparison => ({
+        id: randomUUID(),
+        content: aiPostit.content,
+        dimension: aiPostit.dimension,
+        section: aiPostit.section,
+        tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
+        childrens: [],
+        type: aiPostit.type,
+        from: aiPostit.from,
       }),
     );
   }
