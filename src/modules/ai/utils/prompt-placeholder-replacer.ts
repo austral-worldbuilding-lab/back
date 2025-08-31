@@ -12,7 +12,7 @@ export function replacePromptPlaceholders(
   mandalaDocument?: string,
   comparisonTypes?: string[],
 ): string {
-  /* if (!promptTemplate) throw new Error('Prompt template is required');
+  if (!promptTemplate) throw new Error('Prompt template is required');
   if (!dimensions?.length)
     throw new Error('At least one dimension must be provided');
   if (!scales?.length) throw new Error('At least one scale must be provided');
@@ -34,7 +34,7 @@ export function replacePromptPlaceholders(
   tags.forEach((tag, i) => {
     if (!tag?.trim())
       throw new Error(`Tag at index ${i} must be a valid string`);
-  }); */
+  });
 
   const processedPrompt = promptTemplate
     .replace(/\$\{dimensions}/g, dimensions.join(', '))

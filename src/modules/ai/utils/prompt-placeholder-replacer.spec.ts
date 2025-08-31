@@ -8,6 +8,8 @@ describe('replacePromptPlaceholders', () => {
     Descripción: \${centerCharacterDescription}
     Etiquetas disponibles: \${tags}
     Nunca inventes nuevas dimensiones ni escalas fuera de las proporcionadas.
+    Mandalas a comparar: \${mandalaDocument}
+    Tipos de comparación: \${comparisonTypes}
   `;
 
   const validDimensions = ['Recursos', 'Cultura', 'Economía'];
@@ -15,6 +17,9 @@ describe('replacePromptPlaceholders', () => {
   const validCenterCharacter = 'Alumno';
   const validCenterCharacterDescription = 'Un alumno generico de la UA';
   const validTags = ['educación', 'tecnología'];
+  const validMandalaDocument =
+    'Mandala 1: Sistema UA, Mandala 2: Sistema Educativo';
+  const validComparisonTypes = ['SIMILITUD', 'DIFERENCIA', 'UNICO'];
 
   it('should successfully replace all placeholders with valid data', () => {
     const result = replacePromptPlaceholders(
@@ -24,6 +29,8 @@ describe('replacePromptPlaceholders', () => {
       validCenterCharacter,
       validCenterCharacterDescription,
       validTags,
+      validMandalaDocument,
+      validComparisonTypes,
     );
 
     expect(result).toContain('Recursos, Cultura, Economía');
@@ -35,6 +42,8 @@ describe('replacePromptPlaceholders', () => {
     expect(result).not.toContain('${scales}');
     expect(result).not.toContain('${centerCharacter}');
     expect(result).not.toContain('${centerCharacterDescription}');
+    expect(result).not.toContain('${mandalaDocument}');
+    expect(result).not.toContain('${comparisonTypes}');
     expect(result).not.toContain('${tags}');
   });
 
@@ -46,6 +55,8 @@ describe('replacePromptPlaceholders', () => {
       validCenterCharacter,
       validCenterCharacterDescription,
       [],
+      validMandalaDocument,
+      validComparisonTypes,
     );
 
     expect(result).toContain('Recursos, Cultura, Economía');
@@ -64,6 +75,8 @@ describe('replacePromptPlaceholders', () => {
       validCenterCharacter,
       validCenterCharacterDescription,
       validTags,
+      validMandalaDocument,
+      validComparisonTypes,
     );
 
     expect(result).toContain('Recursos');
@@ -81,6 +94,8 @@ describe('replacePromptPlaceholders', () => {
         validCenterCharacter,
         validCenterCharacterDescription,
         validTags,
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('Prompt template is required');
   });
@@ -94,6 +109,8 @@ describe('replacePromptPlaceholders', () => {
         validCenterCharacter,
         validCenterCharacterDescription,
         validTags,
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('At least one dimension must be provided');
   });
@@ -107,6 +124,8 @@ describe('replacePromptPlaceholders', () => {
         validCenterCharacter,
         validCenterCharacterDescription,
         validTags,
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('At least one scale must be provided');
   });
@@ -120,6 +139,8 @@ describe('replacePromptPlaceholders', () => {
         validCenterCharacter,
         validCenterCharacterDescription,
         validTags,
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('Dimension at index 0 must be a valid string');
   });
@@ -133,6 +154,8 @@ describe('replacePromptPlaceholders', () => {
         validCenterCharacter,
         validCenterCharacterDescription,
         validTags,
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('Scale at index 0 must be a valid string');
   });
@@ -146,6 +169,8 @@ describe('replacePromptPlaceholders', () => {
         '',
         validCenterCharacterDescription,
         validTags,
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('Center character must be provided');
   });
@@ -159,6 +184,8 @@ describe('replacePromptPlaceholders', () => {
         validCenterCharacter,
         '',
         validTags,
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('Center character description must be provided');
   });
@@ -172,6 +199,8 @@ describe('replacePromptPlaceholders', () => {
         validCenterCharacter,
         validCenterCharacterDescription,
         [''],
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('Tag at index 0 must be a valid string');
   });
@@ -194,6 +223,8 @@ describe('replacePromptPlaceholders', () => {
         validCenterCharacter,
         validCenterCharacterDescription,
         validTags,
+        validMandalaDocument,
+        validComparisonTypes,
       );
     }).toThrow('Unreplaced placeholders found: ${unknownPlaceholder}');
   });
@@ -215,6 +246,8 @@ describe('replacePromptPlaceholders', () => {
       validCenterCharacter,
       validCenterCharacterDescription,
       validTags,
+      validMandalaDocument,
+      validComparisonTypes,
     );
 
     expect(result).not.toContain('${dimensions}');
@@ -222,7 +255,8 @@ describe('replacePromptPlaceholders', () => {
     expect(result).not.toContain('${centerCharacter}');
     expect(result).not.toContain('${centerCharacterDescription}');
     expect(result).not.toContain('${tags}');
-
+    expect(result).not.toContain('${mandalaDocument}');
+    expect(result).not.toContain('${comparisonTypes}');
     // Should contain the replacement text multiple times
     expect((result.match(/Recursos, Cultura, Economía/g) || []).length).toBe(2);
     expect((result.match(/Alumno/g) || []).length).toBe(2);
