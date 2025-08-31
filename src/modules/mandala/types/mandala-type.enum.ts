@@ -1,4 +1,5 @@
 export enum MandalaType {
   CHARACTER = 'CHARACTER',
   OVERLAP = 'OVERLAP',
+  OVERLAP_SUMMARY = 'OVERLAP_SUMMARY',
 }

@@ -106,6 +106,7 @@ enum InvitationStatus {
 enum MandalaType {
   CHARACTER
   OVERLAP
+  OVERLAP_SUMMARY
 }
 
 model Tag {
