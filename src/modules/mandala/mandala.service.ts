@@ -362,6 +362,7 @@ export class MandalaService {
           mandala.id,
           mandala.configuration.dimensions.map((d) => d.name),
           mandala.configuration.scales,
+          createMandalaDto.selectedFiles,
         );
 
       const childrenCenter = (
@@ -544,6 +545,7 @@ export class MandalaService {
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
+    selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
 
@@ -569,6 +571,7 @@ export class MandalaService {
       tags.map((tag) => tag.name),
       centerCharacter,
       centerCharacterDescription || 'No content',
+      selectedFiles,
     );
   }
 
@@ -576,6 +579,7 @@ export class MandalaService {
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
+    selectedFiles?: string[],
   ): Promise<PostitWithCoordinates[]> {
     this.logger.log(`generatePostits called for mandala ${mandalaId}`);
 
@@ -588,6 +592,7 @@ export class MandalaService {
       mandalaId,
       effectiveDimensions,
       effectiveScales,
+      selectedFiles,
     );
   }
 

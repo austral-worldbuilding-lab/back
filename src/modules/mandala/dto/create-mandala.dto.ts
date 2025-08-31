@@ -142,6 +142,22 @@ export class CreateMandalaDto {
   @IsUUID()
   @IsOptional()
   parentId?: string | null;
+
+  @ApiProperty({
+    description:
+      'Lista opcional de nombres de archivos específicos a usar para el contexto de IA. Si no se proporciona, se usarán todos los archivos disponibles.',
+    type: [String],
+    required: false,
+    example: [
+      'entrevista_1.pdf',
+      'encuesta_resultados.docx',
+      'notas_investigacion.txt',
+    ],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  selectedFiles?: string[];
 }
 
 export class CreateOverlappedMandalaDto {

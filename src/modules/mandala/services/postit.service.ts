@@ -71,10 +71,16 @@ export class PostitService {
     mandalaId: string,
     dimensions: string[],
     scales: string[],
+    selectedFiles?: string[],
   ): Promise<PostitWithCoordinates[]> {
     const mandala = await this.getMandalaOrThrow(mandalaId);
 
-    const postits = await this.generatePostits(mandala, dimensions, scales);
+    const postits = await this.generatePostits(
+      mandala,
+      dimensions,
+      scales,
+      selectedFiles,
+    );
 
     const postitsBySection = this.groupPostitsBySection(postits);
 
@@ -128,6 +134,7 @@ export class PostitService {
     mandala: MandalaDto,
     dimensions: string[],
     scales: string[],
+    selectedFiles?: string[],
   ): Promise<Postit[]> {
     const projectTags = await this.projectService.getProjectTags(
       mandala.projectId,
@@ -142,6 +149,8 @@ export class PostitService {
       mandala.configuration.center.name,
       mandala.configuration.center.description || 'N/A',
       tagNames,
+      selectedFiles,
+      mandala.id,
     );
 
     return aiResponse.map(
