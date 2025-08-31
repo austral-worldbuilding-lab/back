@@ -21,10 +21,11 @@ export class InvitationDto {
   @ApiProperty({
     description: 'Correo electrónico del usuario invitado',
     example: 'usuario@example.com',
+    required: false,
   })
+  @IsOptional()
   @IsEmail()
-  @IsNotEmpty()
-  email!: string;
+  email?: string;
 
   @ApiProperty({
     description: 'Token único de la invitación',
@@ -67,4 +68,13 @@ export class InvitationDto {
   @IsOptional()
   @IsString()
   role?: string;
+
+  @ApiProperty({
+    description: 'Token único para links de invitación compartibles',
+    example: 'abc123def456',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  inviteToken?: string;
 }

@@ -16,9 +16,14 @@ export class MailService {
     invitedByName: string;
     projectName: string;
     token: string;
+    organizationId?: string;
+    projectId?: string;
   }) {
     const baseUrl = process.env.FRONTEND_BASE_URL ?? 'http://localhost:5173';
-    const acceptUrl = `${baseUrl}/app/invitation/${encodeURIComponent(params.token)}`;
+    let acceptUrl = `${baseUrl}/invite/${encodeURIComponent(params.token)}`;
+    if (params.organizationId && params.projectId) {
+      acceptUrl += `?org=${encodeURIComponent(params.organizationId)}&project=${encodeURIComponent(params.projectId)}`;
+    }
 
     const from = this.config.get<string>('mail.from');
     const subject = `Invitación a un proyecto: ${params.projectName}`;

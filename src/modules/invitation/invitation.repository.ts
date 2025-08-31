@@ -141,4 +141,63 @@ export class InvitationRepository {
       return invitation;
     });
   }
+
+  async createWithToken(
+    projectId: string,
+    invitedById: string,
+    roleId: string,
+    inviteToken: string,
+    expiresAt: Date,
+  ): Promise<Invitation> {
+    const token = randomUUID();
+
+    return this.prisma.invitation.create({
+      data: {
+        projectId,
+        invitedById,
+        roleId,
+        token,
+        inviteToken,
+        expiresAt,
+        status: InvitationStatus.PENDING,
+      },
+    });
+  }
+
+  async findByInviteToken(inviteToken: string): Promise<Invitation | null> {
+    return this.prisma.invitation.findFirst({
+      where: {
+        inviteToken,
+        status: InvitationStatus.PENDING,
+      },
+    });
+  }
+
+  async isUserProjectMember(
+    userId: string,
+    projectId: string,
+  ): Promise<boolean> {
+    const membership = await this.prisma.userProjectRole.findFirst({
+      where: {
+        userId,
+        projectId,
+      },
+    });
+
+    return !!membership;
+  }
+
+  async addUserToProject(
+    userId: string,
+    projectId: string,
+    roleId: string,
+  ): Promise<void> {
+    await this.prisma.userProjectRole.create({
+      data: {
+        userId,
+        projectId,
+        roleId,
+      },
+    });
+  }
 }

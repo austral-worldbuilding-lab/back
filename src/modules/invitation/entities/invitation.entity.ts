@@ -2,8 +2,9 @@ import { InvitationStatus } from '@prisma/client';
 
 export class Invitation {
   id!: string;
-  email!: string;
+  email?: string | null;
   token!: string;
+  inviteToken?: string | null;
   status!: InvitationStatus;
   expiresAt!: Date;
   createdAt!: Date;
