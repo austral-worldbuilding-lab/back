@@ -1,16 +1,3 @@
-/*
-  Warnings:
-
-  - A unique constraint covering the columns `[inviteToken]` on the table `Invitation` will be added. If there are existing duplicate values, this will fail.
-
-*/
--- AlterTable
-ALTER TABLE "Invitation" ADD COLUMN     "inviteToken" TEXT,
-ALTER COLUMN "email" DROP NOT NULL;
-
--- AlterTable
-ALTER TABLE "Tag" ALTER COLUMN "color" SET DEFAULT '#' || lpad(to_hex((random() * 16777215)::int), 6, '0');
-
 -- CreateTable
 CREATE TABLE "OrganizationInvitation" (
     "id" TEXT NOT NULL,
@@ -39,12 +26,6 @@ CREATE INDEX "OrganizationInvitation_inviteToken_idx" ON "OrganizationInvitation
 
 -- CreateIndex
 CREATE UNIQUE INDEX "OrganizationInvitation_email_organizationId_key" ON "OrganizationInvitation"("email", "organizationId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Invitation_inviteToken_key" ON "Invitation"("inviteToken");
-
--- CreateIndex
-CREATE INDEX "Invitation_inviteToken_idx" ON "Invitation"("inviteToken");
 
 -- AddForeignKey
 ALTER TABLE "OrganizationInvitation" ADD CONSTRAINT "OrganizationInvitation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
