@@ -1,8 +1,8 @@
 import {
   BadRequestException,
-  ResourceNotFoundException,
-  InternalServerErrorException,
   ExternalServiceException,
+  InternalServerErrorException,
+  ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
@@ -13,8 +13,8 @@ import { ProjectService } from '@modules/project/project.service';
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
-  FirestoreMandalaDocument,
   FirestoreCharacter,
+  FirestoreMandalaDocument,
 } from '../firebase/types/firestore-character.type';
 
 import {
@@ -23,9 +23,9 @@ import {
 } from './constants/overlap-error-messages';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
+  CreateMandalaCenterDto,
   CreateMandalaCenterWithOriginDto,
   CreateMandalaDto,
-  CreateMandalaCenterDto,
   CreateOverlappedMandalaDto,
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
@@ -37,9 +37,9 @@ import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
 import {
+  getTargetProjectId,
   validateSameDimensions,
   validateSameScales,
-  getTargetProjectId,
 } from './utils/overlap-validation.utils';
 
 import { DimensionDto } from '@/common/dto/dimension.dto';
@@ -449,6 +449,26 @@ export class MandalaService {
       });
     }
 
+    // Para mandalas unificadas, filtros de personajes
+    if (
+      mandala.type === MandalaType.OVERLAP ||
+      mandala.type === MandalaType.OVERLAP_SUMMARY
+    ) {
+      const childrenCenter =
+        await this.mandalaRepository.findChildrenMandalasCenters(mandalaId);
+
+      if (childrenCenter && childrenCenter.length > 0) {
+        filterSections.push({
+          sectionName: 'Personajes',
+          type: 'multiple',
+          options: childrenCenter.map((center) => ({
+            label: center.name,
+            color: center.color,
+          })),
+        });
+      }
+    }
+
     if (projectTags && projectTags.length > 0) {
       filterSections.push({
         sectionName: 'Tags',
@@ -600,15 +620,12 @@ export class MandalaService {
       effectiveScales,
       selectedFiles,
     );
-    const postitsWithCoordinates =
-      this.postitService.transformToPostitsWithCoordinates(
-        mandalaId,
-        postits,
-        effectiveDimensions,
-        effectiveScales,
-      );
-
-    return postitsWithCoordinates;
+    return this.postitService.transformToPostitsWithCoordinates(
+      mandalaId,
+      postits,
+      effectiveDimensions,
+      effectiveScales,
+    );
   }
 
   async getFirestoreDocument(
