@@ -1,6 +1,4 @@
 import * as fs from 'fs';
-import * as http from 'http';
-import * as https from 'https';
 import * as os from 'os';
 import * as path from 'path';
 import { URL } from 'url';
@@ -24,8 +22,14 @@ export class VideoProcessingService {
     this.logger.log(`Starting video processing for: ${fileName}`);
 
     try {
-      const videoBuffer = await this.downloadFileFromUrl(fileUrl);
-      this.logger.debug(`Downloaded ${videoBuffer.length} bytes`);
+      const scope = this.extractScopeFromUrl(fileUrl);
+      const videoBuffer = await this.storageService.getFileBuffer(
+        fileName,
+        scope,
+      );
+      this.logger.debug(
+        `Retrieved ${videoBuffer.length} bytes from blob storage`,
+      );
 
       const audioBuffer = await this.convertVideoToAudio(videoBuffer, fileName);
       this.logger.debug(
@@ -33,8 +37,6 @@ export class VideoProcessingService {
       );
 
       const audioFileName = this.generateAudioFileName(fileName);
-      const scope = this.extractScopeFromUrl(fileUrl);
-
       await this.storageService.uploadBuffer(
         audioBuffer,
         audioFileName,
@@ -61,47 +63,6 @@ export class VideoProcessingService {
       );
       throw error;
     }
-  }
-
-  private async downloadFileFromUrl(url: string): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const urlObj = new URL(url);
-      const client = urlObj.protocol === 'https:' ? https : http;
-
-      const request = client.get(url, (response) => {
-        if (response.statusCode !== 200) {
-          reject(
-            new Error(`Failed to download file: HTTP ${response.statusCode}`),
-          );
-          return;
-        }
-
-        const chunks: Buffer[] = [];
-
-        response.on('data', (chunk) => {
-          chunks.push(Buffer.from(chunk));
-        });
-
-        response.on('end', () => {
-          const buffer = Buffer.concat(chunks);
-          resolve(buffer);
-        });
-
-        response.on('error', (error) => {
-          reject(new Error(`Download error: ${error.message}`));
-        });
-      });
-
-      request.on('error', (error) => {
-        reject(new Error(`Request error: ${error.message}`));
-      });
-
-      request.setTimeout(300000); // 5 minute timeout for large files
-      request.on('timeout', () => {
-        request.destroy();
-        reject(new Error('Download timeout'));
-      });
-    });
   }
 
   private async convertVideoToAudio(
@@ -142,9 +103,10 @@ export class VideoProcessingService {
               this.logger.debug(`FFmpeg conversion completed successfully`);
               resolve(audioBuffer);
             } catch (readError) {
+              const errorMsg = readError instanceof Error ? readError.message : String(readError);
               this.logger.error('Failed to read output file', readError);
               this.cleanupFiles([inputPath, outputPath]);
-              reject(new Error(`Failed to read converted audio: ${readError}`));
+              reject(new Error(`Failed to read converted audio: ${errorMsg}`));
             }
           })
           .on('error', (error) => {
@@ -154,9 +116,10 @@ export class VideoProcessingService {
           })
           .save(outputPath);
       } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
         this.logger.error('Failed to write input file for FFmpeg', error);
         this.cleanupFiles([inputPath, outputPath]);
-        reject(new Error(`Failed to prepare video for conversion: ${error}`));
+        reject(new Error(`Failed to prepare video for conversion: ${errorMsg}`));
       }
     });
   }
