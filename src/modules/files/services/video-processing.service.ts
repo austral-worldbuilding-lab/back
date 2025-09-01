@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { URL } from 'url';
@@ -12,11 +12,8 @@ import { FileScope } from '../types/file-scope.type';
 @Injectable()
 export class VideoProcessingService {
   private readonly logger = new Logger(VideoProcessingService.name);
-  private readonly storageService: AzureBlobStorageService;
 
-  constructor() {
-    this.storageService = new AzureBlobStorageService();
-  }
+  constructor(private readonly storageService: AzureBlobStorageService) {}
 
   async processVideoFile(fileUrl: string, fileName: string): Promise<string> {
     this.logger.log(`Starting video processing for: ${fileName}`);
@@ -69,14 +66,14 @@ export class VideoProcessingService {
     videoBuffer: Buffer,
     fileName: string,
   ): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const tempDir = os.tmpdir();
-      const inputPath = path.join(tempDir, `input_${Date.now()}_${fileName}`);
-      const outputPath = path.join(tempDir, `output_${Date.now()}.mp3`);
+    const tempDir = os.tmpdir();
+    const inputPath = path.join(tempDir, `input_${Date.now()}_${fileName}`);
+    const outputPath = path.join(tempDir, `output_${Date.now()}.mp3`);
 
-      try {
-        fs.writeFileSync(inputPath, videoBuffer);
+    try {
+      await fs.writeFile(inputPath, videoBuffer);
 
+      return new Promise((resolve, reject) => {
         ffmpeg(inputPath)
           .audioCodec('libmp3lame')
           .audioBitrate(128)
@@ -94,51 +91,51 @@ export class VideoProcessingService {
             }
           })
           .on('end', () => {
-            try {
-              const audioBuffer = fs.readFileSync(outputPath);
-
-              fs.unlinkSync(inputPath);
-              fs.unlinkSync(outputPath);
-
-              this.logger.debug(`FFmpeg conversion completed successfully`);
-              resolve(audioBuffer);
-            } catch (readError) {
-              const errorMsg =
-                readError instanceof Error
-                  ? readError.message
-                  : String(readError);
-              this.logger.error('Failed to read output file', readError);
-              this.cleanupFiles([inputPath, outputPath]);
-              reject(new Error(`Failed to read converted audio: ${errorMsg}`));
-            }
+            (async () => {
+              try {
+                const audioBuffer = await fs.readFile(outputPath);
+                await this.cleanupFiles([inputPath, outputPath]);
+                this.logger.debug(`FFmpeg conversion completed successfully`);
+                resolve(audioBuffer);
+              } catch (readError) {
+                const errorMsg =
+                  readError instanceof Error
+                    ? readError.message
+                    : String(readError);
+                this.logger.error('Failed to read output file', readError);
+                await this.cleanupFiles([inputPath, outputPath]);
+                reject(new Error(`Failed to read converted audio: ${errorMsg}`));
+              }
+            })();
           })
           .on('error', (error) => {
-            this.logger.error('FFmpeg conversion failed', error);
-            this.cleanupFiles([inputPath, outputPath]);
-            reject(new Error(`FFmpeg conversion failed: ${error.message}`));
+            (async () => {
+              this.logger.error('FFmpeg conversion failed', error);
+              await this.cleanupFiles([inputPath, outputPath]);
+              reject(new Error(`FFmpeg conversion failed: ${error.message}`));
+            })();
           })
           .save(outputPath);
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        this.logger.error('Failed to write input file for FFmpeg', error);
-        this.cleanupFiles([inputPath, outputPath]);
-        reject(
-          new Error(`Failed to prepare video for conversion: ${errorMsg}`),
-        );
-      }
-    });
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error('Failed to write input file for FFmpeg', error);
+      await this.cleanupFiles([inputPath, outputPath]);
+      throw new Error(`Failed to prepare video for conversion: ${errorMsg}`);
+    }
   }
 
-  private cleanupFiles(filePaths: string[]): void {
-    filePaths.forEach((filePath) => {
-      try {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
+  private async cleanupFiles(filePaths: string[]): Promise<void> {
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        try {
+          await fs.unlink(filePath);
+        } catch (error) {
+          // File might not exist, which is fine
+          this.logger.warn(`Failed to cleanup file ${filePath}:`, error);
         }
-      } catch (error) {
-        this.logger.warn(`Failed to cleanup file ${filePath}:`, error);
-      }
-    });
+      }),
+    );
   }
 
   private generateAudioFileName(originalFileName: string): string {

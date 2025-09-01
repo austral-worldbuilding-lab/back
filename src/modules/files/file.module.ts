@@ -1,5 +1,6 @@
 import { AuthModule } from '@modules/auth/auth.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { Module } from '@nestjs/common';
 
 import { WebhooksController } from './controllers/webhooks.controller';
@@ -16,6 +17,7 @@ import { VideoProcessingService } from './services/video-processing.service';
   providers: [
     FileService,
     VideoProcessingService,
+    AzureBlobStorageService,
     OrganizationFileRoleGuard,
     ProjectFileRoleGuard,
     MandalaFileRoleGuard,
