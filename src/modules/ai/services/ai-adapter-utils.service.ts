@@ -79,20 +79,19 @@ export class AiAdapterUtilsService {
     this.logger.debug(
       `Loading files for project: ${projectId}${mandalaId ? `, mandala: ${mandalaId}` : ''}`,
     );
-
-    // Use hierarchy resolution to get appropriate scope files for better AI context
-    // If mandalaId is provided, use mandala scope (org + project + mandala)
-    // Otherwise, use project scope (org + project)
     const scope = mandalaId
       ? await this.fileService.resolveScope('mandala', mandalaId)
       : await this.fileService.resolveScope('project', projectId);
     const allFileBuffers =
       await this.fileService.readAllFilesAsBuffersWithMetadata(scope);
 
-    // Filter files if selectedFiles is provided
-    const fileBuffers = selectedFiles?.length
-      ? allFileBuffers.filter((file) => selectedFiles.includes(file.fileName))
-      : allFileBuffers;
+    // Filter out video files and apply selectedFiles filter
+    const fileBuffers = allFileBuffers
+      .filter((file) => !file.mimeType.startsWith('video/'))
+      .filter(
+        (file) =>
+          !selectedFiles?.length || selectedFiles.includes(file.fileName),
+      );
 
     if (fileBuffers.length === 0) {
       const errorMessage = selectedFiles?.length
