@@ -5,7 +5,8 @@ export function ApiBlobUploadWebhook() {
   return applyDecorators(
     ApiOperation({
       summary: 'Handle Azure Blob Storage upload events',
-      description: 'Webhook endpoint that receives events when files are uploaded to Azure Blob Storage. Automatically processes video files by converting them to audio.',
+      description:
+        'Webhook endpoint that receives events when files are uploaded to Azure Blob Storage. Automatically processes video files by converting them to audio.',
     }),
     ApiBody({
       description: 'Array of Azure Event Grid blob events',
@@ -20,7 +21,8 @@ export function ApiBlobUploadWebhook() {
             },
             subject: {
               type: 'string',
-              example: '/blobServices/default/containers/mycontainer/blobs/video.mp4',
+              example:
+                '/blobServices/default/containers/mycontainer/blobs/video.mp4',
             },
             eventTime: {
               type: 'string',
@@ -31,7 +33,8 @@ export function ApiBlobUploadWebhook() {
               properties: {
                 url: {
                   type: 'string',
-                  example: 'https://mystorage.blob.core.windows.net/container/video.mp4',
+                  example:
+                    'https://mystorage.blob.core.windows.net/container/video.mp4',
                 },
                 contentType: {
                   type: 'string',

@@ -3,7 +3,6 @@ import * as http from 'http';
 import * as https from 'https';
 import * as os from 'os';
 import * as path from 'path';
-import { Readable } from 'stream';
 import { URL } from 'url';
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -182,13 +181,19 @@ export class VideoProcessingService {
 
   private extractScopeFromUrl(fileUrl: string): FileScope {
     const path = new URL(fileUrl).pathname;
-    const match = path.match(/\/org\/([^/]+)(?:\/project\/([^/]+))?(?:\/mandala\/([^/]+))?\/files\//);
-    
+    const match = path.match(
+      /\/org\/([^/]+)(?:\/project\/([^/]+))?(?:\/mandala\/([^/]+))?\/files\//,
+    );
+
     if (!match) {
       throw new Error(`Invalid blob URL structure: ${fileUrl}`);
     }
 
     const [, orgId, projectId, mandalaId] = match;
-    return { orgId, ...(projectId && { projectId }), ...(mandalaId && { mandalaId }) };
+    return {
+      orgId,
+      ...(projectId && { projectId }),
+      ...(mandalaId && { mandalaId }),
+    };
   }
 }
