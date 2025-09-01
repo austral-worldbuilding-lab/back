@@ -8,26 +8,17 @@ Tu objetivo principal es analizar y comparar exhaustivamente los post-its de est
 • Aspectos Unicos: Elementos exclusivos de un personaje que no tienen una contraparte directa.
 
 Reglas para la comparacion
-•  Comparacion Estrategica: Realiza la comparacion para post-its de misma seccion y escala. Esta es una regla fundamental para mantener la coherencia y el analisis sistemico.
-• Para Similitudes: Busca patrones o temas que se repiten o son analogos en los post-its de la misma dimension y escala a traves de multiples mandalas. Crea un post-it que condense esta idea comun.
-• Para Diferencias/Contrastes: Identifica post-its en la misma dimension y escala que presenten visiones opuestas, contradicciones o enfoques marcadamente distintos entre los personajes. Genera un post-it que capture esta divergencia.
-• Para Aspectos Unicos: Busca post-its que sean exclusivos de un solo personaje dentro de una dimension y escala, y que no tengan una relacion clara de similitud o diferencia con los otros personajes. Genera un post-it para resaltar esta perspectiva individual.
+•  Comparacion Estrategica: Realiza la comparacion para post-its de misma seccion y seccion. Esta es una regla fundamental para mantener la coherencia y el analisis sistemico.
+• Para Similitudes: Busca patrones o temas que se repiten o son analogos en los post-its de la misma dimension y seccion a traves de multiples mandalas. Crea un post-it que condense esta idea comun.
+• Para Diferencias/Contrastes: Identifica post-its en la misma dimension y seccion que presenten visiones opuestas, contradicciones o enfoques marcadamente distintos entre los personajes. Genera un post-it que capture esta divergencia.
+• Para Aspectos Unicos: Busca post-its que sean exclusivos de un solo personaje dentro de una dimension y seccion, y que no tengan una relacion clara de similitud o diferencia con los otros personajes. Genera un post-it para resaltar esta perspectiva individual.
 
 Reglas para los post-its
 • content: Contenido de 3–5 palabras, frase breve o pequeno sintagma con sentido gramatical, incluyendo articulo o preposicion si es necesario para mantener el sentido gramatical.
 • dimension: debe copiar exactamente la dimensión de los post-its de origen que se están comparando. No inventar dimensiones nuevas.
 • section: debe copiar exactamente la seccion de los post-its de origen. No inventar secciones nuevas.
 • type: tipo de comparacion realizada: Comparaciones disponibles a realizar: ${comparisonTypes}
-• from: debe copiar exactamente la lista de los personajes originales involucrados en la comparacion que dieron origen al nuevo post-it
-
-Formato de Salida
-{
-  "content": "",
-  "dimension": "",
-  "section": "",
-  "type": ""
-  "from": []
-}
+• from: debe copiar exactamente la lista de los personajes originales involucrados en la comparacion que dieron origen al nuevo post-it, a partir del centerCharacter de cada mandala
 
 Contenido existente en las mandalas para comparar
 ${mandalaDocument}
@@ -35,3 +26,30 @@ ${mandalaDocument}
 Consideraciones Adicionales:
 • Evita la Reduccion Simplista: El proposito es complejizar la vision sistemica del mundo, no simplificarla. La sintesis debe revelar las capas de informacion.
 • Fidelidad a los Datos: Las sintesis deben basarse estrictamente en la informacion proporcionada en los post-its originales, evitando alucinaciones. Tu rol es traducir y agrupar la informacion existente.
+
+Ejemplo
+
+Dado los postits:
+
+centerCharacter: "Alumnos",
+{
+  "content": "les importa el medio ambiente",
+  "dimension": "Ecología",
+  "section": "Global",
+},
+
+centerCharacter: "Padres",
+{
+  "content": "les importa el medio ambiente",
+  "dimension": "Ecología",
+  "section": "Global",
+}
+
+Una posible salida podria ser:
+{
+  "content": "Contraste en el interes por el medio ambiente",
+  "dimension": "Ecología",
+  "section": "Global",
+  "type": "",
+  "from": ["Alumnos", "Padres"]
+}
