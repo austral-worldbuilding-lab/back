@@ -150,6 +150,28 @@ export class AzureBlobStorageService implements StorageService {
     }
   }
 
+  async uploadBuffer(
+    buffer: Buffer,
+    fileName: string,
+    scope: FileScope,
+    contentType: string = 'application/octet-stream',
+  ): Promise<void> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(scope);
+    const blobName = `${prefix}${fileName}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    await blockBlobClient.upload(buffer, buffer.length, {
+      blobHTTPHeaders: {
+        blobContentType: contentType,
+      },
+    });
+
+    this.logger.debug(`Successfully uploaded ${fileName} to ${blobName}`);
+  }
+
   async generateDownloadUrl(
     fullPath: string,
     expirationHours: number = 24,

@@ -27,6 +27,13 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
     'image/webp',
     'application/json',
     'text/markdown',
+    'audio/mp3',
+    'audio/wav',
+    'audio/flac',
+    'audio/aac',
+    'audio/ogg',
+    'audio/wma',
+    'audio/mpeg',
   ],
 
   blockedMimeTypes: [
@@ -40,12 +47,6 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
     'video/m4v',
     'video/3gp',
     'video/quicktime',
-    'audio/mp3',
-    'audio/wav',
-    'audio/flac',
-    'audio/aac',
-    'audio/ogg',
-    'audio/wma',
   ],
 
   maxFileSize: parseInt(process.env.AI_MAX_FILE_SIZE || '52428800'), // 50MB default
