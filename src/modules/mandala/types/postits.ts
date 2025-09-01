@@ -18,7 +18,7 @@ export interface AiPostitComparisonResponse {
   section: string;
   tags: string[];
   type: string;
-  from: string[];
+  fromSummary: string[];
 }
 
 export interface Postit {
@@ -33,7 +33,7 @@ export interface Postit {
 
 export interface PostitComparison extends Postit {
   type: string;
-  from: string[];
+  fromSummary: string[];
 }
 
 export interface PostitCoordinates {
