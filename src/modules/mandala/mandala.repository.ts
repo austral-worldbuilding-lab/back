@@ -65,7 +65,7 @@ export class MandalaRepository {
     const parentIds = mandala.parent?.map((parent) => parent.id) || [];
     const type = mandala.type as MandalaType;
 
-    // toma a los personajes de las mandalas unificadas 
+    // toma a los personajes de las mandalas unificadas
     let characters: MandalaCharacterDto[] | undefined;
     if (type === MandalaType.OVERLAP && configuration.center.characters) {
       characters = configuration.center.characters.map((character) => ({
@@ -107,7 +107,7 @@ export class MandalaRepository {
       data: {
         name: createMandalaDto.name,
         projectId: createMandalaDto.projectId,
-        type: type as any,
+        type: type,
         configuration: this.parseConfigurationToJson(configuration),
         ...(createMandalaDto.parentId && {
           parent: {
