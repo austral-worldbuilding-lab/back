@@ -104,16 +104,24 @@ export class VideoProcessingService {
                     : String(readError);
                 this.logger.error('Failed to read output file', readError);
                 await this.cleanupFiles([inputPath, outputPath]);
-                reject(new Error(`Failed to read converted audio: ${errorMsg}`));
+                reject(
+                  new Error(`Failed to read converted audio: ${errorMsg}`),
+                );
               }
-            })();
+            })().catch((error) => {
+              this.logger.error('Unexpected error in FFmpeg end handler', error);
+              reject(error);
+            });
           })
           .on('error', (error) => {
             (async () => {
               this.logger.error('FFmpeg conversion failed', error);
               await this.cleanupFiles([inputPath, outputPath]);
               reject(new Error(`FFmpeg conversion failed: ${error.message}`));
-            })();
+            })().catch((cleanupError) => {
+              this.logger.error('Unexpected error in FFmpeg error handler', cleanupError);
+              reject(error);
+            });
           })
           .save(outputPath);
       });
