@@ -5,6 +5,7 @@ import {
   IsDate,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   ValidateNested,
@@ -12,6 +13,32 @@ import {
 
 import { CreateMandalaConfiguration } from '../types/mandala-configuration.type';
 import { MandalaType } from '../types/mandala-type.enum';
+
+export class MandalaCharacterDto {
+  @ApiProperty({
+    description: 'ID del mandala de origen del personaje',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  id!: string;
+
+  @ApiProperty({
+    description: 'Nombre del personaje',
+    example: 'Estudiante',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @ApiProperty({
+    description: 'Color del personaje en formato hexadecimal',
+    example: '#3B82F6',
+  })
+  @IsString()
+  @IsNotEmpty()
+  color!: string;
+}
 
 export class MandalaDto {
   @ApiProperty({
@@ -92,4 +119,15 @@ export class MandalaDto {
   })
   @IsDate()
   updatedAt!: Date;
+
+  @ApiProperty({
+    description: 'Lista de personajes para mandalas unificadas (tipo OVERLAP)',
+    type: [MandalaCharacterDto],
+    required: false,
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => MandalaCharacterDto)
+  characters?: MandalaCharacterDto[];
 }
