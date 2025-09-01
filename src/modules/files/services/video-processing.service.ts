@@ -109,8 +109,11 @@ export class VideoProcessingService {
                 );
               }
             })().catch((error) => {
-              this.logger.error('Unexpected error in FFmpeg end handler', error);
-              reject(error);
+              this.logger.error(
+                'Unexpected error in FFmpeg end handler',
+                error,
+              );
+              reject(error instanceof Error ? error : new Error(String(error)));
             });
           })
           .on('error', (error) => {
@@ -119,8 +122,11 @@ export class VideoProcessingService {
               await this.cleanupFiles([inputPath, outputPath]);
               reject(new Error(`FFmpeg conversion failed: ${error.message}`));
             })().catch((cleanupError) => {
-              this.logger.error('Unexpected error in FFmpeg error handler', cleanupError);
-              reject(error);
+              this.logger.error(
+                'Unexpected error in FFmpeg error handler',
+                cleanupError,
+              );
+              reject(error instanceof Error ? error : new Error(String(error)));
             });
           })
           .save(outputPath);
