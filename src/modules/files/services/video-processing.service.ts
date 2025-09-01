@@ -103,7 +103,10 @@ export class VideoProcessingService {
               this.logger.debug(`FFmpeg conversion completed successfully`);
               resolve(audioBuffer);
             } catch (readError) {
-              const errorMsg = readError instanceof Error ? readError.message : String(readError);
+              const errorMsg =
+                readError instanceof Error
+                  ? readError.message
+                  : String(readError);
               this.logger.error('Failed to read output file', readError);
               this.cleanupFiles([inputPath, outputPath]);
               reject(new Error(`Failed to read converted audio: ${errorMsg}`));
@@ -119,7 +122,9 @@ export class VideoProcessingService {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.logger.error('Failed to write input file for FFmpeg', error);
         this.cleanupFiles([inputPath, outputPath]);
-        reject(new Error(`Failed to prepare video for conversion: ${errorMsg}`));
+        reject(
+          new Error(`Failed to prepare video for conversion: ${errorMsg}`),
+        );
       }
     });
   }

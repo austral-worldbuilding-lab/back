@@ -157,14 +157,14 @@ export class AzureBlobStorageService implements StorageService {
     const prefix = buildPrefix(scope);
     const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
-    
+
     const downloadResponse = await blobClient.download();
     const chunks: Buffer[] = [];
-    
+
     for await (const chunk of downloadResponse.readableStreamBody!) {
       chunks.push(Buffer.from(chunk));
     }
-    
+
     return Buffer.concat(chunks);
   }
 
