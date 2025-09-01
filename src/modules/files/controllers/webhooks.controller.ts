@@ -17,6 +17,22 @@ interface AzureBlobEvent {
   };
 }
 
+interface AzureValidationEvent {
+  eventType: 'Microsoft.EventGrid.SubscriptionValidationEvent';
+  subject: string;
+  eventTime: string;
+  data: {
+    validationCode: string;
+    validationUrl: string;
+  };
+}
+
+interface AzureValidationResponse {
+  validationResponse: string;
+}
+
+type AzureEventGridEvent = AzureBlobEvent | AzureValidationEvent;
+
 @ApiTags('Webhooks')
 @Controller('webhooks')
 export class WebhooksController {
@@ -30,9 +46,25 @@ export class WebhooksController {
   @HttpCode(200)
   @ApiBlobUploadWebhook()
   async handleBlobUpload(
-    @Body() events: AzureBlobEvent[],
-  ): Promise<{ message: string; processedCount: number }> {
-    this.logger.log(`Received ${events.length} blob events`);
+    @Body() events: AzureEventGridEvent[],
+  ): Promise<
+    { message: string; processedCount: number } | AzureValidationResponse
+  > {
+    this.logger.log(`Received ${events.length} events from Azure Event Grid`);
+
+    // Handle subscription validation handshake
+    if (
+      events.length > 0 &&
+      events[0].eventType === 'Microsoft.EventGrid.SubscriptionValidationEvent'
+    ) {
+      const validationEvent = events[0] as AzureValidationEvent;
+      const validationCode = validationEvent.data.validationCode;
+
+      this.logger.log(
+        'Received subscription validation event, responding with validation code',
+      );
+      return { validationResponse: validationCode };
+    }
 
     let processedCount = 0;
 
@@ -44,7 +76,8 @@ export class WebhooksController {
           continue;
         }
 
-        const { url, contentType } = event.data;
+        const blobEvent = event;
+        const { url, contentType } = blobEvent.data;
         const fileName = this.extractFileName(url);
 
         this.logger.log(`Processing file: ${fileName} (${contentType})`);
@@ -72,7 +105,10 @@ export class WebhooksController {
 
         this.logger.error(`Failed to process event: ${errorMessage}`, {
           eventType: event.eventType,
-          url: event.data?.url,
+          url:
+            event.eventType === 'Microsoft.Storage.BlobCreated'
+              ? event.data.url
+              : 'N/A',
           error: errorStack,
         });
         // Continue processing other events even if one fails
