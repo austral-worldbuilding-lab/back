@@ -88,7 +88,10 @@ export class AiAdapterUtilsService {
     // Filter out video files and apply selectedFiles filter
     const fileBuffers = allFileBuffers
       .filter((file) => !file.mimeType.startsWith('video/'))
-      .filter((file) => !selectedFiles?.length || selectedFiles.includes(file.fileName));
+      .filter(
+        (file) =>
+          !selectedFiles?.length || selectedFiles.includes(file.fileName),
+      );
 
     if (fileBuffers.length === 0) {
       const errorMessage = selectedFiles?.length
