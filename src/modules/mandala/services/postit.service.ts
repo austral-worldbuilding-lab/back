@@ -183,7 +183,7 @@ export class PostitService {
         tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
         childrens: [],
         type: aiPostit.type,
-        from: aiPostit.from,
+        fromSummary: aiPostit.fromSummary,
       }),
     );
   }

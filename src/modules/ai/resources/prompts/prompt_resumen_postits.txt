@@ -18,7 +18,7 @@ Reglas para los post-its
 • dimension: debe copiar exactamente la dimensión de los post-its de origen que se están comparando. No inventar dimensiones nuevas.
 • section: debe copiar exactamente la seccion de los post-its de origen. No inventar secciones nuevas.
 • type: tipo de comparacion realizada: Comparaciones disponibles a realizar: ${comparisonTypes}
-• from: debe copiar exactamente la lista de los personajes originales involucrados en la comparacion que dieron origen al nuevo post-it, a partir del centerCharacter de cada mandala
+• fromSummary: debe copiar exactamente la lista de los personajes originales involucrados en la comparacion que dieron origen al nuevo post-it, a partir del centerCharacter de cada mandala
 
 Contenido existente en las mandalas para comparar
 ${mandalaDocument}
@@ -51,5 +51,5 @@ Una posible salida podria ser:
   "dimension": "Ecología",
   "section": "Global",
   "type": "DIFERENCIA",
-  "from": ["Alumnos", "Padres"]
+  "fromSummary": ["Alumnos", "Padres"]
 }
