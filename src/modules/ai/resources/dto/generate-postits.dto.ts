@@ -23,7 +23,7 @@ export const PostitsComparisonResponse = {
       dimension: { type: 'string' },
       section: { type: 'string' },
       type: { type: 'string' },
-      from: { type: 'array', items: { type: 'string' } },
+      fromSummary: { type: 'array', items: { type: 'string' } },
     },
   },
 };
