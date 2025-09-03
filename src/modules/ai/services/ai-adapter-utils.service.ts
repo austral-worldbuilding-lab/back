@@ -6,7 +6,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { AiValidationException } from '../exceptions/ai-validation.exception';
-import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
 @Injectable()
@@ -33,39 +32,18 @@ export class AiAdapterUtilsService {
     return model;
   }
 
-  async preparePrompt(
-    promptFilePath: string,
-    dimensions?: string[],
-    scales?: string[],
-    centerCharacter?: string,
-    centerCharacterDescription?: string,
-    tags?: string[],
-    mandalaDocument?: string,
-    comparisonTypes?: string[],
-  ): Promise<string> {
-    this.logger.debug(`Preparing prompt template...`);
+  async readPromptTemplate(promptFilePath: string): Promise<string> {
+    this.logger.debug(`Reading prompt template from: ${promptFilePath}`);
 
     try {
       const promptTemplate = await fs.readFile(promptFilePath, 'utf-8');
-
-      const systemInstruction = replacePromptPlaceholders(
-        promptTemplate,
-        dimensions || [],
-        scales || [],
-        centerCharacter || '',
-        centerCharacterDescription || '',
-        tags || [],
-        mandalaDocument,
-        comparisonTypes,
-      );
-
-      this.logger.debug(`Prompt template prepared successfully`);
-      return systemInstruction;
+      this.logger.debug(`Prompt template read successfully`);
+      return promptTemplate;
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to prepare prompt template:`, error);
-      throw new Error(`Prompt placeholder replacement failed: ${errorMessage}`);
+      this.logger.error(`Failed to read prompt template:`, error);
+      throw new Error(`Failed to read prompt template: ${errorMessage}`);
     }
   }
 

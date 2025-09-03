@@ -18,6 +18,7 @@ import {
 } from '../resources/dto/generate-postits.dto';
 import { QuestionsResponse } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
+import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
 interface GeminiUploadedFile {
@@ -43,54 +44,6 @@ export class GeminiAdapter implements AiProvider {
     }
     this.ai = new GoogleGenAI({ apiKey });
     this.logger.log('Gemini Adapter initialized');
-  }
-
-  async generatePostits(
-    projectId: string,
-    dimensions: string[],
-    scales: string[],
-    centerCharacter: string,
-    centerCharacterDescription: string,
-    tags: string[],
-    selectedFiles?: string[],
-    mandalaId?: string,
-  ): Promise<AiPostitResponse[]> {
-    this.logger.log(`Starting postit generation for project: ${projectId}`);
-
-    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
-
-    const promptFilePath = path.resolve(
-      __dirname,
-      '../resources/prompts/prompt_generar_postits.txt',
-    );
-    const systemInstruction = await this.utilsService.preparePrompt(
-      promptFilePath,
-      dimensions,
-      scales,
-      centerCharacter,
-      centerCharacterDescription,
-      tags,
-    );
-
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(
-      projectId,
-      dimensions,
-      scales,
-      selectedFiles,
-      mandalaId,
-    );
-
-    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
-    const responseText = await this.generateWithGemini(
-      model,
-      systemInstruction,
-      geminiFiles,
-      PostitsResponse,
-    );
-
-    const result = this.parseAndValidatePostitResponse(responseText, projectId);
-    this.logger.log(`Postit generation completed for project: ${projectId}`);
-    return result;
   }
 
   private async uploadFilesToGemini(
@@ -129,7 +82,7 @@ export class GeminiAdapter implements AiProvider {
     return uploadedFiles;
   }
 
-  private async generateWithGemini(
+  private async generateContentWithFiles(
     model: string,
     systemInstruction: string,
     geminiFiles: GeminiUploadedFile[],
@@ -166,6 +119,55 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log('Generation completed successfully');
 
     return response.text;
+  }
+
+  async generatePostits(
+    projectId: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    tags: string[],
+    selectedFiles?: string[],
+    mandalaId?: string,
+  ): Promise<AiPostitResponse[]> {
+    this.logger.log(`Starting postit generation for project: ${projectId}`);
+
+    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
+
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_postits.txt',
+    );
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const systemInstruction = replacePromptPlaceholders(promptTemplate, {
+      dimensions: dimensions,
+      scales: scales,
+      centerCharacter: centerCharacter,
+      centerCharacterDescription: centerCharacterDescription,
+      tags: tags,
+    });
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      dimensions,
+      scales,
+      selectedFiles,
+      mandalaId,
+    );
+
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const responseText = await this.generateContentWithFiles(
+      model,
+      systemInstruction,
+      geminiFiles,
+      PostitsResponse,
+    );
+
+    const result = this.parseAndValidatePostitResponse(responseText, projectId);
+    this.logger.log(`Postit generation completed for project: ${projectId}`);
+    return result;
   }
 
   private parseAndValidatePostitResponse(
@@ -232,15 +234,17 @@ export class GeminiAdapter implements AiProvider {
       summaryLength: mandalaTextSummary.length,
       model,
     });
-    const systemInstruction = await this.utilsService.preparePrompt(
-      promptFilePath,
-      dimensions,
-      scales,
-      centerCharacter,
-      centerCharacterDescription,
-      tags,
-      mandalaTextSummary,
-    );
+
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const systemInstruction = replacePromptPlaceholders(promptTemplate, {
+      dimensions: dimensions,
+      scales: scales,
+      centerCharacter: centerCharacter,
+      centerCharacterDescription: centerCharacterDescription,
+      tags: tags,
+      mandalaDocument: mandalaTextSummary,
+    });
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
@@ -251,7 +255,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
-    const responseText = await this.generateWithGemini(
+    const responseText = await this.generateContentWithFiles(
       model,
       systemInstruction,
       geminiFiles,
@@ -313,7 +317,6 @@ export class GeminiAdapter implements AiProvider {
     projectId: string,
     dimensions: string[],
     scales: string[],
-    comparisonTypes: string[],
     mandalasDocument: string,
   ): Promise<AiPostitComparisonResponse[]> {
     const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
@@ -322,17 +325,13 @@ export class GeminiAdapter implements AiProvider {
       __dirname,
       '../resources/prompts/prompt_resumen_postits.txt',
     );
-    const systemInstruction = await this.utilsService.preparePrompt(
-      promptFilePath,
-      dimensions,
-      scales,
-      '', // centerCharacter
-      '', // centerCharacterDescription
-      [], // tags
-      mandalasDocument,
-      comparisonTypes,
-    );
-
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const systemInstruction = replacePromptPlaceholders(promptTemplate, {
+      dimensions: dimensions,
+      scales: scales,
+      mandalaDocument: mandalasDocument,
+    });
     this.logger.log('Prompt:', systemInstruction);
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
@@ -342,7 +341,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
-    const responseText = await this.generateWithGemini(
+    const responseText = await this.generateContentWithFiles(
       model,
       systemInstruction,
       geminiFiles,

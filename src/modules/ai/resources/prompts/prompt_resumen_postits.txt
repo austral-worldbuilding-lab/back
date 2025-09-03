@@ -17,7 +17,7 @@ Reglas para los post-its
 • content: Contenido de 3–5 palabras, frase breve o pequeno sintagma con sentido gramatical, incluyendo articulo o preposicion si es necesario para mantener el sentido gramatical. No repetir el mismo contenido en diferentes post-its.
 • dimension: debe copiar exactamente la dimensión de los post-its de origen que se están comparando. No inventar dimensiones nuevas.
 • section: debe copiar exactamente la seccion de los post-its de origen. No inventar secciones nuevas.
-• type: tipo de comparacion realizada: Comparaciones disponibles a realizar: ${comparisonTypes}
+• type: tipo de comparacion realizada: Comparaciones disponibles a realizar: SIMILITUD, DIFERENCIA, UNICO
 • fromSummary: debe copiar exactamente la lista de los personajes originales involucrados en la comparacion que dieron origen al nuevo post-it, a partir del centerCharacter de cada mandala
 
 Contenido existente en las mandalas para comparar

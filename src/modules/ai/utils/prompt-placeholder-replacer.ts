@@ -1,55 +1,91 @@
+export interface PromptReplacementConfig {
+  dimensions?: string[];
+  scales?: string[];
+  centerCharacter?: string;
+  centerCharacterDescription?: string;
+  tags?: string[];
+  mandalaDocument?: string;
+}
+
+type PlaceholderReplacer = (
+  prompt: string,
+  config: PromptReplacementConfig,
+) => string;
+
+const replaceDimensions: PlaceholderReplacer = (prompt, config) => {
+  if (config.dimensions === undefined) return prompt;
+  return prompt.replace(
+    /\$\{dimensions}/g,
+    config.dimensions?.join(', ') || '',
+  );
+};
+
+const replaceScales: PlaceholderReplacer = (prompt, config) => {
+  if (config.scales === undefined) return prompt;
+  return prompt.replace(/\$\{scales}/g, config.scales?.join(', ') || '');
+};
+
+const replaceCenterCharacter: PlaceholderReplacer = (prompt, config) => {
+  if (config.centerCharacter === undefined) return prompt;
+  return prompt.replace(/\$\{centerCharacter}/g, config.centerCharacter || '');
+};
+
+const replaceCenterCharacterDescription: PlaceholderReplacer = (
+  prompt,
+  config,
+) => {
+  if (config.centerCharacterDescription === undefined) return prompt;
+  return prompt.replace(
+    /\$\{centerCharacterDescription}/g,
+    config.centerCharacterDescription || '',
+  );
+};
+
+const replaceTags: PlaceholderReplacer = (prompt, config) => {
+  if (config.tags === undefined) return prompt;
+  return prompt.replace(/\$\{tags}/g, config.tags?.join(', ') || '');
+};
+
+const replaceMandalaDocument: PlaceholderReplacer = (prompt, config) => {
+  if (config.mandalaDocument === undefined) return prompt;
+  return prompt.replace(/\$\{mandalaDocument}/g, config.mandalaDocument || '');
+};
+
+const composeReplacers = (
+  ...replacers: PlaceholderReplacer[]
+): PlaceholderReplacer => {
+  return (prompt: string, config: PromptReplacementConfig) => {
+    return replacers.reduce(
+      (currentPrompt, replacer) => replacer(currentPrompt, config),
+      prompt,
+    );
+  };
+};
+
+const standardReplacer = composeReplacers(
+  replaceDimensions,
+  replaceScales,
+  replaceCenterCharacter,
+  replaceCenterCharacterDescription,
+  replaceTags,
+  replaceMandalaDocument,
+);
+
 /**
  * Reemplaza los placeholders dinámicos en el prompt de mandala inicial
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
  * @returns El prompt con todos los placeholders reemplazados
  */
 export function replacePromptPlaceholders(
   promptTemplate: string,
-  dimensions?: string[],
-  scales?: string[],
-  centerCharacter?: string,
-  centerCharacterDescription?: string,
-  tags?: string[],
-  mandalaDocument?: string,
-  comparisonTypes?: string[],
+  config: PromptReplacementConfig = {},
 ): string {
-  /*   if (!promptTemplate) throw new Error('Prompt template is required');
-  if (!dimensions?.length)
-    throw new Error('At least one dimension must be provided');
-  if (!scales?.length) throw new Error('At least one scale must be provided');
-  if (!centerCharacter?.trim())
-    throw new Error('Center character must be provided');
-  if (!centerCharacterDescription?.trim())
-    throw new Error('Center character description must be provided'); */
+  if (!promptTemplate?.trim()) {
+    throw new Error('Prompt template is required');
+  }
 
-  dimensions?.forEach((dim, i) => {
-    if (!dim?.trim())
-      throw new Error(`Dimension at index ${i} must be a valid string`);
-  });
-
-  scales?.forEach((scale, i) => {
-    if (!scale?.trim())
-      throw new Error(`Scale at index ${i} must be a valid string`);
-  });
-
-  tags?.forEach((tag, i) => {
-    if (!tag?.trim())
-      throw new Error(`Tag at index ${i} must be a valid string`);
-  });
-
-  const processedPrompt = promptTemplate
-    .replace(/\$\{dimensions}/g, dimensions?.join(', ') || 'No content')
-    .replace(/\$\{scales}/g, scales?.join(', ') || 'No content')
-    .replace(/\$\{centerCharacter}/g, centerCharacter || 'No content')
-    .replace(
-      /\$\{centerCharacterDescription}/g,
-      centerCharacterDescription || 'No content',
-    )
-    .replace(/\$\{tags}/g, tags?.join(', ') || 'No content')
-    .replace(/\$\{mandalaDocument}/g, mandalaDocument || 'No content')
-    .replace(
-      /\$\{comparisonTypes}/g,
-      comparisonTypes?.join(', ') || 'No content',
-    );
+  const processedPrompt = standardReplacer(promptTemplate, config);
 
   const remainingPlaceholders = processedPrompt.match(/\$\{[^}]+}/g);
   if (remainingPlaceholders?.length) {
