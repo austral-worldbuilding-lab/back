@@ -63,7 +63,8 @@ export class CacheService {
       const result = await this.cacheManager.get<T>(cacheKey);
       return result ?? null;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.warn(`Cache get failed for ${cacheKey}: ${errorMessage}`);
       return null;
     }
@@ -74,10 +75,9 @@ export class CacheService {
       await this.cacheManager.set(cacheKey, data);
       this.logger.log(`Data cached for ${cacheKey}`);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logger.warn(
-        `Failed to cache data for ${cacheKey}: ${errorMessage}`,
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to cache data for ${cacheKey}: ${errorMessage}`);
     }
   }
 }

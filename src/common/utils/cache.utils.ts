@@ -23,4 +23,5 @@ export class CacheUtils {
   } as const;
 }
 
-export type CacheStatus = typeof CacheUtils.CacheStatus[keyof typeof CacheUtils.CacheStatus];
+export type CacheStatus =
+  (typeof CacheUtils.CacheStatus)[keyof typeof CacheUtils.CacheStatus];
