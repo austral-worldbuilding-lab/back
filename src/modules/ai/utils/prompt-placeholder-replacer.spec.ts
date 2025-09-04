@@ -76,7 +76,7 @@ describe('generatePostitsPromptTemplate', () => {
     expect(result).not.toContain('${');
   });
 
-  it('should handle empty empty character description array', () => {
+  it('should handle empty character description', () => {
     const result = replacePostitPlaceholders(postitPromptTemplate, {
       dimensions: validDimensions,
       scales: validScales,
@@ -100,28 +100,24 @@ describe('generatePostitsPromptTemplate', () => {
     expect(result).not.toContain('${');
   });
 
-  it('should handle empty empty character description array', () => {
-    const result = replacePostitPlaceholders(postitPromptTemplate, {
-      dimensions: validDimensions,
-      scales: validScales,
-      centerCharacter: validCenterCharacter,
-      centerCharacterDescription: '',
-      tags: validTags,
-      maxResults: 24,
-      minResults: 6,
-    });
-    expect(result).toContain('Personaje central: Alumno');
-    expect(result).toContain('Descripción del personaje: ');
-    expect(result).toContain(
-      'Dimensiones habilitadas: Recursos, Cultura, Economía',
-    );
-    expect(result).toContain(
-      'Escalas habilitadas: Persona, Comunidad, Institución',
-    );
-    expect(result).toContain('Etiquetas disponibles: educación, tecnología');
-    expect(result).toContain('Limite minimo de post-its: 6');
-    expect(result).toContain('Limite maximo de post-its: 24');
-    expect(result).not.toContain('${');
+  it('should throw if prompt misses a required placeholder (dimensions)', () => {
+    const badTemplate = `
+• Personaje central: \${centerCharacter}
+• Descripción del personaje: \${centerCharacterDescription}
+• Escalas habilitadas: \${scales}
+• Etiquetas disponibles: \${tags}
+• Limite maximo de post-its: \${maxResults}
+• Limite minimo de post-its: \${minResults}
+    `;
+    expect(() => {
+      replacePostitPlaceholders(badTemplate, {
+        dimensions: validDimensions,
+        scales: validScales,
+        centerCharacter: validCenterCharacter,
+        centerCharacterDescription: validCenterCharacterDescription,
+        tags: validTags,
+      });
+    }).toThrow('Missing placeholder ${dimensions} in prompt');
   });
 });
 
@@ -225,7 +221,7 @@ describe('generateComparisonPromptTemplate', () => {
 Contenido existente en las mandalas para comparar: \${mandalaDocument}
   `;
 
-  it('should replace comparison placeholders with valid data', () => {
+  it('should replace all comparison placeholders with valid data', () => {
     const result = replaceComparisonPlaceholders(comparisonPromptTemplate, {
       maxResults: 24,
       minResults: 6,
