@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   ExternalServiceException,
 } from '@common/exceptions/custom-exceptions';
+import { CacheService, CacheResult } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
@@ -58,6 +59,7 @@ export class MandalaService {
     private postitService: PostitService,
     private projectService: ProjectService,
     private aiService: AiService,
+    private cacheService: CacheService,
   ) {}
 
   private async completeMissingConfiguration(
@@ -548,29 +550,80 @@ export class MandalaService {
   }
 
   async generateQuestions(
+    userId: string,
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
     selectedFiles?: string[],
-  ): Promise<AiQuestionResponse[]> {
-    this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
+    skipCache?: boolean,
+  ): Promise<CacheResult<AiQuestionResponse[]>> {
+    this.logger.log(
+      `generateQuestions called for mandala ${mandalaId}, skipCache: ${skipCache}`,
+    );
 
     const mandala = await this.findOne(mandalaId);
-
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
+    const cacheParams = this.buildQuestionsCacheParams(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+      selectedFiles,
+    );
+    const cacheKey = this.cacheService.buildAiCacheKey(
+      'questions',
+      userId,
+      mandalaId,
+      cacheParams,
+    );
+
+    return this.cacheService.getOrSet(
+      cacheKey,
+      () =>
+        this.generateQuestionsFromAI(
+          mandala,
+          effectiveDimensions,
+          effectiveScales,
+          selectedFiles,
+        ),
+      skipCache,
+    );
+  }
+
+  private buildQuestionsCacheParams(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+    selectedFiles?: string[],
+  ) {
+    return {
+      dimensions: effectiveDimensions,
+      scales: effectiveScales,
+      selectedFiles: selectedFiles || [],
+      centerCharacter: mandala.configuration.center.name,
+      centerCharacterDescription:
+        mandala.configuration.center.description || 'No content',
+    };
+  }
+
+  private async generateQuestionsFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+    selectedFiles?: string[],
+  ): Promise<AiQuestionResponse[]> {
     const centerCharacter = mandala.configuration.center.name;
     const centerCharacterDescription = mandala.configuration.center.description;
     const tags = await this.projectService.getProjectTags(mandala.projectId);
     const mandalaDocument = await this.firebaseDataService.getDocument(
       mandala.projectId,
-      mandalaId,
+      mandala.id,
     );
 
     return this.aiService.generateQuestions(
       mandala.projectId,
-      mandalaId,
+      mandala.id,
       mandalaDocument as FirestoreMandalaDocument,
       effectiveDimensions,
       effectiveScales,
@@ -582,33 +635,82 @@ export class MandalaService {
   }
 
   async generatePostits(
+    userId: string,
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
     selectedFiles?: string[],
-  ): Promise<PostitWithCoordinates[]> {
-    this.logger.log(`generatePostits called for mandala ${mandalaId}`);
+    skipCache?: boolean,
+  ): Promise<CacheResult<PostitWithCoordinates[]>> {
+    this.logger.log(
+      `generatePostits called for mandala ${mandalaId}, skipCache: ${skipCache}`,
+    );
 
     const mandala = await this.findOne(mandalaId);
-
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
+    const cacheParams = this.buildPostitsCacheParams(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+      selectedFiles,
+    );
+    const cacheKey = this.cacheService.buildAiCacheKey(
+      'postits',
+      userId,
+      mandalaId,
+      cacheParams,
+    );
+
+    return this.cacheService.getOrSet(
+      cacheKey,
+      () =>
+        this.generatePostitsFromAI(
+          mandala,
+          effectiveDimensions,
+          effectiveScales,
+          selectedFiles,
+        ),
+      skipCache,
+    );
+  }
+
+  private buildPostitsCacheParams(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+    selectedFiles?: string[],
+  ) {
+    return {
+      dimensions: effectiveDimensions,
+      scales: effectiveScales,
+      selectedFiles: selectedFiles || [],
+      centerCharacter: mandala.configuration.center.name,
+      centerCharacterDescription:
+        mandala.configuration.center.description || 'No content',
+    };
+  }
+
+  private async generatePostitsFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+    selectedFiles?: string[],
+  ): Promise<PostitWithCoordinates[]> {
     const postits = await this.postitService.generatePostits(
       mandala,
       effectiveDimensions,
       effectiveScales,
       selectedFiles,
     );
-    const postitsWithCoordinates =
-      this.postitService.transformToPostitsWithCoordinates(
-        mandalaId,
-        postits,
-        effectiveDimensions,
-        effectiveScales,
-      );
 
-    return postitsWithCoordinates;
+    return this.postitService.transformToPostitsWithCoordinates(
+      mandala.id,
+      postits,
+      effectiveDimensions,
+      effectiveScales,
+    );
   }
 
   async getFirestoreDocument(

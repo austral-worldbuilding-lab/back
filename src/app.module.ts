@@ -1,5 +1,6 @@
 import * as process from 'node:process';
 
+import { CommonModule } from '@common/common.module';
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
@@ -13,6 +14,7 @@ import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectModule } from '@modules/project/project.module';
 import { RoleModule } from '@modules/role/role.module';
 import { UserModule } from '@modules/user/user.module';
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -23,6 +25,7 @@ import { OrganizationInvitationModule } from './modules/organization-invitation/
 
 @Module({
   imports: [
+    CommonModule,
     PrismaModule,
     ProjectModule,
     UserModule,
@@ -36,6 +39,11 @@ import { OrganizationInvitationModule } from './modules/organization-invitation/
     MailModule,
     OrganizationModule,
     HealthModule,
+    CacheModule.register({
+      ttl: parseInt(process.env.CACHE_TTL || '3600') * 1000, // Convert to milliseconds
+      max: parseInt(process.env.CACHE_MAX_ITEMS || '500'),
+      isGlobal: true,
+    }),
     ThrottlerModule.forRoot({
       throttlers: [
         {

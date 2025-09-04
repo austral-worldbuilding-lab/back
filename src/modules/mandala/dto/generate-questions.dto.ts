@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsArray } from 'class-validator';
+import { IsOptional, IsString, IsArray, IsBoolean } from 'class-validator';
 
 export class GenerateQuestionsDto {
   @ApiProperty({
@@ -39,4 +39,14 @@ export class GenerateQuestionsDto {
   @IsArray()
   @IsString({ each: true })
   selectedFiles?: string[];
+
+  @ApiProperty({
+    description:
+      'Si es true, omite el cache y genera preguntas nuevas. Por defecto es false.',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  skipCache?: boolean;
 }

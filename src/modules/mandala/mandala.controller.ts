@@ -8,6 +8,7 @@ import {
   MessageOnlyResponse,
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
 import {
   Controller,
   Get,
@@ -21,7 +22,10 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   HttpCode,
+  Req,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import {
@@ -295,16 +299,24 @@ export class MandalaController {
   async generateQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generateQuestionsDto: GenerateQuestionsDto,
+    @Req() request: RequestWithUser,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<DataResponse<AiQuestionResponse[]>> {
-    const questions = await this.mandalaService.generateQuestions(
+    const userId = request.user.id;
+    const result = await this.mandalaService.generateQuestions(
+      userId,
       mandalaId,
       generateQuestionsDto.dimensions,
       generateQuestionsDto.scales,
       generateQuestionsDto.selectedFiles,
+      generateQuestionsDto.skipCache,
     );
 
+    // Add cache status header
+    response.header('X-Cache-Status', result.status);
+
     return {
-      data: questions,
+      data: result.data,
     };
   }
 
@@ -314,16 +326,24 @@ export class MandalaController {
   async generatePostits(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generatePostitsDto: GeneratePostitsDto,
+    @Req() request: RequestWithUser,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<DataResponse<PostitWithCoordinates[]>> {
-    const postits = await this.mandalaService.generatePostits(
+    const userId = request.user.id;
+    const result = await this.mandalaService.generatePostits(
+      userId,
       mandalaId,
       generatePostitsDto.dimensions,
       generatePostitsDto.scales,
       generatePostitsDto.selectedFiles,
+      generatePostitsDto.skipCache,
     );
 
+    // Add cache status header
+    response.header('X-Cache-Status', result.status);
+
     return {
-      data: postits,
+      data: result.data,
     };
   }
 
