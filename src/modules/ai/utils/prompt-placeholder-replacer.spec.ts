@@ -35,9 +35,15 @@ describe('generatePostitsPromptTemplate', () => {
     });
 
     expect(result).toContain('Personaje central: Alumno');
-    expect(result).toContain('Descripción del personaje: Un alumno generico de la UA');
-    expect(result).toContain('Dimensiones habilitadas: Recursos, Cultura, Economía');
-    expect(result).toContain('Escalas habilitadas: Persona, Comunidad, Institución');
+    expect(result).toContain(
+      'Descripción del personaje: Un alumno generico de la UA',
+    );
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
     expect(result).toContain('Etiquetas disponibles: educación, tecnología');
     expect(result).toContain('Limite minimo de post-its: 6');
     expect(result).toContain('Limite maximo de post-its: 24');
@@ -55,9 +61,15 @@ describe('generatePostitsPromptTemplate', () => {
       minResults: 6,
     });
     expect(result).toContain('Personaje central: Alumno');
-    expect(result).toContain('Descripción del personaje: Un alumno generico de la UA');
-    expect(result).toContain('Dimensiones habilitadas: Recursos, Cultura, Economía');
-    expect(result).toContain('Escalas habilitadas: Persona, Comunidad, Institución');
+    expect(result).toContain(
+      'Descripción del personaje: Un alumno generico de la UA',
+    );
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
     expect(result).toContain('Etiquetas disponibles: ');
     expect(result).toContain('Limite minimo de post-its: 6');
     expect(result).toContain('Limite maximo de post-its: 24');
@@ -93,9 +105,15 @@ Estado actual de la Mandala
     });
 
     expect(result).toContain('Personaje central: Alumno');
-    expect(result).toContain('Descripción del personaje: Un alumno generico de la UA');
-    expect(result).toContain('Dimensiones habilitadas: Recursos, Cultura, Economía');
-    expect(result).toContain('Escalas habilitadas: Persona, Comunidad, Institución');
+    expect(result).toContain(
+      'Descripción del personaje: Un alumno generico de la UA',
+    );
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
     expect(result).toContain('Etiquetas disponibles: educación, tecnología');
     expect(result).toContain('Limite minimo de preguntas: 6');
     expect(result).toContain('Limite maximo de preguntas: 24');
@@ -172,8 +190,12 @@ Contenido existente en las mandalas para comparar
       mandalaDocument: validMandalaDocument,
     });
 
-    expect(result).toContain('Dimensiones habilitadas: Recursos, Cultura, Economía');
-    expect(result).toContain('Escalas habilitadas: Persona, Comunidad, Institución');
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
     expect(result).toContain('Limite minimo de post-its: 6');
     expect(result).toContain('Limite maximo de post-its: 24');
   });
