@@ -65,7 +65,7 @@ const replaceCenterCharacterDescription: PlaceholderReplacer = (
     );
   }
   if (config.centerCharacterDescription === '') {
-    return prompt.replace(/\$\{centerCharacterDescription}/g, '');
+    return prompt.replace(/\$\{centerCharacterDescription}/g, 'N/A');
   }
   return prompt.replace(
     /\$\{centerCharacterDescription}/g,
@@ -83,7 +83,7 @@ const replaceTags: PlaceholderReplacer = (prompt, config) => {
     );
   }
   if (config.tags.length === 0) {
-    return prompt.replace(/\$\{tags}/g, '');
+    return prompt.replace(/\$\{tags}/g, 'N/A');
   }
   return prompt.replace(/\$\{tags}/g, config.tags.join(', '));
 };

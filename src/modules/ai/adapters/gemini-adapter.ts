@@ -135,8 +135,6 @@ export class GeminiAdapter implements AiProvider {
     selectedFiles?: string[],
     mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
-    this.logger.log(`Starting postit generation for project: ${projectId}`);
-
     const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
 
     const promptFilePath = path.resolve(
@@ -154,7 +152,6 @@ export class GeminiAdapter implements AiProvider {
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
-    this.logger.log('Prompt:', systemInstruction);
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
@@ -341,7 +338,6 @@ export class GeminiAdapter implements AiProvider {
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
-    this.logger.log('Prompt:', systemInstruction);
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,

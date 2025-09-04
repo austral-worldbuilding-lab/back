@@ -129,6 +129,7 @@ export class AiRequestValidator {
         totalInputSize: this.formatBytes(totalInputSize),
         dimensionsCount: dimensions.length,
         scalesCount: scales.length,
+        expectedPostitsCount,
       });
     } else {
       this.logger.error(
