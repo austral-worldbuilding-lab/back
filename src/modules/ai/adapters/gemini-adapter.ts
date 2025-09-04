@@ -18,7 +18,11 @@ import {
 } from '../resources/dto/generate-postits.dto';
 import { QuestionsResponse } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
-import { replacePromptPlaceholders } from '../utils/prompt-placeholder-replacer';
+import {
+  replacePostitPlaceholders,
+  replaceQuestionPlaceholders,
+  replaceComparisonPlaceholders,
+} from '../utils/prompt-placeholder-replacer';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
 interface GeminiUploadedFile {
@@ -141,13 +145,16 @@ export class GeminiAdapter implements AiProvider {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
-    const systemInstruction = replacePromptPlaceholders(promptTemplate, {
+    const systemInstruction = replacePostitPlaceholders(promptTemplate, {
       dimensions: dimensions,
       scales: scales,
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
       tags: tags,
+      maxResults: this.utilsService.getMaxResults(),
+      minResults: this.utilsService.getMinResults(),
     });
+    this.logger.log('Prompt:', systemInstruction);
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
@@ -185,16 +192,16 @@ export class GeminiAdapter implements AiProvider {
       );
 
       const config = this.validator.getConfig();
-      if (postits.length > config.maxPostitsPerRequest) {
+      if (postits.length > config.maxResultsPerRequest) {
         this.logger.error(`Generated postits count exceeds limit`, {
           projectId,
           generatedCount: postits.length,
-          maxAllowed: config.maxPostitsPerRequest,
+          maxAllowed: config.maxResultsPerRequest,
           timestamp: new Date().toISOString(),
         });
         throw new AiValidationException(
           [
-            `Generated ${postits.length} postits, but maximum allowed is ${config.maxPostitsPerRequest}`,
+            `Generated ${postits.length} postits, but maximum allowed is ${config.maxResultsPerRequest}`,
           ],
           projectId,
         );
@@ -237,13 +244,15 @@ export class GeminiAdapter implements AiProvider {
 
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
-    const systemInstruction = replacePromptPlaceholders(promptTemplate, {
+    const systemInstruction = replaceQuestionPlaceholders(promptTemplate, {
       dimensions: dimensions,
       scales: scales,
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
       tags: tags,
       mandalaDocument: mandalaTextSummary,
+      maxResults: this.utilsService.getMaxResults(),
+      minResults: this.utilsService.getMinResults(),
     });
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
@@ -285,16 +294,16 @@ export class GeminiAdapter implements AiProvider {
       );
 
       const config = this.validator.getConfig();
-      if (questions.length > config.maxQuestionsPerRequest) {
+      if (questions.length > config.maxResultsPerRequest) {
         this.logger.error(`Generated questions count exceeds limit`, {
           mandalaId,
           generatedCount: questions.length,
-          maxAllowed: config.maxQuestionsPerRequest,
+          maxAllowed: config.maxResultsPerRequest,
           timestamp: new Date().toISOString(),
         });
         throw new AiValidationException(
           [
-            `Generated ${questions.length} questions, but maximum allowed is ${config.maxQuestionsPerRequest}`,
+            `Generated ${questions.length} questions, but maximum allowed is ${config.maxResultsPerRequest}`,
           ],
           mandalaId,
         );
@@ -327,10 +336,10 @@ export class GeminiAdapter implements AiProvider {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
-    const systemInstruction = replacePromptPlaceholders(promptTemplate, {
-      dimensions: dimensions,
-      scales: scales,
+    const systemInstruction = replaceComparisonPlaceholders(promptTemplate, {
       mandalaDocument: mandalasDocument,
+      maxResults: this.utilsService.getMaxResults(),
+      minResults: this.utilsService.getMinResults(),
     });
     this.logger.log('Prompt:', systemInstruction);
 

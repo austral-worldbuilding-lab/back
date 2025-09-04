@@ -28,13 +28,13 @@ export class AiRequestValidator {
     this.logger.log('AI Request Validator initialized with config:', {
       maxFileSize: this.config.maxFileSize,
       maxInputSize: this.config.maxInputSize,
-      maxPostitsPerRequest: this.config.maxPostitsPerRequest,
+      maxResultsPerRequest: this.config.maxResultsPerRequest,
       allowedMimeTypesCount: this.config.allowedMimeTypes.length,
       blockedMimeTypesCount: this.config.blockedMimeTypes.length,
     });
   }
 
-  // TODO: Split file validation into postits, questions and mandala configuration
+  // TODO: Split validation into files and project configuration (dimensions, scales, expected results count)
   /**
    * Main validation method - runs all checks before sending request to AI API
    */
@@ -85,18 +85,18 @@ export class AiRequestValidator {
       });
     }
 
-    // Check expected postits count if provided
+    // Check expected results count if provided
     if (
       expectedPostitsCount &&
-      expectedPostitsCount > this.config.maxPostitsPerRequest
+      expectedPostitsCount > this.config.maxResultsPerRequest
     ) {
-      const error = `Expected postits count (${expectedPostitsCount}) exceeds maximum allowed (${this.config.maxPostitsPerRequest})`;
+      const error = `Expected results count (${expectedPostitsCount}) exceeds maximum allowed (${this.config.maxResultsPerRequest})`;
       errors.push(error);
-      this.logger.error('Postits count validation failed', {
+      this.logger.error('Results count validation failed', {
         projectId,
         expectedPostitsCount,
-        maxPostitsPerRequest: this.config.maxPostitsPerRequest,
-        exceedsBy: expectedPostitsCount - this.config.maxPostitsPerRequest,
+        maxResultsPerRequest: this.config.maxResultsPerRequest,
+        exceedsBy: expectedPostitsCount - this.config.maxResultsPerRequest,
         timestamp: new Date().toISOString(),
       });
     }

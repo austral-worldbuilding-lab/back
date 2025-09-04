@@ -3,8 +3,8 @@ export interface AiValidationConfig {
   blockedMimeTypes: string[];
   maxFileSize: number; // in bytes
   maxInputSize: number; // in bytes
-  maxPostitsPerRequest: number;
-  maxQuestionsPerRequest: number;
+  maxResultsPerRequest: number;
+  minResultsPerRequest: number;
 }
 
 /**
@@ -51,11 +51,8 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
 
   maxFileSize: parseInt(process.env.AI_MAX_FILE_SIZE || '52428800'), // 50MB default
   maxInputSize: parseInt(process.env.AI_MAX_INPUT_SIZE || '209715200'), // 200MB default
-  // TODO: add this limit into the prompt with placeholder replacement
-  maxPostitsPerRequest: parseInt(
-    process.env.AI_MAX_POSTITS_PER_REQUEST || '100',
-  ), // 100 default
-  maxQuestionsPerRequest: parseInt(
-    process.env.AI_MAX_QUESTIONS_PER_REQUEST || '100',
-  ), // 100 default
+  maxResultsPerRequest: parseInt(
+    process.env.AI_MAX_RESULTS_PER_REQUEST || '24',
+  ),
+  minResultsPerRequest: parseInt(process.env.AI_MIN_RESULTS_PER_REQUEST || '6'),
 });

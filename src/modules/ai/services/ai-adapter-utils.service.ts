@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 
+import { getAiValidationConfig } from '@config/ai-validation.config';
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Injectable, Logger } from '@nestjs/common';
@@ -11,12 +12,26 @@ import { AiRequestValidator } from '../validators/ai-request.validator';
 @Injectable()
 export class AiAdapterUtilsService {
   private readonly logger = new Logger(AiAdapterUtilsService.name);
+  private readonly minResults: number;
+  private readonly maxResults: number;
 
   constructor(
     private configService: ConfigService,
     private fileService: FileService,
     private validator: AiRequestValidator,
-  ) {}
+  ) {
+    const config = getAiValidationConfig();
+    this.minResults = config.minResultsPerRequest;
+    this.maxResults = config.maxResultsPerRequest;
+  }
+
+  getMaxResults(): number {
+    return this.maxResults;
+  }
+
+  getMinResults(): number {
+    return this.minResults;
+  }
 
   validateConfiguration(modelConfigKey: string): string {
     this.logger.debug(`Validating configuration...`);
@@ -87,6 +102,7 @@ export class AiAdapterUtilsService {
       projectId,
       dimensions,
       scales,
+      this.maxResults,
     );
 
     if (!validationResult.isValid) {

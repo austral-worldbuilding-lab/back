@@ -11,6 +11,8 @@ Configuración del proyecto
 • Escalas habilitadas: ${scales}
 • Etiquetas disponibles: ${tags}
 • Prohibido inventar nuevas dimensiones o escalas.
+• Limite maximo de post-its: ${maxResults}
+• Limite minimo de post-its: ${minResults}
 
 Procesamiento de la información
 • Leé entrevistas, encuestas, informes y demás archivos.
