@@ -75,6 +75,54 @@ describe('generatePostitsPromptTemplate', () => {
     expect(result).toContain('Limite maximo de post-its: 24');
     expect(result).not.toContain('${');
   });
+
+  it('should handle empty empty character description array', () => {
+    const result = replacePostitPlaceholders(postitPromptTemplate, {
+      dimensions: validDimensions,
+      scales: validScales,
+      centerCharacter: validCenterCharacter,
+      centerCharacterDescription: '',
+      tags: validTags,
+      maxResults: 24,
+      minResults: 6,
+    });
+    expect(result).toContain('Personaje central: Alumno');
+    expect(result).toContain('Descripción del personaje: ');
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
+    expect(result).toContain('Etiquetas disponibles: educación, tecnología');
+    expect(result).toContain('Limite minimo de post-its: 6');
+    expect(result).toContain('Limite maximo de post-its: 24');
+    expect(result).not.toContain('${');
+  });
+
+  it('should handle empty empty character description array', () => {
+    const result = replacePostitPlaceholders(postitPromptTemplate, {
+      dimensions: validDimensions,
+      scales: validScales,
+      centerCharacter: validCenterCharacter,
+      centerCharacterDescription: '',
+      tags: validTags,
+      maxResults: 24,
+      minResults: 6,
+    });
+    expect(result).toContain('Personaje central: Alumno');
+    expect(result).toContain('Descripción del personaje: ');
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
+    expect(result).toContain('Etiquetas disponibles: educación, tecnología');
+    expect(result).toContain('Limite minimo de post-its: 6');
+    expect(result).toContain('Limite maximo de post-its: 24');
+    expect(result).not.toContain('${');
+  });
 });
 
 describe('generateQuestionsPromptTemplate', () => {
@@ -88,8 +136,7 @@ Configuración del proyecto
 • Limite maximo de preguntas: \${maxResults}
 • Limite minimo de preguntas: \${minResults}
 
-Estado actual de la Mandala
-• Contenido existente: \${mandalaDocument}
+Estado actual de la Mandala: \${mandalaDocument}
   `;
 
   it('should replace all question placeholders with valid data', () => {
@@ -118,7 +165,7 @@ Estado actual de la Mandala
     expect(result).toContain('Limite minimo de preguntas: 6');
     expect(result).toContain('Limite maximo de preguntas: 24');
     expect(result).toContain(
-      'Contenido existente: Mandala 1: Sistema UA, Mandala 2: Sistema Educativo',
+      'Estado actual de la Mandala: Mandala 1: Sistema UA, Mandala 2: Sistema Educativo',
     );
     expect(result).not.toContain('${');
   });
@@ -172,49 +219,22 @@ Estado actual de la Mandala
 
 describe('generateComparisonPromptTemplate', () => {
   const comparisonPromptTemplate = `
-• Dimensiones habilitadas: \${dimensions}
-• Escalas habilitadas: \${scales}
 • Limite maximo de post-its: \${maxResults}
 • Limite minimo de post-its: \${minResults}
 
-Contenido existente en las mandalas para comparar
-\${mandalaDocument}
+Contenido existente en las mandalas para comparar: \${mandalaDocument}
   `;
 
   it('should replace comparison placeholders with valid data', () => {
     const result = replaceComparisonPlaceholders(comparisonPromptTemplate, {
-      dimensions: validDimensions,
-      scales: validScales,
       maxResults: 24,
       minResults: 6,
       mandalaDocument: validMandalaDocument,
     });
-
-    expect(result).toContain(
-      'Dimensiones habilitadas: Recursos, Cultura, Economía',
-    );
-    expect(result).toContain(
-      'Escalas habilitadas: Persona, Comunidad, Institución',
-    );
     expect(result).toContain('Limite minimo de post-its: 6');
     expect(result).toContain('Limite maximo de post-its: 24');
-  });
-
-  it('should handle empty arrays and strings', () => {
-    const result = replaceComparisonPlaceholders(comparisonPromptTemplate, {
-      dimensions: [],
-      scales: [],
-      maxResults: 0,
-      minResults: 0,
-      mandalaDocument: '',
-    });
-
-    expect(result).toContain('• Dimensiones habilitadas: ');
-    expect(result).toContain('• Escalas habilitadas: ');
-    expect(result).toContain('• Limite maximo de post-its: 0');
-    expect(result).toContain('• Limite minimo de post-its: 0');
     expect(result).toContain(
-      'Contenido existente en las mandalas para comparar',
+      'Contenido existente en las mandalas para comparar: Mandala 1: Sistema UA, Mandala 2: Sistema Educativo',
     );
     expect(result).not.toContain('${');
   });
