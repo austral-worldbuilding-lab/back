@@ -135,7 +135,6 @@ const composeReplacers = (
   };
 };
 
-// Specific replacers for each generation type
 const postitReplacer = composeReplacers(
   replaceDimensions,
   replaceScales,
@@ -163,9 +162,6 @@ const comparisonReplacer = composeReplacers(
   replaceMinResults,
 );
 
-/**
- * Generic function to replace placeholders using a specific replacer
- */
 function replaceWithReplacer(
   promptTemplate: string,
   config: PromptReplacementConfig,
