@@ -35,13 +35,11 @@ export class AiService {
     selectedFiles?: string[],
     mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
-    this.logger.log(`Starting postit generation for project: ${projectId}`);
-
-    this.logger.debug('Postit generation configuration:', {
-      dimensions: dimensions.length,
-      scales: scales.length,
+    this.logger.log(`Starting postit generation for project: ${projectId}`, {
       centerCharacter,
       centerCharacterDescription,
+      dimensions: dimensions.length,
+      scales: scales.length,
       tags: tags.length,
     });
 
@@ -124,7 +122,6 @@ export class AiService {
       m.configuration.dimensions.map((d) => d.name),
     );
     const allScales = mandalas.flatMap((m) => m.configuration.scales);
-    const comparisonTypes = ['SIMILITUD', 'DIFERENCIA', 'UNICO'];
 
     const mandalasAiSummary = mandalasDocument.map((m) =>
       createMandalaAiSummary(m),
@@ -134,7 +131,6 @@ export class AiService {
       projectId,
       allDimensions,
       allScales,
-      comparisonTypes,
       mandalasAiSummary.map((m) => JSON.stringify(m)).join('\n'),
     );
 

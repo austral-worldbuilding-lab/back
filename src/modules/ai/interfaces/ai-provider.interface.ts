@@ -56,11 +56,24 @@ export interface AiProvider {
     selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]>;
 
+  /**
+   * Generates postit comparisons between multiple mandalas using AI analysis
+   *
+   * This method analyzes the provided mandalas document to identify and compare
+   * postits across different mandalas, highlighting similarities, differences,
+   * and unique characteristics. The AI generates structured comparison responses
+   * that can be used for mandala analysis and insights.
+   *
+   * @param projectId - The unique identifier of the project containing the mandalas
+   * @param dimensions - Array of dimensions to consider during the comparison analysis
+   * @param scales - Array of scales to consider during the comparison analysis
+   * @param mandalasDocument - Document containing the mandalas to be compared
+   * @returns Promise resolving to an array of postit comparison responses
+   */
   generatePostitsComparison(
     projectId: string,
     dimensions: string[],
     scales: string[],
-    comparisonTypes: string[],
     mandalasDocument: string,
   ): Promise<AiPostitComparisonResponse[]>;
 }

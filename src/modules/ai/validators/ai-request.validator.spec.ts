@@ -114,12 +114,12 @@ describe('AiRequestValidator', () => {
         'project-123',
         ['dimension1'],
         ['scale1'],
-        config.maxPostitsPerRequest + 1,
+        config.maxResultsPerRequest + 1,
       );
 
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain(
-        `Expected postits count (${config.maxPostitsPerRequest + 1}) exceeds maximum allowed (${config.maxPostitsPerRequest})`,
+        `Expected results count (${config.maxResultsPerRequest + 1}) exceeds maximum allowed (${config.maxResultsPerRequest})`,
       );
     });
   });
