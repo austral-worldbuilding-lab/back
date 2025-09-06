@@ -345,7 +345,10 @@ export class MandalaController {
     @Req() request: RequestWithUser,
   ): Promise<DataResponse<AiQuestionResponse[][]>> {
     const userId = request.user.id;
-    const cachedQuestions = await this.mandalaService.getCachedQuestions(userId, mandalaId);
+    const cachedQuestions = await this.mandalaService.getCachedQuestions(
+      userId,
+      mandalaId,
+    );
 
     return {
       data: cachedQuestions,
@@ -360,7 +363,10 @@ export class MandalaController {
     @Req() request: RequestWithUser,
   ): Promise<DataResponse<PostitWithCoordinates[][]>> {
     const userId = request.user.id;
-    const cachedPostits = await this.mandalaService.getCachedPostits(userId, mandalaId);
+    const cachedPostits = await this.mandalaService.getCachedPostits(
+      userId,
+      mandalaId,
+    );
 
     return {
       data: cachedPostits,
