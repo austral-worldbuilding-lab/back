@@ -585,9 +585,11 @@ export class MandalaService {
       mandalaId,
     );
 
-    await this.cacheService.addToLimitedCache(cacheKey, questions, 20);
+    for (const question of questions) {
+      await this.cacheService.addToLimitedCache(cacheKey, question, 20);
+    }
     this.logger.log(
-      `Saved ${questions.length} questions to cache for user ${userId}, mandala ${mandalaId}`,
+      `Saved questions to cache for user ${userId}, mandala ${mandalaId}`,
     );
   }
 
@@ -654,7 +656,9 @@ export class MandalaService {
       mandalaId,
     );
 
-    await this.cacheService.addToLimitedCache(cacheKey, postits, 20);
+    for (const postit of postits) {
+      await this.cacheService.addToLimitedCache(cacheKey, postit, 20);
+    }
     this.logger.log(
       `Saved ${postits.length} postits to cache for user ${userId}, mandala ${mandalaId}`,
     );
@@ -663,25 +667,25 @@ export class MandalaService {
   async getCachedQuestions(
     userId: string,
     mandalaId: string,
-  ): Promise<AiQuestionResponse[][]> {
+  ): Promise<AiQuestionResponse[]> {
     const cacheKey = this.cacheService.buildCacheKey(
       'questions',
       userId,
       mandalaId,
     );
-    return this.cacheService.getFromCache<AiQuestionResponse[]>(cacheKey);
+    return this.cacheService.getFromCache<AiQuestionResponse>(cacheKey);
   }
 
   async getCachedPostits(
     userId: string,
     mandalaId: string,
-  ): Promise<PostitWithCoordinates[][]> {
+  ): Promise<PostitWithCoordinates[]> {
     const cacheKey = this.cacheService.buildCacheKey(
       'postits',
       userId,
       mandalaId,
     );
-    return this.cacheService.getFromCache<PostitWithCoordinates[]>(cacheKey);
+    return this.cacheService.getFromCache<PostitWithCoordinates>(cacheKey);
   }
 
   private async generatePostitsFromAI(

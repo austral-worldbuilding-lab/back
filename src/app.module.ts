@@ -40,7 +40,7 @@ import { AppService } from './app.service';
     OrganizationModule,
     HealthModule,
     CacheModule.register({
-      ttl: parseInt(process.env.CACHE_TTL || '7200') * 1000, // Convert to milliseconds
+      ttl: parseInt(process.env.CACHE_TTL || '7200000'),
       max: parseInt(process.env.CACHE_MAX_ITEMS || '500'),
       isGlobal: true,
     }),

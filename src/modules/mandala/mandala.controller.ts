@@ -343,7 +343,7 @@ export class MandalaController {
   async getCachedQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiQuestionResponse[][]>> {
+  ): Promise<DataResponse<AiQuestionResponse[]>> {
     const userId = request.user.id;
     const cachedQuestions = await this.mandalaService.getCachedQuestions(
       userId,
@@ -361,7 +361,7 @@ export class MandalaController {
   async getCachedPostits(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<PostitWithCoordinates[][]>> {
+  ): Promise<DataResponse<PostitWithCoordinates[]>> {
     const userId = request.user.id;
     const cachedPostits = await this.mandalaService.getCachedPostits(
       userId,
