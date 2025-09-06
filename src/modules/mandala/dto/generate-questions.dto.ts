@@ -39,5 +39,4 @@ export class GenerateQuestionsDto {
   @IsArray()
   @IsString({ each: true })
   selectedFiles?: string[];
-
 }

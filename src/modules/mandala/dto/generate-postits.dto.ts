@@ -39,5 +39,4 @@ export class GeneratePostitsDto {
   @IsArray()
   @IsString({ each: true })
   selectedFiles?: string[];
-
 }

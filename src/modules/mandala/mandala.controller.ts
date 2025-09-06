@@ -23,10 +23,8 @@ import {
   ParseIntPipe,
   HttpCode,
   Req,
-  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Response } from 'express';
 
 import {
   ApiCreateMandala,
