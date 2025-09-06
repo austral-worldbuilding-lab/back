@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   ExternalServiceException,
 } from '@common/exceptions/custom-exceptions';
+import { CacheService } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
@@ -58,6 +59,7 @@ export class MandalaService {
     private postitService: PostitService,
     private projectService: ProjectService,
     private aiService: AiService,
+    private cacheService: CacheService,
   ) {}
 
   private async completeMissingConfiguration(
@@ -548,6 +550,7 @@ export class MandalaService {
   }
 
   async generateQuestions(
+    userId: string,
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
@@ -556,21 +559,57 @@ export class MandalaService {
     this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
 
     const mandala = await this.findOne(mandalaId);
-
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
+    const questions = await this.generateQuestionsFromAI(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+      selectedFiles,
+    );
+
+    await this.saveQuestionsToCache(userId, mandalaId, questions);
+
+    return questions;
+  }
+
+  private async saveQuestionsToCache(
+    userId: string,
+    mandalaId: string,
+    questions: AiQuestionResponse[],
+  ): Promise<void> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'questions',
+      userId,
+      mandalaId,
+    );
+
+    for (const question of questions) {
+      await this.cacheService.addToLimitedCache(cacheKey, question, 20);
+    }
+    this.logger.log(
+      `Saved questions to cache for user ${userId}, mandala ${mandalaId}`,
+    );
+  }
+
+  private async generateQuestionsFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+    selectedFiles?: string[],
+  ): Promise<AiQuestionResponse[]> {
     const centerCharacter = mandala.configuration.center.name;
     const centerCharacterDescription = mandala.configuration.center.description;
     const tags = await this.projectService.getProjectTags(mandala.projectId);
     const mandalaDocument = await this.firebaseDataService.getDocument(
       mandala.projectId,
-      mandalaId,
+      mandala.id,
     );
 
     return this.aiService.generateQuestions(
       mandala.projectId,
-      mandalaId,
+      mandala.id,
       mandalaDocument as FirestoreMandalaDocument,
       effectiveDimensions,
       effectiveScales,
@@ -582,6 +621,7 @@ export class MandalaService {
   }
 
   async generatePostits(
+    userId: string,
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
@@ -590,25 +630,83 @@ export class MandalaService {
     this.logger.log(`generatePostits called for mandala ${mandalaId}`);
 
     const mandala = await this.findOne(mandalaId);
-
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
+    const postits = await this.generatePostitsFromAI(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+      selectedFiles,
+    );
+
+    await this.savePostitsToCache(userId, mandalaId, postits);
+
+    return postits;
+  }
+
+  private async savePostitsToCache(
+    userId: string,
+    mandalaId: string,
+    postits: PostitWithCoordinates[],
+  ): Promise<void> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'postits',
+      userId,
+      mandalaId,
+    );
+
+    for (const postit of postits) {
+      await this.cacheService.addToLimitedCache(cacheKey, postit, 20);
+    }
+    this.logger.log(
+      `Saved ${postits.length} postits to cache for user ${userId}, mandala ${mandalaId}`,
+    );
+  }
+
+  async getCachedQuestions(
+    userId: string,
+    mandalaId: string,
+  ): Promise<AiQuestionResponse[]> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'questions',
+      userId,
+      mandalaId,
+    );
+    return this.cacheService.getFromCache<AiQuestionResponse>(cacheKey);
+  }
+
+  async getCachedPostits(
+    userId: string,
+    mandalaId: string,
+  ): Promise<PostitWithCoordinates[]> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'postits',
+      userId,
+      mandalaId,
+    );
+    return this.cacheService.getFromCache<PostitWithCoordinates>(cacheKey);
+  }
+
+  private async generatePostitsFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+    selectedFiles?: string[],
+  ): Promise<PostitWithCoordinates[]> {
     const postits = await this.postitService.generatePostits(
       mandala,
       effectiveDimensions,
       effectiveScales,
       selectedFiles,
     );
-    const postitsWithCoordinates =
-      this.postitService.transformToPostitsWithCoordinates(
-        mandalaId,
-        postits,
-        effectiveDimensions,
-        effectiveScales,
-      );
 
-    return postitsWithCoordinates;
+    return this.postitService.transformToPostitsWithCoordinates(
+      mandala.id,
+      postits,
+      effectiveDimensions,
+      effectiveScales,
+    );
   }
 
   async getFirestoreDocument(
