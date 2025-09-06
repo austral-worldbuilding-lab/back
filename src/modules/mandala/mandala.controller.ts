@@ -300,23 +300,18 @@ export class MandalaController {
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generateQuestionsDto: GenerateQuestionsDto,
     @Req() request: RequestWithUser,
-    @Res({ passthrough: true }) response: Response,
   ): Promise<DataResponse<AiQuestionResponse[]>> {
     const userId = request.user.id;
-    const result = await this.mandalaService.generateQuestions(
+    const questions = await this.mandalaService.generateQuestions(
       userId,
       mandalaId,
       generateQuestionsDto.dimensions,
       generateQuestionsDto.scales,
       generateQuestionsDto.selectedFiles,
-      generateQuestionsDto.skipCache,
     );
 
-    // Add cache status header
-    response.header('X-Cache-Status', result.status);
-
     return {
-      data: result.data,
+      data: questions,
     };
   }
 
@@ -327,23 +322,18 @@ export class MandalaController {
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generatePostitsDto: GeneratePostitsDto,
     @Req() request: RequestWithUser,
-    @Res({ passthrough: true }) response: Response,
   ): Promise<DataResponse<PostitWithCoordinates[]>> {
     const userId = request.user.id;
-    const result = await this.mandalaService.generatePostits(
+    const postits = await this.mandalaService.generatePostits(
       userId,
       mandalaId,
       generatePostitsDto.dimensions,
       generatePostitsDto.scales,
       generatePostitsDto.selectedFiles,
-      generatePostitsDto.skipCache,
     );
 
-    // Add cache status header
-    response.header('X-Cache-Status', result.status);
-
     return {
-      data: result.data,
+      data: postits,
     };
   }
 

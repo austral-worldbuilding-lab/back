@@ -1,19 +1,10 @@
-import * as crypto from 'crypto';
-
 export class CacheUtils {
-  static hashParams(params: any): string {
-    const normalized = JSON.stringify(params, Object.keys(params).sort());
-    return crypto.createHash('md5').update(normalized).digest('hex');
-  }
-
-  static buildCacheKey(
+  static buildSimpleCacheKey(
     type: 'questions' | 'postits',
     userId: string,
     mandalaId: string,
-    params: any,
   ): string {
-    const paramsHash = this.hashParams(params);
-    return `ai:${type}:${userId}:${mandalaId}:${paramsHash}`;
+    return `ai:${type}:${userId}:${mandalaId}`;
   }
 
   static readonly CacheStatus = {

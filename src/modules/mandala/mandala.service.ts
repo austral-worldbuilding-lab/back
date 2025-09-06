@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   ExternalServiceException,
 } from '@common/exceptions/custom-exceptions';
-import { CacheService, CacheResult } from '@common/services/cache.service';
+import { CacheService } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
@@ -555,56 +555,40 @@ export class MandalaService {
     dimensions?: string[],
     scales?: string[],
     selectedFiles?: string[],
-    skipCache?: boolean,
-  ): Promise<CacheResult<AiQuestionResponse[]>> {
-    this.logger.log(
-      `generateQuestions called for mandala ${mandalaId}, skipCache: ${skipCache}`,
-    );
+  ): Promise<AiQuestionResponse[]> {
+    this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
 
     const mandala = await this.findOne(mandalaId);
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
-    const cacheParams = this.buildQuestionsCacheParams(
+    const questions = await this.generateQuestionsFromAI(
       mandala,
       effectiveDimensions,
       effectiveScales,
       selectedFiles,
     );
-    const cacheKey = this.cacheService.buildAiCacheKey(
+
+    await this.saveQuestionsToCache(userId, mandalaId, questions);
+
+    return questions;
+  }
+
+  private async saveQuestionsToCache(
+    userId: string,
+    mandalaId: string,
+    questions: AiQuestionResponse[],
+  ): Promise<void> {
+    const cacheKey = this.cacheService.buildCacheKey(
       'questions',
       userId,
       mandalaId,
-      cacheParams,
     );
 
-    return this.cacheService.getOrSet(
-      cacheKey,
-      () =>
-        this.generateQuestionsFromAI(
-          mandala,
-          effectiveDimensions,
-          effectiveScales,
-          selectedFiles,
-        ),
-      skipCache,
+    await this.cacheService.addToLimitedCache(cacheKey, questions, 20);
+    this.logger.log(
+      `Saved ${questions.length} questions to cache for user ${userId}, mandala ${mandalaId}`,
     );
-  }
-
-  private buildQuestionsCacheParams(
-    mandala: MandalaDto,
-    effectiveDimensions: string[],
-    effectiveScales: string[],
-    selectedFiles?: string[],
-  ) {
-    return {
-      dimensions: effectiveDimensions,
-      scales: effectiveScales,
-      selectedFiles: selectedFiles || [],
-      centerCharacter: mandala.configuration.center.name,
-      centerCharacterDescription:
-        mandala.configuration.center.description || 'No content',
-    };
   }
 
   private async generateQuestionsFromAI(
@@ -640,56 +624,40 @@ export class MandalaService {
     dimensions?: string[],
     scales?: string[],
     selectedFiles?: string[],
-    skipCache?: boolean,
-  ): Promise<CacheResult<PostitWithCoordinates[]>> {
-    this.logger.log(
-      `generatePostits called for mandala ${mandalaId}, skipCache: ${skipCache}`,
-    );
+  ): Promise<PostitWithCoordinates[]> {
+    this.logger.log(`generatePostits called for mandala ${mandalaId}`);
 
     const mandala = await this.findOne(mandalaId);
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
-    const cacheParams = this.buildPostitsCacheParams(
+    const postits = await this.generatePostitsFromAI(
       mandala,
       effectiveDimensions,
       effectiveScales,
       selectedFiles,
     );
-    const cacheKey = this.cacheService.buildAiCacheKey(
+
+    await this.savePostitsToCache(userId, mandalaId, postits);
+
+    return postits;
+  }
+
+  private async savePostitsToCache(
+    userId: string,
+    mandalaId: string,
+    postits: PostitWithCoordinates[],
+  ): Promise<void> {
+    const cacheKey = this.cacheService.buildCacheKey(
       'postits',
       userId,
       mandalaId,
-      cacheParams,
     );
 
-    return this.cacheService.getOrSet(
-      cacheKey,
-      () =>
-        this.generatePostitsFromAI(
-          mandala,
-          effectiveDimensions,
-          effectiveScales,
-          selectedFiles,
-        ),
-      skipCache,
+    await this.cacheService.addToLimitedCache(cacheKey, postits, 20);
+    this.logger.log(
+      `Saved ${postits.length} postits to cache for user ${userId}, mandala ${mandalaId}`,
     );
-  }
-
-  private buildPostitsCacheParams(
-    mandala: MandalaDto,
-    effectiveDimensions: string[],
-    effectiveScales: string[],
-    selectedFiles?: string[],
-  ) {
-    return {
-      dimensions: effectiveDimensions,
-      scales: effectiveScales,
-      selectedFiles: selectedFiles || [],
-      centerCharacter: mandala.configuration.center.name,
-      centerCharacterDescription:
-        mandala.configuration.center.description || 'No content',
-    };
   }
 
   private async generatePostitsFromAI(
