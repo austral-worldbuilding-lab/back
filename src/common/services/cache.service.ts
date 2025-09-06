@@ -34,4 +34,15 @@ export class CacheService {
       );
     }
   }
+
+  async getFromCache<T>(cacheKey: string): Promise<T[]> {
+    try {
+      return (await this.cacheManager.get<T[]>(cacheKey)) || [];
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to get from cache ${cacheKey}: ${errorMessage}`);
+      return [];
+    }
+  }
 }

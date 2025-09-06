@@ -44,6 +44,8 @@ import {
   ApiGenerateQuestions,
   ApiGeneratePostits,
   ApiOverlapSummary,
+  ApiGetCachedQuestions,
+  ApiGetCachedPostits,
 } from './decorators/mandala-swagger.decorators';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
@@ -332,6 +334,36 @@ export class MandalaController {
 
     return {
       data: postits,
+    };
+  }
+
+  @Get(':id/cached-questions')
+  @UseGuards(MandalaRoleGuard)
+  @ApiGetCachedQuestions()
+  async getCachedQuestions(
+    @Param('id', new UuidValidationPipe()) mandalaId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DataResponse<AiQuestionResponse[][]>> {
+    const userId = request.user.id;
+    const cachedQuestions = await this.mandalaService.getCachedQuestions(userId, mandalaId);
+
+    return {
+      data: cachedQuestions,
+    };
+  }
+
+  @Get(':id/cached-postits')
+  @UseGuards(MandalaRoleGuard)
+  @ApiGetCachedPostits()
+  async getCachedPostits(
+    @Param('id', new UuidValidationPipe()) mandalaId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DataResponse<PostitWithCoordinates[][]>> {
+    const userId = request.user.id;
+    const cachedPostits = await this.mandalaService.getCachedPostits(userId, mandalaId);
+
+    return {
+      data: cachedPostits,
     };
   }
 

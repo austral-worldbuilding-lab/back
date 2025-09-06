@@ -660,6 +660,16 @@ export class MandalaService {
     );
   }
 
+  async getCachedQuestions(userId: string, mandalaId: string): Promise<AiQuestionResponse[][]> {
+    const cacheKey = this.cacheService.buildCacheKey('questions', userId, mandalaId);
+    return this.cacheService.getFromCache<AiQuestionResponse[]>(cacheKey);
+  }
+
+  async getCachedPostits(userId: string, mandalaId: string): Promise<PostitWithCoordinates[][]> {
+    const cacheKey = this.cacheService.buildCacheKey('postits', userId, mandalaId);
+    return this.cacheService.getFromCache<PostitWithCoordinates[]>(cacheKey);
+  }
+
   private async generatePostitsFromAI(
     mandala: MandalaDto,
     effectiveDimensions: string[],
