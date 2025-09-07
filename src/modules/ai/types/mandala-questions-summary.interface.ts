@@ -17,7 +17,7 @@ export interface SectionSummary {
   totalPostits: number;
 }
 
-export interface MandalaAiSummary {
+export interface MandalaAiSummaryForQuestions {
   centerCharacter: {
     name: string;
     description: string;

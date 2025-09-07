@@ -10,10 +10,7 @@ import { MandalaDto } from '../mandala/dto/mandala.dto';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
-import {
-  createMandalaAiSummary,
-  generateTextualSummary,
-} from './utils/mandala-summary.util';
+import { createMandalaAiSummaryForQuestions } from './utils/mandala-questions-summary.util';
 
 @Injectable()
 export class AiService {
@@ -27,15 +24,15 @@ export class AiService {
 
   async generatePostits(
     projectId: string,
+    mandalaId: string,
     dimensions: string[],
     scales: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
     selectedFiles?: string[],
-    mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
-    this.logger.log(`Starting postit generation for project: ${projectId}`, {
+    this.logger.log(`Starting postit generation for mandala: ${mandalaId}`, {
       centerCharacter,
       centerCharacterDescription,
       dimensions: dimensions.length,
@@ -45,17 +42,17 @@ export class AiService {
 
     const result = await this.aiProvider.generatePostits(
       projectId,
+      mandalaId,
       dimensions,
       scales,
       centerCharacter,
       centerCharacterDescription,
       tags,
       selectedFiles,
-      mandalaId,
     );
 
     this.logger.log(
-      `Generated ${result.length} postits for project: ${projectId}`,
+      `Generated ${result.length} postits for mandala: ${mandalaId}`,
     );
     return result;
   }
@@ -66,38 +63,32 @@ export class AiService {
     mandala: FirestoreMandalaDocument,
     dimensions: string[],
     scales: string[],
-    tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
-    this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
+    this.logger.log(`Starting question generation for mandala: ${mandalaId}`, {
+      dimensions: dimensions.length,
+      scales: scales.length,
+      centerCharacter,
+      centerCharacterDescription,
+    });
 
-    // Transform raw mandala document into AI-readable summary
-    const mandalaAiSummary = createMandalaAiSummary(mandala);
+    const mandalaAiSummary = createMandalaAiSummaryForQuestions(mandala);
 
-    this.logger.debug('Mandala summary created:', {
+    this.logger.debug('Mandala summary for questions created:', {
       totalPostits: mandalaAiSummary.totalPostits,
       dimensions: mandalaAiSummary.dimensions.length,
       sections: mandalaAiSummary.sections.length,
       centerCharacter: mandalaAiSummary.centerCharacter.name,
     });
 
-    // Generate formatted summary for better AI understanding with natural language
-    const mandalaTextSummary = generateTextualSummary(mandalaAiSummary);
-
-    this.logger.debug(
-      'Generated text summary length:',
-      mandalaTextSummary.length,
-    );
-
     const result = await this.aiProvider.generateQuestions(
       projectId,
       mandalaId,
-      mandalaTextSummary,
+      JSON.stringify(mandalaAiSummary),
       dimensions,
       scales,
-      tags,
       centerCharacter,
       centerCharacterDescription,
       selectedFiles,
@@ -117,6 +108,7 @@ export class AiService {
     this.logger.log(
       `Starting postit summary generation for mandalas: ${mandalas.map((m) => m.id).join(', ')}`,
     );
+    const mandalaIds = mandalas.map((m) => m.id);
 
     const allDimensions = mandalas.flatMap((m) =>
       m.configuration.dimensions.map((d) => d.name),
@@ -124,11 +116,12 @@ export class AiService {
     const allScales = mandalas.flatMap((m) => m.configuration.scales);
 
     const mandalasAiSummary = mandalasDocument.map((m) =>
-      createMandalaAiSummary(m),
+      createMandalaAiSummaryForQuestions(m),
     );
 
-    const result = await this.aiProvider.generatePostitsComparison(
+    const result = await this.aiProvider.generatePostitsSummary(
       projectId,
+      mandalaIds,
       allDimensions,
       allScales,
       mandalasAiSummary.map((m) => JSON.stringify(m)).join('\n'),

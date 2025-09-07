@@ -5,7 +5,8 @@ OBJETIVO:
 CONFIGURACIÓN DEL PERSONAJE CENTRAL:
   • Nombre: ${centerCharacter}
   • Descripción: ${centerCharacterDescription}
-  • Contenido: ${mandalaDocument}
+  • Contenido del personaje central:
+  ${mandalaDocument}
 CONFIGURACIÓN DEL MUNDO:
   • Dimensiones habilitadas: ${dimensions}
   • Escalas habilitadas: ${scales}

@@ -9,6 +9,7 @@ export interface AiProvider {
   /**
    * Generates postits for a project
    * @param projectId - The ID of the project to generate postits for
+   * @param mandalaId - The ID of the mandala to generate postits for
    * @param dimensions - Array of dimensions
    * @param scales - Array of scales
    * @param centerCharacter
@@ -20,13 +21,13 @@ export interface AiProvider {
    */
   generatePostits(
     projectId: string,
+    mandalaId: string,
     dimensions: string[],
     scales: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
     selectedFiles?: string[],
-    mandalaId?: string,
   ): Promise<AiPostitResponse[]>;
 
   /**
@@ -37,7 +38,6 @@ export interface AiProvider {
    * Project configuration:
    * @param dimensions - Array of dimensions to generate questions for
    * @param scales - Array of scales to generate questions for
-   * @param tags - Array of tags to be used for connecting postits across dimensions
    * Mandala configuration:
    * @param centerCharacter - The center character
    * @param centerCharacterDescription - The center character description
@@ -50,14 +50,13 @@ export interface AiProvider {
     mandalaAiSummary: string,
     dimensions: string[],
     scales: string[],
-    tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]>;
 
   /**
-   * Generates postit comparisons between multiple mandalas using AI analysis
+   * Generates postit summary between multiple mandalas using AI analysis
    *
    * This method analyzes the provided mandalas document to identify and compare
    * postits across different mandalas, highlighting similarities, differences,
@@ -65,13 +64,15 @@ export interface AiProvider {
    * that can be used for mandala analysis and insights.
    *
    * @param projectId - The unique identifier of the project containing the mandalas
+   * @param mandalaIds - The unique identifiers of the mandalas to be summarized
    * @param dimensions - Array of dimensions to consider during the comparison analysis
    * @param scales - Array of scales to consider during the comparison analysis
    * @param mandalasDocument - Document containing the mandalas to be compared
    * @returns Promise resolving to an array of postit comparison responses
    */
-  generatePostitsComparison(
+  generatePostitsSummary(
     projectId: string,
+    mandalaIds: string[],
     dimensions: string[],
     scales: string[],
     mandalasDocument: string,

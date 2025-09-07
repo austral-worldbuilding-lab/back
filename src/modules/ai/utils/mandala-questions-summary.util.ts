@@ -1,13 +1,12 @@
 import { FirestoreMandalaDocument } from '@modules/firebase/types/firestore-character.type';
 
 import {
-  MandalaAiSummary,
+  MandalaAiSummaryForQuestions,
   PostitSummary,
   DimensionSummary,
   SectionSummary,
-} from '../types/mandala-summary.interface';
+} from '../types/mandala-questions-summary.interface';
 
-// Types for mandala configuration structure
 interface MandalaCenter {
   name: string;
   description?: string;
@@ -31,16 +30,15 @@ interface MandalaData {
 }
 
 /**
- * Transforms a raw FirestoreMandalaDocument into a clean, AI-readable summary
+ * Transforms a raw FirestoreMandalaDocument into a clean, AI-readable for better AI understanding to generate questions
  * Removes technical details like coordinates and IDs while preserving semantic information
  */
-export function createMandalaAiSummary(
+export function createMandalaAiSummaryForQuestions(
   document: FirestoreMandalaDocument,
-): MandalaAiSummary {
+): MandalaAiSummaryForQuestions {
   const postits = document.postits || [];
   const mandala = document.mandala as MandalaData | undefined;
 
-  // Extract post-it summaries without coordinates and technical IDs
   const postitSummaries: PostitSummary[] = postits.map((postit) => ({
     content: postit.content,
     dimension: postit.dimension,
@@ -52,7 +50,6 @@ export function createMandalaAiSummary(
     mandala?.configuration?.dimensions || [];
   const configuredScales: string[] = mandala?.configuration?.scales || [];
 
-  // Create dimensions with their post-its
   const dimensions: DimensionSummary[] = configuredDimensions.map(
     (dimension: MandalaDimension) => {
       const dimensionPostits = postitSummaries.filter(
@@ -66,7 +63,6 @@ export function createMandalaAiSummary(
     },
   );
 
-  // Create sections with their post-its
   const sections: SectionSummary[] = configuredScales.map((scale: string) => {
     const scalePostits = postitSummaries.filter((p) => p.section === scale);
     return {
@@ -85,37 +81,4 @@ export function createMandalaAiSummary(
     sections,
     totalPostits: postitSummaries.length,
   };
-}
-
-/**
- * Generates a human-readable text summary for AI consumption
- */
-export function generateTextualSummary(summary: MandalaAiSummary): string {
-  const lines: string[] = [];
-
-  lines.push(`Center Character: ${summary.centerCharacter.name}`);
-
-  if (summary.centerCharacter.description) {
-    lines.push(`Character Description: ${summary.centerCharacter.description}`);
-  }
-
-  lines.push('');
-
-  // Dimensions analysis with ALL scales shown for each dimension
-  summary.dimensions.forEach((dimension) => {
-    lines.push(`\n${dimension.name}: ${dimension.totalPostits} post-its`);
-
-    // Show ALL sections for this dimension (even with 0 post-its)
-    summary.sections.forEach((section) => {
-      const sectionPostits = dimension.postits.filter(
-        (p) => p.section === section.name,
-      );
-      lines.push(`  ${section.name}: ${sectionPostits.length} post-its`);
-      sectionPostits.forEach((postit) => {
-        lines.push(`    • ${postit.content}`);
-      });
-    });
-  });
-
-  return lines.join('\n');
 }

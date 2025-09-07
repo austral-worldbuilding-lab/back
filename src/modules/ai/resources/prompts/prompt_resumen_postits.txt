@@ -6,7 +6,8 @@ OBJETIVO:
   • Aspectos únicos: elementos exclusivos de un personaje sin equivalentes.
 
 CONFIGURACIÓN DE LOS PERSONAJES:
-  • Contenido de mandalas a comparar: ${mandalaDocument}
+  • Contenido de los personajes individuales a comparar:
+  ${mandalaDocument}
 CONFIGURACIÓN DE LA GENERACIÓN:
   • Cantidad mínima de post-its: ${minResults}
   • Cantidad máxima de post-its: ${maxResults}

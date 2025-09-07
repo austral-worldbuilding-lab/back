@@ -150,7 +150,6 @@ const questionReplacer = composeReplacers(
   replaceScales,
   replaceCenterCharacter,
   replaceCenterCharacterDescription,
-  replaceTags,
   replaceMandalaDocument,
   replaceMaxResults,
   replaceMinResults,

@@ -34,7 +34,7 @@ interface GeminiUploadedFile {
 export class GeminiAdapter implements AiProvider {
   private ai: GoogleGenAI;
   private readonly logger = new Logger(GeminiAdapter.name);
-
+  private readonly geminiModel: string;
   constructor(
     private configService: ConfigService,
     private readonly validator: AiRequestValidator,
@@ -47,6 +47,7 @@ export class GeminiAdapter implements AiProvider {
       );
     }
     this.ai = new GoogleGenAI({ apiKey });
+    this.geminiModel = this.utilsService.validateConfiguration('GEMINI_MODEL');
     this.logger.log('Gemini Adapter initialized');
   }
 
@@ -129,19 +130,19 @@ export class GeminiAdapter implements AiProvider {
 
   async generatePostits(
     projectId: string,
+    mandalaId: string,
     dimensions: string[],
     scales: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
     selectedFiles?: string[],
-    mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
-    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
-    const commonInstruction = path.resolve(
-      __dirname,
-      '../resources/prompts/instrucciones_ciclo_1.txt',
-    );
+    this.logger.log(`Starting postit generation for mandala: ${mandalaId}`);
+
+    const model = this.geminiModel;
+    const commonInstruction = await this.utilsService.getCommonInstructions();
+
     const promptFilePath = path.resolve(
       __dirname,
       '../resources/prompts/prompt_generar_postits.txt',
@@ -178,14 +179,13 @@ export class GeminiAdapter implements AiProvider {
       }),
     );
 
-    const result = this.parseAndValidatePostitResponse(responseText, projectId);
-    this.logger.log(`Postit generation completed for project: ${projectId}`);
+    const result = this.parseAndValidatePostitResponse(responseText);
+    this.logger.log(`Postit generation completed for mandala: ${mandalaId}`);
     return result;
   }
 
   private parseAndValidatePostitResponse(
     responseText: string | undefined,
-    projectId: string,
   ): AiPostitResponse[] {
     if (!responseText) {
       throw new Error('No response text received from Gemini API');
@@ -200,17 +200,13 @@ export class GeminiAdapter implements AiProvider {
       const config = this.validator.getConfig();
       if (postits.length > config.maxResultsPerRequest) {
         this.logger.error(`Generated postits count exceeds limit`, {
-          projectId,
           generatedCount: postits.length,
           maxAllowed: config.maxResultsPerRequest,
           timestamp: new Date().toISOString(),
         });
-        throw new AiValidationException(
-          [
-            `Generated ${postits.length} postits, but maximum allowed is ${config.maxResultsPerRequest}`,
-          ],
-          projectId,
-        );
+        throw new AiValidationException([
+          `Generated ${postits.length} postits, but maximum allowed is ${config.maxResultsPerRequest}`,
+        ]);
       }
 
       return postits;
@@ -226,32 +222,22 @@ export class GeminiAdapter implements AiProvider {
   async generateQuestions(
     projectId: string,
     mandalaId: string,
-    mandalaTextSummary: string,
+    mandalaAiSummary: string,
     dimensions: string[],
     scales: string[],
-    tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
 
-    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
-    const commonInstruction = path.resolve(
-      __dirname,
-      '../resources/prompts/instrucciones_ciclo_1.txt',
-    );
+    const model = this.geminiModel;
+    const commonInstruction = await this.utilsService.getCommonInstructions();
 
     const promptFilePath = path.resolve(
       __dirname,
       '../resources/prompts/prompt_generar_preguntas.txt',
     );
-
-    this.logger.debug('Processing mandala text summary:', {
-      summaryLength: mandalaTextSummary.length,
-      model,
-    });
-
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
     const promptTask = replaceQuestionPlaceholders(promptTemplate, {
@@ -259,8 +245,7 @@ export class GeminiAdapter implements AiProvider {
       scales: scales,
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
-      tags: tags,
-      mandalaDocument: mandalaTextSummary,
+      mandalaDocument: mandalaAiSummary,
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
@@ -285,17 +270,13 @@ export class GeminiAdapter implements AiProvider {
       }),
     );
 
-    const result = this.parseAndValidateQuestionResponse(
-      responseText,
-      mandalaId,
-    );
+    const result = this.parseAndValidateQuestionResponse(responseText);
     this.logger.log(`Question generation completed for mandala: ${mandalaId}`);
     return result;
   }
 
   private parseAndValidateQuestionResponse(
     responseText: string | undefined,
-    mandalaId: string,
   ): AiQuestionResponse[] {
     if (!responseText) {
       throw new Error('No response text received from Gemini API');
@@ -310,17 +291,13 @@ export class GeminiAdapter implements AiProvider {
       const config = this.validator.getConfig();
       if (questions.length > config.maxResultsPerRequest) {
         this.logger.error(`Generated questions count exceeds limit`, {
-          mandalaId,
           generatedCount: questions.length,
           maxAllowed: config.maxResultsPerRequest,
           timestamp: new Date().toISOString(),
         });
-        throw new AiValidationException(
-          [
-            `Generated ${questions.length} questions, but maximum allowed is ${config.maxResultsPerRequest}`,
-          ],
-          mandalaId,
-        );
+        throw new AiValidationException([
+          `Generated ${questions.length} questions, but maximum allowed is ${config.maxResultsPerRequest}`,
+        ]);
       }
 
       return questions;
@@ -336,17 +313,19 @@ export class GeminiAdapter implements AiProvider {
     }
   }
 
-  async generatePostitsComparison(
+  async generatePostitsSummary(
     projectId: string,
+    mandalaIds: string[],
     dimensions: string[],
     scales: string[],
     mandalasDocument: string,
   ): Promise<AiPostitComparisonResponse[]> {
-    const model = this.utilsService.validateConfiguration('GEMINI_MODEL');
-    const commonInstruction = path.resolve(
-      __dirname,
-      '../resources/prompts/instrucciones_ciclo_1.txt',
+    this.logger.log(
+      `Starting question generation for mandalas: ${mandalaIds.join(', ')}`,
     );
+
+    const model = this.geminiModel;
+    const commonInstruction = await this.utilsService.getCommonInstructions();
     const promptFilePath = path.resolve(
       __dirname,
       '../resources/prompts/prompt_resumen_postits.txt',

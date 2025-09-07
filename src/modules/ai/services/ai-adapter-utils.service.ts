@@ -1,4 +1,5 @@
 import { promises as fs } from 'fs';
+import * as path from 'path';
 
 import { getAiValidationConfig } from '@config/ai-validation.config';
 import { FileService } from '@modules/files/file.service';
@@ -14,7 +15,6 @@ export class AiAdapterUtilsService {
   private readonly logger = new Logger(AiAdapterUtilsService.name);
   private readonly minResults: number;
   private readonly maxResults: number;
-
   constructor(
     private configService: ConfigService,
     private fileService: FileService,
@@ -60,6 +60,14 @@ export class AiAdapterUtilsService {
       this.logger.error(`Failed to read prompt template:`, error);
       throw new Error(`Failed to read prompt template: ${errorMessage}`);
     }
+  }
+
+  async getCommonInstructions(): Promise<string> {
+    const commonInstructionPath = path.resolve(
+      __dirname,
+      '../resources/prompts/instrucciones_ciclo_1.txt',
+    );
+    return this.readPromptTemplate(commonInstructionPath);
   }
 
   async loadAndValidateFiles(
