@@ -32,6 +32,7 @@ export interface AiProvider {
   /**
    * Generates questions for a project based on mandala configuration and files
    * @param projectId
+   * @param mandalaId
    * @param mandalaTextSummary - Clean textual summary of the mandala without technical details
    * Project configuration:
    * @param dimensions - Array of dimensions to generate questions for
@@ -44,13 +45,13 @@ export interface AiProvider {
    */
   generateQuestions(
     projectId: string,
+    mandalaId: string,
     dimensions: string[],
     scales: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     mandalaAiSummary: string,
     selectedFiles?: string[],
-    mandalaId?: string,
   ): Promise<AiQuestionResponse[]>;
 
   /**

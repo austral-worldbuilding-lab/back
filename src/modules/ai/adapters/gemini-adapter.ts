@@ -136,6 +136,7 @@ export class GeminiAdapter implements AiProvider {
     centerCharacter: string,
     centerCharacterDescription: string,
     selectedFiles?: string[],
+    mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
     this.logger.log(`Starting postit generation for project: ${projectId}`);
 
@@ -163,6 +164,7 @@ export class GeminiAdapter implements AiProvider {
       dimensions,
       scales,
       selectedFiles,
+      mandalaId,
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
@@ -219,6 +221,7 @@ export class GeminiAdapter implements AiProvider {
 
   async generateQuestions(
     projectId: string,
+    mandalaId: string,
     dimensions: string[],
     scales: string[],
     mandalaAiSummary: string,
@@ -252,6 +255,7 @@ export class GeminiAdapter implements AiProvider {
       dimensions,
       scales,
       selectedFiles,
+      mandalaId,
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);

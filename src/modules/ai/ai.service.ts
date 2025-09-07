@@ -88,6 +88,7 @@ export class AiService {
 
     const result = await this.aiProvider.generateQuestions(
       projectId,
+      mandalaId,
       dimensions,
       scales,
       centerCharacter,
