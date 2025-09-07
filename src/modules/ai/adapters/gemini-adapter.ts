@@ -130,15 +130,14 @@ export class GeminiAdapter implements AiProvider {
 
   async generatePostits(
     projectId: string,
-    mandalaId: string,
     dimensions: string[],
     scales: string[],
+    tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
-    tags: string[],
     selectedFiles?: string[],
   ): Promise<AiPostitResponse[]> {
-    this.logger.log(`Starting postit generation for mandala: ${mandalaId}`);
+    this.logger.log(`Starting postit generation for project: ${projectId}`);
 
     const model = this.geminiModel;
     const commonInstruction = await this.utilsService.getCommonInstructions();
@@ -164,7 +163,6 @@ export class GeminiAdapter implements AiProvider {
       dimensions,
       scales,
       selectedFiles,
-      mandalaId,
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
@@ -180,7 +178,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const result = this.parseAndValidatePostitResponse(responseText);
-    this.logger.log(`Postit generation completed for mandala: ${mandalaId}`);
+    this.logger.log(`Postit generation completed for project: ${projectId}`);
     return result;
   }
 
@@ -221,15 +219,14 @@ export class GeminiAdapter implements AiProvider {
 
   async generateQuestions(
     projectId: string,
-    mandalaId: string,
-    mandalaAiSummary: string,
     dimensions: string[],
     scales: string[],
+    mandalaAiSummary: string,
     centerCharacter: string,
     centerCharacterDescription: string,
     selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
-    this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
+    this.logger.log(`Starting question generation for project: ${projectId}`);
 
     const model = this.geminiModel;
     const commonInstruction = await this.utilsService.getCommonInstructions();
@@ -255,7 +252,6 @@ export class GeminiAdapter implements AiProvider {
       dimensions,
       scales,
       selectedFiles,
-      mandalaId,
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
@@ -271,7 +267,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const result = this.parseAndValidateQuestionResponse(responseText);
-    this.logger.log(`Question generation completed for mandala: ${mandalaId}`);
+    this.logger.log(`Question generation completed for project: ${projectId}`);
     return result;
   }
 
@@ -315,14 +311,11 @@ export class GeminiAdapter implements AiProvider {
 
   async generatePostitsSummary(
     projectId: string,
-    mandalaIds: string[],
     dimensions: string[],
     scales: string[],
-    mandalasDocument: string,
+    mandalasAiSummary: string,
   ): Promise<AiPostitComparisonResponse[]> {
-    this.logger.log(
-      `Starting question generation for mandalas: ${mandalaIds.join(', ')}`,
-    );
+    this.logger.log(`Starting question generation for project: ${projectId}`);
 
     const model = this.geminiModel;
     const commonInstruction = await this.utilsService.getCommonInstructions();
@@ -333,7 +326,7 @@ export class GeminiAdapter implements AiProvider {
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
     const promptTask = replaceComparisonPlaceholders(promptTemplate, {
-      mandalaDocument: mandalasDocument,
+      mandalaDocument: mandalasAiSummary,
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
