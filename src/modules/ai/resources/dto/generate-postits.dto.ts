@@ -1,4 +1,7 @@
-export const PostitsResponse = {
+export const createPostitsResponseSchema = (limits: {
+  minItems: number;
+  maxItems: number;
+}) => ({
   type: 'array',
   items: {
     type: 'object',
@@ -11,10 +14,17 @@ export const PostitsResponse = {
         items: { type: 'string' },
       },
     },
+    required: ['content', 'dimension', 'section'],
+    propertyOrdering: ['content', 'dimension', 'section', 'tags'],
   },
-};
+  minItems: limits.minItems,
+  maxItems: limits.maxItems,
+});
 
-export const PostitsComparisonResponse = {
+export const createPostitsSummaryResponseSchema = (limits: {
+  minItems: number;
+  maxItems: number;
+}) => ({
   type: 'array',
   items: {
     type: 'object',
@@ -25,5 +35,15 @@ export const PostitsComparisonResponse = {
       type: { type: 'string' },
       fromSummary: { type: 'array', items: { type: 'string' } },
     },
+    required: ['content', 'dimension', 'section', 'type', 'fromSummary'],
+    propertyOrdering: [
+      'content',
+      'dimension',
+      'section',
+      'type',
+      'fromSummary',
+    ],
   },
-};
+  minItems: limits.minItems,
+  maxItems: limits.maxItems,
+});

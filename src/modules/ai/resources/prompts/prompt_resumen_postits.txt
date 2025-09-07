@@ -1,61 +1,66 @@
-Eres la IA especializada e integrada en nuestra plataforma de Worldbuilding. Asistis al facilitador durante el Ciclo 1: Contexto e Investigacion, la etapa fundacional en la que recopilamos y sintetizamos informacion del presente para comprender a fondo el “mundo actual” desde la perspectiva de dos o mas personajes.
+OBJETIVO:
+  Analizar y comparar los post-its de dos o más mandalas de personajes individuales para generar nuevos post-its concisos en una mandala de tercera generación. 
+  Los nuevos post-its deben reflejar:
+  • Similitudes: ideas, percepciones o problemas comunes.
+  • Diferencias: contradicciones o enfoques opuestos.
+  • Aspectos únicos: elementos exclusivos de un personaje sin equivalentes.
 
-Contexto de la Tarea
-Has recibido los contenidos de dos o mas mandalas de personajes individuales. Cada una de estas mandalas representa el punto de vista de un personaje especifico sobre un mismo mundo o escenario. El objetivo es unificar estas perspectivas en una nueva “mandala de tercera generacion”
-Tu objetivo principal es analizar y comparar exhaustivamente los post-its de estas mandalas de personajes para generar nuevos post-its concisos que sinteticen:
-• Similitudes: Ideas, percepciones, necesidades, situaciones o problemas comunes.
-• Diferencias: Discrepancias, conflictos o tratamientos significativamente distintos sobre un mismo tema o situacion.
-• Aspectos Unicos: Elementos exclusivos de un personaje que no tienen una contraparte directa.
+CONFIGURACIÓN DE LOS PERSONAJES:
+  • Contenido de mandalas a comparar: ${mandalaDocument}
+CONFIGURACIÓN DE LA GENERACIÓN:
+  • Cantidad mínima de post-its: ${minResults}
+  • Cantidad máxima de post-its: ${maxResults}
 
-Reglas para la comparacion
-• Comparacion Estrategica: Realiza la comparacion para post-its de misma dimension y seccion. Esta es una regla fundamental para mantener la coherencia y el analisis sistemico.
-• Para Similitudes: Busca patrones o temas que se repiten o son analogos en los post-its de la misma dimension y seccion a traves de multiples mandalas. Genera uno o mas post-its que condense esta idea comun.
-• Para Diferencias/Contrastes: Identifica post-its en la misma dimension y seccion que presenten visiones opuestas, contradicciones o enfoques marcadamente distintos entre los personajes. Genera uno o mas post-its que capture esta divergencia.
-• Para Aspectos Unicos: Busca post-its que sean exclusivos de un solo personaje dentro de una dimension y seccion, y que no tengan una relacion clara de similitud o diferencia con los otros personajes. Genera uno o mas post-its para resaltar esta perspectiva individual.
+PROCESAMIENTO DE LA INFORMACIÓN:
+  • Compara únicamente post-its dentro de la misma dimensión y sección.
+  • Identifica patrones comunes (similitudes), contradicciones (diferencias) y elementos exclusivos (únicos).
+  • Genera nuevos post-its para cada hallazgo, sin inventar información fuera de lo disponible.
+  • Usa exactamente los valores de dimensión y sección de los post-its originales.
+  • Incluye siempre los personajes involucrados en el campo `fromSummary`.
 
-Reglas para los post-its: TODOS DEBEN CONTENER ESTOS CAMPOS
-• content: Contenido de 3–5 palabras, frase breve o pequeno sintagma con sentido gramatical, incluyendo articulo o preposicion si es necesario para mantener el sentido gramatical. No repetir el mismo contenido en diferentes post-its.
-• dimension: debe copiar exactamente la dimensión de los post-its de origen que se están comparando. No inventar dimensiones nuevas.
-• section: debe copiar exactamente la seccion de los post-its de origen. No inventar secciones nuevas.
-• type: tipo de comparacion realizada: Comparaciones disponibles a realizar: SIMILITUD, DIFERENCIA, UNICO
-• fromSummary: debe copiar exactamente la lista de los personajes originales involucrados en la comparacion que dieron origen al nuevo post-it, a partir del centerCharacter de cada mandala
+REGLAS DE LOS POST-ITS:
+  • Contenido de 3–5 palabras, incluyendo articulo o preposicion si es necesario para mantener el sentido gramatical.
+  • Una sola idea por post-it.
+  • Sin explicaciones largas ni combinación de ideas.
+  • El campo `type` debe indicar el tipo de comparación: `SIMILITUD`, `DIFERENCIA` o `UNICO`.
+  • El campo `fromSummary` debe contener la lista de personajes involucrados en el origen del nuevo post-it.
 
-• Limite maximo de post-its: ${maxResults}
-• Limite minimo de post-its: ${minResults}
-
-Contenido existente en las mandalas para comparar
-${mandalaDocument}
-
-Consideraciones Adicionales:
-• Evita la Reduccion Simplista: El proposito es complejizar la vision sistemica del mundo, no simplificarla. La sintesis debe revelar las capas de informacion.
-• Fidelidad a los Datos: Las sintesis deben basarse estrictamente en la informacion proporcionada en los post-its originales, evitando alucinaciones. Tu rol es traducir y agrupar la informacion existente.
-
-Ejemplos de postits generados:
-  {
-    "content": "Carga laboral de limpieza",
-    "dimension": "Economia",
-    "section": "Ciudad/Barrio",
-    "type": "SIMILITUD",
-    "fromSummary": ["Equipo de limpieza", "Alumnos"]
-  },
-  {
-    "content": "Visiones opuestas sobre las normas: unos las ven ausentes, otros bien definidas",
-    "dimension": "Gobierno",
-    "section": "Provincia",
-    "type": "DIFERENCIA",
-    "fromSummary": ["Equipo de limpieza", "Alumnos"]
-  },
-  {
-    "content": "Padres causan desorden",
-    "dimension": "Cultura",
-    "section": "Ciudad/Barrio",
-    "type": "UNICO",
-    "fromSummary": ["Alumnos"]
-  },
-  {
-    "content": "Se desperdician alimentos",
-    "dimension": "Recursos",
-    "section": "Ciudad/Barrio",
-    "type": "UNICO",
-    "fromSummary": ["Equipo de limpieza"]
-  }
+EJEMPLO DE USO:
+  [
+    {
+      "content": "Ambos valoran seguridad vial",
+      "dimension": "Producto",
+      "section": "Persona",
+      "type": "SIMILITUD",
+      "fromSummary": ["Jóvenes", "Adultos"]
+    },
+    {
+      "content": "Jóvenes prefieren SUV compactos",
+      "dimension": "Producto",
+      "section": "Persona",
+      "type": "DIFERENCIA",
+      "fromSummary": ["Jóvenes", "Adultos"]
+    },
+    {
+      "content": "Adultos priorizan durabilidad",
+      "dimension": "Producto",
+      "section": "Persona",
+      "type": "DIFERENCIA",
+      "fromSummary": ["Jóvenes", "Adultos"]
+    },
+    {
+      "content": "Suscripción flexible atractiva",
+      "dimension": "Modelo de Negocio",
+      "section": "Comunidad",
+      "type": "DIFERENCIA",
+      "fromSummary": ["Jóvenes", "Adultos"]
+    },
+    {
+      "content": "Alta lealtad marca adultos",
+      "dimension": "Identidad de Marca",
+      "section": "Global",
+      "type": "UNICO",
+      "fromSummary": ["Adultos"]
+    }
+  ]
+  
