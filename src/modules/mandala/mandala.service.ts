@@ -456,18 +456,34 @@ export class MandalaService {
       mandala.type === MandalaType.OVERLAP ||
       mandala.type === MandalaType.OVERLAP_SUMMARY
     ) {
-      const childrenCenter =
-        await this.mandalaRepository.findChildrenMandalasCenters(mandalaId);
-
-      if (childrenCenter && childrenCenter.length > 0) {
+      // Obtener personajes directamente de la configuración de la mandala
+      if (
+        mandala.configuration.center.characters &&
+        mandala.configuration.center.characters.length > 0
+      ) {
         filterSections.push({
           sectionName: 'Personajes',
           type: 'multiple',
-          options: childrenCenter.map((center) => ({
-            label: center.name,
-            color: center.color,
+          options: mandala.configuration.center.characters.map((character) => ({
+            label: character.name,
+            color: character.color,
           })),
         });
+      } else {
+        // Fallback: buscar en mandalas hijas vinculadas manualmente
+        const childrenCenter =
+          await this.mandalaRepository.findChildrenMandalasCenters(mandalaId);
+
+        if (childrenCenter && childrenCenter.length > 0) {
+          filterSections.push({
+            sectionName: 'Personajes',
+            type: 'multiple',
+            options: childrenCenter.map((center) => ({
+              label: center.name,
+              color: center.color,
+            })),
+          });
+        }
       }
     }
 
