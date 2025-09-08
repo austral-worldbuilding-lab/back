@@ -31,6 +31,8 @@ Configuración del proyecto
 • Dimensiones habilitadas: ${dimensions}
 • Escalas habilitadas: ${scales}
 • Etiquetas disponibles: ${tags}
+• Limite maximo de preguntas: ${maxResults}
+• Limite minimo de preguntas: ${minResults}
 
 Estado actual de la Mandala
 • Contenido existente: ${mandalaDocument}

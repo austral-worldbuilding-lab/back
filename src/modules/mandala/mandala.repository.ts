@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { CharacterListItemDto } from './dto/character-list-item.dto';
-import { MandalaDto } from './dto/mandala.dto';
+import { MandalaDto, MandalaCharacterDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { CreateMandalaConfiguration } from './types/mandala-configuration.type';
 import { MandalaType } from './types/mandala-type.enum';
@@ -65,6 +65,16 @@ export class MandalaRepository {
     const parentIds = mandala.parent?.map((parent) => parent.id) || [];
     const type = mandala.type as MandalaType;
 
+    // toma a los personajes de las mandalas unificadas
+    let characters: MandalaCharacterDto[] | undefined;
+    if (type === MandalaType.OVERLAP && configuration.center.characters) {
+      characters = configuration.center.characters.map((character) => ({
+        id: character.id,
+        name: character.name,
+        color: character.color,
+      }));
+    }
+
     return {
       id: mandala.id,
       name: mandala.name,
@@ -79,6 +89,7 @@ export class MandalaRepository {
       parentIds,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
+      characters,
     };
   }
 

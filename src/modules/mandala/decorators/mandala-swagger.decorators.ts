@@ -432,6 +432,60 @@ export const ApiOverlapMandalas = () =>
     }),
   );
 
+export const ApiGetCachedQuestions = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener preguntas del cache',
+      description:
+        'Obtiene todas las preguntas generadas previamente para un mandala desde el cache',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Preguntas obtenidas exitosamente del cache',
+      type: [AiQuestionResponseDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiGetCachedPostits = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener post-its del cache',
+      description:
+        'Obtiene todos los post-its generados previamente para un mandala desde el cache',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Post-its obtenidos exitosamente del cache',
+      type: [PostitWithCoordinatesDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
 export const ApiOverlapSummary = () =>
   applyDecorators(
     ApiOperation({

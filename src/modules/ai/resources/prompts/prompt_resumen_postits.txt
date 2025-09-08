@@ -13,12 +13,15 @@ Reglas para la comparacion
 • Para Diferencias/Contrastes: Identifica post-its en la misma dimension y seccion que presenten visiones opuestas, contradicciones o enfoques marcadamente distintos entre los personajes. Genera uno o mas post-its que capture esta divergencia.
 • Para Aspectos Unicos: Busca post-its que sean exclusivos de un solo personaje dentro de una dimension y seccion, y que no tengan una relacion clara de similitud o diferencia con los otros personajes. Genera uno o mas post-its para resaltar esta perspectiva individual.
 
-Reglas para los post-its
+Reglas para los post-its: TODOS DEBEN CONTENER ESTOS CAMPOS
 • content: Contenido de 3–5 palabras, frase breve o pequeno sintagma con sentido gramatical, incluyendo articulo o preposicion si es necesario para mantener el sentido gramatical. No repetir el mismo contenido en diferentes post-its.
 • dimension: debe copiar exactamente la dimensión de los post-its de origen que se están comparando. No inventar dimensiones nuevas.
 • section: debe copiar exactamente la seccion de los post-its de origen. No inventar secciones nuevas.
-• type: tipo de comparacion realizada: Comparaciones disponibles a realizar: ${comparisonTypes}
+• type: tipo de comparacion realizada: Comparaciones disponibles a realizar: SIMILITUD, DIFERENCIA, UNICO
 • fromSummary: debe copiar exactamente la lista de los personajes originales involucrados en la comparacion que dieron origen al nuevo post-it, a partir del centerCharacter de cada mandala
+
+• Limite maximo de post-its: ${maxResults}
+• Limite minimo de post-its: ${minResults}
 
 Contenido existente en las mandalas para comparar
 ${mandalaDocument}
@@ -26,42 +29,6 @@ ${mandalaDocument}
 Consideraciones Adicionales:
 • Evita la Reduccion Simplista: El proposito es complejizar la vision sistemica del mundo, no simplificarla. La sintesis debe revelar las capas de informacion.
 • Fidelidad a los Datos: Las sintesis deben basarse estrictamente en la informacion proporcionada en los post-its originales, evitando alucinaciones. Tu rol es traducir y agrupar la informacion existente.
-
-Ejemplos para worldbuilding acerca de los Festejos de egresados en una universidad:
-centerCharacter: "Alumnos",
-  {
-    "content": "Normas y protocolo bien definidos",
-    "dimension": "Gobierno",
-    "section": "Provincia",
-  },
-  {
-    "content": "Universidad garantiza limpieza",
-    "dimension": "Economia",
-    "section": "Ciudad/Barrio",
-  },
-  {
-    "content": "Padres causan desorden",
-    "dimension": "Cultura",
-    "section": "Ciudad/Barrio",
-  },
-
-
-  centerCharacter: "Equipo de limpieza",
-  {
-    "content": "Normas claras ausentes",
-    "dimension": "Gobierno",
-    "section": "Provincia",
-  },
-  {
-    "content": "Excesiva carga laboral",
-    "dimension": "Economia",
-    "section": "Ciudad/Barrio",
-  },
-  {
-    "content": "Se desperdician alimentos",
-    "dimension": "Recursos",
-    "section": "Provincia",
-}
 
 Ejemplos de postits generados:
   {
