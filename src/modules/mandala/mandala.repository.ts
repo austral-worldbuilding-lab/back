@@ -66,7 +66,7 @@ export class MandalaRepository {
     const type = mandala.type as MandalaType;
 
     // toma a los personajes de las mandalas unificadas
-    let characters: MandalaCharacterDto[] | undefined;
+    let characters: MandalaCharacterDto[] = [];
     if (type === MandalaType.OVERLAP && configuration.center.characters) {
       characters = configuration.center.characters.map((character) => ({
         id: character.id,

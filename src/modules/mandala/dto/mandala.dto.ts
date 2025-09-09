@@ -5,7 +5,6 @@ import {
   IsDate,
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   IsString,
   IsUUID,
   ValidateNested,
@@ -123,11 +122,10 @@ export class MandalaDto {
   @ApiProperty({
     description: 'Lista de personajes para mandalas unificadas (tipo OVERLAP)',
     type: [MandalaCharacterDto],
-    required: false,
+    required: true,
   })
   @IsArray()
-  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MandalaCharacterDto)
-  characters?: MandalaCharacterDto[];
+  characters!: MandalaCharacterDto[];
 }
