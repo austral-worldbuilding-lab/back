@@ -5,6 +5,7 @@ import {
   IsDate,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   ValidateNested,
@@ -122,10 +123,49 @@ export class MandalaDto {
   @ApiProperty({
     description: 'Lista de personajes para mandalas unificadas (tipo OVERLAP)',
     type: [MandalaCharacterDto],
+    required: false,
+    default: [],
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => MandalaCharacterDto)
+  characters?: MandalaCharacterDto[] = [];
+}
+
+// DTO específico para mandalas OVERLAP que garantiza characters obligatorio
+export class MandalaOverlapDto extends MandalaDto {
+  @ApiProperty({
+    description: 'Tipo de mandala unificada',
+    enum: [MandalaType.OVERLAP, MandalaType.OVERLAP_SUMMARY],
+    example: MandalaType.OVERLAP,
+  })
+  @IsEnum([MandalaType.OVERLAP, MandalaType.OVERLAP_SUMMARY])
+  declare type: MandalaType.OVERLAP | MandalaType.OVERLAP_SUMMARY;
+
+  @ApiProperty({
+    description: 'Lista de personajes de la mandala unificada (obligatorio)',
+    type: [MandalaCharacterDto],
     required: true,
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MandalaCharacterDto)
-  characters!: MandalaCharacterDto[];
+  declare characters: MandalaCharacterDto[]; // Obligatorio para OVERLAP
+}
+
+// Type guards simplificados
+export function isOverlapMandala(
+  mandala: MandalaDto,
+): mandala is MandalaOverlapDto {
+  return (
+    mandala.type === MandalaType.OVERLAP ||
+    mandala.type === MandalaType.OVERLAP_SUMMARY
+  );
+}
+
+export function hasCharacters(
+  mandala: MandalaDto,
+): mandala is MandalaOverlapDto {
+  return isOverlapMandala(mandala);
 }
