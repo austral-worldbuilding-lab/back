@@ -65,9 +65,12 @@ export class MandalaRepository {
     const parentIds = mandala.parent?.map((parent) => parent.id) || [];
     const type = mandala.type as MandalaType;
 
-    // toma a los personajes de las mandalas unificadas
-    let characters: MandalaCharacterDto[] | undefined;
-    if (type === MandalaType.OVERLAP && configuration.center.characters) {
+    // Para mandalas unificadas, obtener personajes
+    let characters: MandalaCharacterDto[] = [];
+    if (
+      (type === MandalaType.OVERLAP || type === MandalaType.OVERLAP_SUMMARY) &&
+      configuration.center.characters
+    ) {
       characters = configuration.center.characters.map((character) => ({
         id: character.id,
         name: character.name,
@@ -89,7 +92,7 @@ export class MandalaRepository {
       parentIds,
       createdAt: mandala.createdAt,
       updatedAt: mandala.updatedAt,
-      characters,
+      characters, // Siempre array, nunca undefined
     };
   }
 

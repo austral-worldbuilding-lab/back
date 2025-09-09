@@ -31,7 +31,7 @@ import {
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import { MandalaDto } from './dto/mandala.dto';
+import { MandalaDto, hasCharacters } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
@@ -451,20 +451,12 @@ export class MandalaService {
       });
     }
 
-    // Para mandalas unificadas, filtros de personajes
-    if (
-      mandala.type === MandalaType.OVERLAP ||
-      mandala.type === MandalaType.OVERLAP_SUMMARY
-    ) {
-      // Obtener personajes directamente de la configuración de la mandala
-      if (
-        mandala.configuration.center.characters &&
-        mandala.configuration.center.characters.length > 0
-      ) {
+    if (hasCharacters(mandala)) {
+      if (mandala.characters.length > 0) {
         filterSections.push({
           sectionName: 'Personajes',
           type: 'multiple',
-          options: mandala.configuration.center.characters.map((character) => ({
+          options: mandala.characters.map((character) => ({
             label: character.name,
             color: character.color,
           })),
