@@ -128,6 +128,7 @@ Configuración del proyecto
 • Descripción del personaje: \${centerCharacterDescription}
 • Dimensiones habilitadas: \${dimensions}
 • Escalas habilitadas: \${scales}
+• Etiquetas disponibles: \${tags}
 • Limite maximo de preguntas: \${maxResults}
 • Limite minimo de preguntas: \${minResults}
 
@@ -140,6 +141,7 @@ Estado actual de la Mandala: \${mandalaDocument}
       scales: validScales,
       centerCharacter: validCenterCharacter,
       centerCharacterDescription: validCenterCharacterDescription,
+      tags: validTags,
       maxResults: 24,
       minResults: 6,
       mandalaDocument: validMandalaDocument,
@@ -155,6 +157,7 @@ Estado actual de la Mandala: \${mandalaDocument}
     expect(result).toContain(
       'Escalas habilitadas: Persona, Comunidad, Institución',
     );
+    expect(result).toContain('Etiquetas disponibles: educación, tecnología');
     expect(result).toContain('Limite minimo de preguntas: 6');
     expect(result).toContain('Limite maximo de preguntas: 24');
     expect(result).toContain(
@@ -163,18 +166,20 @@ Estado actual de la Mandala: \${mandalaDocument}
     expect(result).not.toContain('${');
   });
 
-  it('should allow empty centerCharacterDescription and replace to empty', () => {
+  it('should allow empty centerCharacterDescription and tags and replace to empty', () => {
     const result = replaceQuestionPlaceholders(questionPromptTemplate, {
       dimensions: validDimensions,
       scales: validScales,
       centerCharacter: validCenterCharacter,
       centerCharacterDescription: '',
+      tags: [],
       maxResults: 5,
       minResults: 2,
       mandalaDocument: validMandalaDocument,
     });
 
     expect(result).toContain('Descripción del personaje: ');
+    expect(result).toContain('Etiquetas disponibles: ');
     expect(result).toContain('Limite minimo de preguntas: 2');
     expect(result).toContain('Limite maximo de preguntas: 5');
     expect(result).not.toContain('${');
@@ -186,6 +191,7 @@ Configuración del proyecto
 • Personaje central: \${centerCharacter}
 • Descripción del personaje: \${centerCharacterDescription}
 • Escalas habilitadas: \${scales}
+• Etiquetas disponibles: \${tags}
 • Limite maximo de preguntas: \${maxResults}
 • Limite minimo de preguntas: \${minResults}
 
@@ -198,6 +204,7 @@ Estado actual de la Mandala
         scales: validScales,
         centerCharacter: validCenterCharacter,
         centerCharacterDescription: validCenterCharacterDescription,
+        tags: validTags,
         maxResults: 24,
         minResults: 6,
         mandalaDocument: validMandalaDocument,
