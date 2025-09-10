@@ -1,5 +1,3 @@
-import * as path from 'node:path';
-
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import {
@@ -18,11 +16,7 @@ import {
 } from '../resources/dto/generate-postits.dto';
 import { createQuestionsResponseSchema } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
-import {
-  replacePostitPlaceholders,
-  replaceQuestionPlaceholders,
-  replaceComparisonPlaceholders,
-} from '../utils/prompt-placeholder-replacer';
+import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
 interface GeminiUploadedFile {
@@ -39,6 +33,7 @@ export class GeminiAdapter implements AiProvider {
     private configService: ConfigService,
     private readonly validator: AiRequestValidator,
     private readonly utilsService: AiAdapterUtilsService,
+    private readonly promptBuilderService: AiPromptBuilderService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -138,27 +133,14 @@ export class GeminiAdapter implements AiProvider {
     selectedFiles?: string[],
     mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
-    this.logger.log(`Starting postit generation for project: ${projectId}`);
-
     const model = this.geminiModel;
-    const commonInstruction = await this.utilsService.getCommonInstructions();
-
-    const promptFilePath = path.resolve(
-      __dirname,
-      '../resources/prompts/prompt_generar_postits.txt',
+    const finalPromptTask = await this.promptBuilderService.buildPostitPrompt(
+      dimensions,
+      scales,
+      centerCharacter,
+      centerCharacterDescription,
+      tags,
     );
-    const promptTemplate =
-      await this.utilsService.readPromptTemplate(promptFilePath);
-    const promptTask = replacePostitPlaceholders(promptTemplate, {
-      dimensions: dimensions,
-      scales: scales,
-      centerCharacter: centerCharacter,
-      centerCharacterDescription: centerCharacterDescription,
-      tags: tags,
-      maxResults: this.utilsService.getMaxResults(),
-      minResults: this.utilsService.getMinResults(),
-    });
-    const finalPromptTask = `${commonInstruction}\n\n${promptTask}`;
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
@@ -238,25 +220,14 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log(`Starting question generation for project: ${projectId}`);
 
     const model = this.geminiModel;
-    const commonInstruction = await this.utilsService.getCommonInstructions();
-
-    const promptFilePath = path.resolve(
-      __dirname,
-      '../resources/prompts/prompt_generar_preguntas.txt',
+    const finalPromptTask = await this.promptBuilderService.buildQuestionPrompt(
+      dimensions,
+      scales,
+      tags,
+      centerCharacter,
+      centerCharacterDescription,
+      mandalaAiSummary,
     );
-    const promptTemplate =
-      await this.utilsService.readPromptTemplate(promptFilePath);
-    const promptTask = replaceQuestionPlaceholders(promptTemplate, {
-      dimensions: dimensions,
-      scales: scales,
-      tags: tags,
-      centerCharacter: centerCharacter,
-      centerCharacterDescription: centerCharacterDescription,
-      mandalaDocument: mandalaAiSummary,
-      maxResults: this.utilsService.getMaxResults(),
-      minResults: this.utilsService.getMinResults(),
-    });
-    const finalPromptTask = `${commonInstruction}\n\n${promptTask}`;
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
       dimensions,
@@ -328,19 +299,10 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log(`Starting question generation for project: ${projectId}`);
 
     const model = this.geminiModel;
-    const commonInstruction = await this.utilsService.getCommonInstructions();
-    const promptFilePath = path.resolve(
-      __dirname,
-      '../resources/prompts/prompt_resumen_postits.txt',
-    );
-    const promptTemplate =
-      await this.utilsService.readPromptTemplate(promptFilePath);
-    const promptTask = replaceComparisonPlaceholders(promptTemplate, {
-      mandalaDocument: mandalasAiSummary,
-      maxResults: this.utilsService.getMaxResults(),
-      minResults: this.utilsService.getMinResults(),
-    });
-    const finalPromptTask = `${commonInstruction}\n\n${promptTask}`;
+    const finalPromptTask =
+      await this.promptBuilderService.buildPostitSummaryPrompt(
+        mandalasAiSummary,
+      );
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
