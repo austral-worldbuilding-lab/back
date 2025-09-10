@@ -229,6 +229,7 @@ export class GeminiAdapter implements AiProvider {
     mandalaId: string,
     dimensions: string[],
     scales: string[],
+    tags: string[],
     mandalaAiSummary: string,
     centerCharacter: string,
     centerCharacterDescription: string,
@@ -248,6 +249,7 @@ export class GeminiAdapter implements AiProvider {
     const promptTask = replaceQuestionPlaceholders(promptTemplate, {
       dimensions: dimensions,
       scales: scales,
+      tags: tags,
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
       mandalaDocument: mandalaAiSummary,

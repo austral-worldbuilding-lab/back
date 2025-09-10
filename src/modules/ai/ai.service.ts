@@ -66,6 +66,7 @@ export class AiService {
     mandala: FirestoreMandalaDocument,
     dimensions: string[],
     scales: string[],
+    tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     selectedFiles?: string[],
@@ -73,6 +74,7 @@ export class AiService {
     this.logger.log(`Starting question generation for project: ${projectId}`, {
       dimensions: dimensions.length,
       scales: scales.length,
+      tags: tags.length,
       centerCharacter,
       centerCharacterDescription,
     });
@@ -82,7 +84,7 @@ export class AiService {
     this.logger.debug('Mandala summary for questions created:', {
       totalPostits: cleanMandalaDocument.totalPostits,
       dimensions: cleanMandalaDocument.dimensions.length,
-      sections: cleanMandalaDocument.scales.length,
+      scales: cleanMandalaDocument.scales.length,
       centerCharacter: cleanMandalaDocument.centerCharacter.name,
     });
 
@@ -91,6 +93,7 @@ export class AiService {
       mandalaId,
       dimensions,
       scales,
+      tags,
       centerCharacter,
       centerCharacterDescription,
       JSON.stringify(cleanMandalaDocument),

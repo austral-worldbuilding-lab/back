@@ -48,6 +48,7 @@ export interface AiProvider {
     mandalaId: string,
     dimensions: string[],
     scales: string[],
+    tags: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     mandalaAiSummary: string,

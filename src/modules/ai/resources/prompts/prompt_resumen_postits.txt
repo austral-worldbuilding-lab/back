@@ -26,6 +26,10 @@ REGLAS DE LOS POST-ITS:
   • El campo `type` debe indicar el tipo de comparación: `SIMILITUD`, `DIFERENCIA` o `UNICO`.
   • El campo `fromSummary` debe contener la lista de personajes involucrados en el origen del nuevo post-it.
 
+COBERTURA Y BALANCE:
+  • Distribuir los post-its entre las similitudes, diferencias y unicos, evitando concentrar más del ~30% en una sola, salvo que no haya evidencia suficiente en otras.
+  • Darle prioridad a los post-its que reflejan similitudes o diferencias.
+
 EJEMPLO DE USO:
   [
     {

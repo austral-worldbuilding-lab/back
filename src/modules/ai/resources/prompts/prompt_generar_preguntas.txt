@@ -10,6 +10,7 @@ CONFIGURACIÓN DEL PERSONAJE CENTRAL:
 CONFIGURACIÓN DEL MUNDO:
   • Dimensiones habilitadas: ${dimensions}
   • Escalas habilitadas: ${scales}
+  • Etiquetas disponibles: ${tags}
 CONFIGURACIÓN DE LA GENERACIÓN:
   • Cantidad mínima de preguntas: ${minResults}
   • Cantidad máxima de preguntas: ${maxResults}
