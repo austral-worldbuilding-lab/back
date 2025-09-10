@@ -11,9 +11,9 @@ import { MandalaDto } from '../mandala/dto/mandala.dto';
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
 import {
-  createMandalaAiSummary,
-  generateTextualSummary,
-} from './utils/mandala-summary.util';
+  createCleanMandalaForQuestions,
+  createCleanMandalaForSummary,
+} from './utils/mandala-cleaned-for-ai.util';
 
 @Injectable()
 export class AiService {
@@ -35,21 +35,15 @@ export class AiService {
     selectedFiles?: string[],
     mandalaId?: string,
   ): Promise<AiPostitResponse[]> {
-    this.logger.log(`Starting postit generation for project: ${projectId}`, {
-      centerCharacter,
-      centerCharacterDescription,
-      dimensions: dimensions.length,
-      scales: scales.length,
-      tags: tags.length,
-    });
+    this.logger.log(`Starting postit generation for project: ${projectId}`);
 
     const result = await this.aiProvider.generatePostits(
       projectId,
       dimensions,
       scales,
+      tags,
       centerCharacter,
       centerCharacterDescription,
-      tags,
       selectedFiles,
       mandalaId,
     );
@@ -71,40 +65,37 @@ export class AiService {
     centerCharacterDescription: string,
     selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
-    this.logger.log(`Starting question generation for mandala: ${mandalaId}`);
-
-    // Transform raw mandala document into AI-readable summary
-    const mandalaAiSummary = createMandalaAiSummary(mandala);
-
-    this.logger.debug('Mandala summary created:', {
-      totalPostits: mandalaAiSummary.totalPostits,
-      dimensions: mandalaAiSummary.dimensions.length,
-      sections: mandalaAiSummary.sections.length,
-      centerCharacter: mandalaAiSummary.centerCharacter.name,
+    this.logger.log(`Starting question generation for project: ${projectId}`, {
+      dimensions: dimensions.length,
+      scales: scales.length,
+      tags: tags.length,
+      centerCharacter,
+      centerCharacterDescription,
     });
 
-    // Generate formatted summary for better AI understanding with natural language
-    const mandalaTextSummary = generateTextualSummary(mandalaAiSummary);
+    const cleanMandalaDocument = createCleanMandalaForQuestions(mandala);
 
-    this.logger.debug(
-      'Generated text summary length:',
-      mandalaTextSummary.length,
-    );
+    this.logger.debug('Mandala summary for questions created:', {
+      totalPostits: cleanMandalaDocument.totalPostits,
+      dimensions: cleanMandalaDocument.dimensions.length,
+      scales: cleanMandalaDocument.scales.length,
+      centerCharacter: cleanMandalaDocument.centerCharacter.name,
+    });
 
     const result = await this.aiProvider.generateQuestions(
       projectId,
       mandalaId,
-      mandalaTextSummary,
       dimensions,
       scales,
       tags,
       centerCharacter,
       centerCharacterDescription,
+      JSON.stringify(cleanMandalaDocument),
       selectedFiles,
     );
 
     this.logger.log(
-      `Generated ${result.length} questions for mandala: ${mandalaId}`,
+      `Generated ${result.length} questions for project: ${projectId}`,
     );
     return result;
   }
@@ -115,27 +106,26 @@ export class AiService {
     mandalasDocument: FirestoreMandalaDocument[],
   ): Promise<AiPostitComparisonResponse[]> {
     this.logger.log(
-      `Starting postit summary generation for mandalas: ${mandalas.map((m) => m.id).join(', ')}`,
+      `Starting postit summary generation for project: ${projectId}`,
     );
-
     const allDimensions = mandalas.flatMap((m) =>
       m.configuration.dimensions.map((d) => d.name),
     );
     const allScales = mandalas.flatMap((m) => m.configuration.scales);
 
-    const mandalasAiSummary = mandalasDocument.map((m) =>
-      createMandalaAiSummary(m),
+    const cleanMandalasDocument = mandalasDocument.map((m) =>
+      createCleanMandalaForSummary(m),
     );
 
-    const result = await this.aiProvider.generatePostitsComparison(
+    const result = await this.aiProvider.generatePostitsSummary(
       projectId,
       allDimensions,
       allScales,
-      mandalasAiSummary.map((m) => JSON.stringify(m)).join('\n'),
+      cleanMandalasDocument.map((m) => JSON.stringify(m)).join('\n'),
     );
 
     this.logger.log(
-      `Generated ${result.length} postits summary for mandalas: ${mandalas.map((m) => m.id).join(', ')}`,
+      `Generated ${result.length} postits summary for project: ${projectId}`,
     );
 
     return result;

@@ -166,7 +166,7 @@ Estado actual de la Mandala: \${mandalaDocument}
     expect(result).not.toContain('${');
   });
 
-  it('should allow empty tags and centerCharacterDescription and replace to empty', () => {
+  it('should allow empty centerCharacterDescription and tags and replace to empty', () => {
     const result = replaceQuestionPlaceholders(questionPromptTemplate, {
       dimensions: validDimensions,
       scales: validScales,

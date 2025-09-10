@@ -148,9 +148,9 @@ const postitReplacer = composeReplacers(
 const questionReplacer = composeReplacers(
   replaceDimensions,
   replaceScales,
+  replaceTags,
   replaceCenterCharacter,
   replaceCenterCharacterDescription,
-  replaceTags,
   replaceMandalaDocument,
   replaceMaxResults,
   replaceMinResults,

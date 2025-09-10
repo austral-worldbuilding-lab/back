@@ -11,6 +11,7 @@ import {
   AI_PROVIDER,
 } from './factories/ai-provider.factory';
 import { AiAdapterUtilsService } from './services/ai-adapter-utils.service';
+import { AiPromptBuilderService } from './services/ai-prompt-builder.service';
 import { AiRequestValidator } from './validators/ai-request.validator';
 
 @Module({
@@ -18,6 +19,7 @@ import { AiRequestValidator } from './validators/ai-request.validator';
     AiService,
     AiRequestValidator,
     AiAdapterUtilsService,
+    AiPromptBuilderService,
     {
       provide: AI_PROVIDER,
       useFactory: aiProviderFactory,
@@ -26,6 +28,7 @@ import { AiRequestValidator } from './validators/ai-request.validator';
         FileService,
         AiRequestValidator,
         AiAdapterUtilsService,
+        AiPromptBuilderService,
       ],
     },
   ],
