@@ -10,6 +10,7 @@ import {
   IsNumber,
   IsArray,
   ValidateIf,
+  Matches,
 } from 'class-validator';
 
 import { CreateTagDto } from '@/modules/project/dto/create-tag.dto';
@@ -82,4 +83,17 @@ export class CreatePostitDto {
   @ValidateIf((object, value) => value !== null)
   @IsUUID()
   parentId?: string | null;
+
+  @ApiProperty({
+    description: 'Name of the image file to attach to the post-it (optional)',
+    required: false,
+    example: 'image.jpg',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/\.(jpg|jpeg|png|gif|webp)$/i, {
+    message:
+      'Image file name must have a valid extension (.jpg, .jpeg, .png, .gif, .webp)',
+  })
+  imageFileName?: string;
 }

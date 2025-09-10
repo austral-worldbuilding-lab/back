@@ -9,6 +9,16 @@ export interface AiPostitResponse {
   section: string;
   tags: string[];
   childrens: Postit[];
+  imageFileName?: string;
+}
+
+export interface AiPostitComparisonResponse {
+  content: string;
+  dimension: string;
+  section: string;
+  tags: string[];
+  type: string;
+  fromSummary: string[];
 }
 
 export interface Postit {
@@ -18,6 +28,12 @@ export interface Postit {
   section: string;
   tags: PostitTag[];
   childrens: Postit[];
+  imageFileName?: string;
+}
+
+export interface PostitComparison extends Postit {
+  type: string;
+  fromSummary: string[];
 }
 
 export interface PostitCoordinates {
@@ -28,4 +44,5 @@ export interface PostitCoordinates {
 export interface PostitWithCoordinates extends Postit {
   coordinates: PostitCoordinates;
   childrens: PostitWithCoordinates[];
+  presignedUrl?: string;
 }

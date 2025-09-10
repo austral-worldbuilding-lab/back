@@ -74,7 +74,8 @@ export class OrganizationService {
     if (!org) {
       throw new ResourceNotFoundException('Organization', id);
     }
-    return this.organizationRepository.remove(id);
+
+    return this.organizationRepository.removeWithCascade(id);
   }
 
   async findOrganizationProjectsPaginated(

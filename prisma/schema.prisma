@@ -9,13 +9,14 @@ datasource db {
 }
 
 model User {
-  id           String                  @id
-  username     String                  @unique
-  email        String                  @unique
-  is_active    Boolean                 @default(true)
-  projectRoles UserProjectRole[]
-  Invitation   Invitation[]
-  organizationRoles UserOrganizationRole[]
+  id                     String                   @id @default(uuid())
+  username               String                   @unique
+  email                  String                   @unique
+  is_active              Boolean                  @default(true)
+  projectRoles           UserProjectRole[]
+  Invitation             Invitation[]
+  organizationRoles      UserOrganizationRole[]
+  OrganizationInvitation OrganizationInvitation[]
 }
 
 model Project {
@@ -31,16 +32,17 @@ model Project {
   Invitation    Invitation[]      @relation("ProjectToInvitations")
   tags          Tag[]
 
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  organizationId String?
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
 }
 
 model Role {
-  id        String            @id @default(uuid())
-  name      String            @unique
-  userRoles UserProjectRole[]
-  organizationRoles UserOrganizationRole[]
-  invitations Invitation[]
+  id                      String                   @id @default(uuid())
+  name                    String                   @unique
+  userRoles               UserProjectRole[]
+  organizationRoles       UserOrganizationRole[]
+  invitations             Invitation[]
+  organizationInvitations OrganizationInvitation[]
 }
 
 model UserProjectRole {
@@ -56,14 +58,15 @@ model UserProjectRole {
 }
 
 model Mandala {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
   name          String
-  configuration Json // Contains centerCharacter, dimensions[] and scales[]
-  project       Project  @relation("ProjectToMandalas", fields: [projectId], references: [id], onDelete: Cascade)
+  type          MandalaType @default(CHARACTER)
+  configuration Json        // Contains centerCharacter, dimensions[] and scales[]
+  project       Project     @relation("ProjectToMandalas", fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  isActive      Boolean  @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  isActive      Boolean     @default(true)
   deletedAt     DateTime?
 
   children Mandala[] @relation("MandalaToMandala")
@@ -71,24 +74,26 @@ model Mandala {
 }
 
 model Invitation {
-  id        String           @id @default(uuid())
-  email     String
-  token     String           @unique
-  status    InvitationStatus @default(PENDING)
-  expiresAt DateTime
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id          String           @id @default(uuid())
+  email       String?
+  token       String           @unique
+  inviteToken String?          @unique
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   project   Project @relation("ProjectToInvitations", fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
 
   invitedBy   User   @relation(fields: [invitedById], references: [id])
-  invitedById String // quien manda la invitación
+  invitedById String
 
   role   Role?   @relation(fields: [roleId], references: [id])
-  roleId String? // rol que tendrá el usuario invitado
+  roleId String?
 
   @@unique([email, projectId])
+  @@index([inviteToken])
 }
 
 enum InvitationStatus {
@@ -98,27 +103,34 @@ enum InvitationStatus {
   EXPIRED
 }
 
+enum MandalaType {
+  CHARACTER
+  OVERLAP
+  OVERLAP_SUMMARY
+}
+
 model Tag {
-  id        String  @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  color     String  @default(dbgenerated("'#' || lpad(to_hex((random() * 16777215)::int), 6, '0')"))
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  color     String    @default(dbgenerated("'#' || lpad(to_hex((random() * 16777215)::int), 6, '0')"))
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
-  isActive  Boolean @default(true)
+  isActive  Boolean   @default(true)
   deletedAt DateTime?
 
   @@unique([name, projectId, isActive])
 }
 
 model Organization {
-  id        String  @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  createdAt DateTime @default(now())
-  isActive  Boolean @default(true)
+  createdAt DateTime  @default(now())
+  isActive  Boolean   @default(true)
   deletedAt DateTime?
 
-  projects  Project[]
-  userRoles UserOrganizationRole[]
+  projects                Project[]
+  userRoles               UserOrganizationRole[]
+  organizationInvitations OrganizationInvitation[] @relation("OrganizationToInvitations")
 }
 
 model UserOrganizationRole {
@@ -131,4 +143,27 @@ model UserOrganizationRole {
   roleId         String
 
   @@unique([userId, organizationId])
+}
+
+model OrganizationInvitation {
+  id          String           @id @default(uuid())
+  email       String?
+  token       String           @unique
+  inviteToken String?          @unique
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  organization   Organization @relation("OrganizationToInvitations", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+  invitedById String // quien manda la invitación
+
+  role   Role?   @relation(fields: [roleId], references: [id])
+  roleId String? // rol que tendrá el usuario invitado
+
+  @@unique([email, organizationId])
+  @@index([inviteToken])
 }

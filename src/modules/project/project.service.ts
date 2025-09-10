@@ -1,5 +1,8 @@
 import { DimensionDto } from '@common/dto/dimension.dto';
-import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import {
+  ResourceNotFoundException,
+  StateConflictException,
+} from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
 import {
@@ -88,7 +91,8 @@ export class ProjectService {
     if (!project) {
       throw new ResourceNotFoundException('Project', id);
     }
-    return this.projectRepository.remove(id);
+
+    return this.projectRepository.removeWithCascade(id);
   }
 
   async update(
@@ -138,19 +142,11 @@ export class ProjectService {
     projectId: string,
     userId: string,
     roleName: string,
-    requestingUserId: string,
   ): Promise<UserRoleResponseDto> {
     // Verificar que el proyecto existe
     const project = await this.projectRepository.findOne(projectId);
     if (!project) {
       throw new ResourceNotFoundException('Project', projectId);
-    }
-
-    // Prevenir que un usuario cambie su propio rol
-    if (userId === requestingUserId) {
-      throw new NotFoundException(
-        'No puedes cambiar tu propio rol en el proyecto',
-      );
     }
 
     // Obtener el rol por nombre
@@ -159,7 +155,31 @@ export class ProjectService {
       throw new NotFoundException(`Role '${roleName}' not found`);
     }
 
-    // Actualizar el rol del usuario
+    const currentUserRole = await this.projectRepository.getUserRole(
+      project.id,
+      userId,
+    );
+    if (!currentUserRole) {
+      throw new ResourceNotFoundException(
+        'ProjectUser',
+        `${project.id}:${userId}`,
+      );
+    }
+
+    const isCurrentlyOwner = currentUserRole?.name === 'owner';
+    const willBeOwner = role.name === 'owner';
+    const isDowngradeFromOwner = isCurrentlyOwner && !willBeOwner;
+
+    if (isDowngradeFromOwner) {
+      const ownersCount = await this.projectRepository.countOwners(projectId);
+
+      if (ownersCount <= 1) {
+        throw new StateConflictException('owner', 'downgrade', {
+          reason: 'last_owner',
+        });
+      }
+    }
+
     return this.projectRepository.updateUserRole(projectId, userId, role.id);
   }
 

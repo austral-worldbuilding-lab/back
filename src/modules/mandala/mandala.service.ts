@@ -1,9 +1,10 @@
 import {
   BadRequestException,
-  ResourceNotFoundException,
-  InternalServerErrorException,
   ExternalServiceException,
+  InternalServerErrorException,
+  ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
+import { CacheService } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
@@ -17,15 +18,36 @@ import {
   FirestoreCharacter,
 } from '../firebase/types/firestore-character.type';
 
+import {
+  OVERLAP_ERROR_MESSAGES,
+  OVERLAP_ERROR_TYPES,
+} from './constants/overlap-error-messages';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
-import { CreateMandalaDto } from './dto/create-mandala.dto';
+import {
+  CreateMandalaCenterWithOriginDto,
+  CreateMandalaDto,
+  CreateMandalaCenterDto,
+  CreateOverlappedMandalaDto,
+} from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import { MandalaDto } from './dto/mandala.dto';
+import { MandalaDto, hasCharacters } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
+import { MandalaType } from './types/mandala-type.enum';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
+import {
+  validateSameDimensions,
+  validateSameScales,
+  getTargetProjectId,
+} from './utils/overlap-validation.utils';
+
+import { DimensionDto } from '@/common/dto/dimension.dto';
+
+const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
+const DEFAULT_CHARACTER_SECTION = '';
+const DEFAULT_CHARACTER_DIMENSION = '';
 
 @Injectable()
 export class MandalaService {
@@ -37,9 +59,10 @@ export class MandalaService {
     private postitService: PostitService,
     private projectService: ProjectService,
     private aiService: AiService,
+    private cacheService: CacheService,
   ) {}
 
-  private async completeMissingVariables(
+  private async completeMissingConfiguration(
     createMandalaDto: CreateMandalaDto,
   ): Promise<CreateMandalaDto> {
     if (!createMandalaDto.dimensions || !createMandalaDto.scales) {
@@ -54,11 +77,16 @@ export class MandalaService {
     return createMandalaDto;
   }
 
-  async create(createMandalaDto: CreateMandalaDto): Promise<MandalaDto> {
+  async create(
+    createMandalaDto: CreateMandalaDto,
+    type: MandalaType,
+  ): Promise<MandalaDto> {
     const completeDto: CreateMandalaDto =
-      await this.completeMissingVariables(createMandalaDto);
-    const mandala: MandalaDto =
-      await this.mandalaRepository.create(completeDto);
+      await this.completeMissingConfiguration(createMandalaDto);
+    const mandala: MandalaDto = await this.mandalaRepository.create(
+      completeDto,
+      type,
+    );
 
     try {
       const childrenCenter = (
@@ -68,9 +96,9 @@ export class MandalaService {
         name: center.name,
         description: center.description,
         color: center.color,
-        position: { x: 0, y: 0 },
-        section: '',
-        dimension: '',
+        position: DEFAULT_CHARACTER_POSITION,
+        section: DEFAULT_CHARACTER_SECTION,
+        dimension: DEFAULT_CHARACTER_DIMENSION,
       }));
 
       const firestoreData = {
@@ -231,7 +259,10 @@ export class MandalaService {
     }
   }
 
-  async updateParentMandalaDocument(parentMandalaId: string): Promise<void> {
+  async updateParentMandalaDocument(
+    parentMandalaId: string,
+    newChildId?: string,
+  ): Promise<void> {
     const parentMandala = await this.mandalaRepository.findOne(parentMandalaId);
 
     if (!parentMandala) {
@@ -256,28 +287,42 @@ export class MandalaService {
         existingCharacters.map((char) => [char.id, char]),
       );
 
-      const updatedCharacters = childrenCenter.map((center) => {
-        const existingCharacter = existingCharactersMap.get(center.id);
+      const childrenCenterMap = new Map(
+        childrenCenter.map((center) => [center.id, center]),
+      );
 
-        if (existingCharacter) {
-          return {
-            ...existingCharacter,
-            name: center.name,
-            description: center.description,
-            color: center.color,
-          };
+      const childrenIds = new Set(childrenCenter.map((center) => center.id));
+      const updatedCharacters: FirestoreCharacter[] = [];
+
+      existingCharacters.forEach((existingChar) => {
+        if (childrenIds.has(existingChar.id)) {
+          const centerData = childrenCenterMap.get(existingChar.id);
+          if (centerData) {
+            updatedCharacters.push({
+              ...existingChar,
+              name: centerData.name,
+              description: centerData.description,
+              color: centerData.color,
+            });
+          }
         }
-
-        return {
-          id: center.id,
-          name: center.name,
-          description: center.description,
-          color: center.color,
-          position: { x: 0, y: 0 },
-          section: '',
-          dimension: '',
-        };
       });
+
+      // Add only the specific new character if provided (when linking)
+      if (newChildId) {
+        const newCenter = childrenCenterMap.get(newChildId);
+        if (newCenter && !existingCharactersMap.has(newChildId)) {
+          updatedCharacters.push({
+            id: newCenter.id,
+            name: newCenter.name,
+            description: newCenter.description,
+            color: newCenter.color,
+            position: DEFAULT_CHARACTER_POSITION,
+            section: DEFAULT_CHARACTER_SECTION,
+            dimension: DEFAULT_CHARACTER_DIMENSION,
+          });
+        }
+      }
 
       const updateData = {
         characters: updatedCharacters,
@@ -308,12 +353,22 @@ export class MandalaService {
       );
     }
 
-    const mandala: MandalaDto = await this.create(createMandalaDto);
+    const mandala: MandalaDto = await this.create(
+      createMandalaDto,
+      MandalaType.CHARACTER,
+    );
 
     try {
-      const postits: PostitWithCoordinates[] =
-        await this.postitService.generatePostitsForMandala(
+      const postits = await this.postitService.generatePostits(
+        mandala,
+        mandala.configuration.dimensions.map((d) => d.name),
+        mandala.configuration.scales,
+        createMandalaDto.selectedFiles,
+      );
+      const postitsWithCoordinates: PostitWithCoordinates[] =
+        this.postitService.transformToPostitsWithCoordinates(
           mandala.id,
+          postits,
           mandala.configuration.dimensions.map((d) => d.name),
           mandala.configuration.scales,
         );
@@ -324,14 +379,14 @@ export class MandalaService {
         name: center.name,
         description: center.description,
         color: center.color,
-        position: { x: 0, y: 0 },
-        section: '',
-        dimension: '',
+        position: DEFAULT_CHARACTER_POSITION,
+        section: DEFAULT_CHARACTER_SECTION,
+        dimension: DEFAULT_CHARACTER_DIMENSION,
       }));
 
       const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
         mandala: mandala,
-        postits: postits,
+        postits: postitsWithCoordinates,
         childrenCenter,
       };
 
@@ -339,7 +394,7 @@ export class MandalaService {
         createMandalaDto.projectId,
         {
           mandala: mandala,
-          postits: postits,
+          postits: postitsWithCoordinates,
           characters: childrenCenter,
         },
         mandala.id,
@@ -396,6 +451,34 @@ export class MandalaService {
       });
     }
 
+    if (hasCharacters(mandala)) {
+      if (mandala.characters.length > 0) {
+        filterSections.push({
+          sectionName: 'Personajes',
+          type: 'multiple',
+          options: mandala.characters.map((character) => ({
+            label: character.name,
+            color: character.color,
+          })),
+        });
+      } else {
+        // Fallback: buscar en mandalas hijas vinculadas manualmente
+        const childrenCenter =
+          await this.mandalaRepository.findChildrenMandalasCenters(mandalaId);
+
+        if (childrenCenter && childrenCenter.length > 0) {
+          filterSections.push({
+            sectionName: 'Personajes',
+            type: 'multiple',
+            options: childrenCenter.map((center) => ({
+              label: center.name,
+              color: center.color,
+            })),
+          });
+        }
+      }
+    }
+
     if (projectTags && projectTags.length > 0) {
       filterSections.push({
         sectionName: 'Tags',
@@ -437,7 +520,7 @@ export class MandalaService {
         childId,
       );
 
-      await this.updateParentMandalaDocument(parentId);
+      await this.updateParentMandalaDocument(parentId, childId);
 
       this.logger.log(
         `Mandala ${childId} successfully linked as child of ${parentId}`,
@@ -495,51 +578,160 @@ export class MandalaService {
   }
 
   async generateQuestions(
+    userId: string,
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
+    selectedFiles?: string[],
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(`generateQuestions called for mandala ${mandalaId}`);
 
     const mandala = await this.findOne(mandalaId);
-
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
+    const questions = await this.generateQuestionsFromAI(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+      selectedFiles,
+    );
+
+    await this.saveQuestionsToCache(userId, mandalaId, questions);
+
+    return questions;
+  }
+
+  private async saveQuestionsToCache(
+    userId: string,
+    mandalaId: string,
+    questions: AiQuestionResponse[],
+  ): Promise<void> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'questions',
+      userId,
+      mandalaId,
+    );
+
+    for (const question of questions) {
+      await this.cacheService.addToLimitedCache(cacheKey, question, 20);
+    }
+    this.logger.log(
+      `Saved questions to cache for user ${userId}, mandala ${mandalaId}`,
+    );
+  }
+
+  private async generateQuestionsFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+    selectedFiles?: string[],
+  ): Promise<AiQuestionResponse[]> {
     const centerCharacter = mandala.configuration.center.name;
     const centerCharacterDescription = mandala.configuration.center.description;
     const tags = await this.projectService.getProjectTags(mandala.projectId);
     const mandalaDocument = await this.firebaseDataService.getDocument(
       mandala.projectId,
-      mandalaId,
+      mandala.id,
     );
 
     return this.aiService.generateQuestions(
       mandala.projectId,
-      mandalaId,
+      mandala.id,
       mandalaDocument as FirestoreMandalaDocument,
       effectiveDimensions,
       effectiveScales,
       tags.map((tag) => tag.name),
       centerCharacter,
       centerCharacterDescription || 'No content',
+      selectedFiles,
     );
   }
 
   async generatePostits(
+    userId: string,
     mandalaId: string,
     dimensions?: string[],
     scales?: string[],
+    selectedFiles?: string[],
   ): Promise<PostitWithCoordinates[]> {
     this.logger.log(`generatePostits called for mandala ${mandalaId}`);
 
     const mandala = await this.findOne(mandalaId);
-
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
-    return this.postitService.generatePostitsForMandala(
+    const postits = await this.generatePostitsFromAI(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+      selectedFiles,
+    );
+
+    await this.savePostitsToCache(userId, mandalaId, postits);
+
+    return postits;
+  }
+
+  private async savePostitsToCache(
+    userId: string,
+    mandalaId: string,
+    postits: PostitWithCoordinates[],
+  ): Promise<void> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'postits',
+      userId,
       mandalaId,
+    );
+
+    for (const postit of postits) {
+      await this.cacheService.addToLimitedCache(cacheKey, postit, 20);
+    }
+    this.logger.log(
+      `Saved ${postits.length} postits to cache for user ${userId}, mandala ${mandalaId}`,
+    );
+  }
+
+  async getCachedQuestions(
+    userId: string,
+    mandalaId: string,
+  ): Promise<AiQuestionResponse[]> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'questions',
+      userId,
+      mandalaId,
+    );
+    return this.cacheService.getFromCache<AiQuestionResponse>(cacheKey);
+  }
+
+  async getCachedPostits(
+    userId: string,
+    mandalaId: string,
+  ): Promise<PostitWithCoordinates[]> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'postits',
+      userId,
+      mandalaId,
+    );
+    return this.cacheService.getFromCache<PostitWithCoordinates>(cacheKey);
+  }
+
+  private async generatePostitsFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+    selectedFiles?: string[],
+  ): Promise<PostitWithCoordinates[]> {
+    const postits = await this.postitService.generatePostits(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+      selectedFiles,
+    );
+
+    return this.postitService.transformToPostitsWithCoordinates(
+      mandala.id,
+      postits,
       effectiveDimensions,
       effectiveScales,
     );
@@ -570,5 +762,252 @@ export class MandalaService {
         { mandalaId, originalError: errorMessage },
       );
     }
+  }
+
+  async createOverlapMandala(
+    createOverlapDto: CreateOverlappedMandalaDto,
+  ): Promise<MandalaDto> {
+    this.logger.log(
+      `Starting overlap operation for ${createOverlapDto.mandalas.length} mandalas`,
+    );
+
+    try {
+      const mandalas = await this.validateAndRetrieveMandalas(
+        createOverlapDto.mandalas,
+      );
+      this.validateMandalaCompatibility(mandalas);
+
+      const flattenedPostits =
+        await this.postitService.collectPostitsWithSource(mandalas);
+
+      this.logger.log(`Total postits to overlap: ${flattenedPostits.length}`);
+
+      const overlappedConfiguration =
+        this.overlapMandalaConfigurations(mandalas);
+
+      const allCenterCharacters: CreateMandalaCenterWithOriginDto[] =
+        mandalas.map((m) => ({
+          id: m.id,
+          name: m.name,
+          description: m.configuration.center.description,
+          color: m.configuration.center.color,
+        }));
+
+      this.logger.log(
+        `Total centers to overlap: ${allCenterCharacters.length}`,
+      );
+
+      const targetProjectId = getTargetProjectId(mandalas);
+
+      const overlapCenter: CreateMandalaCenterDto = {
+        name: createOverlapDto.name,
+        description: `Mandala unificada: ${allCenterCharacters
+          .map((c) => c.name)
+          .join(', ')}`,
+        color: createOverlapDto.color,
+        characters: allCenterCharacters,
+      };
+
+      const createOverlappedMandalaDto: CreateMandalaDto = {
+        name: createOverlapDto.name,
+        projectId: targetProjectId,
+        center: overlapCenter,
+        dimensions: overlappedConfiguration.dimensions,
+        scales: overlappedConfiguration.scales,
+      };
+
+      const newMandala = await this.create(
+        createOverlappedMandalaDto,
+        MandalaType.OVERLAP,
+      );
+
+      await this.firebaseDataService.updateDocument(
+        targetProjectId,
+        {
+          postits: flattenedPostits,
+        },
+        newMandala.id,
+      );
+
+      this.logger.log(
+        `Successfully created overlapped mandala ${newMandala.id}`,
+      );
+
+      return newMandala;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to overlap mandalas: ${errorMessage}`, error);
+      throw new InternalServerErrorException({
+        message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
+        error: OVERLAP_ERROR_TYPES.OVERLAP_OPERATION_ERROR,
+        details: {
+          mandalaIds: createOverlapDto.mandalas,
+          originalError: errorMessage,
+        },
+      });
+    }
+  }
+
+  async createOverlapSummary(
+    createOverlapDto: CreateOverlappedMandalaDto,
+  ): Promise<MandalaDto> {
+    this.logger.log(
+      `Starting overlap summary operation for ${createOverlapDto.mandalas.length} mandalas`,
+    );
+    try {
+      const mandalas = await this.validateAndRetrieveMandalas(
+        createOverlapDto.mandalas,
+      );
+      this.validateMandalaCompatibility(mandalas);
+
+      const overlappedConfiguration =
+        this.overlapMandalaConfigurations(mandalas);
+
+      const allCenterCharacters: CreateMandalaCenterWithOriginDto[] =
+        mandalas.map((m) => ({
+          id: m.id,
+          name: m.name,
+          description: m.configuration.center.description,
+          color: m.configuration.center.color,
+        }));
+
+      this.logger.log(
+        `Total centers to overlap: ${allCenterCharacters.length}`,
+      );
+
+      const targetProjectId = getTargetProjectId(mandalas);
+
+      const overlapCenter: CreateMandalaCenterDto = {
+        name: createOverlapDto.name,
+        description: `Mandala unificada: ${allCenterCharacters
+          .map((c) => c.name)
+          .join(', ')}`,
+        color: createOverlapDto.color,
+        characters: allCenterCharacters,
+      };
+
+      const createOverlappedMandalaDto: CreateMandalaDto = {
+        name: createOverlapDto.name,
+        projectId: targetProjectId,
+        center: overlapCenter,
+        dimensions: overlappedConfiguration.dimensions,
+        scales: overlappedConfiguration.scales,
+      };
+
+      const mandalasDocumentPromises = mandalas.map((m) =>
+        this.firebaseDataService.getDocument(m.projectId, m.id),
+      );
+      const mandalasDocument = (await Promise.all(
+        mandalasDocumentPromises,
+      )) as FirestoreMandalaDocument[];
+
+      const newMandala = await this.create(
+        createOverlappedMandalaDto,
+        MandalaType.OVERLAP_SUMMARY,
+      );
+
+      const aiSummaryPostits =
+        await this.postitService.generateComparisonPostits(
+          mandalas,
+          mandalasDocument,
+        );
+
+      const aiSummaryPostitsWithCoordinates =
+        this.postitService.transformToPostitsWithCoordinates(
+          newMandala.id,
+          aiSummaryPostits,
+          overlappedConfiguration.dimensions.map((d) => d.name),
+          overlappedConfiguration.scales,
+        );
+
+      await this.firebaseDataService.updateDocument(
+        targetProjectId,
+        {
+          postits: aiSummaryPostitsWithCoordinates,
+        },
+        newMandala.id,
+      );
+
+      this.logger.log(
+        `Successfully created overlapped mandala ${newMandala.id}`,
+      );
+
+      return newMandala;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to overlap mandalas: ${errorMessage}`, error);
+      throw new InternalServerErrorException({
+        message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
+        error: OVERLAP_ERROR_TYPES.OVERLAP_OPERATION_ERROR,
+        details: {
+          mandalaIds: createOverlapDto.mandalas,
+          originalError: errorMessage,
+        },
+      });
+    }
+  }
+
+  /**
+   * Validates and retrieves all mandalas for overlap operation
+   * @param mandalaIds - Array of mandala IDs to validate and retrieve
+   * @returns Array of validated MandalaDto objects
+   * @throws BadRequestException if mandalas don't exist
+   */
+  private async validateAndRetrieveMandalas(
+    mandalaIds: string[],
+  ): Promise<MandalaDto[]> {
+    // Validate that all mandalas exist
+    const mandalas = await Promise.all(
+      mandalaIds.map((id) => this.findOne(id)),
+    );
+
+    // Log project information for transparency
+    const projectIds = [...new Set(mandalas.map((m) => m.projectId))];
+    if (projectIds.length > 1) {
+      this.logger.log(
+        `Overlapping mandalas from ${projectIds.length} different projects: ${projectIds.join(', ')}. ` +
+          `New mandala will be saved in project: ${projectIds[0]}`,
+      );
+    } else {
+      this.logger.log(
+        `All ${mandalas.length} mandalas belong to project: ${projectIds[0]}`,
+      );
+    }
+
+    return mandalas;
+  }
+
+  /**
+   * Validates that all mandalas have the same dimensions and scales
+   * @param mandalas - Array of mandalas to validate
+   * @throws BadRequestException if mandalas have different dimensions or scales
+   */
+  private validateMandalaCompatibility(mandalas: MandalaDto[]): void {
+    validateSameDimensions(mandalas);
+    validateSameScales(mandalas);
+
+    const firstMandala = mandalas[0];
+    const dimensions = firstMandala.configuration.dimensions.map((d) => d.name);
+    const scales = firstMandala.configuration.scales;
+
+    this.logger.log(
+      `Validation successful: All ${mandalas.length} mandalas have matching dimensions [${dimensions.join(', ')}] and scales [${scales.join(', ')}]`,
+    );
+  }
+
+  private overlapMandalaConfigurations(mandalas: MandalaDto[]): {
+    dimensions: DimensionDto[];
+    scales: string[];
+  } {
+    const firstMandala = mandalas[0];
+    const dimensions = firstMandala.configuration.dimensions;
+    const scales = firstMandala.configuration.scales;
+
+    return {
+      dimensions: dimensions,
+      scales: scales,
+    };
   }
 }

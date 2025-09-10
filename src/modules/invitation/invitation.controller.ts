@@ -48,13 +48,13 @@ import { InvitationService } from './invitation.service';
 @ApiTags('Invitations')
 @Controller('invitation')
 @UseGuards(FirebaseAuthGuard)
-@ApiBearerAuth()
 export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
   @Post()
   @UseGuards(InvitationRoleGuard)
   @RequireOwner()
+  @ApiBearerAuth()
   @ApiCreateInvitation()
   async create(
     @Body() createInvitationDto: CreateInvitationDto,
@@ -71,6 +71,7 @@ export class InvitationController {
   }
 
   @Get()
+  @ApiBearerAuth()
   @ApiGetAllInvitations()
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe, new MinValuePipe(1))
@@ -96,6 +97,7 @@ export class InvitationController {
   }
 
   @Get('project/:projectId')
+  @ApiBearerAuth()
   @ApiGetInvitationsByProject()
   async findByProject(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -114,6 +116,7 @@ export class InvitationController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
   @ApiGetInvitation()
   async findOne(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -125,6 +128,7 @@ export class InvitationController {
   @Post(':id/accept')
   @UseGuards(InvitationAccessGuard)
   @RequireInvitationAccess('recipient')
+  @ApiBearerAuth()
   @ApiAcceptInvitation()
   async accept(
     @Param('id') id: string,
@@ -140,6 +144,7 @@ export class InvitationController {
   @Post(':id/reject')
   @UseGuards(InvitationAccessGuard)
   @RequireInvitationAccess('recipient')
+  @ApiBearerAuth()
   @ApiRejectInvitation()
   async reject(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -154,11 +159,66 @@ export class InvitationController {
   @Delete(':id')
   @UseGuards(InvitationAccessGuard)
   @RequireInvitationAccess('sender', 'recipient')
+  @ApiBearerAuth()
   @ApiDeleteInvitation()
   async remove(
     @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<MessageOnlyResponse> {
     await this.invitationService.remove(id);
     return { message: 'Invitation deleted successfully' };
+  }
+
+  @Post('create-link')
+  @UseGuards(InvitationRoleGuard)
+  @RequireOwner()
+  @ApiBearerAuth()
+  async createInviteLink(
+    @Body()
+    createLinkDto: {
+      projectId: string;
+      role: string;
+      organizationId: string;
+      expiresAt?: Date;
+      email?: string;
+      sendEmail?: boolean;
+    },
+    @Request() req: RequestWithUser,
+  ): Promise<MessageResponse<{ inviteUrl: string; token: string }>> {
+    const invitation = await this.invitationService.createInviteLink(
+      createLinkDto.projectId,
+      createLinkDto.role,
+      req.user.id,
+      createLinkDto.expiresAt,
+      createLinkDto.email,
+      createLinkDto.sendEmail,
+    );
+
+    const inviteUrl = `${process.env.FRONTEND_BASE_URL}/invite/${invitation.inviteToken}?org=${createLinkDto.organizationId}&project=${createLinkDto.projectId}`;
+
+    return {
+      message: createLinkDto.sendEmail
+        ? 'Invitation sent successfully'
+        : 'Invite link created successfully',
+      data: { inviteUrl, token: invitation.inviteToken },
+    };
+  }
+
+  @Get('join/:token')
+  @ApiBearerAuth()
+  async joinByToken(
+    @Param('token') token: string,
+    @Request() req: RequestWithUser,
+  ): Promise<MessageResponse<{ projectId: string; organizationId?: string }>> {
+    const result = await this.invitationService.acceptByToken(
+      token,
+      req.user.id,
+    );
+    return {
+      message: 'Successfully joined project',
+      data: {
+        projectId: result.projectId,
+        organizationId: result.organizationId,
+      },
+    };
   }
 }

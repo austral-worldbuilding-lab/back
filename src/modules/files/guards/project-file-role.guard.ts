@@ -10,7 +10,7 @@ import { Reflector } from '@nestjs/core';
 export { RequireProjectRoles };
 
 @Injectable()
-export class FileRoleGuard extends BaseProjectRoleGuard {
+export class ProjectFileRoleGuard extends BaseProjectRoleGuard {
   constructor(prisma: PrismaService, reflector: Reflector) {
     super(prisma, reflector);
   }
@@ -18,7 +18,7 @@ export class FileRoleGuard extends BaseProjectRoleGuard {
   protected extractProjectId(
     request: RequestWithUser,
   ): Promise<string | undefined> {
-    // For file operations, projectId is always in the URL params
+    // For project file operations, projectId is in the URL params
     const projectId = (request.params as { projectId?: string })?.projectId;
 
     return Promise.resolve(projectId);

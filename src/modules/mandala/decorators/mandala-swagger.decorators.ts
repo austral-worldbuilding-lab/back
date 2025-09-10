@@ -1,11 +1,13 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
+import { AiQuestionResponseDto } from '../dto/ai-question-response.dto';
 import { CharacterListItemDto } from '../dto/character-list-item.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from '../dto/mandala.dto';
 import { PostitResponseDto } from '../dto/postit/postit-response.dto';
+import { PostitWithCoordinatesDto } from '../dto/postit/postit-with-coordinates.dto';
 
 export const ApiCreateMandala = () =>
   applyDecorators(
@@ -152,7 +154,7 @@ export const ApiCreatePostit = () =>
     ApiOperation({
       summary: 'Crear un nuevo post-it en un mandala',
       description:
-        'Crea un nuevo post-it en el mandala especificado con coordenadas, dimensiones, sección y tags',
+        'Crea un nuevo post-it en el mandala especificado con coordenadas, dimensiones, sección y tags. Si se proporciona imageFileName, también genera una URL firmada para subir la imagen.',
     }),
     ApiParam({
       name: 'mandalaId',
@@ -161,7 +163,8 @@ export const ApiCreatePostit = () =>
     }),
     ApiResponse({
       status: 201,
-      description: 'El post-it ha sido creado exitosamente',
+      description:
+        'El post-it ha sido creado exitosamente. Incluye URL firmada si se proporcionó imageFileName.',
       type: PostitResponseDto,
     }),
     ApiResponse({
@@ -340,5 +343,163 @@ export const ApiUpdatePostit = () =>
     ApiResponse({
       status: 404,
       description: 'Mandala o post-it no encontrado',
+    }),
+  );
+
+export const ApiGenerateQuestions = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar preguntas usando IA',
+      description:
+        'Genera preguntas guía para un mandala usando IA basándose en la configuración del mandala y archivos del proyecto',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala para generar preguntas',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Preguntas generadas exitosamente',
+      type: [AiQuestionResponseDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiGeneratePostits = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar post-its usando IA',
+      description:
+        'Genera post-its para un mandala usando IA basándose en la configuración del mandala y archivos del proyecto',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala para generar post-its',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Post-its generados exitosamente',
+      type: [PostitWithCoordinatesDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiOverlapMandalas = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Unir mandalas',
+      description:
+        'Crea una nueva mandala que es la unión de dos o más mandalas existentes, incluyendo todos sus post-its. ' +
+        'Todas las mandalas deben tener las mismas dimensiones y escalas para poder ser superpuestas. ' +
+        'La nueva mandala se guardará en el proyecto de la primera mandala de la lista, ' +
+        'permitiendo superponer mandalas de diferentes proyectos. ' +
+        'El centro de la nueva mandala contendrá todos los personajes centrales originales. ' +
+        'Todos los post-its serán copiados a la nueva mandala.',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Mandala unida creada exitosamente',
+      type: MandalaDto,
+    }),
+    ApiResponse({
+      status: 400,
+      description:
+        'Solicitud inválida - Las mandalas deben tener las mismas dimensiones y escalas',
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a uno o más proyectos',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Una o más mandalas no encontradas',
+    }),
+  );
+
+export const ApiGetCachedQuestions = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener preguntas del cache',
+      description:
+        'Obtiene todas las preguntas generadas previamente para un mandala desde el cache',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Preguntas obtenidas exitosamente del cache',
+      type: [AiQuestionResponseDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiGetCachedPostits = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener post-its del cache',
+      description:
+        'Obtiene todos los post-its generados previamente para un mandala desde el cache',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Post-its obtenidos exitosamente del cache',
+      type: [PostitWithCoordinatesDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiOverlapSummary = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Comparar mandalas',
+      description: 'Compara dos mandalas usando IA',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Mandala superpuesto de comparación creado exitosamente',
+      type: MandalaDto,
+    }),
+    ApiResponse({
+      status: 400,
+      description:
+        'Solicitud inválida - Las mandalas deben tener las mismas dimensiones y escalas',
     }),
   );

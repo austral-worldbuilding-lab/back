@@ -10,10 +10,13 @@ import {
 import { PresignedUrl } from '@common/types/presigned-url';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { Logger } from '@nestjs/common';
+import { FileScope } from '@modules/files/types/file-scope.type';
+import { Injectable, Logger } from '@nestjs/common';
 
+import { buildPrefix } from './path-builder';
 import { StorageService } from './StorageService';
 
+@Injectable()
 export class AzureBlobStorageService implements StorageService {
   private readonly logger = new Logger(AzureBlobStorageService.name);
   private containerName = process.env.AZURE_STORAGE_CONTAINER_NAME!;
@@ -34,15 +37,16 @@ export class AzureBlobStorageService implements StorageService {
 
   async uploadFiles(
     files: CreateFileDto[],
-    projectId: string,
+    scope: FileScope,
   ): Promise<PresignedUrl[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const urls: PresignedUrl[] = [];
+    const prefix = buildPrefix(scope);
 
     for (const file of files) {
-      const blobName = `${projectId}/${file.file_name}`;
+      const blobName = `${prefix}${file.file_name}`;
       const blockBlobClient = containerClient.getBlockBlobClient(blobName);
       const expiresOn = new Date(new Date().valueOf() + 3600 * 1000);
       const sasUrl = await blockBlobClient.generateSasUrl({
@@ -55,17 +59,18 @@ export class AzureBlobStorageService implements StorageService {
     return urls;
   }
 
-  async getFiles(projectId: string): Promise<CreateFileDto[]> {
+  async getFiles(scope: FileScope): Promise<CreateFileDto[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const descriptors: CreateFileDto[] = [];
+    const prefix = buildPrefix(scope);
 
     for await (const blob of containerClient.listBlobsFlat({
-      prefix: `${projectId}/`,
+      prefix: prefix,
     })) {
       descriptors.push({
-        file_name: blob.name.split('/').pop() || '',
+        file_name: blob.name.replace(prefix, ''),
         file_type: blob.properties.contentType || 'unknown',
       });
     }
@@ -73,14 +78,15 @@ export class AzureBlobStorageService implements StorageService {
     return descriptors;
   }
 
-  async readAllFilesAsBuffers(folder: string): Promise<Buffer[]> {
+  async readAllFilesAsBuffers(scope: FileScope): Promise<Buffer[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const buffers: Buffer[] = [];
+    const prefix = buildPrefix(scope);
 
     for await (const blob of containerClient.listBlobsFlat({
-      prefix: `${folder}/`,
+      prefix: prefix,
     })) {
       const blobClient = containerClient.getBlobClient(blob.name);
       const downloadResponse = await blobClient.download();
@@ -98,15 +104,16 @@ export class AzureBlobStorageService implements StorageService {
   }
 
   async readAllFilesAsBuffersWithMetadata(
-    folder: string,
+    scope: FileScope,
   ): Promise<FileBuffer[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const fileBuffers: FileBuffer[] = [];
+    const prefix = buildPrefix(scope);
 
     for await (const blob of containerClient.listBlobsFlat({
-      prefix: `${folder}/`,
+      prefix: prefix,
     })) {
       const blobClient = containerClient.getBlobClient(blob.name);
       const downloadResponse = await blobClient.download();
@@ -119,7 +126,7 @@ export class AzureBlobStorageService implements StorageService {
       const fullBuffer = Buffer.concat(chunks);
       fileBuffers.push({
         buffer: fullBuffer,
-        fileName: blob.name.split('/').pop() || '',
+        fileName: blob.name.replace(prefix, ''),
         mimeType: blob.properties.contentType || 'application/octet-stream',
       });
     }
@@ -127,12 +134,13 @@ export class AzureBlobStorageService implements StorageService {
     return fileBuffers;
   }
 
-  async deleteFile(projectId: string, fileName: string): Promise<void> {
+  async deleteFile(scope: FileScope, fileName: string): Promise<void> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
+    const prefix = buildPrefix(scope);
 
-    const blobName = `${projectId}/${fileName}`;
+    const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
 
     try {
@@ -140,6 +148,65 @@ export class AzureBlobStorageService implements StorageService {
     } catch (rawError: unknown) {
       this.handleAzureDeletionError(rawError, blobName);
     }
+  }
+
+  async getFileBuffer(fileName: string, scope: FileScope): Promise<Buffer> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(scope);
+    const blobName = `${prefix}${fileName}`;
+    const blobClient = containerClient.getBlobClient(blobName);
+
+    const downloadResponse = await blobClient.download();
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of downloadResponse.readableStreamBody!) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    return Buffer.concat(chunks);
+  }
+
+  async uploadBuffer(
+    buffer: Buffer,
+    fileName: string,
+    scope: FileScope,
+    contentType: string = 'application/octet-stream',
+  ): Promise<void> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(scope);
+    const blobName = `${prefix}${fileName}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    await blockBlobClient.upload(buffer, buffer.length, {
+      blobHTTPHeaders: {
+        blobContentType: contentType,
+      },
+    });
+
+    this.logger.debug(`Successfully uploaded ${fileName} to ${blobName}`);
+  }
+
+  async generateDownloadUrl(
+    fullPath: string,
+    expirationHours: number = 24,
+  ): Promise<string> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const blockBlobClient = containerClient.getBlockBlobClient(fullPath);
+
+    const expiresOn = new Date(
+      new Date().valueOf() + expirationHours * 3600 * 1000,
+    );
+
+    return await blockBlobClient.generateSasUrl({
+      permissions: BlobSASPermissions.parse('r'), // read-only permission
+      expiresOn,
+    });
   }
 
   private handleAzureDeletionError(error: unknown, blobName: string): never {

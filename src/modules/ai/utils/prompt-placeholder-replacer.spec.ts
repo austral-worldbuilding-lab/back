@@ -1,230 +1,255 @@
-import { replacePromptPlaceholders } from './prompt-placeholder-replacer';
+import {
+  replacePostitPlaceholders,
+  replaceQuestionPlaceholders,
+  replaceComparisonPlaceholders,
+} from './prompt-placeholder-replacer';
 
-describe('replacePromptPlaceholders', () => {
-  const mockPromptTemplate = `
-    Utiliza estas dimensiones: \${dimensions}
-    Trabaja con estas escalas: \${scales}
-    Personaje central: \${centerCharacter}
-    Descripción: \${centerCharacterDescription}
-    Etiquetas disponibles: \${tags}
-    Nunca inventes nuevas dimensiones ni escalas fuera de las proporcionadas.
+const validDimensions = ['Recursos', 'Cultura', 'Economía'];
+const validScales = ['Persona', 'Comunidad', 'Institución'];
+const validCenterCharacter = 'Alumno';
+const validCenterCharacterDescription = 'Un alumno generico de la UA';
+const validTags = ['educación', 'tecnología'];
+const validMandalaDocument =
+  'Mandala 1: Sistema UA, Mandala 2: Sistema Educativo';
+
+describe('generatePostitsPromptTemplate', () => {
+  const postitPromptTemplate = `
+• Personaje central: \${centerCharacter}
+• Descripción del personaje: \${centerCharacterDescription}
+• Dimensiones habilitadas: \${dimensions}
+• Escalas habilitadas: \${scales}
+• Etiquetas disponibles: \${tags}
+• Limite maximo de post-its: \${maxResults}
+• Limite minimo de post-its: \${minResults}
   `;
 
-  const validDimensions = ['Recursos', 'Cultura', 'Economía'];
-  const validScales = ['Persona', 'Comunidad', 'Institución'];
-  const validCenterCharacter = 'Alumno';
-  const validCenterCharacterDescription = 'Un alumno generico de la UA';
-  const validTags = ['educación', 'tecnología'];
+  it('should successfully replace all postit placeholders with valid data', () => {
+    const result = replacePostitPlaceholders(postitPromptTemplate, {
+      dimensions: validDimensions,
+      scales: validScales,
+      centerCharacter: validCenterCharacter,
+      centerCharacterDescription: validCenterCharacterDescription,
+      tags: validTags,
+      maxResults: 24,
+      minResults: 6,
+    });
 
-  it('should successfully replace all placeholders with valid data', () => {
-    const result = replacePromptPlaceholders(
-      mockPromptTemplate,
-      validDimensions,
-      validScales,
-      validCenterCharacter,
-      validCenterCharacterDescription,
-      validTags,
+    expect(result).toContain('Personaje central: Alumno');
+    expect(result).toContain(
+      'Descripción del personaje: Un alumno generico de la UA',
     );
-
-    expect(result).toContain('Recursos, Cultura, Economía');
-    expect(result).toContain('Persona, Comunidad, Institución');
-    expect(result).toContain('Alumno');
-    expect(result).toContain('Un alumno generico de la UA');
-    expect(result).toContain('educación, tecnología');
-    expect(result).not.toContain('${dimensions}');
-    expect(result).not.toContain('${scales}');
-    expect(result).not.toContain('${centerCharacter}');
-    expect(result).not.toContain('${centerCharacterDescription}');
-    expect(result).not.toContain('${tags}');
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
+    expect(result).toContain('Etiquetas disponibles: educación, tecnología');
+    expect(result).toContain('Limite minimo de post-its: 6');
+    expect(result).toContain('Limite maximo de post-its: 24');
+    expect(result).not.toContain('${');
   });
 
   it('should handle empty tags array', () => {
-    const result = replacePromptPlaceholders(
-      mockPromptTemplate,
-      validDimensions,
-      validScales,
-      validCenterCharacter,
-      validCenterCharacterDescription,
-      [],
+    const result = replacePostitPlaceholders(postitPromptTemplate, {
+      dimensions: validDimensions,
+      scales: validScales,
+      centerCharacter: validCenterCharacter,
+      centerCharacterDescription: validCenterCharacterDescription,
+      tags: [], // Empty array should replace placeholder with empty string
+      maxResults: 24,
+      minResults: 6,
+    });
+    expect(result).toContain('Personaje central: Alumno');
+    expect(result).toContain(
+      'Descripción del personaje: Un alumno generico de la UA',
     );
-
-    expect(result).toContain('Recursos, Cultura, Economía');
-    expect(result).toContain('Persona, Comunidad, Institución');
-    expect(result).toContain('Alumno');
-    expect(result).toContain('Un alumno generico de la UA');
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
     expect(result).toContain('Etiquetas disponibles: ');
-    expect(result).not.toContain('${tags}');
+    expect(result).toContain('Limite minimo de post-its: 6');
+    expect(result).toContain('Limite maximo de post-its: 24');
+    expect(result).not.toContain('${');
   });
 
-  it('should handle single dimension and scale', () => {
-    const result = replacePromptPlaceholders(
-      mockPromptTemplate,
-      ['Recursos'],
-      ['Persona'],
-      validCenterCharacter,
-      validCenterCharacterDescription,
-      validTags,
+  it('should handle empty character description', () => {
+    const result = replacePostitPlaceholders(postitPromptTemplate, {
+      dimensions: validDimensions,
+      scales: validScales,
+      centerCharacter: validCenterCharacter,
+      centerCharacterDescription: '',
+      tags: validTags,
+      maxResults: 24,
+      minResults: 6,
+    });
+    expect(result).toContain('Personaje central: Alumno');
+    expect(result).toContain('Descripción del personaje: ');
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
     );
-
-    expect(result).toContain('Recursos');
-    expect(result).toContain('Persona');
-    expect(result).toContain('Alumno');
-    expect(result).toContain('Un alumno generico de la UA');
-  });
-
-  it('should throw error when prompt template is empty', () => {
-    expect(() => {
-      replacePromptPlaceholders(
-        '',
-        validDimensions,
-        validScales,
-        validCenterCharacter,
-        validCenterCharacterDescription,
-        validTags,
-      );
-    }).toThrow('Prompt template is required');
-  });
-
-  it('should throw error when dimensions array is empty', () => {
-    expect(() => {
-      replacePromptPlaceholders(
-        mockPromptTemplate,
-        [],
-        validScales,
-        validCenterCharacter,
-        validCenterCharacterDescription,
-        validTags,
-      );
-    }).toThrow('At least one dimension must be provided');
-  });
-
-  it('should throw error when scales array is empty', () => {
-    expect(() => {
-      replacePromptPlaceholders(
-        mockPromptTemplate,
-        validDimensions,
-        [],
-        validCenterCharacter,
-        validCenterCharacterDescription,
-        validTags,
-      );
-    }).toThrow('At least one scale must be provided');
-  });
-
-  it('should throw error when dimension is empty string', () => {
-    expect(() => {
-      replacePromptPlaceholders(
-        mockPromptTemplate,
-        [''],
-        validScales,
-        validCenterCharacter,
-        validCenterCharacterDescription,
-        validTags,
-      );
-    }).toThrow('Dimension at index 0 must be a valid string');
-  });
-
-  it('should throw error when scale is empty string', () => {
-    expect(() => {
-      replacePromptPlaceholders(
-        mockPromptTemplate,
-        validDimensions,
-        [''],
-        validCenterCharacter,
-        validCenterCharacterDescription,
-        validTags,
-      );
-    }).toThrow('Scale at index 0 must be a valid string');
-  });
-
-  it('should throw error when center character is empty', () => {
-    expect(() => {
-      replacePromptPlaceholders(
-        mockPromptTemplate,
-        validDimensions,
-        validScales,
-        '',
-        validCenterCharacterDescription,
-        validTags,
-      );
-    }).toThrow('Center character must be provided');
-  });
-
-  it('should throw error when center character description is empty', () => {
-    expect(() => {
-      replacePromptPlaceholders(
-        mockPromptTemplate,
-        validDimensions,
-        validScales,
-        validCenterCharacter,
-        '',
-        validTags,
-      );
-    }).toThrow('Center character description must be provided');
-  });
-
-  it('should throw error when tag is empty string', () => {
-    expect(() => {
-      replacePromptPlaceholders(
-        mockPromptTemplate,
-        validDimensions,
-        validScales,
-        validCenterCharacter,
-        validCenterCharacterDescription,
-        [''],
-      );
-    }).toThrow('Tag at index 0 must be a valid string');
-  });
-
-  it('should throw error when template contains unreplaced placeholders', () => {
-    const templateWithExtraPlaceholder = `
-      \${dimensions}
-      \${scales}
-      \${centerCharacter}
-      \${centerCharacterDescription}
-      \${tags}
-      \${unknownPlaceholder}
-    `;
-
-    expect(() => {
-      replacePromptPlaceholders(
-        templateWithExtraPlaceholder,
-        validDimensions,
-        validScales,
-        validCenterCharacter,
-        validCenterCharacterDescription,
-        validTags,
-      );
-    }).toThrow('Unreplaced placeholders found: ${unknownPlaceholder}');
-  });
-
-  it('should handle multiple occurrences of same placeholder', () => {
-    const templateWithDuplicates = `
-      Dimensiones: \${dimensions}
-      Usar solo estas dimensiones: \${dimensions}
-      Escalas: \${scales}
-      Personaje: \${centerCharacter}
-      Personaje otra vez: \${centerCharacter}
-      Tags: \${tags}
-    `;
-
-    const result = replacePromptPlaceholders(
-      templateWithDuplicates,
-      validDimensions,
-      validScales,
-      validCenterCharacter,
-      validCenterCharacterDescription,
-      validTags,
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
     );
+    expect(result).toContain('Etiquetas disponibles: educación, tecnología');
+    expect(result).toContain('Limite minimo de post-its: 6');
+    expect(result).toContain('Limite maximo de post-its: 24');
+    expect(result).not.toContain('${');
+  });
 
-    expect(result).not.toContain('${dimensions}');
-    expect(result).not.toContain('${scales}');
-    expect(result).not.toContain('${centerCharacter}');
-    expect(result).not.toContain('${centerCharacterDescription}');
-    expect(result).not.toContain('${tags}');
+  it('should throw if prompt misses a required placeholder (dimensions)', () => {
+    const badTemplate = `
+• Personaje central: \${centerCharacter}
+• Descripción del personaje: \${centerCharacterDescription}
+• Escalas habilitadas: \${scales}
+• Etiquetas disponibles: \${tags}
+• Limite maximo de post-its: \${maxResults}
+• Limite minimo de post-its: \${minResults}
+    `;
+    expect(() => {
+      replacePostitPlaceholders(badTemplate, {
+        dimensions: validDimensions,
+        scales: validScales,
+        centerCharacter: validCenterCharacter,
+        centerCharacterDescription: validCenterCharacterDescription,
+        tags: validTags,
+      });
+    }).toThrow('Missing placeholder ${dimensions} in prompt');
+  });
+});
 
-    // Should contain the replacement text multiple times
-    expect((result.match(/Recursos, Cultura, Economía/g) || []).length).toBe(2);
-    expect((result.match(/Alumno/g) || []).length).toBe(2);
+describe('generateQuestionsPromptTemplate', () => {
+  const questionPromptTemplate = `
+Configuración del proyecto
+• Personaje central: \${centerCharacter}
+• Descripción del personaje: \${centerCharacterDescription}
+• Dimensiones habilitadas: \${dimensions}
+• Escalas habilitadas: \${scales}
+• Etiquetas disponibles: \${tags}
+• Limite maximo de preguntas: \${maxResults}
+• Limite minimo de preguntas: \${minResults}
+
+Estado actual de la Mandala: \${mandalaDocument}
+  `;
+
+  it('should replace all question placeholders with valid data', () => {
+    const result = replaceQuestionPlaceholders(questionPromptTemplate, {
+      dimensions: validDimensions,
+      scales: validScales,
+      centerCharacter: validCenterCharacter,
+      centerCharacterDescription: validCenterCharacterDescription,
+      tags: validTags,
+      maxResults: 24,
+      minResults: 6,
+      mandalaDocument: validMandalaDocument,
+    });
+
+    expect(result).toContain('Personaje central: Alumno');
+    expect(result).toContain(
+      'Descripción del personaje: Un alumno generico de la UA',
+    );
+    expect(result).toContain(
+      'Dimensiones habilitadas: Recursos, Cultura, Economía',
+    );
+    expect(result).toContain(
+      'Escalas habilitadas: Persona, Comunidad, Institución',
+    );
+    expect(result).toContain('Etiquetas disponibles: educación, tecnología');
+    expect(result).toContain('Limite minimo de preguntas: 6');
+    expect(result).toContain('Limite maximo de preguntas: 24');
+    expect(result).toContain(
+      'Estado actual de la Mandala: Mandala 1: Sistema UA, Mandala 2: Sistema Educativo',
+    );
+    expect(result).not.toContain('${');
+  });
+
+  it('should allow empty tags and centerCharacterDescription and replace to empty', () => {
+    const result = replaceQuestionPlaceholders(questionPromptTemplate, {
+      dimensions: validDimensions,
+      scales: validScales,
+      centerCharacter: validCenterCharacter,
+      centerCharacterDescription: '',
+      tags: [],
+      maxResults: 5,
+      minResults: 2,
+      mandalaDocument: validMandalaDocument,
+    });
+
+    expect(result).toContain('Descripción del personaje: ');
+    expect(result).toContain('Etiquetas disponibles: ');
+    expect(result).toContain('Limite minimo de preguntas: 2');
+    expect(result).toContain('Limite maximo de preguntas: 5');
+    expect(result).not.toContain('${');
+  });
+
+  it('should throw if prompt misses a required placeholder (dimensions)', () => {
+    const badTemplate = `
+Configuración del proyecto
+• Personaje central: \${centerCharacter}
+• Descripción del personaje: \${centerCharacterDescription}
+• Escalas habilitadas: \${scales}
+• Etiquetas disponibles: \${tags}
+• Limite maximo de preguntas: \${maxResults}
+• Limite minimo de preguntas: \${minResults}
+
+Estado actual de la Mandala
+• Contenido existente: \${mandalaDocument}
+    `;
+    expect(() => {
+      replaceQuestionPlaceholders(badTemplate, {
+        dimensions: validDimensions,
+        scales: validScales,
+        centerCharacter: validCenterCharacter,
+        centerCharacterDescription: validCenterCharacterDescription,
+        tags: validTags,
+        maxResults: 24,
+        minResults: 6,
+        mandalaDocument: validMandalaDocument,
+      });
+    }).toThrow('Missing placeholder ${dimensions} in prompt');
+  });
+});
+
+describe('generateComparisonPromptTemplate', () => {
+  const comparisonPromptTemplate = `
+• Limite maximo de post-its: \${maxResults}
+• Limite minimo de post-its: \${minResults}
+
+Contenido existente en las mandalas para comparar: \${mandalaDocument}
+  `;
+
+  it('should replace all comparison placeholders with valid data', () => {
+    const result = replaceComparisonPlaceholders(comparisonPromptTemplate, {
+      maxResults: 24,
+      minResults: 6,
+      mandalaDocument: validMandalaDocument,
+    });
+    expect(result).toContain('Limite minimo de post-its: 6');
+    expect(result).toContain('Limite maximo de post-its: 24');
+    expect(result).toContain(
+      'Contenido existente en las mandalas para comparar: Mandala 1: Sistema UA, Mandala 2: Sistema Educativo',
+    );
+    expect(result).not.toContain('${');
+  });
+
+  it('should throw if prompt misses a required placeholder (mandalaDocument)', () => {
+    const badTemplate = `
+• Dimensiones habilitadas: \${dimensions}
+• Escalas habilitadas: \${scales}
+• Limite maximo de post-its: \${maxResults}
+• Limite minimo de post-its: \${minResults}
+    `;
+    expect(() => {
+      replaceComparisonPlaceholders(badTemplate, {
+        dimensions: validDimensions,
+        scales: validScales,
+        maxResults: 24,
+        minResults: 6,
+        mandalaDocument: validMandalaDocument,
+      });
+    }).toThrow('Missing placeholder ${mandalaDocument} in prompt');
   });
 });

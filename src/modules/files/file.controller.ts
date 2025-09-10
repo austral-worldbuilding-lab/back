@@ -14,14 +14,24 @@ import {
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import {
-  ApiGetFiles,
-  ApiUploadFiles,
-  ApiGetFileBuffers,
-  ApiDeleteFile,
+  ApiGetOrganizationFiles,
+  ApiUploadOrganizationFiles,
+  ApiDeleteOrganizationFile,
+  ApiGetProjectFilesWithInheritance,
+  ApiUploadProjectFiles,
+  ApiDeleteProjectFile,
+  ApiGetMandalaFiles,
+  ApiUploadMandalaFiles,
+  ApiDeleteMandalaFile,
+  ApiGetMandalaBuffers,
+  ApiGetProjectBuffers,
 } from './decorators/file-swagger.decorators';
 import { CreateFileDto } from './dto/create-file.dto';
 import { FileService } from './file.service';
-import { FileRoleGuard } from './guards/file-role.guard';
+import { MandalaFileRoleGuard } from './guards/mandala-file-role.guard';
+import { OrganizationFileRoleGuard } from './guards/organization-file-role.guard';
+import { ProjectFileRoleGuard } from './guards/project-file-role.guard';
+import { EffectiveFile } from './types/file-scope.type';
 
 @ApiTags('Files')
 @Controller('files')
@@ -30,47 +40,130 @@ import { FileRoleGuard } from './guards/file-role.guard';
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
-  @Get(':projectId')
-  @UseGuards(FileRoleGuard)
-  @ApiGetFiles()
-  async getFiles(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-  ): Promise<DataResponse<CreateFileDto[]>> {
-    const response = await this.fileService.getFiles(projectId);
+  @Post('organization/:orgId')
+  @UseGuards(OrganizationFileRoleGuard)
+  @ApiUploadOrganizationFiles()
+  async uploadOrganizationFiles(
+    @Param('orgId', new UuidValidationPipe()) orgId: string,
+    @Body() body: CreateFileDto[],
+  ): Promise<DataResponse<PresignedUrl[]>> {
+    const scope = await this.fileService.resolveScope('org', orgId);
+    const response = await this.fileService.uploadFiles(body, scope);
     return { data: response };
   }
 
-  @Post(':projectId')
-  @UseGuards(FileRoleGuard)
-  @ApiUploadFiles()
-  async uploadFiles(
+  @Get('organization/:orgId')
+  @UseGuards(OrganizationFileRoleGuard)
+  @ApiGetOrganizationFiles()
+  async getOrganizationFiles(
+    @Param('orgId', new UuidValidationPipe()) orgId: string,
+  ): Promise<DataResponse<EffectiveFile[]>> {
+    const scope = await this.fileService.resolveScope('org', orgId);
+    const response = await this.fileService.getFiles(scope);
+    return { data: response };
+  }
+
+  @Delete('organization/:orgId/:fileName')
+  @UseGuards(OrganizationFileRoleGuard)
+  @ApiDeleteOrganizationFile()
+  async deleteOrganizationFile(
+    @Param('orgId', new UuidValidationPipe()) orgId: string,
+    @Param('fileName') fileName: string,
+  ): Promise<MessageOnlyResponse> {
+    const scope = await this.fileService.resolveScope('org', orgId);
+    await this.fileService.deleteFile(scope, fileName);
+    return { message: 'File deleted successfully' };
+  }
+
+  @Post('project/:projectId')
+  @UseGuards(ProjectFileRoleGuard)
+  @ApiUploadProjectFiles()
+  async uploadProjectFiles(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() body: CreateFileDto[],
   ): Promise<DataResponse<PresignedUrl[]>> {
-    const response = await this.fileService.uploadFiles(body, projectId);
+    const scope = await this.fileService.resolveScope('project', projectId);
+    const response = await this.fileService.uploadFiles(body, scope);
     return { data: response };
   }
 
-  @Get(':projectId/buffers')
-  @UseGuards(FileRoleGuard)
-  @ApiGetFileBuffers()
-  async getFileBuffers(
+  @Get('project/:projectId')
+  @UseGuards(ProjectFileRoleGuard)
+  @ApiGetProjectFilesWithInheritance()
+  async getProjectFilesWithInheritance(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
-  ): Promise<DataResponse<Buffer[]>> {
-    const response = await this.fileService.readAllFilesAsBuffers(projectId);
+  ): Promise<DataResponse<EffectiveFile[]>> {
+    const scope = await this.fileService.resolveScope('project', projectId);
+    const response = await this.fileService.getFiles(scope);
     return { data: response };
   }
 
-  @Delete(':projectId/:fileName')
-  @UseGuards(FileRoleGuard)
-  @ApiDeleteFile()
-  async deleteFile(
+  @Delete('project/:projectId/:fileName')
+  @UseGuards(ProjectFileRoleGuard)
+  @ApiDeleteProjectFile()
+  async deleteProjectFile(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Param('fileName') fileName: string,
   ): Promise<MessageOnlyResponse> {
-    await this.fileService.deleteFile(projectId, fileName);
-    return {
-      message: 'File deleted successfully',
-    };
+    const scope = await this.fileService.resolveScope('project', projectId);
+    await this.fileService.deleteFile(scope, fileName);
+    return { message: 'File deleted successfully' };
+  }
+
+  @Post('mandala/:mandalaId')
+  @UseGuards(MandalaFileRoleGuard)
+  @ApiUploadMandalaFiles()
+  async uploadMandalaFiles(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Body() body: CreateFileDto[],
+  ): Promise<DataResponse<PresignedUrl[]>> {
+    const scope = await this.fileService.resolveScope('mandala', mandalaId);
+    const response = await this.fileService.uploadFiles(body, scope);
+    return { data: response };
+  }
+
+  @Get('mandala/:mandalaId')
+  @UseGuards(MandalaFileRoleGuard)
+  @ApiGetMandalaFiles()
+  async getMandalaFiles(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+  ): Promise<DataResponse<EffectiveFile[]>> {
+    const scope = await this.fileService.resolveScope('mandala', mandalaId);
+    const response = await this.fileService.getFiles(scope);
+    return { data: response };
+  }
+
+  @Delete('mandala/:mandalaId/:fileName')
+  @UseGuards(MandalaFileRoleGuard)
+  @ApiDeleteMandalaFile()
+  async deleteMandalaFile(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Param('fileName') fileName: string,
+  ): Promise<MessageOnlyResponse> {
+    const scope = await this.fileService.resolveScope('mandala', mandalaId);
+    await this.fileService.deleteFile(scope, fileName);
+    return { message: 'File deleted successfully' };
+  }
+
+  @Get('mandala/:mandalaId/buffers')
+  @UseGuards(MandalaFileRoleGuard)
+  @ApiGetMandalaBuffers()
+  async getMandalaFileBuffers(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+  ): Promise<DataResponse<Buffer[]>> {
+    const scope = await this.fileService.resolveScope('mandala', mandalaId);
+    const response = await this.fileService.readAllFilesAsBuffers(scope);
+    return { data: response };
+  }
+
+  @Get('project/:projectId/buffers')
+  @UseGuards(ProjectFileRoleGuard)
+  @ApiGetProjectBuffers()
+  async getProjectFileBuffers(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<Buffer[]>> {
+    const scope = await this.fileService.resolveScope('project', projectId);
+    const response = await this.fileService.readAllFilesAsBuffers(scope);
+    return { data: response };
   }
 }
