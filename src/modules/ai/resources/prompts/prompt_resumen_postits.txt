@@ -31,35 +31,35 @@ EJEMPLO DE USO:
     {
       "content": "Ambos valoran seguridad vial",
       "dimension": "Producto",
-      "section": "Persona",
+      "scale": "Persona",
       "type": "SIMILITUD",
       "fromSummary": ["Jóvenes", "Adultos"]
     },
     {
       "content": "Jóvenes prefieren SUV compactos",
       "dimension": "Producto",
-      "section": "Persona",
+      "scale": "Persona",
       "type": "DIFERENCIA",
       "fromSummary": ["Jóvenes", "Adultos"]
     },
     {
       "content": "Adultos priorizan durabilidad",
       "dimension": "Producto",
-      "section": "Persona",
+      "scale": "Persona",
       "type": "DIFERENCIA",
       "fromSummary": ["Jóvenes", "Adultos"]
     },
     {
       "content": "Suscripción flexible atractiva",
       "dimension": "Modelo de Negocio",
-      "section": "Comunidad",
+      "scale": "Comunidad",
       "type": "DIFERENCIA",
       "fromSummary": ["Jóvenes", "Adultos"]
     },
     {
       "content": "Alta lealtad marca adultos",
       "dimension": "Identidad de Marca",
-      "section": "Global",
+      "scale": "Global",
       "type": "UNICO",
       "fromSummary": ["Adultos"]
     }

@@ -365,6 +365,7 @@ export class MandalaService {
         mandala.configuration.scales,
         createMandalaDto.selectedFiles,
       );
+      this.logger.debug('postits', postits);
       const postitsWithCoordinates: PostitWithCoordinates[] =
         this.postitService.transformToPostitsWithCoordinates(
           mandala.id,

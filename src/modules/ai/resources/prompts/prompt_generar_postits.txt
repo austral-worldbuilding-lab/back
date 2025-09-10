@@ -43,31 +43,31 @@ EJEMPLO DE USO:
     {
       "content": "Buscan SUV compactos",
       "dimension": "Producto",
-      "section": "Persona",
-      "tags": ["primer auto", "diseño"]
+      "scale": "Persona",
+      "tags": ["Primer auto", "Diseño"]
     },
     {
       "content": "Atraccion por suscripción flexible",
       "dimension": "Economía",
-      "section": "Persona",
-      "tags": ["financiamiento"]
+      "scale": "Persona",
+      "tags": ["Financiamiento"]
     },
     {
       "content": "Baja lealtad de marca",
       "dimension": "Cultura",
-      "section": "Global",
-      "tags": ["reputación"]
+      "scale": "Global",
+      "tags": ["Reputación"]
     },
     {
       "content": "Minimalismo no atrae",
       "dimension": "Estética",
-      "section": "Persona",
-      "tags": ["diseño"]
+      "scale": "Persona",
+      "tags": ["Diseño"]
     },
     {
       "content": "Precio inicial elevado",
       "dimension": "Economía",
-      "section": "Persona",
-      "tags": ["financiamiento"]
+      "scale": "Persona",
+      "tags": ["Financiamiento"]
     }
   ]

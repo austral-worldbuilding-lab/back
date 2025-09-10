@@ -90,9 +90,9 @@ export class GeminiAdapter implements AiProvider {
   private async generateContentWithFiles(
     model: string,
     systemInstruction: string,
-    promptTask: string,
     geminiFiles: GeminiUploadedFile[],
     responseSchema: unknown,
+    promptTask?: string,
   ): Promise<string | undefined> {
     this.logger.debug('Preparing Gemini API request...');
 
@@ -158,6 +158,7 @@ export class GeminiAdapter implements AiProvider {
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
+    const finalPromptTask = `${commonInstruction}\n\n${promptTask}`;
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
@@ -170,8 +171,7 @@ export class GeminiAdapter implements AiProvider {
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
     const responseText = await this.generateContentWithFiles(
       model,
-      commonInstruction,
-      promptTask,
+      finalPromptTask,
       geminiFiles,
       createPostitsResponseSchema({
         minItems: this.utilsService.getMinResults(),
@@ -192,7 +192,12 @@ export class GeminiAdapter implements AiProvider {
     }
 
     try {
-      const postits = JSON.parse(responseText) as AiPostitResponse[];
+      // Normalize legacy key names from the AI response
+      const normalizedResponseText = responseText.replace(
+        /"scale"\s*:/g,
+        '"section":',
+      );
+      const postits = JSON.parse(normalizedResponseText) as AiPostitResponse[];
       this.logger.log(
         `Successfully parsed ${postits.length} postits from AI response`,
       );
@@ -249,7 +254,7 @@ export class GeminiAdapter implements AiProvider {
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
-
+    const finalPromptTask = `${commonInstruction}\n\n${promptTask}`;
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
       dimensions,
@@ -261,8 +266,7 @@ export class GeminiAdapter implements AiProvider {
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
     const responseText = await this.generateContentWithFiles(
       model,
-      commonInstruction,
-      promptTask,
+      finalPromptTask,
       geminiFiles,
       createQuestionsResponseSchema({
         minItems: this.utilsService.getMinResults(),
@@ -334,6 +338,7 @@ export class GeminiAdapter implements AiProvider {
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
+    const finalPromptTask = `${commonInstruction}\n\n${promptTask}`;
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
@@ -344,8 +349,7 @@ export class GeminiAdapter implements AiProvider {
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
     const responseText = await this.generateContentWithFiles(
       model,
-      commonInstruction,
-      promptTask,
+      finalPromptTask,
       geminiFiles,
       createPostitsSummaryResponseSchema({
         minItems: this.utilsService.getMinResults(),
@@ -368,8 +372,12 @@ export class GeminiAdapter implements AiProvider {
     }
 
     try {
+      const normalizedResponseText = responseText.replace(
+        /"scale"\s*:/g,
+        '"section":',
+      );
       const comparisons = JSON.parse(
-        responseText,
+        normalizedResponseText,
       ) as AiPostitComparisonResponse[];
       this.logger.log(
         `Successfully parsed ${comparisons.length} comparison responses from AI`,
