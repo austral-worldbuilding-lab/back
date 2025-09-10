@@ -1,8 +1,8 @@
 import {
   BadRequestException,
-  ResourceNotFoundException,
-  InternalServerErrorException,
   ExternalServiceException,
+  InternalServerErrorException,
+  ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
 import { CacheService } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
@@ -31,7 +31,7 @@ import {
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import { MandalaDto } from './dto/mandala.dto';
+import { MandalaDto, hasCharacters } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
@@ -449,6 +449,34 @@ export class MandalaService {
           label: scale,
         })),
       });
+    }
+
+    if (hasCharacters(mandala)) {
+      if (mandala.characters.length > 0) {
+        filterSections.push({
+          sectionName: 'Personajes',
+          type: 'multiple',
+          options: mandala.characters.map((character) => ({
+            label: character.name,
+            color: character.color,
+          })),
+        });
+      } else {
+        // Fallback: buscar en mandalas hijas vinculadas manualmente
+        const childrenCenter =
+          await this.mandalaRepository.findChildrenMandalasCenters(mandalaId);
+
+        if (childrenCenter && childrenCenter.length > 0) {
+          filterSections.push({
+            sectionName: 'Personajes',
+            type: 'multiple',
+            options: childrenCenter.map((center) => ({
+              label: center.name,
+              color: center.color,
+            })),
+          });
+        }
+      }
     }
 
     if (projectTags && projectTags.length > 0) {
