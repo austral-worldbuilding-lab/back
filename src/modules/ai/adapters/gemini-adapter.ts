@@ -120,7 +120,9 @@ export class GeminiAdapter implements AiProvider {
       contents,
     });
 
-    this.logger.log('Generation completed successfully');
+    this.logger.log('Generation completed successfully', {
+      usageMetadata: response.usageMetadata,
+    });
 
     return response.text;
   }
