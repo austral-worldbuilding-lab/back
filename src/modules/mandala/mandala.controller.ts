@@ -467,11 +467,7 @@ export class MandalaController {
   ): Promise<MessageOnlyResponse> {
     const mandala = await this.mandalaService.findOne(mandalaId);
 
-    await this.imageService.deleteImage(
-      mandala.projectId,
-      mandalaId,
-      imageId,
-    );
+    await this.imageService.deleteImage(mandala.projectId, mandalaId, imageId);
 
     return {
       message: 'Image deleted successfully',

@@ -135,7 +135,11 @@ export class AzureBlobStorageService implements StorageService {
     return fileBuffers;
   }
 
-  async deleteFile(scope: FileScope, fileName: string, folderName: StorageFolder): Promise<void> {
+  async deleteFile(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): Promise<void> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );

@@ -31,21 +31,36 @@ export class ImageService {
     );
 
     if (!mandalaInfo) {
-      throw new BusinessLogicException('Mandala not found or missing project information', {
-        mandalaId: imageUploadData.mandalaId,
-      });
+      throw new BusinessLogicException(
+        'Mandala not found or missing project information',
+        {
+          mandalaId: imageUploadData.mandalaId,
+        },
+      );
     }
 
     const imageId = randomUUID();
-    const uniqueFileName = this.generateUniqueFileName(imageUploadData.fileName, imageId);
-    const fileScope = this.buildFileScope(mandalaInfo, imageUploadData.mandalaId);
-    
-    const presignedUrl = await this.generatePresignedUrl(uniqueFileName, fileScope);
+    const uniqueFileName = this.generateUniqueFileName(
+      imageUploadData.fileName,
+      imageId,
+    );
+    const fileScope = this.buildFileScope(
+      mandalaInfo,
+      imageUploadData.mandalaId,
+    );
+
+    const presignedUrl = await this.generatePresignedUrl(
+      uniqueFileName,
+      fileScope,
+    );
 
     return { imageId, presignedUrl };
   }
 
-  private generateUniqueFileName(originalFileName: string, imageId: string): string {
+  private generateUniqueFileName(
+    originalFileName: string,
+    imageId: string,
+  ): string {
     const fileExtension = originalFileName.split('.').pop() || '';
     return `${imageId}.${fileExtension}`;
   }
@@ -61,7 +76,10 @@ export class ImageService {
     };
   }
 
-  private async generatePresignedUrl(fileName: string, storageScope: FileScope): Promise<string> {
+  private async generatePresignedUrl(
+    fileName: string,
+    storageScope: FileScope,
+  ): Promise<string> {
     const fileMetadata: CreateFileDto = {
       file_name: fileName,
       file_type: 'image/*',
@@ -87,7 +105,7 @@ export class ImageService {
     imageData: ConfirmMandalaImageRequest,
   ): Promise<MandalaImage> {
     const mandalaDocument = await this.getMandalaDocument(projectId, mandalaId);
-    
+
     // Crear imagen siempre en el centro con valores por defecto
     const newImage: MandalaImage = {
       id: imageData.id,
@@ -99,9 +117,14 @@ export class ImageService {
       dimension: '',
       section: '',
     };
-    
-    await this.addImageToMandala(projectId, mandalaId, mandalaDocument, newImage);
-    
+
+    await this.addImageToMandala(
+      projectId,
+      mandalaId,
+      mandalaDocument,
+      newImage,
+    );
+
     return newImage;
   }
 
@@ -155,14 +178,14 @@ export class ImageService {
   ): Promise<void> {
     const mandalaDocument = await this.getMandalaDocument(projectId, mandalaId);
     const existingImages = mandalaDocument.images || [];
-    
+
     const imageToDelete = this.findImageById(existingImages, imageId);
-    
+
     const updatedImages = this.removeImageFromList(existingImages, imageId);
-    
+
     // Primero lo eliminamos de Firebase
     await this.updateMandalaImages(projectId, mandalaId, updatedImages);
-    
+
     // Despues lo eliminamos de S3
     await this.deleteImageFromStorage(mandalaId, imageToDelete);
   }
@@ -175,7 +198,10 @@ export class ImageService {
     return image;
   }
 
-  private removeImageFromList(images: MandalaImage[], imageId: string): MandalaImage[] {
+  private removeImageFromList(
+    images: MandalaImage[],
+    imageId: string,
+  ): MandalaImage[] {
     return images.filter((img) => img.id !== imageId);
   }
 
@@ -194,12 +220,18 @@ export class ImageService {
     );
   }
 
-  private async deleteImageFromStorage(mandalaId: string, image: MandalaImage): Promise<void> {
+  private async deleteImageFromStorage(
+    mandalaId: string,
+    image: MandalaImage,
+  ): Promise<void> {
     try {
-      const mandalaProjectInfo = await this.mandalaRepository.findMandalaWithProjectInfo(mandalaId);
-      
+      const mandalaProjectInfo =
+        await this.mandalaRepository.findMandalaWithProjectInfo(mandalaId);
+
       if (!mandalaProjectInfo) {
-        console.warn(`Could not get project info for mandala ${mandalaId}, skipping S3 deletion`);
+        console.warn(
+          `Could not get project info for mandala ${mandalaId}, skipping S3 deletion`,
+        );
         return;
       }
 
@@ -216,5 +248,4 @@ export class ImageService {
     const parts = url.split('/');
     return parts[parts.length - 1];
   }
-
 }

@@ -338,14 +338,14 @@ export class MandalaRepository {
     organizationId: string;
   } | null> {
     const mandala = await this.prisma.mandala.findFirst({
-      where: { 
-        id: mandalaId, 
+      where: {
+        id: mandalaId,
         isActive: true,
       },
       select: {
         projectId: true,
-        project: { 
-          select: { 
+        project: {
+          select: {
             organizationId: true,
           },
         },

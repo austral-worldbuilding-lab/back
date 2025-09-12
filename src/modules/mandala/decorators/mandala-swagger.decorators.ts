@@ -560,39 +560,38 @@ export const ApiConfirmImageUpload = () =>
     }),
   );
 
-
 export const ApiDeleteImage = () =>
   applyDecorators(
     ApiOperation({
-      summary: "Eliminar imagen de mandala",
-      description: "Elimina una imagen de la mandala y del almacenamiento S3",
+      summary: 'Eliminar imagen de mandala',
+      description: 'Elimina una imagen de la mandala y del almacenamiento S3',
     }),
     ApiParam({
-      name: "mandalaId",
-      description: "ID de la mandala",
+      name: 'mandalaId',
+      description: 'ID de la mandala',
       type: String,
     }),
     ApiParam({
-      name: "imageId",
-      description: "ID de la imagen a eliminar",
+      name: 'imageId',
+      description: 'ID de la imagen a eliminar',
       type: String,
     }),
     ApiResponse({
       status: 200,
-      description: "Imagen eliminada exitosamente",
+      description: 'Imagen eliminada exitosamente',
       schema: {
-        type: "object",
+        type: 'object',
         properties: {
-          message: { type: "string", example: "Image deleted successfully" },
+          message: { type: 'string', example: 'Image deleted successfully' },
         },
       },
     }),
     ApiResponse({
       status: 403,
-      description: "Prohibido - No tienes acceso a esta mandala",
+      description: 'Prohibido - No tienes acceso a esta mandala',
     }),
     ApiResponse({
       status: 404,
-      description: "Mandala o imagen no encontrada",
+      description: 'Mandala o imagen no encontrada',
     }),
   );

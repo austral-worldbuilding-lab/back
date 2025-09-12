@@ -14,7 +14,11 @@ export interface StorageService {
   getFiles(scope: FileScope): Promise<CreateFileDto[]>;
   readAllFilesAsBuffers(scope: FileScope): Promise<Buffer[]>;
   readAllFilesAsBuffersWithMetadata(scope: FileScope): Promise<FileBuffer[]>;
-  deleteFile(scope: FileScope, fileName: string, folderName: StorageFolder): Promise<void>;
+  deleteFile(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): Promise<void>;
   generateDownloadUrl(
     fullPath: string,
     expirationHours?: number,
