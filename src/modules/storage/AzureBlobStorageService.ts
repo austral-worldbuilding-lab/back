@@ -13,7 +13,7 @@ import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { FileScope } from '@modules/files/types/file-scope.type';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { buildPrefix } from './path-builder';
+import { buildPrefix, StorageFolder } from './path-builder';
 import { StorageService } from './StorageService';
 
 @Injectable()
@@ -38,12 +38,13 @@ export class AzureBlobStorageService implements StorageService {
   async uploadFiles(
     files: CreateFileDto[],
     scope: FileScope,
+    folderName: StorageFolder,
   ): Promise<PresignedUrl[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const urls: PresignedUrl[] = [];
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, folderName);
 
     for (const file of files) {
       const blobName = `${prefix}${file.file_name}`;
@@ -64,7 +65,7 @@ export class AzureBlobStorageService implements StorageService {
       this.containerName,
     );
     const descriptors: CreateFileDto[] = [];
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: prefix,
@@ -83,7 +84,7 @@ export class AzureBlobStorageService implements StorageService {
       this.containerName,
     );
     const buffers: Buffer[] = [];
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: prefix,
@@ -110,7 +111,7 @@ export class AzureBlobStorageService implements StorageService {
       this.containerName,
     );
     const fileBuffers: FileBuffer[] = [];
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: prefix,
@@ -134,11 +135,11 @@ export class AzureBlobStorageService implements StorageService {
     return fileBuffers;
   }
 
-  async deleteFile(scope: FileScope, fileName: string): Promise<void> {
+  async deleteFile(scope: FileScope, fileName: string, folderName: StorageFolder): Promise<void> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, folderName);
 
     const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
@@ -154,7 +155,7 @@ export class AzureBlobStorageService implements StorageService {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
     const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
 
@@ -177,7 +178,7 @@ export class AzureBlobStorageService implements StorageService {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
     const blobName = `${prefix}${fileName}`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 

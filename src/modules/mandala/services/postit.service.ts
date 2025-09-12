@@ -384,6 +384,7 @@ export class PostitService {
       const presignedUrls = await this.storageService.uploadFiles(
         [createFileDto],
         fileScope,
+        'images',
       );
       presignedUrl = presignedUrls[0]?.url;
     }

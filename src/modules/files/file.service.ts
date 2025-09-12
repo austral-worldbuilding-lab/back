@@ -99,14 +99,14 @@ export class FileService {
   }
 
   private buildFilePath(scope: FileScope, fileName: string): string {
-    return `${buildPrefix(scope)}${fileName}`;
+    return `${buildPrefix(scope, 'files')}${fileName}`;
   }
 
   async uploadFiles(
     files: CreateFileDto[],
     scope: FileScope,
   ): Promise<PresignedUrl[]> {
-    return this.storageService.uploadFiles(files, scope);
+    return this.storageService.uploadFiles(files, scope, 'files');
   }
 
   async getFiles(scope: FileScope): Promise<EffectiveFile[]> {
@@ -131,10 +131,6 @@ export class FileService {
     if (scope.mandalaId) return 'mandala';
     if (scope.projectId) return 'project';
     return 'org';
-  }
-
-  async getFilesFromScope(scope: FileScope): Promise<CreateFileDto[]> {
-    return this.storageService.getFiles(scope);
   }
 
   async readAllFilesAsBuffers(scope: FileScope): Promise<Buffer[]> {
@@ -167,17 +163,7 @@ export class FileService {
     return allFileBuffers;
   }
 
-  async readAllFilesAsBuffersFromScope(scope: FileScope): Promise<Buffer[]> {
-    return this.storageService.readAllFilesAsBuffers(scope);
-  }
-
-  async readAllFilesAsBuffersWithMetadataFromScope(
-    scope: FileScope,
-  ): Promise<FileBuffer[]> {
-    return this.storageService.readAllFilesAsBuffersWithMetadata(scope);
-  }
-
   async deleteFile(scope: FileScope, fileName: string): Promise<void> {
-    return this.storageService.deleteFile(scope, fileName);
+    return this.storageService.deleteFile(scope, fileName, 'files');
   }
 }
