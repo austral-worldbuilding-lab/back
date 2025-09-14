@@ -60,7 +60,11 @@ export class AzureBlobStorageService implements StorageService {
     return urls;
   }
 
-  buildPublicUrl(scope: FileScope, fileName: string, folderName: StorageFolder): string {
+  buildPublicUrl(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): string {
     const prefix = buildPrefix(scope, folderName);
     const blobName = `${prefix}${fileName}`;
     const account = process.env.AZURE_STORAGE_ACCOUNT!;

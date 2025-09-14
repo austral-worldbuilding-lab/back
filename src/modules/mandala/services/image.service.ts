@@ -106,19 +106,23 @@ export class ImageService {
   ): Promise<MandalaImage> {
     const mandalaDocument = await this.getMandalaDocument(projectId, mandalaId);
 
- 
-    const mandalaInfo = await this.mandalaRepository.findMandalaWithProjectInfo(mandalaId);
+    const mandalaInfo =
+      await this.mandalaRepository.findMandalaWithProjectInfo(mandalaId);
     if (!mandalaInfo) {
       throw new BusinessLogicException('Mandala not found', { mandalaId });
     }
 
     const fileName = `${imageData.id}.jpg`;
     const fileScope = this.buildFileScope(mandalaInfo, mandalaId);
-    const publicUrl = this.storageService.buildPublicUrl(fileScope, fileName, 'images');
+    const publicUrl = this.storageService.buildPublicUrl(
+      fileScope,
+      fileName,
+      'images',
+    );
 
     const newImage: MandalaImage = {
       id: imageData.id,
-      url: publicUrl, 
+      url: publicUrl,
       coordinates: {
         x: 0,
         y: 0,
