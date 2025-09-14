@@ -46,6 +46,9 @@ import {
   ApiOverlapSummary,
   ApiGetCachedQuestions,
   ApiGetCachedPostits,
+  ApiCreateImagePresignedUrl,
+  ApiConfirmImageUpload,
+  ApiDeleteImage,
 } from './decorators/mandala-swagger.decorators';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
@@ -55,6 +58,13 @@ import {
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { GeneratePostitsDto } from './dto/generate-postits.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
+import { ConfirmImageUploadDto } from './dto/image/confirm-image-upload.dto';
+import { CreateImagePresignedUrlDto } from './dto/image/create-image-presigned-url.dto';
+import {
+  ImageResponseDto,
+  toImageResponseDto,
+} from './dto/image/image-response.dto';
+import { PresignedUrlResponseDto } from './dto/image/presigned-url-response.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
@@ -65,6 +75,7 @@ import {
   RequireProjectRoles,
 } from './guards/mandala-role.guard';
 import { MandalaService } from './mandala.service';
+import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { PostitWithCoordinates } from './types/postits';
@@ -78,6 +89,7 @@ export class MandalaController {
   constructor(
     private readonly mandalaService: MandalaService,
     private readonly postitService: PostitService,
+    private readonly imageService: ImageService,
   ) {}
 
   @Post()
@@ -397,6 +409,66 @@ export class MandalaController {
       message:
         'Mandala superpuesto de resumen comparativo creado correctamente',
       data: result,
+    };
+  }
+
+  @Post(':mandalaId/images/presigned-url')
+  @UseGuards(MandalaRoleGuard)
+  @ApiCreateImagePresignedUrl()
+  async createImagePresignedUrl(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Body() createImageDto: CreateImagePresignedUrlDto,
+  ): Promise<MessageResponse<PresignedUrlResponseDto>> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    const result = await this.imageService.generatePresignedUrlForImage({
+      projectId: mandala.projectId,
+      mandalaId: mandalaId,
+      fileName: createImageDto.fileName,
+    });
+
+    return {
+      message: 'Presigned URL generated successfully',
+      data: result,
+    };
+  }
+
+  @Post(':mandalaId/images/confirm')
+  @UseGuards(MandalaRoleGuard)
+  @ApiConfirmImageUpload()
+  async confirmImageUpload(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Body() confirmImageDto: ConfirmImageUploadDto,
+  ): Promise<MessageResponse<ImageResponseDto>> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    const result = await this.imageService.confirmImageUpload(
+      mandala.projectId,
+      mandalaId,
+      {
+        id: confirmImageDto.id,
+      },
+    );
+
+    return {
+      message: 'Image uploaded and saved successfully',
+      data: toImageResponseDto(result),
+    };
+  }
+
+  @Delete(':mandalaId/images/:imageId')
+  @UseGuards(MandalaRoleGuard)
+  @ApiDeleteImage()
+  async deleteImage(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Param('imageId', new UuidValidationPipe()) imageId: string,
+  ): Promise<MessageOnlyResponse> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    await this.imageService.deleteImage(mandala.projectId, mandalaId, imageId);
+
+    return {
+      message: 'Image deleted successfully',
     };
   }
 }

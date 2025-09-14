@@ -332,4 +332,33 @@ export class MandalaRepository {
       };
     });
   }
+
+  async findMandalaWithProjectInfo(mandalaId: string): Promise<{
+    projectId: string;
+    organizationId: string;
+  } | null> {
+    const mandala = await this.prisma.mandala.findFirst({
+      where: {
+        id: mandalaId,
+        isActive: true,
+      },
+      select: {
+        projectId: true,
+        project: {
+          select: {
+            organizationId: true,
+          },
+        },
+      },
+    });
+
+    if (!mandala || !mandala.project?.organizationId) {
+      return null;
+    }
+
+    return {
+      projectId: mandala.projectId,
+      organizationId: mandala.project.organizationId,
+    };
+  }
 }

@@ -115,14 +115,6 @@ export class PostitService {
     return postitsWithCoordinates;
   }
 
-  private async getMandalaOrThrow(mandalaId: string): Promise<MandalaDto> {
-    const mandala = await this.mandalaRepository.findOne(mandalaId);
-    if (!mandala) {
-      throw new BusinessLogicException('Mandala not found', { mandalaId });
-    }
-    return mandala;
-  }
-
   async generatePostits(
     mandala: MandalaDto,
     dimensions: string[],
@@ -384,6 +376,7 @@ export class PostitService {
       const presignedUrls = await this.storageService.uploadFiles(
         [createFileDto],
         fileScope,
+        'images',
       );
       presignedUrl = presignedUrls[0]?.url;
     }

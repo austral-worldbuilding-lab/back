@@ -10,6 +10,7 @@ import { MandalaRoleGuard } from './guards/mandala-role.guard';
 import { MandalaController } from './mandala.controller';
 import { MandalaRepository } from './mandala.repository';
 import { MandalaService } from './mandala.service';
+import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 
 @Module({
@@ -19,6 +20,7 @@ import { PostitService } from './services/postit.service';
     MandalaService,
     MandalaRepository,
     PostitService,
+    ImageService,
     MandalaRoleGuard,
     AzureBlobStorageService,
   ],

@@ -28,12 +28,10 @@ export class MandalaRoleGuard extends BaseProjectRoleGuard {
       return directProjectId;
     }
 
-    // Handle overlap endpoint - validate access to all mandalas and extract project ID from first
     const overlapBody = request.body as { mandalas?: string[] };
     if (overlapBody?.mandalas && overlapBody.mandalas.length > 0) {
       const mandalaIds = overlapBody.mandalas;
 
-      // Find all mandalas to validate access
       const mandalas = await this.prisma.mandala.findMany({
         where: {
           id: { in: mandalaIds },
@@ -46,7 +44,6 @@ export class MandalaRoleGuard extends BaseProjectRoleGuard {
         throw new ForbiddenException('One or more mandalas not found');
       }
 
-      // Check if user has access to ALL projects
       const userId = request.user.id;
       for (const mandala of mandalas) {
         const userRole = await this.prisma.userProjectRole.findUnique({
@@ -65,7 +62,6 @@ export class MandalaRoleGuard extends BaseProjectRoleGuard {
         }
       }
 
-      // Return the first mandala's project ID for the base guard logic
       return mandalas[0]?.projectId;
     }
 

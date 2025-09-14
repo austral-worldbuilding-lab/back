@@ -4,6 +4,8 @@ import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { AiQuestionResponseDto } from '../dto/ai-question-response.dto';
 import { CharacterListItemDto } from '../dto/character-list-item.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
+import { ImageResponseDto } from '../dto/image/image-response.dto';
+import { PresignedUrlResponseDto } from '../dto/image/presigned-url-response.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from '../dto/mandala.dto';
 import { PostitResponseDto } from '../dto/postit/postit-response.dto';
@@ -501,5 +503,95 @@ export const ApiOverlapSummary = () =>
       status: 400,
       description:
         'Solicitud inválida - Las mandalas deben tener las mismas dimensiones y escalas',
+    }),
+  );
+
+export const ApiCreateImagePresignedUrl = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar URL firmada para subir imagen',
+      description:
+        'Genera una URL firmada para que el frontend pueda subir una imagen directamente a S3',
+    }),
+    ApiParam({
+      name: 'mandalaId',
+      description: 'ID de la mandala',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'URL firmada generada exitosamente',
+      type: PresignedUrlResponseDto,
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a esta mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrada',
+    }),
+  );
+
+export const ApiConfirmImageUpload = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Confirmar carga de imagen',
+      description:
+        'Confirma que la imagen fue subida exitosamente usando solo el imageId. Construye la URL automáticamente y crea la imagen en la mandala en el centro (0,0) con valores por defecto',
+    }),
+    ApiParam({
+      name: 'mandalaId',
+      description: 'ID de la mandala',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Imagen confirmada y guardada exitosamente',
+      type: ImageResponseDto,
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a esta mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrada',
+    }),
+  );
+
+export const ApiDeleteImage = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Eliminar imagen de mandala',
+      description: 'Elimina una imagen de la mandala y del almacenamiento S3',
+    }),
+    ApiParam({
+      name: 'mandalaId',
+      description: 'ID de la mandala',
+      type: String,
+    }),
+    ApiParam({
+      name: 'imageId',
+      description: 'ID de la imagen a eliminar',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Imagen eliminada exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Image deleted successfully' },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a esta mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala o imagen no encontrada',
     }),
   );
