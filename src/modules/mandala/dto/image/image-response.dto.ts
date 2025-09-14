@@ -20,8 +20,8 @@ class ImageCoordinatesResponseDto {
 
 export class ImageResponseDto {
   @ApiProperty({
-    description: 'ID único de la imagen',
-    example: '123e4567-e89b-12d3-a456-426614174002',
+    description: 'ID único de la imagen con la extensión',
+    example: '123e4567-e89b-12d3-a456-426614174002.jpg',
   })
   id!: string;
 

@@ -54,7 +54,7 @@ export class ImageService {
       fileScope,
     );
 
-    return { imageId, presignedUrl };
+    return { imageId: uniqueFileName, presignedUrl };
   }
 
   private generateUniqueFileName(
@@ -112,7 +112,7 @@ export class ImageService {
       throw new BusinessLogicException('Mandala not found', { mandalaId });
     }
 
-    const fileName = `${imageData.id}.jpg`;
+    const fileName = imageData.id;
     const fileScope = this.buildFileScope(mandalaInfo, mandalaId);
     const publicUrl = this.storageService.buildPublicUrl(
       fileScope,
