@@ -197,7 +197,7 @@ model AiUsage {
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
-  quantity Int // tokens consumidos
+  quantity Int // tokens consumed
 
   @@index([userId, timestamp])
   @@index([service, timestamp])
