@@ -106,10 +106,19 @@ export class ImageService {
   ): Promise<MandalaImage> {
     const mandalaDocument = await this.getMandalaDocument(projectId, mandalaId);
 
-    // Crear imagen siempre en el centro con valores por defecto
+ 
+    const mandalaInfo = await this.mandalaRepository.findMandalaWithProjectInfo(mandalaId);
+    if (!mandalaInfo) {
+      throw new BusinessLogicException('Mandala not found', { mandalaId });
+    }
+
+    const fileName = `${imageData.id}.jpg`;
+    const fileScope = this.buildFileScope(mandalaInfo, mandalaId);
+    const publicUrl = this.storageService.buildPublicUrl(fileScope, fileName, 'images');
+
     const newImage: MandalaImage = {
       id: imageData.id,
-      url: imageData.url,
+      url: publicUrl, 
       coordinates: {
         x: 0,
         y: 0,
@@ -183,10 +192,8 @@ export class ImageService {
 
     const updatedImages = this.removeImageFromList(existingImages, imageId);
 
-    // Primero lo eliminamos de Firebase
     await this.updateMandalaImages(projectId, mandalaId, updatedImages);
 
-    // Despues lo eliminamos de S3
     await this.deleteImageFromStorage(mandalaId, imageToDelete);
   }
 

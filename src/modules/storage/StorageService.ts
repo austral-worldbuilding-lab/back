@@ -23,4 +23,9 @@ export interface StorageService {
     fullPath: string,
     expirationHours?: number,
   ): Promise<string>;
+  buildPublicUrl(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): string;
 }

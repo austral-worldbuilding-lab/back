@@ -538,7 +538,7 @@ export const ApiConfirmImageUpload = () =>
     ApiOperation({
       summary: 'Confirmar carga de imagen',
       description:
-        'Confirma que la imagen fue subida exitosamente y la crea en la mandala en el centro (0,0) con valores por defecto',
+        'Confirma que la imagen fue subida exitosamente usando solo el imageId. Construye la URL automáticamente y crea la imagen en la mandala en el centro (0,0) con valores por defecto',
     }),
     ApiParam({
       name: 'mandalaId',

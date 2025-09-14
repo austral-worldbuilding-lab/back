@@ -447,7 +447,6 @@ export class MandalaController {
       mandalaId,
       {
         id: confirmImageDto.id,
-        url: confirmImageDto.url,
       },
     );
 

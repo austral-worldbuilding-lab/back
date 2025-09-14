@@ -21,5 +21,4 @@ export interface CreateMandalaImageRequest {
 
 export interface ConfirmMandalaImageRequest {
   id: string;
-  url: string;
 }
