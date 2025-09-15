@@ -3,6 +3,7 @@ import {
   ResourceNotFoundException,
   StateConflictException,
 } from '@common/exceptions/custom-exceptions';
+import { CacheService } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { getProjectValidationConfig } from '@config/project-validation.config';
 import { AiService } from '@modules/ai/ai.service';
@@ -40,6 +41,7 @@ export class ProjectService {
     @Inject(forwardRef(() => MandalaService))
     private mandalaService: MandalaService,
     private fileService: FileService,
+    private cacheService: CacheService,
   ) {}
 
   private getDimensions(dimensions?: DimensionDto[]): DimensionDto[] {
@@ -273,7 +275,7 @@ export class ProjectService {
   }
 
   async generateSolutions(
-    //userId: string,
+    userId: string,
     projectId: string,
     selectedFiles?: string[],
   ): Promise<AiSolutionResponse[]> {
@@ -298,7 +300,40 @@ export class ProjectService {
       mandalasDocument,
       selectedFiles,
     );
-    //TODO save solutions to cache
+
+    await this.saveSolutionsToCache(userId, projectId, solutions);
+
     return solutions;
+  }
+
+  private async saveSolutionsToCache(
+    userId: string,
+    projectId: string,
+    solutions: AiSolutionResponse[],
+  ): Promise<void> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'solutions',
+      userId,
+      projectId,
+    );
+
+    for (const solution of solutions) {
+      await this.cacheService.addToLimitedCache(cacheKey, solution, 20);
+    }
+    this.logger.log(
+      `Saved solutions to cache for user ${userId}, project ${projectId}`,
+    );
+  }
+
+  async getCachedSolutions(
+    userId: string,
+    projectId: string,
+  ): Promise<AiSolutionResponse[]> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'solutions',
+      userId,
+      projectId,
+    );
+    return this.cacheService.getFromCache<AiSolutionResponse>(cacheKey);
   }
 }

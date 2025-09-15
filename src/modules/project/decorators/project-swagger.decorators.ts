@@ -10,6 +10,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import { AiSolutionResponseDto } from '../dto/ai-solution-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { TagDto } from '../dto/tag.dto';
@@ -505,5 +506,32 @@ export const ApiCreateProjectSolutions = () =>
           statusCode: { type: 'number', example: 401 },
         },
       },
+    }),
+  );
+
+export const ApiGetCachedSolutions = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener soluciones del cache',
+      description:
+        'Obtiene todas las soluciones generadas previamente para un proyecto desde el cache',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del proyecto',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Soluciones obtenidas exitosamente del cache',
+      type: [AiSolutionResponseDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Proyecto no encontrado',
     }),
   );
