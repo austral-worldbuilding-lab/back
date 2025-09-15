@@ -163,6 +163,16 @@ export class FileService {
     return allFileBuffers;
   }
 
+  async countProjectFiles(projectId: string): Promise<number> {
+    const scope = await this.resolveScope('project', projectId);
+    const projectScope: FileScope = {
+      orgId: scope.orgId,
+      projectId: scope.projectId,
+    };
+
+    return this.storageService.countFilesInScope(projectScope);
+  }
+
   async deleteFile(scope: FileScope, fileName: string): Promise<void> {
     return this.storageService.deleteFile(scope, fileName, 'files');
   }

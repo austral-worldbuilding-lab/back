@@ -379,3 +379,131 @@ export const ApiRemoveUserFromProject = () =>
       },
     }),
   );
+
+export const ApiCreateProjectSolutions = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar soluciones para un proyecto',
+      description:
+        'Genera soluciones de IA basadas en las mandalas y descripción del proyecto',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID único del proyecto',
+      type: String,
+      example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Soluciones generadas exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                title: {
+                  type: 'string',
+                  example: 'Crear un Festejódromo',
+                },
+                description: {
+                  type: 'string',
+                  example:
+                    'Se propone la creación de un espacio dedicado dentro del campus universitario para la celebración de festejos de graduación. Este "Festejódromo" contaría con una infraestructura específica que facilitaría la limpieza inmediata, promovería la donación de alimentos sobrantes para fomentar festejos solidarios y sostenibles, y ofrecería mensajes inspiradores sobre una nueva etapa para los graduados. Aborda la problemática de la huella ecológica y el mal prestigio al centralizar y regular las celebraciones, y satisface el deseo de los alumnos de festejar dentro del campus con sus seres queridos, gestionando las preocupaciones de seguridad y orden con la comunidad local.',
+                },
+                provocation: {
+                  type: 'string',
+                  example:
+                    '¿Qué pasaría si la universidad creara un espacio dedicado para la celebración de festejos de graduación?',
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiBadRequestResponse({
+      description:
+        'Solicitud incorrecta - El proyecto no cumple con los requisitos mínimos para generar soluciones',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            examples: {
+              missingDescription: {
+                summary: 'Falta descripción del proyecto',
+                value:
+                  'Se requiere una descripción del proyecto para generar soluciones.',
+              },
+              missingDimensions: {
+                summary: 'Faltan dimensiones del proyecto',
+                value:
+                  'Se requieren dimensiones del proyecto para generar soluciones.',
+              },
+              missingScales: {
+                summary: 'Faltan escalas del proyecto',
+                value:
+                  'Se requieren escalas del proyecto para generar soluciones.',
+              },
+              insufficientMandalas: {
+                summary: 'Insuficientes mandalas',
+                value:
+                  'El proyecto no cumple el minimo de mandalas para generar soluciones.',
+              },
+              insufficientPostits: {
+                summary: 'Insuficientes postits',
+                value:
+                  'El proyecto no cumple el minimo de postits en todas las mandalas para generar soluciones.',
+              },
+              insufficientFiles: {
+                summary: 'Insuficientes archivos',
+                value:
+                  'El proyecto no cumple el minimo de archivos para generar soluciones.',
+              },
+            },
+          },
+          error: { type: 'string', example: 'Solicitud Incorrecta' },
+          statusCode: { type: 'number', example: 400 },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example:
+              'Project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description: 'Prohibido - No tiene permisos para acceder a este proyecto',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Forbidden resource' },
+          error: { type: 'string', example: 'Forbidden' },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Unauthorized' },
+          statusCode: { type: 'number', example: 401 },
+        },
+      },
+    }),
+  );

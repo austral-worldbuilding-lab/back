@@ -13,8 +13,11 @@ import { AiRequestValidator } from '../validators/ai-request.validator';
 @Injectable()
 export class AiAdapterUtilsService {
   private readonly logger = new Logger(AiAdapterUtilsService.name);
+  //TODO split min and max results to postits and questions
   private readonly minResults: number;
   private readonly maxResults: number;
+  private readonly minSolutions: number;
+  private readonly maxSolutions: number;
   constructor(
     private configService: ConfigService,
     private fileService: FileService,
@@ -23,6 +26,8 @@ export class AiAdapterUtilsService {
     const config = getAiValidationConfig();
     this.minResults = config.minResultsPerRequest;
     this.maxResults = config.maxResultsPerRequest;
+    this.minSolutions = config.minSolutionsPerRequest;
+    this.maxSolutions = config.maxSolutionsPerRequest;
   }
 
   getMaxResults(): number {
@@ -31,6 +36,14 @@ export class AiAdapterUtilsService {
 
   getMinResults(): number {
     return this.minResults;
+  }
+
+  getMinSolutions(): number {
+    return this.minSolutions;
+  }
+
+  getMaxSolutions(): number {
+    return this.maxSolutions;
   }
 
   validateConfiguration(modelConfigKey: string): string {
@@ -62,10 +75,18 @@ export class AiAdapterUtilsService {
     }
   }
 
-  async getCommonInstructions(): Promise<string> {
+  async getCiclo1Instructions(): Promise<string> {
     const commonInstructionPath = path.resolve(
       __dirname,
       '../resources/prompts/instrucciones_ciclo_1.txt',
+    );
+    return this.readPromptTemplate(commonInstructionPath);
+  }
+
+  async getCiclo3Instructions(): Promise<string> {
+    const commonInstructionPath = path.resolve(
+      __dirname,
+      '../resources/prompts/instrucciones_ciclo_3.txt',
     );
     return this.readPromptTemplate(commonInstructionPath);
   }

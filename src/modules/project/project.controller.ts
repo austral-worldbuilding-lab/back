@@ -37,9 +37,11 @@ import {
   ApiUpdateUserRole,
   ApiGetProjectUsers,
   ApiRemoveUserFromProject,
+  ApiCreateProjectSolutions,
 } from './decorators/project-swagger.decorators';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { GenerateSolutionsDto } from './dto/generate-solutions.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { TagDto } from './dto/tag.dto';
@@ -51,6 +53,7 @@ import {
   RequireProjectRoles,
 } from './guards/project-role.guard';
 import { ProjectService } from './project.service';
+import { AiSolutionResponse } from './types/solutions.type';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -225,6 +228,25 @@ export class ProjectController {
     return {
       message: 'Usuario eliminado del proyecto exitosamente',
       data: removedUser,
+    };
+  }
+
+  @Post(':id/generate-solutions')
+  @UseGuards(ProjectRoleGuard)
+  @ApiCreateProjectSolutions()
+  async createProjectSolutions(
+    @Param('id', new UuidValidationPipe()) projectId: string,
+    @Body() generateSolutionsDto: GenerateSolutionsDto,
+    //@Req() request: RequestWithUser,
+  ): Promise<DataResponse<AiSolutionResponse[]>> {
+    //const userId = request.user.id;
+    const solutions = await this.projectService.generateSolutions(
+      //userId,
+      projectId,
+      generateSolutionsDto.selectedFiles,
+    );
+    return {
+      data: solutions,
     };
   }
 }

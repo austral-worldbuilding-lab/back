@@ -79,7 +79,7 @@ import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { PostitWithCoordinates } from './types/postits';
-import { AiQuestionResponse } from './types/questions';
+import { AiQuestionResponse } from './types/questions.type';
 
 @ApiTags('Mandalas')
 @Controller('mandala')

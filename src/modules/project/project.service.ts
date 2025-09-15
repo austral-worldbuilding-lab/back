@@ -4,11 +4,19 @@ import {
   StateConflictException,
 } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
+import { getProjectValidationConfig } from '@config/project-validation.config';
+import { AiService } from '@modules/ai/ai.service';
+import { FileService } from '@modules/files/file.service';
+import { MandalaService } from '@modules/mandala/mandala.service';
 import { RoleService } from '@modules/role/role.service';
 import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
+  Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -20,12 +28,18 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectRepository } from './project.repository';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
+import { AiSolutionResponse } from './types/solutions.type';
 
 @Injectable()
 export class ProjectService {
+  private readonly logger = new Logger(ProjectService.name);
   constructor(
     private projectRepository: ProjectRepository,
     private roleService: RoleService,
+    private aiService: AiService,
+    @Inject(forwardRef(() => MandalaService))
+    private mandalaService: MandalaService,
+    private fileService: FileService,
   ) {}
 
   private getDimensions(dimensions?: DimensionDto[]): DimensionDto[] {
@@ -36,6 +50,53 @@ export class ProjectService {
 
   private getScales(scales?: string[]): string[] {
     return !scales || scales.length === 0 ? DEFAULT_SCALES : scales;
+  }
+
+  private async checkMinimalConditionsForSolutions(
+    project: ProjectDto,
+    projectId: string,
+  ): Promise<void> {
+    const config = getProjectValidationConfig();
+
+    if (!project.description || project.description.trim().length === 0) {
+      throw new BadRequestException(
+        'Project description is required to generate solutions. Please add a description to the project first.',
+      );
+    }
+
+    if (project.configuration.dimensions.length === 0) {
+      throw new BadRequestException(
+        'Project dimensions are required to generate solutions. Please add dimensions to the project first.',
+      );
+    }
+
+    if (project.configuration.scales.length === 0) {
+      throw new BadRequestException(
+        'Project scales are required to generate solutions. Please add scales to the project first.',
+      );
+    }
+
+    const mandalas = await this.mandalaService.findAll(projectId);
+    if (mandalas.length < config.minMandalasForSolutions) {
+      throw new BadRequestException(
+        `Project must have at least ${config.minMandalasForSolutions} mandalas to generate solutions. Please add more mandalas to the project first.`,
+      );
+    }
+    const totalPostitsCount =
+      await this.mandalaService.countPostitsAcrossMandalas(mandalas);
+    if (totalPostitsCount < config.minPostitsForSolutions) {
+      throw new BadRequestException(
+        `Project must have at least ${config.minPostitsForSolutions} postits across all mandalas to generate solutions. Please add more postits to your mandalas first.`,
+      );
+    }
+
+    const projectFilesCount =
+      await this.fileService.countProjectFiles(projectId);
+    if (projectFilesCount < config.minFilesForSolutions) {
+      throw new BadRequestException(
+        `Project must have at least ${config.minFilesForSolutions} files to generate solutions. Please add more files to the project first.`,
+      );
+    }
   }
 
   async create(
@@ -209,5 +270,35 @@ export class ProjectService {
     }
 
     return this.projectRepository.removeUserFromProject(projectId, userId);
+  }
+
+  async generateSolutions(
+    //userId: string,
+    projectId: string,
+    selectedFiles?: string[],
+  ): Promise<AiSolutionResponse[]> {
+    this.logger.log(`generateSolutions called for project ${projectId}`);
+    const project = await this.findOne(projectId);
+
+    await this.checkMinimalConditionsForSolutions(project, projectId);
+
+    const projectMandalas = await this.mandalaService.findAll(projectId);
+    const mandalasDocument = await Promise.all(
+      projectMandalas.map((m) =>
+        this.mandalaService.getFirestoreDocument(m.projectId, m.id),
+      ),
+    );
+
+    const solutions = await this.aiService.generateSolutions(
+      projectId,
+      project.name,
+      project.description!,
+      project.configuration.dimensions.map((d) => d.name),
+      project.configuration.scales,
+      mandalasDocument,
+      selectedFiles,
+    );
+    //TODO save solutions to cache
+    return solutions;
   }
 }

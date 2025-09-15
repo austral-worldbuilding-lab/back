@@ -147,6 +147,22 @@ export class AzureBlobStorageService implements StorageService {
     return fileBuffers;
   }
 
+  async countFilesInScope(scope: FileScope): Promise<number> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(scope, 'files');
+    let count = 0;
+
+    for await (const _blob of containerClient.listBlobsFlat({
+      prefix: prefix,
+    })) {
+      count++;
+    }
+
+    return count;
+  }
+
   async deleteFile(
     scope: FileScope,
     fileName: string,
