@@ -21,7 +21,7 @@ REGLAS PARA LAS POSIBLES SOLUCIONES:
 
 EJEMPLO DE USO:
   Proyecto: Festejos UA
-  Descipcion del proyecto: El proyecto Festejos UA se desarrolla en el campus de la Universidad Austral y se centra en las celebraciones de los estudiantes, especialmente las graduaciones. El problema principal radica en las prácticas de festejo actuales, que generan desorden, quejas del personal, una huella ecológica negativa, desperdicio de alimentos y una percepción de mal prestigio para la universidad
+  Descipción del proyecto: El proyecto Festejos UA se desarrolla en el campus de la Universidad Austral y se centra en las celebraciones de los estudiantes, especialmente las graduaciones. El problema principal radica en las prácticas de festejo actuales, que generan desorden, quejas del personal, una huella ecológica negativa, desperdicio de alimentos y una percepción de mal prestigio para la universidad
   [
     {
       "title": "Crear un Festejódromo",
