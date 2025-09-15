@@ -78,7 +78,7 @@ export interface AiProvider {
 
   /**
    * Generates solutions for a project
-   * @param projectId - The ID of the project to be used in LoadAndValidateFiles //TODO get Files as input to avoid this, just pass mandalaId or projectIdfor logs
+   * @param projectId - The ID of the project to be used in LoadAndValidateFiles //TODO get Files as input to avoid this, just pass mandalaId or projectId for logs
    * @param projectName - The name of the project to be used in the prompt
    * @param projectDescription - The description of the project to be used in the prompt
    * @param dimensions - Array of dimensions to be used in LoadAndValidateFiles //TODO get Files as input to avoid this

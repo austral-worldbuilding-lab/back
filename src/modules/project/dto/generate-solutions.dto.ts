@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsString } from 'class-validator';
 
-// TODO: use generics for selectedFiles as its the same as the one in generate-questions.dto.ts
+// TODO: use generics for selectedFiles as it's the same as the one in generate-questions.dto.ts
 export class GenerateSolutionsDto {
   @ApiProperty({
     description:

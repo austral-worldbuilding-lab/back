@@ -16,7 +16,7 @@ export class AiPromptBuilderService {
   constructor(private readonly utilsService: AiAdapterUtilsService) {}
 
   /**
-   * Builds a complete prompt by combining ciclo 1 instructions with task-specific prompt
+   * Builds a complete prompt by combining Ciclo 1 instructions with task-specific prompt
    * This is because is better to have a instruction + prompt combined inside SystemInstruction to avoid "Lost in the middle" problem with all context
    * @param taskPrompt - The task-specific prompt content
    * @returns The final prompt with ciclo 1 instructions prepended
@@ -27,7 +27,7 @@ export class AiPromptBuilderService {
   }
 
   /**
-   * Builds a complete prompt by combining ciclo 3 instructions with task-specific prompt
+   * Builds a complete prompt by combining Ciclo 3 instructions with task-specific prompt
    * This is because is better to have a instruction + prompt combined inside SystemInstruction to avoid "Lost in the middle" problem with all context
    * @param taskPrompt - The task-specific prompt content
    * @returns The final prompt with ciclo 3 instructions prepended

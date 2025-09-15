@@ -13,7 +13,7 @@ import { AiRequestValidator } from '../validators/ai-request.validator';
 @Injectable()
 export class AiAdapterUtilsService {
   private readonly logger = new Logger(AiAdapterUtilsService.name);
-  //TODO split min and max results to postits and questions
+  // TODO: split min and max results to postits and questions
   private readonly minResults: number;
   private readonly maxResults: number;
   private readonly minSolutions: number;
