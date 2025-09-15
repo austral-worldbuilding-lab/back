@@ -5,6 +5,8 @@ export interface AiValidationConfig {
   maxInputSize: number; // in bytes
   maxResultsPerRequest: number;
   minResultsPerRequest: number;
+  minSolutionsPerRequest: number;
+  maxSolutionsPerRequest: number;
 }
 
 /**
@@ -55,4 +57,10 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
     process.env.AI_MAX_RESULTS_PER_REQUEST || '24',
   ),
   minResultsPerRequest: parseInt(process.env.AI_MIN_RESULTS_PER_REQUEST || '6'),
+  minSolutionsPerRequest: parseInt(
+    process.env.AI_MIN_SOLUTIONS_PER_REQUEST || '3',
+  ),
+  maxSolutionsPerRequest: parseInt(
+    process.env.AI_MAX_SOLUTIONS_PER_REQUEST || '5',
+  ),
 });

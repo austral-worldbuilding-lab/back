@@ -4,7 +4,8 @@ import {
   AiPostitComparisonResponse,
   AiPostitResponse,
 } from '@modules/mandala/types/postits';
-import { AiQuestionResponse } from '@modules/mandala/types/questions';
+import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
+import { AiSolutionResponse } from '@modules/project/types/solutions.type';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -13,6 +14,7 @@ import { AiProvider } from '../interfaces/ai-provider.interface';
 import {
   createPostitsSummaryResponseSchema,
   createPostitsResponseSchema,
+  createSolutionsResponseSchema,
 } from '../resources/dto/generate-postits.dto';
 import { createQuestionsResponseSchema } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
@@ -119,6 +121,8 @@ export class GeminiAdapter implements AiProvider {
     });
 
     this.logger.log('Generation completed successfully');
+    this.logger.debug('Usage metadata', response.usageMetadata);
+    this.logger.debug('Response text', response.text);
 
     return response.text;
   }
@@ -321,8 +325,6 @@ export class GeminiAdapter implements AiProvider {
       }),
     );
 
-    this.logger.log('responseText', responseText);
-
     const result = this.parseAndValidateComparisonResponse(responseText);
     this.logger.log(`Comparison generation completed`);
     return result;
@@ -353,6 +355,64 @@ export class GeminiAdapter implements AiProvider {
         'Failed to parse AI comparison response as JSON:',
         error,
       );
+      throw new Error('Invalid JSON response from Gemini API');
+    }
+  }
+
+  async generateSolutions(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    mandalasAiSummary: string,
+  ): Promise<AiSolutionResponse[]> {
+    this.logger.log(`Starting solutions generation for project: ${projectId}`);
+
+    const model = this.geminiModel;
+    const finalPromptTask = await this.promptBuilderService.buildSolutionPrompt(
+      projectName,
+      projectDescription,
+      mandalasAiSummary,
+    );
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      dimensions,
+      scales,
+    );
+
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const responseText = await this.generateContentWithFiles(
+      model,
+      finalPromptTask,
+      geminiFiles,
+      createSolutionsResponseSchema({
+        minItems: this.utilsService.getMinSolutions(),
+        maxItems: this.utilsService.getMaxSolutions(),
+      }),
+    );
+
+    const result = this.parseAndValidateSolutionResponse(responseText);
+    this.logger.log(`Solutions generation completed`);
+    return result;
+  }
+
+  private parseAndValidateSolutionResponse(
+    responseText: string | undefined,
+  ): AiSolutionResponse[] {
+    if (!responseText) {
+      throw new Error('No response text received from Gemini API');
+    }
+    try {
+      const solutions = JSON.parse(responseText) as AiSolutionResponse[];
+      this.logger.log(
+        `Successfully parsed ${solutions.length} solution responses from AI`,
+      );
+
+      return solutions;
+    } catch (error) {
+      this.logger.error('Failed to parse AI solution response as JSON:', error);
       throw new Error('Invalid JSON response from Gemini API');
     }
   }

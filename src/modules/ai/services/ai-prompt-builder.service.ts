@@ -6,6 +6,7 @@ import {
   replacePostitPlaceholders,
   replaceQuestionPlaceholders,
   replaceComparisonPlaceholders,
+  replaceSolutionPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -15,13 +16,24 @@ export class AiPromptBuilderService {
   constructor(private readonly utilsService: AiAdapterUtilsService) {}
 
   /**
-   * Builds a complete prompt by combining common instructions with task-specific prompt
+   * Builds a complete prompt by combining Ciclo 1 instructions with task-specific prompt
    * This is because is better to have a instruction + prompt combined inside SystemInstruction to avoid "Lost in the middle" problem with all context
    * @param taskPrompt - The task-specific prompt content
-   * @returns The final prompt with common instructions prepended
+   * @returns The final prompt with ciclo 1 instructions prepended
    */
-  async buildPromptWithCommonInstructions(taskPrompt: string): Promise<string> {
-    const commonInstruction = await this.utilsService.getCommonInstructions();
+  async buildPromptWithCiclo1Instructions(taskPrompt: string): Promise<string> {
+    const commonInstruction = await this.utilsService.getCiclo1Instructions();
+    return `${commonInstruction}\n\n${taskPrompt}`;
+  }
+
+  /**
+   * Builds a complete prompt by combining Ciclo 3 instructions with task-specific prompt
+   * This is because is better to have a instruction + prompt combined inside SystemInstruction to avoid "Lost in the middle" problem with all context
+   * @param taskPrompt - The task-specific prompt content
+   * @returns The final prompt with ciclo 3 instructions prepended
+   */
+  async buildPromptWithCiclo3Instructions(taskPrompt: string): Promise<string> {
+    const commonInstruction = await this.utilsService.getCiclo3Instructions();
     return `${commonInstruction}\n\n${taskPrompt}`;
   }
 
@@ -56,7 +68,7 @@ export class AiPromptBuilderService {
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
-    return this.buildPromptWithCommonInstructions(promptTask);
+    return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 
   /**
@@ -93,7 +105,7 @@ export class AiPromptBuilderService {
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
-    return this.buildPromptWithCommonInstructions(promptTask);
+    return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 
   /**
@@ -113,6 +125,32 @@ export class AiPromptBuilderService {
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),
     });
-    return this.buildPromptWithCommonInstructions(promptTask);
+    return this.buildPromptWithCiclo1Instructions(promptTask);
+  }
+
+  /**
+   * Builds complete prompt for solution generation
+   * @param mandalasAiSummary - Document containing the mandalas to be compared
+   * @returns Complete prompt ready for AI processing
+   */
+  async buildSolutionPrompt(
+    projectName: string,
+    projectDescription: string,
+    mandalasAiSummary: string,
+  ): Promise<string> {
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_soluciones.txt',
+    );
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const promptTask = replaceSolutionPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
+      mandalaDocument: mandalasAiSummary,
+      maxResults: this.utilsService.getMaxResults(),
+      minResults: this.utilsService.getMinResults(),
+    });
+    return this.buildPromptWithCiclo3Instructions(promptTask);
   }
 }

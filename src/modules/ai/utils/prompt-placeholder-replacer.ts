@@ -7,6 +7,8 @@ export interface PromptReplacementConfig {
   mandalaDocument?: string;
   maxResults?: number;
   minResults?: number;
+  projectName?: string;
+  projectDescription?: string;
 }
 
 type PlaceholderReplacer = (
@@ -124,6 +126,27 @@ const replaceMinResults: PlaceholderReplacer = (prompt, config) => {
   return prompt.replace(/\$\{minResults}/g, config.minResults.toString());
 };
 
+const replaceProjectName: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{projectName\}/g.test(prompt)) {
+    throw new Error('Missing placeholder ${projectName} in prompt');
+  }
+  if (config.projectName === undefined) {
+    throw new Error(
+      'projectName config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{projectName}/g, config.projectName);
+};
+
+const replaceProjectDescription: PlaceholderReplacer = (prompt, config) => {
+  if (config.projectDescription === undefined) {
+    throw new Error(
+      'projectDescription config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{projectDescription}/g, config.projectDescription);
+};
+
 const composeReplacers = (
   ...replacers: PlaceholderReplacer[]
 ): PlaceholderReplacer => {
@@ -157,6 +180,14 @@ const questionReplacer = composeReplacers(
 );
 
 const comparisonReplacer = composeReplacers(
+  replaceMandalaDocument,
+  replaceMaxResults,
+  replaceMinResults,
+);
+
+const solutionReplacer = composeReplacers(
+  replaceProjectName,
+  replaceProjectDescription,
   replaceMandalaDocument,
   replaceMaxResults,
   replaceMinResults,
@@ -230,5 +261,23 @@ export function replaceComparisonPlaceholders(
     config,
     comparisonReplacer,
     'comparison',
+  );
+}
+
+/**
+ * Replace placeholders for solution generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceSolutionPlaceholders(
+  promptTemplate: string,
+  config: PromptReplacementConfig = {},
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    solutionReplacer,
+    'solution',
   );
 }

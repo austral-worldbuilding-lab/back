@@ -50,6 +50,7 @@ import {
   ApiConfirmImageUpload,
   ApiDeleteImage,
 } from './decorators/mandala-swagger.decorators';
+import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaDto,
@@ -79,7 +80,6 @@ import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { PostitWithCoordinates } from './types/postits';
-import { AiQuestionResponse } from './types/questions';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -312,7 +312,7 @@ export class MandalaController {
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generateQuestionsDto: GenerateQuestionsDto,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiQuestionResponse[]>> {
+  ): Promise<DataResponse<AiQuestionResponseDto[]>> {
     const userId = request.user.id;
     const questions = await this.mandalaService.generateQuestions(
       userId,
@@ -355,7 +355,7 @@ export class MandalaController {
   async getCachedQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiQuestionResponse[]>> {
+  ): Promise<DataResponse<AiQuestionResponseDto[]>> {
     const userId = request.user.id;
     const cachedQuestions = await this.mandalaService.getCachedQuestions(
       userId,

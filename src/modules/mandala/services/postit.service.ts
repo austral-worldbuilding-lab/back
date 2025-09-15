@@ -11,10 +11,9 @@ import { PrismaService } from '@modules/prisma/prisma.service';
 import { TagDto } from '@modules/project/dto/tag.dto';
 import { ProjectService } from '@modules/project/project.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { CreatePostitDto } from '../dto/postit/create-postit.dto';
-import { MandalaRepository } from '../mandala.repository';
 import {
   Postit,
   PostitCoordinates,
@@ -36,7 +35,7 @@ import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-cha
 export class PostitService {
   constructor(
     private aiService: AiService,
-    private mandalaRepository: MandalaRepository,
+    @Inject(forwardRef(() => ProjectService))
     private projectService: ProjectService,
     private firebaseDataService: FirebaseDataService,
     private prisma: PrismaService,

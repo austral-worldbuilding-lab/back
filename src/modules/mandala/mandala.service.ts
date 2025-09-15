@@ -1,3 +1,4 @@
+import { DimensionDto } from '@common/dto/dimension.dto';
 import {
   BadRequestException,
   ExternalServiceException,
@@ -9,9 +10,9 @@ import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
-import { AiQuestionResponse } from '@modules/mandala/types/questions';
+import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
 import {
   FirestoreMandalaDocument,
@@ -43,8 +44,6 @@ import {
   getTargetProjectId,
 } from './utils/overlap-validation.utils';
 
-import { DimensionDto } from '@/common/dto/dimension.dto';
-
 const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
 const DEFAULT_CHARACTER_SECTION = '';
 const DEFAULT_CHARACTER_DIMENSION = '';
@@ -57,6 +56,7 @@ export class MandalaService {
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
     private postitService: PostitService,
+    @Inject(forwardRef(() => ProjectService))
     private projectService: ProjectService,
     private aiService: AiService,
     private cacheService: CacheService,
@@ -133,6 +133,10 @@ export class MandalaService {
     }
 
     return mandala;
+  }
+
+  async findAll(projectId: string): Promise<MandalaDto[]> {
+    return this.mandalaRepository.findAll(projectId);
   }
 
   async findAllPaginated(
@@ -741,7 +745,7 @@ export class MandalaService {
   async getFirestoreDocument(
     projectId: string,
     mandalaId: string,
-  ): Promise<FirestoreMandalaDocument | null> {
+  ): Promise<FirestoreMandalaDocument> {
     this.logger.log(`Getting Firestore document for mandala ${mandalaId}`);
 
     try {
@@ -750,7 +754,7 @@ export class MandalaService {
         mandalaId,
       );
 
-      return document as FirestoreMandalaDocument | null;
+      return document as FirestoreMandalaDocument;
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -896,12 +900,9 @@ export class MandalaService {
         scales: overlappedConfiguration.scales,
       };
 
-      const mandalasDocumentPromises = mandalas.map((m) =>
-        this.firebaseDataService.getDocument(m.projectId, m.id),
+      const mandalasDocument = await Promise.all(
+        mandalas.map((m) => this.getFirestoreDocument(m.projectId, m.id)),
       );
-      const mandalasDocument = (await Promise.all(
-        mandalasDocumentPromises,
-      )) as FirestoreMandalaDocument[];
 
       const newMandala = await this.create(
         createOverlappedMandalaDto,
@@ -1010,5 +1011,20 @@ export class MandalaService {
       dimensions: dimensions,
       scales: scales,
     };
+  }
+
+  async countPostitsAcrossMandalas(mandalas: MandalaDto[]): Promise<number> {
+    const mandalasDocument = await Promise.all(
+      mandalas.map((mandala) =>
+        this.getFirestoreDocument(mandala.projectId, mandala.id),
+      ),
+    );
+
+    const totalPostitsCount = mandalasDocument.reduce((acc, doc) => {
+      const postits = doc.postits || [];
+      return acc + postits.length;
+    }, 0);
+
+    return totalPostitsCount;
   }
 }
