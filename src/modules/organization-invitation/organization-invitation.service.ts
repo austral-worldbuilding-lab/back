@@ -172,13 +172,6 @@ export class OrganizationInvitationService {
       roleId,
     );
 
-    if (!updated) {
-      throw new BusinessLogicException('Failed to update invitation', {
-        invitationId: id,
-        operation: 'accept',
-      });
-    }
-
     return this.mapToDto(updated);
   }
 
@@ -338,9 +331,9 @@ export class OrganizationInvitationService {
       roleId = memberRole.id;
     }
 
-    await this.invitationRepository.addUserToOrganization(
+    await this.invitationRepository.acceptInvitationAndAddUser(
+      invitation.id,
       userId,
-      invitation.organizationId,
       roleId,
     );
 
