@@ -475,4 +475,42 @@ export class ProjectRepository {
       });
     }
   }
+
+  async findProjectsByUserAndOrganization(
+    userId: string,
+    organizationId: string,
+    skip: number,
+    take: number,
+  ): Promise<[ProjectDto[], number]> {
+    const whereClause: Prisma.ProjectWhereInput = {
+      isActive: true,
+      organizationId,
+      userRoles: {
+        some: {
+          userId,
+        },
+      },
+    };
+
+    const [projects, total] = await this.prisma.$transaction([
+      this.prisma.project.findMany({
+        where: whereClause,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          organization: true,
+          userRoles: {
+            include: {
+              role: true,
+              user: true,
+            },
+          },
+        },
+      }),
+      this.prisma.project.count({ where: whereClause }),
+    ]);
+
+    return [projects.map((p) => this.parseToProjectDto(p)), total];
+  }
 }
