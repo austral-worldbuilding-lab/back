@@ -172,6 +172,13 @@ export class OrganizationInvitationService {
       roleId,
     );
 
+    // Auto-assign user to all projects in the organization
+    await this.invitationRepository.autoAssignToOrganizationProjects(
+      userId,
+      invitationFromDb.organizationId,
+      roleId,
+    );
+
     return this.mapToDto(updated);
   }
 
@@ -334,6 +341,12 @@ export class OrganizationInvitationService {
     await this.invitationRepository.acceptInvitationAndAddUser(
       invitation.id,
       userId,
+      roleId,
+    );
+
+    await this.invitationRepository.autoAssignToOrganizationProjects(
+      userId,
+      invitation.organizationId,
       roleId,
     );
 

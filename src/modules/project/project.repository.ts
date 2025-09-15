@@ -446,4 +446,33 @@ export class ProjectRepository {
       where: { projectId, role: { name: 'owner' } },
     });
   }
+
+  async autoAssignOrganizationMembers(
+    projectId: string,
+    organizationId: string,
+  ): Promise<void> {
+    const orgMembers = await this.prisma.userOrganizationRole.findMany({
+      where: { organizationId },
+      include: { role: true },
+    });
+
+    for (const member of orgMembers) {
+      await this.prisma.userProjectRole.upsert({
+        where: {
+          userId_projectId: {
+            userId: member.userId,
+            projectId: projectId,
+          },
+        },
+        update: {
+          roleId: member.roleId,
+        },
+        create: {
+          userId: member.userId,
+          projectId: projectId,
+          roleId: member.roleId,
+        },
+      });
+    }
+  }
 }

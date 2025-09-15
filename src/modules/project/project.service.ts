@@ -48,11 +48,18 @@ export class ProjectService {
     // Handle role at service level
     const ownerRole = await this.roleService.findOrCreate('owner');
 
-    return this.projectRepository.create(
+    const project: ProjectDto = await this.projectRepository.create(
       { ...createProjectDto, dimensions, scales } as CreateProjectDto,
       userId,
       ownerRole.id,
     );
+
+    await this.projectRepository.autoAssignOrganizationMembers(
+      project.id,
+      createProjectDto.organizationId,
+    );
+
+    return project;
   }
 
   async findAllPaginated(

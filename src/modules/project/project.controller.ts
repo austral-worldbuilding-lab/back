@@ -142,6 +142,7 @@ export class ProjectController {
 
   @Post(':id/tag')
   @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiCreateProjectTag()
   async createProjectTag(
     @Param('id') projectId: string,

@@ -42,35 +42,8 @@ export abstract class BaseProjectRoleGuard implements CanActivate {
       },
     });
 
-    let effectiveRole: { role: { id: string; name: string } } | null = userRole;
-
     if (!userRole) {
-      const project = await this.prisma.project.findUnique({
-        where: { id: projectId },
-        select: { organizationId: true },
-      });
-
-      if (!project) {
-        throw new ForbiddenException('Proyecto no encontrado');
-      }
-
-      const orgRole = await this.prisma.userOrganizationRole.findUnique({
-        where: {
-          userId_organizationId: {
-            userId: userId,
-            organizationId: project.organizationId,
-          },
-        },
-        include: {
-          role: true,
-        },
-      });
-
-      if (!orgRole) {
-        throw new ForbiddenException('No tienes acceso a este proyecto');
-      }
-
-      effectiveRole = orgRole;
+      throw new ForbiddenException('No tienes acceso a este proyecto');
     }
 
     const requiredRoles = this.reflector.get<string[]>(
@@ -83,7 +56,7 @@ export abstract class BaseProjectRoleGuard implements CanActivate {
       return true;
     }
 
-    if (!requiredRoles.includes(effectiveRole!.role.name)) {
+    if (!requiredRoles.includes(userRole.role.name)) {
       throw new ForbiddenException(
         'No tienes los permisos necesarios para realizar esta acción',
       );
