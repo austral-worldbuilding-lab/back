@@ -58,7 +58,7 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
   ),
   minResultsPerRequest: parseInt(process.env.AI_MIN_RESULTS_PER_REQUEST || '6'),
   minSolutionsPerRequest: parseInt(
-    process.env.AI_MIN_SOLUTIONS_PER_REQUEST || '5',
+    process.env.AI_MIN_SOLUTIONS_PER_REQUEST || '3',
   ),
   maxSolutionsPerRequest: parseInt(
     process.env.AI_MAX_SOLUTIONS_PER_REQUEST || '5',
