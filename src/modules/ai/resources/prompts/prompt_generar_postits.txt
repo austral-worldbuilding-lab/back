@@ -1,5 +1,5 @@
 OBJETIVO:
-  Generar post-its que representen cómo vivo, percibe o actúa el personaje central en su mundo actual. 
+  Generar post-its que representen cómo vive, percibe o actúa el personaje central en su mundo actual. 
   Cada post-it debe ser breve, claro y directamente relacionado con ese personaje.
 
 CONFIGURACION DEL PERSONAJE CENTRAL:
@@ -25,7 +25,7 @@ REGLAS DE LOS POST-ITS:
   • Una sola idea por post-it.
   • Sin explicaciones largas ni combinación de ideas.
   • Enfoque en experiencias, necesidades o percepciones del personaje.
-  • Redactadas en primera persona como si él/ella lo dijera.  
+  • Redactadas en tercera persona, como alguien que observa al personaje.  
   • Procura que ninguna dimensión o escala concentre más del 30% del total salvo falta de información.
 
 REGLAS DE LAS ETIQUETAS:
