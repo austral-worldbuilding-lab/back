@@ -25,6 +25,7 @@ REGLAS DE LAS PREGUNTAS:
   • Claras, abiertas y específicas (evitar sí/no; comenzar con “¿Qué…?”, “¿Cómo…?”, “¿Por qué…?”, “¿Quién…?”, “¿Dónde…?”, “¿Cuándo…?”).
   • Una sola intención por pregunta (evitar preguntas múltiples en una).
   • Variedad de tipos: clarificación, profundización, contraste/contradicción, fragilidad/vulnerabilidad, consistencia/sistemas.
+  • Las preguntas deben redactarse de manera abierta y exploratoria, formuladas como disparadores para el análisis del mundo, involucrando al personaje ${centerCharacter}, pero dirigidas al worldbuilder que lo construye.
   • Evitar duplicados o parafraseos equivalentes.
   • Usar únicamente dimensiones y escalas de las listas habilitadas.
 
@@ -38,33 +39,33 @@ EJEMPLO DE USO:
   Descripcion: Residente de Buenos Aires durante la pandemia y cuarentena por COVID-19.
   [
     {
-      question: "¿Qué costumbres cotidianas de tu barrio cambiaron durante la cuarentena?",
+      question: "¿Qué costumbres cotidianas del barrio cambiaron durante la cuarentena?",
       dimension: "Cultura",
       scale: "Comunidad"
     },
     {
-      question: "¿Cómo afectó el cierre de comercios a las relaciones de confianza en tu zona?",
+      question: "¿Cómo afectó el cierre de comercios a las relaciones de confianza en la zona?",
       dimension: "Economía",
       scale: "Ciudad"
     },
     {
-      question: "¿Qué rol tuvo la OMS en las reglas que hoy condicionan tu vida diaria?",
+      question: "¿Qué rol tuvo la OMS en las reglas que hoy condicionan la vida diaria?",
       dimension: "Gobernanza",
       scale: "Global"
     },
     {
-      question: "¿Cómo se sintió cuando el sistema de salud colapsó y faltaban insumos?",
+      question: "¿Qué sentimientos experimentó cuando el sistema de salud colapsó y faltaban insumos?",
       dimension: "Infraestructura",
       scale: "Hospital"
     },
     {
-      question: "¿Cómo consiguieron alimentos o medicinas cuando la distribución falló?",
+      question: "¿Cómo se conseguían alimentos o medicinas cuando la distribución falló?",
       dimension: "Recursos",
       scale: "Familiar"
     },
     {
-      question: "¿Qué viste que cambió en la naturaleza mientras la ciudad estaba en pausa?",
+      question: "¿Qué cambió en la naturaleza mientras la ciudad estaba en pausa?",
       dimension: "Ecología",
       scale: "Global"
-    },
-  ]
+    },
+  ]
