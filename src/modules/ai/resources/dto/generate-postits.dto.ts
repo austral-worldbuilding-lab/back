@@ -82,22 +82,3 @@ export const createSolutionsResponseSchema = (limits: {
   minItems: limits.minItems,
   maxItems: limits.maxItems,
 });
-
-export const createSolutionsResponseSchema = (limits: {
-  minItems: number;
-  maxItems: number;
-}) => ({
-  type: 'array',
-  items: {
-    type: 'object',
-    properties: {
-      title: { type: 'string' },
-      description: { type: 'string' },
-      provocation: { type: 'string' },
-    },
-    required: ['title', 'description', 'provocation'],
-    propertyOrdering: ['title', 'description', 'provocation'],
-  },
-  minItems: limits.minItems,
-  maxItems: limits.maxItems,
-});

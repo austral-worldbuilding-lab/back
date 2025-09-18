@@ -4,6 +4,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiSolutionResponse } from '@modules/project/types/solutions.type';
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 
 export interface AiProvider {
   /**
