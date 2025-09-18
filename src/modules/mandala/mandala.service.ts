@@ -1,3 +1,4 @@
+import { DimensionDto } from '@common/dto/dimension.dto';
 import {
   BadRequestException,
   ExternalServiceException,
@@ -8,10 +9,11 @@ import { CacheService } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
+import { AiMandalaReport, emptyReport } from '@modules/mandala/types/ai-report';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
-import { AiQuestionResponse } from '@modules/mandala/types/questions';
+import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
 import {
   FirestoreMandalaDocument,
@@ -43,8 +45,6 @@ import {
   getTargetProjectId,
 } from './utils/overlap-validation.utils';
 
-import { DimensionDto } from '@/common/dto/dimension.dto';
-
 const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
 const DEFAULT_CHARACTER_SECTION = '';
 const DEFAULT_CHARACTER_DIMENSION = '';
@@ -57,6 +57,7 @@ export class MandalaService {
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
     private postitService: PostitService,
+    @Inject(forwardRef(() => ProjectService))
     private projectService: ProjectService,
     private aiService: AiService,
     private cacheService: CacheService,
@@ -133,6 +134,10 @@ export class MandalaService {
     }
 
     return mandala;
+  }
+
+  async findAll(projectId: string): Promise<MandalaDto[]> {
+    return this.mandalaRepository.findAll(projectId);
   }
 
   async findAllPaginated(
@@ -741,7 +746,7 @@ export class MandalaService {
   async getFirestoreDocument(
     projectId: string,
     mandalaId: string,
-  ): Promise<FirestoreMandalaDocument | null> {
+  ): Promise<FirestoreMandalaDocument> {
     this.logger.log(`Getting Firestore document for mandala ${mandalaId}`);
 
     try {
@@ -750,7 +755,7 @@ export class MandalaService {
         mandalaId,
       );
 
-      return document as FirestoreMandalaDocument | null;
+      return document as FirestoreMandalaDocument;
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -852,7 +857,7 @@ export class MandalaService {
 
   async createOverlapSummary(
     createOverlapDto: CreateOverlappedMandalaDto,
-  ): Promise<MandalaDto> {
+  ): Promise<{ mandala: MandalaDto; report: AiMandalaReport }> {
     this.logger.log(
       `Starting overlap summary operation for ${createOverlapDto.mandalas.length} mandalas`,
     );
@@ -896,19 +901,16 @@ export class MandalaService {
         scales: overlappedConfiguration.scales,
       };
 
-      const mandalasDocumentPromises = mandalas.map((m) =>
-        this.firebaseDataService.getDocument(m.projectId, m.id),
+      const mandalasDocument = await Promise.all(
+        mandalas.map((m) => this.getFirestoreDocument(m.projectId, m.id)),
       );
-      const mandalasDocument = (await Promise.all(
-        mandalasDocumentPromises,
-      )) as FirestoreMandalaDocument[];
 
       const newMandala = await this.create(
         createOverlappedMandalaDto,
         MandalaType.OVERLAP_SUMMARY,
       );
 
-      const aiSummaryPostits =
+      const { comparisons, report } =
         await this.postitService.generateComparisonPostits(
           mandalas,
           mandalasDocument,
@@ -917,7 +919,7 @@ export class MandalaService {
       const aiSummaryPostitsWithCoordinates =
         this.postitService.transformToPostitsWithCoordinates(
           newMandala.id,
-          aiSummaryPostits,
+          comparisons,
           overlappedConfiguration.dimensions.map((d) => d.name),
           overlappedConfiguration.scales,
         );
@@ -926,6 +928,7 @@ export class MandalaService {
         targetProjectId,
         {
           postits: aiSummaryPostitsWithCoordinates,
+          report: report ?? emptyReport(),
         },
         newMandala.id,
       );
@@ -934,7 +937,7 @@ export class MandalaService {
         `Successfully created overlapped mandala ${newMandala.id}`,
       );
 
-      return newMandala;
+      return { mandala: newMandala, report: report ?? emptyReport() };
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -1010,5 +1013,20 @@ export class MandalaService {
       dimensions: dimensions,
       scales: scales,
     };
+  }
+
+  async countPostitsAcrossMandalas(mandalas: MandalaDto[]): Promise<number> {
+    const mandalasDocument = await Promise.all(
+      mandalas.map((mandala) =>
+        this.getFirestoreDocument(mandala.projectId, mandala.id),
+      ),
+    );
+
+    const totalPostitsCount = mandalasDocument.reduce((acc, doc) => {
+      const postits = doc.postits || [];
+      return acc + postits.length;
+    }, 0);
+
+    return totalPostitsCount;
   }
 }

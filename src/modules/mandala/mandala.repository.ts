@@ -127,6 +127,22 @@ export class MandalaRepository {
     return this.parseToMandalaDto(mandala as MandalaWithRelations);
   }
 
+  async findAll(projectId: string): Promise<MandalaDto[]> {
+    const mandalas = await this.prisma.mandala.findMany({
+      where: {
+        projectId,
+        isActive: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        children: { select: { id: true } },
+        parent: { select: { id: true } },
+      },
+    });
+
+    return mandalas.map((m) => this.parseToMandalaDto(m));
+  }
+
   async findAllPaginated(
     projectId: string,
     skip: number,

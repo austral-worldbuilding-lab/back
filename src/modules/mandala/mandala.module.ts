@@ -4,7 +4,7 @@ import { FirebaseModule } from '@modules/firebase/firebase.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { ProjectModule } from '@modules/project/project.module';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { MandalaRoleGuard } from './guards/mandala-role.guard';
 import { MandalaController } from './mandala.controller';
@@ -14,7 +14,13 @@ import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule, FirebaseModule, AiModule, ProjectModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    FirebaseModule,
+    AiModule,
+    forwardRef(() => ProjectModule),
+  ],
   controllers: [MandalaController],
   providers: [
     MandalaService,

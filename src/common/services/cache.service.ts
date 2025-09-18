@@ -10,11 +10,11 @@ export class CacheService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   buildCacheKey(
-    type: 'questions' | 'postits',
+    type: 'questions' | 'postits' | 'solutions',
     userId: string,
-    mandalaId: string,
+    scopeId: string,
   ): string {
-    return CacheUtils.buildSimpleCacheKey(type, userId, mandalaId);
+    return CacheUtils.buildSimpleCacheKey(type, userId, scopeId);
   }
 
   async addToLimitedCache<T>(

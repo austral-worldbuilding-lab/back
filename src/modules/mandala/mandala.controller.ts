@@ -9,6 +9,7 @@ import {
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   Controller,
   Get,
@@ -50,6 +51,7 @@ import {
   ApiConfirmImageUpload,
   ApiDeleteImage,
 } from './decorators/mandala-swagger.decorators';
+import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaDto,
@@ -79,7 +81,6 @@ import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { PostitWithCoordinates } from './types/postits';
-import { AiQuestionResponse } from './types/questions';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -312,7 +313,7 @@ export class MandalaController {
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generateQuestionsDto: GenerateQuestionsDto,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiQuestionResponse[]>> {
+  ): Promise<DataResponse<AiQuestionResponseDto[]>> {
     const userId = request.user.id;
     const questions = await this.mandalaService.generateQuestions(
       userId,
@@ -355,7 +356,7 @@ export class MandalaController {
   async getCachedQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiQuestionResponse[]>> {
+  ): Promise<DataResponse<AiQuestionResponseDto[]>> {
     const userId = request.user.id;
     const cachedQuestions = await this.mandalaService.getCachedQuestions(
       userId,
@@ -403,8 +404,12 @@ export class MandalaController {
   @ApiOverlapSummary()
   async createOverlapSummary(
     @Body() overlapDto: CreateOverlappedMandalaDto,
-  ): Promise<MessageResponse<MandalaDto>> {
+  ): Promise<
+    MessageResponse<{ mandala: MandalaDto; report: AiMandalaReport }>
+  > {
+    console.log(overlapDto);
     const result = await this.mandalaService.createOverlapSummary(overlapDto);
+    console.log(result);
     return {
       message:
         'Mandala superpuesto de resumen comparativo creado correctamente',

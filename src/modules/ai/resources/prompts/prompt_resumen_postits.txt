@@ -30,8 +30,9 @@ COBERTURA Y BALANCE:
   • Distribuir los post-its entre las similitudes, diferencias y unicos, evitando concentrar más del ~30% en una sola, salvo que no haya evidencia suficiente en otras.
   • Darle prioridad a los post-its que reflejan similitudes o diferencias.
 
-EJEMPLO DE USO:
-  [
+EJEMPLO DE SALIDA:
+{
+  "comparisons": [
     {
       "content": "Ambos valoran seguridad vial",
       "dimension": "Producto",
@@ -47,25 +48,51 @@ EJEMPLO DE USO:
       "fromSummary": ["Jóvenes", "Adultos"]
     },
     {
-      "content": "Adultos priorizan durabilidad",
-      "dimension": "Producto",
-      "scale": "Persona",
-      "type": "DIFERENCIA",
-      "fromSummary": ["Jóvenes", "Adultos"]
-    },
-    {
-      "content": "Suscripción flexible atractiva",
-      "dimension": "Modelo de Negocio",
-      "scale": "Comunidad",
-      "type": "DIFERENCIA",
-      "fromSummary": ["Jóvenes", "Adultos"]
-    },
-    {
       "content": "Alta lealtad marca adultos",
       "dimension": "Identidad de Marca",
       "scale": "Global",
       "type": "UNICO",
       "fromSummary": ["Adultos"]
     }
-  ]
-  
+  ],
+  "report": {
+    "summary": "Se observa un patrón compartido en la valoración de la seguridad y en el interés por modalidades de acceso flexibles. Mientras el segmento Joven prioriza versatilidad y tamaño compacto para la movilidad cotidiana, el segmento Adulto pondera durabilidad y fidelidad a la marca, generando tensiones en la propuesta de producto y en los mensajes de marca. En conjunto, emergen oportunidades para articular una oferta que combine seguridad percibida con modalidades de acceso flexibles, acompañada de una comunicación diferenciada por segmento.",
+    "coincidences": [
+      "Valoración de la seguridad",
+      "Interés por modalidades de acceso flexibles"
+    ],
+    "tensions": [
+      "Tamaño/configuración del vehículo (compacto vs. robusto)",
+      "Diferente grado de fidelidad a marca"
+    ],
+    "insights": [
+      "Paquetes que integren seguridad + flexibilidad de acceso",
+      "Mensajería diferenciada por segmento para producto y marca"
+    ]
+  }
+}
+
+FORMATO DE SALIDA (OBLIGATORIO):
+
+Devolver EXCLUSIVAMENTE JSON válido con la siguiente estructura EXACTA:
+
+{
+  "comparisons": [{
+    "content": "string (3-5 palabras)",
+    "dimension": "string (misma que en los post-its originales)",
+    "scale": "string (misma que en los post-its originales)",
+    "type": "CHARACTER | OVERLAP | OVERLAP_SUMMARY",
+    "fromSummary": ["string (nombre del personaje)"]
+  }],
+  "report": {
+    "summary": "párrafo narrativo (120–200 palabras; máx. 1200 caracteres)",
+    "coincidences": ["string"],
+    "tensions": ["string"],
+    "insights": ["string"]
+  }
+}
+
+Reglas:
+- No incluir texto fuera del JSON (sin markdown ni comentarios).
+- `summary` debe ser un párrafo analítico y cohesivo (estilo informe), sin repetir listados de `tensions`/`insights`.
+- Si falta evidencia, indicarlo con lenguaje prudente (“indicios”, “hipótesis”).

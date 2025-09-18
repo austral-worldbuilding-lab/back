@@ -1,8 +1,10 @@
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
   AiPostitResponse,
 } from '@modules/mandala/types/postits';
-import { AiQuestionResponse } from '@modules/mandala/types/questions';
+import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
+import { AiSolutionResponse } from '@modules/project/types/solutions.type';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
@@ -75,13 +77,6 @@ export class AiService {
 
     const cleanMandalaDocument = createCleanMandalaForQuestions(mandala);
 
-    this.logger.debug('Mandala summary for questions created:', {
-      totalPostits: cleanMandalaDocument.totalPostits,
-      dimensions: cleanMandalaDocument.dimensions.length,
-      scales: cleanMandalaDocument.scales.length,
-      centerCharacter: cleanMandalaDocument.centerCharacter.name,
-    });
-
     const result = await this.aiProvider.generateQuestions(
       projectId,
       mandalaId,
@@ -104,7 +99,10 @@ export class AiService {
     projectId: string,
     mandalas: MandalaDto[],
     mandalasDocument: FirestoreMandalaDocument[],
-  ): Promise<AiPostitComparisonResponse[]> {
+  ): Promise<{
+    comparisons: AiPostitComparisonResponse[];
+    report: AiMandalaReport;
+  }> {
     this.logger.log(
       `Starting postit summary generation for project: ${projectId}`,
     );
@@ -125,7 +123,39 @@ export class AiService {
     );
 
     this.logger.log(
-      `Generated ${result.length} postits summary for project: ${projectId}`,
+      `Generated ${result.comparisons.length} postits summary for project: ${projectId}`,
+    );
+
+    return result;
+  }
+
+  async generateSolutions(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    mandalasDocument: FirestoreMandalaDocument[],
+    selectedFiles?: string[],
+  ): Promise<AiSolutionResponse[]> {
+    this.logger.log(`Starting solutions generation for project: ${projectId}`);
+
+    const cleanMandalasDocument = mandalasDocument.map((m) =>
+      createCleanMandalaForSummary(m),
+    );
+
+    const result = await this.aiProvider.generateSolutions(
+      projectId,
+      projectName,
+      projectDescription,
+      dimensions,
+      scales,
+      cleanMandalasDocument.map((m) => JSON.stringify(m)).join('\n'),
+      selectedFiles,
+    );
+
+    this.logger.log(
+      `Generated ${result.length} solutions for project: ${projectId}`,
     );
 
     return result;

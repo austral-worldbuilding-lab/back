@@ -1,9 +1,10 @@
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
   AiPostitResponse,
 } from '@modules/mandala/types/postits';
-
-import { AiQuestionResponse } from '@/modules/mandala/types/questions';
+import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
+import { AiSolutionResponse } from '@modules/project/types/solutions.type';
 
 export interface AiProvider {
   /**
@@ -74,5 +75,29 @@ export interface AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
-  ): Promise<AiPostitComparisonResponse[]>;
+  ): Promise<{
+    comparisons: AiPostitComparisonResponse[];
+    report: AiMandalaReport;
+  }>;
+
+  /**
+   * Generates solutions for a project
+   * @param projectId - The ID of the project to be used in LoadAndValidateFiles //TODO get Files as input to avoid this, just pass mandalaId or projectId for logs
+   * @param projectName - The name of the project to be used in the prompt
+   * @param projectDescription - The description of the project to be used in the prompt
+   * @param dimensions - Array of dimensions to be used in LoadAndValidateFiles //TODO get Files as input to avoid this
+   * @param scales - Array of scales to be used in LoadAndValidateFiles //TODO get Files as input to avoid this
+   * @param mandalasAiSummary - Document containing the mandalas to be used in the prompt
+   * @param selectedFiles - Optional array of file names to filter context
+   * @returns Promise resolving to an array of solution responses
+   */
+  generateSolutions(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    mandalasAiSummary: string,
+    selectedFiles?: string[],
+  ): Promise<AiSolutionResponse[]>;
 }
