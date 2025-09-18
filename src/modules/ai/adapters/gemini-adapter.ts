@@ -433,9 +433,18 @@ export class GeminiAdapter implements AiProvider {
       throw new Error('No response text received from Gemini API');
     }
 
-    let parsed: any;
+    interface GeminiComparisonWithReport {
+      comparisons?: AiPostitComparisonResponse[];
+      report?: Partial<AiMandalaReport>;
+    }
+
+    let parsed: GeminiComparisonWithReport;
+
     try {
-      parsed = JSON.parse(responseText);
+      parsed = JSON.parse(responseText) as {
+        comparisons?: AiPostitComparisonResponse[];
+        report?: AiMandalaReport;
+      };
     } catch {
       const start = responseText.indexOf('{');
       const end = responseText.lastIndexOf('}');
@@ -443,16 +452,24 @@ export class GeminiAdapter implements AiProvider {
         this.logger.error('Invalid JSON response from Gemini API');
         throw new Error('Invalid JSON response from Gemini API');
       }
-      parsed = JSON.parse(responseText.slice(start, end + 1));
+      parsed = JSON.parse(
+        responseText.slice(start, end + 1),
+      ) as GeminiComparisonWithReport;
     }
 
-    const normalizedComparisonsText = JSON.stringify(parsed.comparisons ?? []);
+    const normalizedComparisonsText = Array.isArray(parsed.comparisons)
+      ? JSON.stringify(parsed.comparisons)
+      : JSON.stringify([]);
+
     const comparisons = this.parseAndValidateComparisonResponse(
       normalizedComparisonsText,
     );
 
     const report: AiMandalaReport = {
-      summary: parsed?.report?.summary ?? '',
+      summary:
+        parsed.report && typeof parsed.report.summary === 'string'
+          ? parsed.report.summary
+          : '',
       coincidences: parsed?.report?.coincidences ?? [],
       tensions: parsed?.report?.tensions ?? [],
       insights: parsed?.report?.insights ?? [],
