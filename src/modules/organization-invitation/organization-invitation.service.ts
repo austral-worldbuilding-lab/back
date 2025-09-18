@@ -172,12 +172,12 @@ export class OrganizationInvitationService {
       roleId,
     );
 
-    if (!updated) {
-      throw new BusinessLogicException('Failed to update invitation', {
-        invitationId: id,
-        operation: 'accept',
-      });
-    }
+    // Auto-assign user to all projects in the organization
+    await this.invitationRepository.autoAssignToOrganizationProjects(
+      userId,
+      invitationFromDb.organizationId,
+      roleId,
+    );
 
     return this.mapToDto(updated);
   }
@@ -338,7 +338,13 @@ export class OrganizationInvitationService {
       roleId = memberRole.id;
     }
 
-    await this.invitationRepository.addUserToOrganization(
+    await this.invitationRepository.acceptInvitationAndAddUser(
+      invitation.id,
+      userId,
+      roleId,
+    );
+
+    await this.invitationRepository.autoAssignToOrganizationProjects(
       userId,
       invitation.organizationId,
       roleId,

@@ -1,6 +1,6 @@
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma, Organization } from '@prisma/client';
+import { Organization } from '@prisma/client';
 
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationDto } from './dto/organization.dto';
@@ -47,26 +47,30 @@ export class OrganizationRepository {
     take: number,
     userId: string,
   ): Promise<[OrganizationDto[], number]> {
-    const whereClause: Prisma.OrganizationWhereInput = {
-      isActive: true,
-      userRoles: {
-        some: {
-          userId,
-        },
+    const orgsWithAccess = await this.prisma.organization.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { userRoles: { some: { userId } } },
+          { projects: { some: { userRoles: { some: { userId } } } } },
+        ],
       },
-    };
+      include: {
+        userRoles: { where: { userId }, include: { role: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    const [orgs, total] = await this.prisma.$transaction([
-      this.prisma.organization.findMany({
-        where: whereClause,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.organization.count({ where: whereClause }),
-    ]);
+    const orgDtos = orgsWithAccess.map((org) => ({
+      ...this.parseToOrganizationDto(org),
+      accessType:
+        org.userRoles.length > 0 ? ('full' as const) : ('limited' as const),
+    }));
 
-    return [orgs.map((o) => this.parseToOrganizationDto(o)), total];
+    const total = orgDtos.length;
+    const paginated = orgDtos.slice(skip, skip + take);
+
+    return [paginated, total];
   }
 
   async findOne(id: string): Promise<OrganizationDto | null> {

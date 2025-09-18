@@ -9,6 +9,10 @@ import {
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import {
+  OrganizationRoleGuard,
+  RequireOrganizationRoles,
+} from '@modules/organization/guards/organization-role.guard';
+import {
   Controller,
   Get,
   Post,
@@ -65,6 +69,8 @@ export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Post()
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
   @ApiCreateProject()
   async create(
     @Body() createProjectDto: CreateProjectDto,
@@ -141,6 +147,7 @@ export class ProjectController {
 
   @Post(':id/tag')
   @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiCreateProjectTag()
   async createProjectTag(
     @Param('id') projectId: string,
