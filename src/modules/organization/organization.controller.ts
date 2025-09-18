@@ -126,7 +126,6 @@ export class OrganizationController {
   }
 
   @Get(':id/projects')
-  @UseGuards(OrganizationRoleGuard)
   @ApiGetOrganizationProjects()
   async findProjects(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -140,11 +139,13 @@ export class OrganizationController {
       new MaxValuePipe(100),
     )
     limit: number,
+    @Req() req: RequestWithUser,
   ): Promise<PaginatedResponse<ProjectDto>> {
     return this.organizationService.findOrganizationProjectsPaginated(
       id,
       page,
       limit,
+      req.user.id,
     );
   }
 }

@@ -1,5 +1,6 @@
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
+import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { ProjectRepository } from '@modules/project/project.repository';
 import { RoleService } from '@modules/role/role.service';
@@ -16,6 +17,7 @@ export class OrganizationService {
     private organizationRepository: OrganizationRepository,
     private roleService: RoleService,
     private projectRepository: ProjectRepository,
+    private prisma: PrismaService,
   ) {}
 
   async create(
@@ -82,6 +84,7 @@ export class OrganizationService {
     id: string,
     page: number,
     limit: number,
+    userId: string,
   ): Promise<PaginatedResponse<ProjectDto>> {
     const org = await this.organizationRepository.findOne(id);
     if (!org) {
@@ -89,12 +92,31 @@ export class OrganizationService {
     }
 
     const skip = (page - 1) * limit;
-    const [projects, total] =
-      await this.projectRepository.findAllByOrganizationPaginated(
-        id,
-        skip,
-        limit,
-      );
+    const userOrgRole = await this.prisma.userOrganizationRole.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId: id },
+      },
+    });
+
+    let projects: ProjectDto[];
+    let total: number;
+
+    if (userOrgRole) {
+      [projects, total] =
+        await this.projectRepository.findAllByOrganizationPaginated(
+          id,
+          skip,
+          limit,
+        );
+    } else {
+      [projects, total] =
+        await this.projectRepository.findProjectsByUserAndOrganization(
+          userId,
+          id,
+          skip,
+          limit,
+        );
+    }
 
     return {
       data: projects,

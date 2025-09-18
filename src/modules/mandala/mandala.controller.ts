@@ -95,6 +95,7 @@ export class MandalaController {
 
   @Post()
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiCreateMandala()
   async create(
     @Body() createMandalaDto: CreateMandalaDto,
@@ -175,6 +176,7 @@ export class MandalaController {
 
   @Patch(':id')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiUpdateMandala()
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -203,6 +205,7 @@ export class MandalaController {
 
   @Post('generate')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiGenerateMandala()
   async generate(
     @Body() createMandalaDto: CreateMandalaDto,
@@ -217,6 +220,7 @@ export class MandalaController {
 
   @Post(':mandalaId/postits')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiCreatePostit()
   async createPostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -238,6 +242,7 @@ export class MandalaController {
 
   @Patch(':mandalaId/postits/:postitId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiUpdatePostit()
   async updatePostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -261,6 +266,7 @@ export class MandalaController {
 
   @Delete(':mandalaId/postits/:postitId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiDeletePostit()
   @HttpCode(204)
   async deletePostit(
@@ -278,6 +284,7 @@ export class MandalaController {
 
   @Post(':id/link/:childId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiLinkMandala()
   async linkMandala(
     @Param('id', new UuidValidationPipe()) parentId: string,
@@ -295,6 +302,7 @@ export class MandalaController {
 
   @Delete(':id/unlink/:childId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiUnlinkMandala()
   async unlinkMandala(
     @Param('id', new UuidValidationPipe()) parentId: string,
@@ -308,6 +316,7 @@ export class MandalaController {
 
   @Post(':id/generate-questions')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiGenerateQuestions()
   async generateQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
@@ -330,6 +339,7 @@ export class MandalaController {
 
   @Post(':id/generate-postits')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiGeneratePostits()
   async generatePostits(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
@@ -388,6 +398,7 @@ export class MandalaController {
 
   @Post('overlap')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiOverlapMandalas()
   async overlapMandalas(
     @Body() overlapDto: CreateOverlappedMandalaDto,
@@ -401,6 +412,7 @@ export class MandalaController {
 
   @Post('overlap/summary')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiOverlapSummary()
   async createOverlapSummary(
     @Body() overlapDto: CreateOverlappedMandalaDto,
@@ -419,6 +431,7 @@ export class MandalaController {
 
   @Post(':mandalaId/images/presigned-url')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiCreateImagePresignedUrl()
   async createImagePresignedUrl(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -440,6 +453,7 @@ export class MandalaController {
 
   @Post(':mandalaId/images/confirm')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiConfirmImageUpload()
   async confirmImageUpload(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -463,6 +477,7 @@ export class MandalaController {
 
   @Delete(':mandalaId/images/:imageId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiDeleteImage()
   async deleteImage(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,

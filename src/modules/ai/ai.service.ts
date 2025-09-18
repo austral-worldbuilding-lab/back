@@ -160,4 +160,36 @@ export class AiService {
 
     return result;
   }
+
+  async generateSolutions(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    mandalasDocument: FirestoreMandalaDocument[],
+    selectedFiles?: string[],
+  ): Promise<AiSolutionResponse[]> {
+    this.logger.log(`Starting solutions generation for project: ${projectId}`);
+
+    const cleanMandalasDocument = mandalasDocument.map((m) =>
+      createCleanMandalaForSummary(m),
+    );
+
+    const result = await this.aiProvider.generateSolutions(
+      projectId,
+      projectName,
+      projectDescription,
+      dimensions,
+      scales,
+      cleanMandalasDocument.map((m) => JSON.stringify(m)).join('\n'),
+      selectedFiles,
+    );
+
+    this.logger.log(
+      `Generated ${result.length} solutions for project: ${projectId}`,
+    );
+
+    return result;
+  }
 }

@@ -207,4 +207,34 @@ export class OrganizationInvitationRepository {
       },
     });
   }
+
+  async autoAssignToOrganizationProjects(
+    userId: string,
+    organizationId: string,
+    roleId: string,
+  ): Promise<void> {
+    const projects = await this.prisma.project.findMany({
+      where: { organizationId },
+      select: { id: true },
+    });
+
+    for (const project of projects) {
+      await this.prisma.userProjectRole.upsert({
+        where: {
+          userId_projectId: {
+            userId,
+            projectId: project.id,
+          },
+        },
+        update: {
+          roleId,
+        },
+        create: {
+          userId,
+          projectId: project.id,
+          roleId,
+        },
+      });
+    }
+  }
 }

@@ -1,4 +1,3 @@
-import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
   AiPostitResponse,

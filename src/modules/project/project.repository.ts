@@ -446,4 +446,71 @@ export class ProjectRepository {
       where: { projectId, role: { name: 'owner' } },
     });
   }
+
+  async autoAssignOrganizationMembers(
+    projectId: string,
+    organizationId: string,
+  ): Promise<void> {
+    const orgMembers = await this.prisma.userOrganizationRole.findMany({
+      where: { organizationId },
+      include: { role: true },
+    });
+
+    for (const member of orgMembers) {
+      await this.prisma.userProjectRole.upsert({
+        where: {
+          userId_projectId: {
+            userId: member.userId,
+            projectId: projectId,
+          },
+        },
+        update: {
+          roleId: member.roleId,
+        },
+        create: {
+          userId: member.userId,
+          projectId: projectId,
+          roleId: member.roleId,
+        },
+      });
+    }
+  }
+
+  async findProjectsByUserAndOrganization(
+    userId: string,
+    organizationId: string,
+    skip: number,
+    take: number,
+  ): Promise<[ProjectDto[], number]> {
+    const whereClause: Prisma.ProjectWhereInput = {
+      isActive: true,
+      organizationId,
+      userRoles: {
+        some: {
+          userId,
+        },
+      },
+    };
+
+    const [projects, total] = await this.prisma.$transaction([
+      this.prisma.project.findMany({
+        where: whereClause,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          organization: true,
+          userRoles: {
+            include: {
+              role: true,
+              user: true,
+            },
+          },
+        },
+      }),
+      this.prisma.project.count({ where: whereClause }),
+    ]);
+
+    return [projects.map((p) => this.parseToProjectDto(p)), total];
+  }
 }
