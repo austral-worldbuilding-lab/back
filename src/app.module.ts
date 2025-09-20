@@ -1,6 +1,7 @@
 import * as process from 'node:process';
 
 import { CommonModule } from '@common/common.module';
+import { UserThrottlerGuard } from '@common/guards/user-throttler.guard';
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
@@ -18,7 +19,7 @@ import { UserModule } from '@modules/user/user.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -59,7 +60,7 @@ import { AppService } from './app.service';
     PrismaService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: UserThrottlerGuard,
     },
   ],
   exports: [PrismaService],
