@@ -1,3 +1,4 @@
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
   AiPostitResponse,
@@ -67,14 +68,19 @@ export interface AiProvider {
    * @param dimensions - Array of dimensions to consider during the comparison analysis
    * @param scales - Array of scales to consider during the comparison analysis
    * @param mandalasAiSummary - Document containing the mandalas to be compared
-   * @returns Promise resolving to an array of postit comparison responses
+   * @returns Promise resolving to an object containing:
+   *          - comparisons: Array of postit comparison responses
+   *          - report: Overall analysis report of the mandalas
    */
   generatePostitsSummary(
     projectId: string,
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
-  ): Promise<AiPostitComparisonResponse[]>;
+  ): Promise<{
+    comparisons: AiPostitComparisonResponse[];
+    report: AiMandalaReport;
+  }>;
 
   /**
    * Generates solutions for a project

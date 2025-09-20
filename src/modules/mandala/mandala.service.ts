@@ -9,6 +9,7 @@ import { CacheService } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
@@ -856,7 +857,7 @@ export class MandalaService {
 
   async createOverlapSummary(
     createOverlapDto: CreateOverlappedMandalaDto,
-  ): Promise<MandalaDto> {
+  ): Promise<{ mandala: MandalaDto; report: AiMandalaReport }> {
     this.logger.log(
       `Starting overlap summary operation for ${createOverlapDto.mandalas.length} mandalas`,
     );
@@ -909,16 +910,24 @@ export class MandalaService {
         MandalaType.OVERLAP_SUMMARY,
       );
 
-      const aiSummaryPostits =
+      const { comparisons, report } =
         await this.postitService.generateComparisonPostits(
           mandalas,
           mandalasDocument,
         );
 
+      if (!report) {
+        throw new InternalServerErrorException({
+          message: 'AI service failed to generate a report',
+          error: 'AI Report Generation Error',
+          details: { mandalaId: newMandala.id },
+        });
+      }
+
       const aiSummaryPostitsWithCoordinates =
         this.postitService.transformToPostitsWithCoordinates(
           newMandala.id,
-          aiSummaryPostits,
+          comparisons,
           overlappedConfiguration.dimensions.map((d) => d.name),
           overlappedConfiguration.scales,
         );
@@ -927,6 +936,7 @@ export class MandalaService {
         targetProjectId,
         {
           postits: aiSummaryPostitsWithCoordinates,
+          report: report,
         },
         newMandala.id,
       );
@@ -935,7 +945,7 @@ export class MandalaService {
         `Successfully created overlapped mandala ${newMandala.id}`,
       );
 
-      return newMandala;
+      return { mandala: newMandala, report: report };
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';

@@ -9,6 +9,7 @@ import {
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   Controller,
   Get,
@@ -415,7 +416,9 @@ export class MandalaController {
   @ApiOverlapSummary()
   async createOverlapSummary(
     @Body() overlapDto: CreateOverlappedMandalaDto,
-  ): Promise<MessageResponse<MandalaDto>> {
+  ): Promise<
+    MessageResponse<{ mandala: MandalaDto; report: AiMandalaReport }>
+  > {
     const result = await this.mandalaService.createOverlapSummary(overlapDto);
     return {
       message:

@@ -7,6 +7,7 @@ import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { TagDto } from '@modules/project/dto/tag.dto';
 import { ProjectService } from '@modules/project/project.service';
@@ -153,30 +154,32 @@ export class PostitService {
   async generateComparisonPostits(
     mandalas: MandalaDto[],
     mandalasDocument: FirestoreMandalaDocument[],
-  ): Promise<PostitComparison[]> {
+  ): Promise<{ comparisons: PostitComparison[]; report: AiMandalaReport }> {
     const projectTags = await this.projectService.getProjectTags(
       mandalas[0].projectId, // Use first mandala's project for tags
     );
 
-    const aiResponse: AiPostitComparisonResponse[] =
+    const { comparisons: aiComparisons, report } =
       await this.aiService.generatePostitsSummary(
-        mandalas[0].projectId, // TODO update this to use the projectId of all mandalas
+        mandalas[0].projectId, // TODO: unificar si más adelante soportan multi-proyecto
         mandalas,
         mandalasDocument,
       );
 
-    return aiResponse.map(
+    const comparisons: PostitComparison[] = aiComparisons.map(
       (aiPostit: AiPostitComparisonResponse): PostitComparison => ({
         id: randomUUID(),
         content: aiPostit.content,
         dimension: aiPostit.dimension,
-        section: aiPostit.section,
+        section: aiPostit.section, // ya normalizado por el adapter (scale -> section)
         tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
         childrens: [],
         type: aiPostit.type,
         fromSummary: aiPostit.fromSummary,
       }),
     );
+
+    return { comparisons, report };
   }
 
   private mapTagsWithColors(

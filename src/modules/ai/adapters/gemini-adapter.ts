@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
   AiPostitResponse,
@@ -299,7 +300,10 @@ export class GeminiAdapter implements AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
-  ): Promise<AiPostitComparisonResponse[]> {
+  ): Promise<{
+    comparisons: AiPostitComparisonResponse[];
+    report: AiMandalaReport;
+  }> {
     this.logger.log(`Starting question generation for project: ${projectId}`);
 
     const model = this.geminiModel;
@@ -325,9 +329,14 @@ export class GeminiAdapter implements AiProvider {
       }),
     );
 
-    const result = this.parseAndValidateComparisonResponse(responseText);
-    this.logger.log(`Comparison generation completed`);
-    return result;
+    const { comparisons, report } =
+      this.parseAndValidateComparisonWithReport(responseText);
+
+    this.logger.log(`Comparison + report generation completed`);
+    this.logger.debug(
+      '[AI REPORT][comparativa] ' + JSON.stringify(report, null, 2),
+    );
+    return { comparisons, report };
   }
 
   private parseAndValidateComparisonResponse(
@@ -415,5 +424,57 @@ export class GeminiAdapter implements AiProvider {
       this.logger.error('Failed to parse AI solution response as JSON:', error);
       throw new Error('Invalid JSON response from Gemini API');
     }
+  }
+
+  private parseAndValidateComparisonWithReport(
+    responseText: string | undefined,
+  ): { comparisons: AiPostitComparisonResponse[]; report: AiMandalaReport } {
+    if (!responseText) {
+      throw new Error('No response text received from Gemini API');
+    }
+
+    interface GeminiComparisonWithReport {
+      comparisons?: AiPostitComparisonResponse[];
+      report?: Partial<AiMandalaReport>;
+    }
+
+    let parsed: GeminiComparisonWithReport;
+
+    try {
+      parsed = JSON.parse(responseText) as {
+        comparisons?: AiPostitComparisonResponse[];
+        report?: AiMandalaReport;
+      };
+    } catch {
+      const start = responseText.indexOf('{');
+      const end = responseText.lastIndexOf('}');
+      if (start < 0 || end < 0) {
+        this.logger.error('Invalid JSON response from Gemini API');
+        throw new Error('Invalid JSON response from Gemini API');
+      }
+      parsed = JSON.parse(
+        responseText.slice(start, end + 1),
+      ) as GeminiComparisonWithReport;
+    }
+
+    const normalizedComparisonsText = Array.isArray(parsed.comparisons)
+      ? JSON.stringify(parsed.comparisons)
+      : JSON.stringify([]);
+
+    const comparisons = this.parseAndValidateComparisonResponse(
+      normalizedComparisonsText,
+    );
+
+    const report: AiMandalaReport = {
+      summary:
+        parsed.report && typeof parsed.report.summary === 'string'
+          ? parsed.report.summary
+          : '',
+      coincidences: parsed?.report?.coincidences ?? [],
+      tensions: parsed?.report?.tensions ?? [],
+      insights: parsed?.report?.insights ?? [],
+    };
+
+    return { comparisons, report };
   }
 }

@@ -1,3 +1,4 @@
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
   AiPostitResponse,
@@ -98,7 +99,10 @@ export class AiService {
     projectId: string,
     mandalas: MandalaDto[],
     mandalasDocument: FirestoreMandalaDocument[],
-  ): Promise<AiPostitComparisonResponse[]> {
+  ): Promise<{
+    comparisons: AiPostitComparisonResponse[];
+    report: AiMandalaReport;
+  }> {
     this.logger.log(
       `Starting postit summary generation for project: ${projectId}`,
     );
@@ -119,7 +123,7 @@ export class AiService {
     );
 
     this.logger.log(
-      `Generated ${result.length} postits summary for project: ${projectId}`,
+      `Generated ${result.comparisons.length} postits summary for project: ${projectId}`,
     );
 
     return result;
