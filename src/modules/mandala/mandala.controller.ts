@@ -419,9 +419,7 @@ export class MandalaController {
   ): Promise<
     MessageResponse<{ mandala: MandalaDto; report: AiMandalaReport }>
   > {
-    console.log(overlapDto);
     const result = await this.mandalaService.createOverlapSummary(overlapDto);
-    console.log(result);
     return {
       message:
         'Mandala superpuesto de resumen comparativo creado correctamente',

@@ -29,7 +29,7 @@
     "migrate": "prisma migrate deploy",
     "postinstall": "chmod +x node_modules/.bin/* 2>/dev/null || true",
     "prepare": "husky",
-    "scan-secrets": ""
+    "scan-secrets": "docker run --rm -v \"${PWD}:/repo:ro\" -w /repo zricethezav/gitleaks:latest git --pre-commit --redact --staged --verbose"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

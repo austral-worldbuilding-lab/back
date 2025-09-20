@@ -6,10 +6,3 @@ export type AiMandalaReport = {
   tensions: string[];
   insights: string[];
 };
-
-export const emptyReport = (): AiMandalaReport => ({
-  summary: '',
-  coincidences: [],
-  tensions: [],
-  insights: [],
-});

@@ -9,7 +9,7 @@ import { CacheService } from '@common/services/cache.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
-import { AiMandalaReport, emptyReport } from '@modules/mandala/types/ai-report';
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
@@ -916,6 +916,14 @@ export class MandalaService {
           mandalasDocument,
         );
 
+      if (!report) {
+        throw new InternalServerErrorException({
+          message: 'AI service failed to generate a report',
+          error: 'AI Report Generation Error',
+          details: { mandalaId: newMandala.id },
+        });
+      }
+
       const aiSummaryPostitsWithCoordinates =
         this.postitService.transformToPostitsWithCoordinates(
           newMandala.id,
@@ -928,7 +936,7 @@ export class MandalaService {
         targetProjectId,
         {
           postits: aiSummaryPostitsWithCoordinates,
-          report: report ?? emptyReport(),
+          report: report,
         },
         newMandala.id,
       );
@@ -937,7 +945,7 @@ export class MandalaService {
         `Successfully created overlapped mandala ${newMandala.id}`,
       );
 
-      return { mandala: newMandala, report: report ?? emptyReport() };
+      return { mandala: newMandala, report: report};
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
