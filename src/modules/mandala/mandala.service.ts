@@ -945,7 +945,7 @@ export class MandalaService {
         `Successfully created overlapped mandala ${newMandala.id}`,
       );
 
-      return { mandala: newMandala, report: report};
+      return { mandala: newMandala, report: report };
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
