@@ -1,18 +1,18 @@
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma, Project, Tag } from '@prisma/client';
+import { Prisma, Project, Provocation, Tag } from '@prisma/client';
 
 import { CreateProjectDto } from './dto/create-project.dto';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
-import { CreateProvocationDto } from './dto/create-provocation.dto';
-import { ProvocationDto } from './dto/provocation.dto';
 
 @Injectable()
 export class ProjectRepository {
@@ -60,17 +60,21 @@ export class ProjectRepository {
     } as TagDto;
   }
 
-  private parseToProvocationDto(provocation: any): ProvocationDto {
+  private parseToProvocationDto(provocation: Provocation): ProvocationDto {
+    const content = provocation.content as {
+      title?: string;
+      description?: string;
+    } | null;
     return {
       id: provocation.id,
       question: provocation.question,
-      title: provocation.content?.title,
-      description: provocation.content?.description,
-      parentProvocationId: provocation.parentProvocationId,
+      title: content?.title,
+      description: content?.description,
+      parentProvocationId: provocation.parentProvocationId ?? undefined,
       createdAt: provocation.createdAt,
       updatedAt: provocation.updatedAt,
       isActive: provocation.isActive,
-      deletedAt: provocation.deletedAt,
+      deletedAt: provocation.deletedAt ?? undefined,
     };
   }
 
@@ -530,13 +534,17 @@ export class ProjectRepository {
     return [projects.map((p) => this.parseToProjectDto(p)), total];
   }
 
-  async createProvocation(projectId: string, createProvocationDto: CreateProvocationDto): Promise<ProvocationDto> {
-    const existingOriginLink = await this.prisma.projectProvocationLink.findFirst({
-      where: {
-        projectId: projectId,
-        role: 'ORIGIN',
-      },
-    });
+  async createProvocation(
+    projectId: string,
+    createProvocationDto: CreateProvocationDto,
+  ): Promise<ProvocationDto> {
+    const existingOriginLink =
+      await this.prisma.projectProvocationLink.findFirst({
+        where: {
+          projectId: projectId,
+          role: 'ORIGIN',
+        },
+      });
 
     const provocation = await this.prisma.provocation.create({
       data: {

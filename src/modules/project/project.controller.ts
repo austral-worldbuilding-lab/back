@@ -47,10 +47,12 @@ import {
 } from './decorators/project-swagger.decorators';
 import { AiSolutionResponseDto } from './dto/ai-solution-response.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { GenerateSolutionsDto } from './dto/generate-solutions.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
@@ -61,8 +63,6 @@ import {
 } from './guards/project-role.guard';
 import { ProjectService } from './project.service';
 import { AiSolutionResponse } from './types/solutions.type';
-import { CreateProvocationDto } from './dto/create-provocation.dto';
-import { ProvocationDto } from './dto/provocation.dto';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -290,7 +290,6 @@ export class ProjectController {
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() createProvocationDto: CreateProvocationDto,
   ): Promise<MessageResponse<ProvocationDto>> {
-
     const createdProvocation = await this.projectService.createProvocation(
       projectId,
       createProvocationDto,

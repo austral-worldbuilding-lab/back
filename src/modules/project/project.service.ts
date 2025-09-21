@@ -21,17 +21,17 @@ import {
 } from '@nestjs/common';
 
 import { CreateProjectDto } from './dto/create-project.dto';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectRepository } from './project.repository';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { AiSolutionResponse } from './types/solutions.type';
-import { CreateProvocationDto } from './dto/create-provocation.dto';
-import { ProvocationDto } from './dto/provocation.dto';
 
 @Injectable()
 export class ProjectService {
@@ -354,6 +354,9 @@ export class ProjectService {
 
     await this.checkMinimalConditionsForSolutions(project, projectId);
 
-    return this.projectRepository.createProvocation(projectId, createProvocationDto);
+    return this.projectRepository.createProvocation(
+      projectId,
+      createProvocationDto,
+    );
   }
 }

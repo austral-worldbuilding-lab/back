@@ -6,7 +6,7 @@ export class ProvocationDto {
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   id!: string;
-  
+
   @ApiPropertyOptional({
     description: 'Título de la provocación',
     example: 'Crear un Festejódromo',
@@ -15,16 +15,17 @@ export class ProvocationDto {
 
   @ApiPropertyOptional({
     description: 'Descripción de la provocación',
-    example: 'Se propone la creación de un espacio dedicado dentro del campus universitario para la celebración de festejos de graduación...',
+    example:
+      'Se propone la creación de un espacio dedicado dentro del campus universitario para la celebración de festejos de graduación...',
   })
   description?: string;
 
   @ApiProperty({
     description: 'Pregunta o provocación principal',
-    example: '¿Qué pasaría si la universidad creara un espacio dedicado para la celebración de festejos de graduación?',
+    example:
+      '¿Qué pasaría si la universidad creara un espacio dedicado para la celebración de festejos de graduación?',
   })
   question!: string;
-
 
   @ApiPropertyOptional({
     description: 'ID de la provocación padre (si es una sub-provocación)',
@@ -74,8 +75,8 @@ export class ProvocationDto {
       {
         id: '123e4567-e89b-12d3-a456-426614174002',
         role: 'ORIGIN',
-        createdAt: '2024-01-15T10:30:00.000Z'
-      }
+        createdAt: '2024-01-15T10:30:00.000Z',
+      },
     ],
   })
   projects?: {

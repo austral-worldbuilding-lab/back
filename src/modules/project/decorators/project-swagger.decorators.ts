@@ -14,7 +14,6 @@ import { AiSolutionResponseDto } from '../dto/ai-solution-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { TagDto } from '../dto/tag.dto';
-import { ProvocationDto } from '../dto/provocation.dto';
 
 export const ApiCreateProject = () =>
   applyDecorators(
@@ -575,7 +574,10 @@ export const ApiCreateProvocation = () =>
           message: {
             type: 'array',
             items: { type: 'string' },
-            example: ['question should not be empty', 'question must be a string'],
+            example: [
+              'question should not be empty',
+              'question must be a string',
+            ],
           },
           error: { type: 'string', example: 'Bad Request' },
           statusCode: { type: 'number', example: 400 },
@@ -599,7 +601,8 @@ export const ApiCreateProvocation = () =>
         properties: {
           message: {
             type: 'string',
-            example: 'No tienes los permisos necesarios para realizar esta acción',
+            example:
+              'No tienes los permisos necesarios para realizar esta acción',
           },
           statusCode: { type: 'number', example: 403 },
         },
@@ -612,7 +615,8 @@ export const ApiCreateProvocation = () =>
         properties: {
           message: {
             type: 'string',
-            example: 'Project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+            example:
+              'Project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
           },
           error: { type: 'string', example: 'Not Found' },
           statusCode: { type: 'number', example: 404 },
