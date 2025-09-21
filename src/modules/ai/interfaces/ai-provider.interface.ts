@@ -3,7 +3,6 @@ import {
   AiPostitResponse,
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
-
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 
 export interface AiProvider {

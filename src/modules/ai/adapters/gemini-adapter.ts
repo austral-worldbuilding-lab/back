@@ -5,6 +5,7 @@ import {
   AiPostitResponse,
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
+import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -19,8 +20,6 @@ import { createQuestionsResponseSchema } from '../resources/dto/generate-questio
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
-
-import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 
 interface GeminiUploadedFile {
   uri: string;
