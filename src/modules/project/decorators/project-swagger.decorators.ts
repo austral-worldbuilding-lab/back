@@ -9,11 +9,13 @@ import {
   ApiForbiddenResponse,
   ApiUnauthorizedResponse,
   ApiBody,
+  ApiExtraModels,
 } from '@nestjs/swagger';
 
 import { AiProvocationResponseDto } from '../dto/ai-provocation-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
+import { ProvocationDto } from '../dto/provocation.dto';
 import { TagDto } from '../dto/tag.dto';
 
 export const ApiCreateProject = () =>
@@ -560,10 +562,7 @@ export const ApiCreateProvocation = () =>
           message: {
             type: 'string',
             example: 'Provocation created successfully',
-          },
-          data: {
-            $ref: '#/components/schemas/ProvocationDto',
-          },
+          }
         },
       },
     }),
