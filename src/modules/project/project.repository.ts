@@ -1,7 +1,13 @@
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma, Project, Provocation, Tag } from '@prisma/client';
+import {
+  Prisma,
+  Project,
+  Provocation,
+  Tag,
+  ProjProvLinkRole,
+} from '@prisma/client';
 
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
@@ -84,6 +90,41 @@ export class ProjectRepository {
     roleId: string,
   ): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
+      let parentProjectId: string | undefined = undefined;
+      let provocationId: string | undefined = undefined;
+
+      if (createProjectDto.fromProvocation) {
+        const provocation = await tx.provocation.findFirst({
+          where: {
+            id: createProjectDto.fromProvocation,
+            isActive: true,
+          },
+        });
+
+        if (!provocation) {
+          throw new ResourceNotFoundException(
+            'Provocation',
+            createProjectDto.fromProvocation,
+          );
+        }
+
+        const parentProjectLink = await tx.projectProvocationLink.findFirst({
+          where: {
+            provocationId: createProjectDto.fromProvocation,
+            role: ProjProvLinkRole.GENERATED,
+          },
+          include: {
+            project: true,
+          },
+        });
+
+        if (parentProjectLink) {
+          parentProjectId = parentProjectLink.projectId;
+        }
+
+        provocationId = createProjectDto.fromProvocation;
+      }
+
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
@@ -93,8 +134,19 @@ export class ProjectRepository {
             scales: createProjectDto.scales!,
           }),
           organizationId: createProjectDto.organizationId,
+          parentProjectId,
         },
       });
+
+      if (provocationId) {
+        await tx.projectProvocationLink.create({
+          data: {
+            projectId: project.id,
+            provocationId,
+            role: ProjProvLinkRole.ORIGIN,
+          },
+        });
+      }
 
       await tx.userProjectRole.create({
         data: {
@@ -542,7 +594,7 @@ export class ProjectRepository {
       await this.prisma.projectProvocationLink.findFirst({
         where: {
           projectId: projectId,
-          role: 'ORIGIN',
+          role: ProjProvLinkRole.ORIGIN,
         },
       });
 
@@ -557,7 +609,7 @@ export class ProjectRepository {
         projects: {
           create: {
             projectId: projectId,
-            role: 'GENERATED',
+            role: ProjProvLinkRole.GENERATED,
           },
         },
       },
