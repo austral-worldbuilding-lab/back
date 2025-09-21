@@ -454,19 +454,39 @@ export class ProjectRepository {
     id: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
+    const updateData: any = {};
+
+    if (updateProjectDto.name !== undefined) {
+      updateData.name = updateProjectDto.name;
+    }
+
+    if (updateProjectDto.description !== undefined) {
+      updateData.description = updateProjectDto.description;
+    }
+
+    if (updateProjectDto.organizationId !== undefined) {
+      updateData.organizationId = updateProjectDto.organizationId;
+    }
+
+    if (updateProjectDto.dimensions !== undefined || updateProjectDto.scales !== undefined) {
+      const currentProject = await this.prisma.project.findUnique({
+        where: { id },
+        select: { configuration: true },
+      });
+
+      if (currentProject) {
+        const currentConfig = this.parseToProjectConfiguration(currentProject.configuration);
+        
+        updateData.configuration = this.parseToJson({
+          dimensions: updateProjectDto.dimensions ?? currentConfig.dimensions,
+          scales: updateProjectDto.scales ?? currentConfig.scales,
+        });
+      }
+    }
+
     const project = await this.prisma.project.update({
       where: { id },
-      data: {
-        name: updateProjectDto.name,
-        description: updateProjectDto.description,
-        configuration: this.parseToJson({
-          dimensions: updateProjectDto.dimensions!,
-          scales: updateProjectDto.scales!,
-        }),
-        ...(updateProjectDto.organizationId
-          ? { organizationId: updateProjectDto.organizationId }
-          : {}),
-      },
+      data: updateData,
     });
 
     return this.parseToProjectDto(project);

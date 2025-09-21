@@ -74,6 +74,39 @@ export const ApiUpdateProject = () =>
   applyDecorators(
     ApiOperation({ summary: 'Actualizar un proyecto' }),
     ApiParam({ name: 'id', description: 'ID del proyecto', type: String }),
+    ApiBody({
+      description: 'Datos para actualizar el proyecto',
+      examples: {
+        'actualizar-nombre': {
+          summary: 'Actualizar solo el nombre',
+          description: 'Ejemplo de actualización del nombre del proyecto',
+          value: {
+            name: 'Proyecto Comedor Austral Actualizado',
+          },
+        },
+        'actualizar-descripcion': {
+          summary: 'Actualizar solo la descripción',
+          description: 'Ejemplo de actualización de la descripción del proyecto',
+          value: {
+            description: 'Esta es una descripción actualizada del proyecto que busca mejorar la experiencia del comedor universitario.',
+          },
+        },
+        'actualizar-completo': {
+          summary: 'Actualización completa',
+          description: 'Ejemplo de actualización de múltiples campos del proyecto',
+          value: {
+            name: 'Proyecto Comedor Austral Mejorado',
+            description: 'Este proyecto busca mejorar significativamente la experiencia del comedor universitario mediante el análisis profundo de las necesidades de los usuarios y la implementación de mejoras innovadoras.',
+            dimensions: [
+              { name: 'Recursos', color: '#FF0000' },
+              { name: 'Tiempo', color: '#00FF00' },
+              { name: 'Calidad', color: '#0000FF' },
+            ],
+            scales: ['Persona', 'Comunidad', 'Institución', 'Sociedad'],
+          },
+        },
+      },
+    }),
     ApiResponse({
       status: 200,
       description: 'El proyecto ha sido actualizado exitosamente',
