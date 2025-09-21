@@ -482,16 +482,18 @@ export class ProjectRepository {
         select: { configuration: true },
       });
 
-      if (currentProject) {
-        const currentConfig = this.parseToProjectConfiguration(
-          currentProject.configuration,
-        );
-
-        updateData.configuration = this.parseToJson({
-          dimensions: updateProjectDto.dimensions ?? currentConfig.dimensions,
-          scales: updateProjectDto.scales ?? currentConfig.scales,
-        });
+      if (!currentProject) {
+        throw new Error(`Project with id ${id} not found`);
       }
+
+      const currentConfig = this.parseToProjectConfiguration(
+        currentProject.configuration,
+      );
+
+      updateData.configuration = this.parseToJson({
+        dimensions: updateProjectDto.dimensions ?? currentConfig.dimensions,
+        scales: updateProjectDto.scales ?? currentConfig.scales,
+      });
     }
 
     const project = await this.prisma.project.update({
