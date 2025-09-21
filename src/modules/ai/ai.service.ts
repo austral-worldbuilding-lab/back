@@ -15,7 +15,7 @@ import {
   createCleanMandalaForSummary,
 } from './utils/mandala-cleaned-for-ai.util';
 
-import { AiProvocationResponse } from '@/modules/project/types/provocations.type';
+import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 
 @Injectable()
 export class AiService {
