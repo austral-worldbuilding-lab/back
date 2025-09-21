@@ -11,6 +11,8 @@ import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectConfiguration } from './types/project-configuration.type';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 
 @Injectable()
 export class ProjectRepository {
@@ -56,6 +58,20 @@ export class ProjectRepository {
       name: tag.name,
       color: tag.color,
     } as TagDto;
+  }
+
+  private parseToProvocationDto(provocation: any): ProvocationDto {
+    return {
+      id: provocation.id,
+      question: provocation.question,
+      title: provocation.content?.title,
+      description: provocation.content?.description,
+      parentProvocationId: provocation.parentProvocationId,
+      createdAt: provocation.createdAt,
+      updatedAt: provocation.updatedAt,
+      isActive: provocation.isActive,
+      deletedAt: provocation.deletedAt,
+    };
   }
 
   async create(
@@ -512,5 +528,33 @@ export class ProjectRepository {
     ]);
 
     return [projects.map((p) => this.parseToProjectDto(p)), total];
+  }
+
+  async createProvocation(projectId: string, createProvocationDto: CreateProvocationDto): Promise<ProvocationDto> {
+    const existingOriginLink = await this.prisma.projectProvocationLink.findFirst({
+      where: {
+        projectId: projectId,
+        role: 'ORIGIN',
+      },
+    });
+
+    const provocation = await this.prisma.provocation.create({
+      data: {
+        question: createProvocationDto.question,
+        content: {
+          title: createProvocationDto.title,
+          description: createProvocationDto.description,
+        },
+        parentProvocationId: existingOriginLink?.provocationId,
+        projects: {
+          create: {
+            projectId: projectId,
+            role: 'GENERATED',
+          },
+        },
+      },
+    });
+
+    return this.parseToProvocationDto(provocation);
   }
 }

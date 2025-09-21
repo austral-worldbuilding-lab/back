@@ -14,6 +14,7 @@ import { AiSolutionResponseDto } from '../dto/ai-solution-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { TagDto } from '../dto/tag.dto';
+import { ProvocationDto } from '../dto/provocation.dto';
 
 export const ApiCreateProject = () =>
   applyDecorators(
@@ -533,5 +534,89 @@ export const ApiGetCachedSolutions = () =>
     ApiResponse({
       status: 404,
       description: 'Proyecto no encontrado',
+    }),
+  );
+
+export const ApiCreateProvocation = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear una nueva provocación para un proyecto',
+      description:
+        'Crea una nueva provocación asociada al proyecto especificado. La provocación se vincula automáticamente con el proyecto con rol GENERATED.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: 'string',
+      format: 'uuid',
+      example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Provocación creada exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Provocation created successfully',
+          },
+          data: {
+            $ref: '#/components/schemas/ProvocationDto',
+          },
+        },
+      },
+    }),
+    ApiBadRequestResponse({
+      description: 'Datos de entrada inválidos',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'array',
+            items: { type: 'string' },
+            example: ['question should not be empty', 'question must be a string'],
+          },
+          error: { type: 'string', example: 'Bad Request' },
+          statusCode: { type: 'number', example: 400 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Unauthorized' },
+          statusCode: { type: 'number', example: 401 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description: 'Sin permisos para realizar esta acción',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'No tienes los permisos necesarios para realizar esta acción',
+          },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
     }),
   );

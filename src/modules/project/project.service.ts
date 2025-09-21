@@ -30,6 +30,8 @@ import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectRepository } from './project.repository';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { AiSolutionResponse } from './types/solutions.type';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 
 @Injectable()
 export class ProjectService {
@@ -342,5 +344,16 @@ export class ProjectService {
       projectId,
     );
     return this.cacheService.getFromCache<AiSolutionResponse>(cacheKey);
+  }
+
+  async createProvocation(
+    projectId: string,
+    createProvocationDto: CreateProvocationDto,
+  ): Promise<ProvocationDto> {
+    const project = await this.findOne(projectId);
+
+    await this.checkMinimalConditionsForSolutions(project, projectId);
+
+    return this.projectRepository.createProvocation(projectId, createProvocationDto);
   }
 }

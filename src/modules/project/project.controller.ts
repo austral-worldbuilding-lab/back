@@ -43,6 +43,7 @@ import {
   ApiRemoveUserFromProject,
   ApiCreateProjectSolutions,
   ApiGetCachedSolutions,
+  ApiCreateProvocation,
 } from './decorators/project-swagger.decorators';
 import { AiSolutionResponseDto } from './dto/ai-solution-response.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -60,6 +61,8 @@ import {
 } from './guards/project-role.guard';
 import { ProjectService } from './project.service';
 import { AiSolutionResponse } from './types/solutions.type';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -240,6 +243,7 @@ export class ProjectController {
     };
   }
 
+  //TODO: refactor to provocation naming
   @Post(':id/generate-solutions')
   @UseGuards(ProjectRoleGuard)
   @ApiCreateProjectSolutions()
@@ -259,6 +263,7 @@ export class ProjectController {
     };
   }
 
+  //TODO: refactor to provocation naming
   @Get(':id/cached-solutions')
   @UseGuards(ProjectRoleGuard)
   @ApiGetCachedSolutions()
@@ -274,6 +279,26 @@ export class ProjectController {
 
     return {
       data: cachedSolutions,
+    };
+  }
+
+  @Post(':projectId/provocation')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin')
+  @ApiCreateProvocation()
+  async createProvocation(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Body() createProvocationDto: CreateProvocationDto,
+  ): Promise<MessageResponse<ProvocationDto>> {
+
+    const createdProvocation = await this.projectService.createProvocation(
+      projectId,
+      createProvocationDto,
+    );
+
+    return {
+      message: 'Provocation created successfully',
+      data: createdProvocation,
     };
   }
 }
