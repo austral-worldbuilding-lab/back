@@ -21,15 +21,17 @@ import {
 } from '@nestjs/common';
 
 import { CreateProjectDto } from './dto/create-project.dto';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectRepository } from './project.repository';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
-import { AiSolutionResponse } from './types/solutions.type';
+import { AiProvocationResponse } from './types/provocations.type';
 
 @Injectable()
 export class ProjectService {
@@ -54,7 +56,7 @@ export class ProjectService {
     return !scales || scales.length === 0 ? DEFAULT_SCALES : scales;
   }
 
-  private async checkMinimalConditionsForSolutions(
+  private async checkMinimalConditionsForProvocations(
     project: ProjectDto,
     projectId: string,
   ): Promise<void> {
@@ -62,41 +64,41 @@ export class ProjectService {
 
     if (!project.description || project.description.trim().length === 0) {
       throw new BadRequestException(
-        'Project description is required to generate solutions. Please add a description to the project first.',
+        'Project description is required to generate provocations. Please add a description to the project first.',
       );
     }
 
     if (project.configuration.dimensions.length === 0) {
       throw new BadRequestException(
-        'Project dimensions are required to generate solutions. Please add dimensions to the project first.',
+        'Project dimensions are required to generate provocations. Please add dimensions to the project first.',
       );
     }
 
     if (project.configuration.scales.length === 0) {
       throw new BadRequestException(
-        'Project scales are required to generate solutions. Please add scales to the project first.',
+        'Project scales are required to generate provocations. Please add scales to the project first.',
       );
     }
 
     const mandalas = await this.mandalaService.findAll(projectId);
-    if (mandalas.length < config.minMandalasForSolutions) {
+    if (mandalas.length < config.minMandalasForProvocations) {
       throw new BadRequestException(
-        `Project must have at least ${config.minMandalasForSolutions} mandalas to generate solutions. Please add more mandalas to the project first.`,
+        `Project must have at least ${config.minMandalasForProvocations} mandalas to generate provocations. Please add more mandalas to the project first.`,
       );
     }
     const totalPostitsCount =
       await this.mandalaService.countPostitsAcrossMandalas(mandalas);
-    if (totalPostitsCount < config.minPostitsForSolutions) {
+    if (totalPostitsCount < config.minPostitsForProvocations) {
       throw new BadRequestException(
-        `Project must have at least ${config.minPostitsForSolutions} postits across all mandalas to generate solutions. Please add more postits to your mandalas first.`,
+        `Project must have at least ${config.minPostitsForProvocations} postits across all mandalas to generate provocations. Please add more postits to your mandalas first.`,
       );
     }
 
     const projectFilesCount =
       await this.fileService.countProjectFiles(projectId);
-    if (projectFilesCount < config.minFilesForSolutions) {
+    if (projectFilesCount < config.minFilesForProvocations) {
       throw new BadRequestException(
-        `Project must have at least ${config.minFilesForSolutions} files to generate solutions. Please add more files to the project first.`,
+        `Project must have at least ${config.minFilesForProvocations} files to generate provocations. Please add more files to the project first.`,
       );
     }
   }
@@ -281,15 +283,15 @@ export class ProjectService {
     return this.projectRepository.removeUserFromProject(projectId, userId);
   }
 
-  async generateSolutions(
+  async generateProvocations(
     userId: string,
     projectId: string,
     selectedFiles?: string[],
-  ): Promise<AiSolutionResponse[]> {
-    this.logger.log(`generateSolutions called for project ${projectId}`);
+  ): Promise<AiProvocationResponse[]> {
+    this.logger.log(`generateProvocations called for project ${projectId}`);
     const project = await this.findOne(projectId);
 
-    await this.checkMinimalConditionsForSolutions(project, projectId);
+    await this.checkMinimalConditionsForProvocations(project, projectId);
 
     const projectMandalas = await this.mandalaService.findAll(projectId);
     const mandalasDocument = await Promise.all(
@@ -298,7 +300,7 @@ export class ProjectService {
       ),
     );
 
-    const solutions = await this.aiService.generateSolutions(
+    const provocations = await this.aiService.generateProvocations(
       projectId,
       project.name,
       project.description!,
@@ -308,39 +310,53 @@ export class ProjectService {
       selectedFiles,
     );
 
-    await this.saveSolutionsToCache(userId, projectId, solutions);
+    await this.saveProvocationsToCache(userId, projectId, provocations);
 
-    return solutions;
+    return provocations;
   }
 
-  private async saveSolutionsToCache(
+  private async saveProvocationsToCache(
     userId: string,
     projectId: string,
-    solutions: AiSolutionResponse[],
+    provocations: AiProvocationResponse[],
   ): Promise<void> {
     const cacheKey = this.cacheService.buildCacheKey(
-      'solutions',
+      'provocations',
       userId,
       projectId,
     );
 
-    for (const solution of solutions) {
-      await this.cacheService.addToLimitedCache(cacheKey, solution, 20);
+    for (const provocation of provocations) {
+      await this.cacheService.addToLimitedCache(cacheKey, provocation, 20);
     }
     this.logger.log(
-      `Saved solutions to cache for user ${userId}, project ${projectId}`,
+      `Saved provocations to cache for user ${userId}, project ${projectId}`,
     );
   }
 
-  async getCachedSolutions(
+  async getCachedProvocations(
     userId: string,
     projectId: string,
-  ): Promise<AiSolutionResponse[]> {
+  ): Promise<AiProvocationResponse[]> {
     const cacheKey = this.cacheService.buildCacheKey(
-      'solutions',
+      'provocations',
       userId,
       projectId,
     );
-    return this.cacheService.getFromCache<AiSolutionResponse>(cacheKey);
+    return this.cacheService.getFromCache<AiProvocationResponse>(cacheKey);
+  }
+
+  async createProvocation(
+    projectId: string,
+    createProvocationDto: CreateProvocationDto,
+  ): Promise<ProvocationDto> {
+    const project = await this.findOne(projectId);
+
+    await this.checkMinimalConditionsForProvocations(project, projectId);
+
+    return this.projectRepository.createProvocation(
+      projectId,
+      createProvocationDto,
+    );
   }
 }

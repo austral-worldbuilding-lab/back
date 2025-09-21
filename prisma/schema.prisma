@@ -36,6 +36,15 @@ model Project {
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
   AiUsage        AiUsage[]
+
+  // project hierarchy useful for timeline
+  parentProjectId String?
+  parent          Project?          @relation("ProjParent", fields: [parentProjectId], references: [id], onDelete: SetNull)
+  children        Project[]         @relation("ProjParent")
+
+  provocations      ProjectProvocationLink[]
+
+  @@index([parentProjectId])
 }
 
 model Role {
@@ -204,4 +213,45 @@ model AiUsage {
   @@index([model, timestamp])
   @@index([projectId, timestamp])
   @@index([organizationId, timestamp])
+}
+
+model Provocation {
+  id         String   @id @default(uuid())
+
+  parentProvocationId String?
+  parent      Provocation?  @relation("ProvParent", fields: [parentProvocationId], references: [id], onDelete: SetNull)
+  children    Provocation[] @relation("ProvParent")
+
+  question    String
+  content     Json?         // title, description
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  deletedAt   DateTime?
+
+  projects     ProjectProvocationLink[]
+
+  @@index([parentProvocationId])
+}
+
+enum ProjProvLinkRole {
+  ORIGIN // PROVOCATION_ORIGINATES_PROJECT
+  GENERATED // PROJECT_GENERATES_PROVOCATION
+  REFERENCE
+}
+
+model ProjectProvocationLink {
+  id            String      @id @default(uuid())
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  provocationId String
+  provocation   Provocation @relation(fields: [provocationId], references: [id], onDelete: Cascade)
+  
+  role          ProjProvLinkRole
+  createdAt     DateTime    @default(now())
+
+  @@unique([projectId, provocationId, role])
+  @@index([provocationId, role])
+  @@index([projectId, role])
 }

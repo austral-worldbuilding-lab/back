@@ -16,8 +16,8 @@ export class AiAdapterUtilsService {
   // TODO: split min and max results to postits and questions
   private readonly minResults: number;
   private readonly maxResults: number;
-  private readonly minSolutions: number;
-  private readonly maxSolutions: number;
+  private readonly minProvocations: number;
+  private readonly maxProvocations: number;
   constructor(
     private configService: ConfigService,
     private fileService: FileService,
@@ -26,8 +26,8 @@ export class AiAdapterUtilsService {
     const config = getAiValidationConfig();
     this.minResults = config.minResultsPerRequest;
     this.maxResults = config.maxResultsPerRequest;
-    this.minSolutions = config.minSolutionsPerRequest;
-    this.maxSolutions = config.maxSolutionsPerRequest;
+    this.minProvocations = config.minProvocationsPerRequest;
+    this.maxProvocations = config.maxProvocationsPerRequest;
   }
 
   getMaxResults(): number {
@@ -38,12 +38,12 @@ export class AiAdapterUtilsService {
     return this.minResults;
   }
 
-  getMinSolutions(): number {
-    return this.minSolutions;
+  getMinProvocations(): number {
+    return this.minProvocations;
   }
 
-  getMaxSolutions(): number {
-    return this.maxSolutions;
+  getMaxProvocations(): number {
+    return this.maxProvocations;
   }
 
   validateConfiguration(modelConfigKey: string): string {

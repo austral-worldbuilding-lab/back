@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsString } from 'class-validator';
 
 // TODO: use generics for selectedFiles as it's the same as the one in generate-questions.dto.ts
-export class GenerateSolutionsDto {
+export class GenerateProvocationsDto {
   @ApiProperty({
     description:
       'Lista opcional de nombres de archivos específicos a usar para el contexto de IA. Si no se proporciona, se usarán todos los archivos disponibles.',

@@ -6,7 +6,7 @@ import {
   AiPostitResponse,
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
-import { AiSolutionResponse } from '@modules/project/types/solutions.type';
+import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -15,7 +15,7 @@ import { AiProvider } from '../interfaces/ai-provider.interface';
 import {
   createPostitsSummaryResponseSchema,
   createPostitsResponseSchema,
-  createSolutionsResponseSchema,
+  createProvocationsResponseSchema,
 } from '../resources/dto/generate-postits.dto';
 import { createQuestionsResponseSchema } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
@@ -368,22 +368,25 @@ export class GeminiAdapter implements AiProvider {
     }
   }
 
-  async generateSolutions(
+  async generateProvocations(
     projectId: string,
     projectName: string,
     projectDescription: string,
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
-  ): Promise<AiSolutionResponse[]> {
-    this.logger.log(`Starting solutions generation for project: ${projectId}`);
+  ): Promise<AiProvocationResponse[]> {
+    this.logger.log(
+      `Starting provocations generation for project: ${projectId}`,
+    );
 
     const model = this.geminiModel;
-    const finalPromptTask = await this.promptBuilderService.buildSolutionPrompt(
-      projectName,
-      projectDescription,
-      mandalasAiSummary,
-    );
+    const finalPromptTask =
+      await this.promptBuilderService.buildProvocationPrompt(
+        projectName,
+        projectDescription,
+        mandalasAiSummary,
+      );
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
@@ -396,32 +399,35 @@ export class GeminiAdapter implements AiProvider {
       model,
       finalPromptTask,
       geminiFiles,
-      createSolutionsResponseSchema({
-        minItems: this.utilsService.getMinSolutions(),
-        maxItems: this.utilsService.getMaxSolutions(),
+      createProvocationsResponseSchema({
+        minItems: this.utilsService.getMinProvocations(),
+        maxItems: this.utilsService.getMaxProvocations(),
       }),
     );
 
-    const result = this.parseAndValidateSolutionResponse(responseText);
-    this.logger.log(`Solutions generation completed`);
+    const result = this.parseAndValidateProvocationResponse(responseText);
+    this.logger.log(`Provocations generation completed`);
     return result;
   }
 
-  private parseAndValidateSolutionResponse(
+  private parseAndValidateProvocationResponse(
     responseText: string | undefined,
-  ): AiSolutionResponse[] {
+  ): AiProvocationResponse[] {
     if (!responseText) {
       throw new Error('No response text received from Gemini API');
     }
     try {
-      const solutions = JSON.parse(responseText) as AiSolutionResponse[];
+      const provocations = JSON.parse(responseText) as AiProvocationResponse[];
       this.logger.log(
-        `Successfully parsed ${solutions.length} solution responses from AI`,
+        `Successfully parsed ${provocations.length} provocation responses from AI`,
       );
 
-      return solutions;
+      return provocations;
     } catch (error) {
-      this.logger.error('Failed to parse AI solution response as JSON:', error);
+      this.logger.error(
+        'Failed to parse AI provocation response as JSON:',
+        error,
+      );
       throw new Error('Invalid JSON response from Gemini API');
     }
   }

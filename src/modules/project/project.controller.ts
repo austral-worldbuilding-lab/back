@@ -41,15 +41,18 @@ import {
   ApiUpdateUserRole,
   ApiGetProjectUsers,
   ApiRemoveUserFromProject,
-  ApiCreateProjectSolutions,
-  ApiGetCachedSolutions,
+  ApiGenerateProjectProvocations,
+  ApiGetCachedProvocations,
+  ApiCreateProvocation,
 } from './decorators/project-swagger.decorators';
-import { AiSolutionResponseDto } from './dto/ai-solution-response.dto';
+import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
-import { GenerateSolutionsDto } from './dto/generate-solutions.dto';
+import { GenerateProvocationsDto } from './dto/generate-provocations.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
@@ -59,7 +62,7 @@ import {
   RequireProjectRoles,
 } from './guards/project-role.guard';
 import { ProjectService } from './project.service';
-import { AiSolutionResponse } from './types/solutions.type';
+import { AiProvocationResponse } from './types/provocations.type';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -240,40 +243,59 @@ export class ProjectController {
     };
   }
 
-  @Post(':id/generate-solutions')
+  @Post(':id/generate-provocations')
   @UseGuards(ProjectRoleGuard)
-  @ApiCreateProjectSolutions()
-  async createProjectSolutions(
+  @ApiGenerateProjectProvocations()
+  async generateProvocations(
     @Param('id', new UuidValidationPipe()) projectId: string,
-    @Body() generateSolutionsDto: GenerateSolutionsDto,
+    @Body() generateProvocationsDto: GenerateProvocationsDto,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiSolutionResponse[]>> {
+  ): Promise<DataResponse<AiProvocationResponse[]>> {
     const userId = request.user.id;
-    const solutions = await this.projectService.generateSolutions(
+    const provocations = await this.projectService.generateProvocations(
       userId,
       projectId,
-      generateSolutionsDto.selectedFiles,
+      generateProvocationsDto.selectedFiles,
     );
     return {
-      data: solutions,
+      data: provocations,
     };
   }
 
-  @Get(':id/cached-solutions')
+  @Get(':id/cached-provocations')
   @UseGuards(ProjectRoleGuard)
-  @ApiGetCachedSolutions()
-  async getCachedSolutions(
+  @ApiGetCachedProvocations()
+  async getCachedProvocations(
     @Param('id', new UuidValidationPipe()) projectId: string,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiSolutionResponseDto[]>> {
+  ): Promise<DataResponse<AiProvocationResponseDto[]>> {
     const userId = request.user.id;
-    const cachedSolutions = await this.projectService.getCachedSolutions(
+    const cachedProvocations = await this.projectService.getCachedProvocations(
       userId,
       projectId,
     );
 
     return {
-      data: cachedSolutions,
+      data: cachedProvocations,
+    };
+  }
+
+  @Post(':projectId/provocation')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin')
+  @ApiCreateProvocation()
+  async createProvocation(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Body() createProvocationDto: CreateProvocationDto,
+  ): Promise<MessageResponse<ProvocationDto>> {
+    const createdProvocation = await this.projectService.createProvocation(
+      projectId,
+      createProvocationDto,
+    );
+
+    return {
+      message: 'Provocation created successfully',
+      data: createdProvocation,
     };
   }
 }
