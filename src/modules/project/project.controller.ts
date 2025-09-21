@@ -44,8 +44,10 @@ import {
   ApiGenerateProjectProvocations,
   ApiGetCachedProvocations,
   ApiCreateProvocation,
+  ApiCreateProjectFromProvocation,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
+import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -85,6 +87,24 @@ export class ProjectController {
     );
     return {
       message: 'Project created successfully',
+      data: project,
+    };
+  }
+
+  @Post('from-provocation')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
+  @ApiCreateProjectFromProvocation()
+  async createFromProvocation(
+    @Body() createProjectFromProvocationDto: CreateProjectFromProvocationDto,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.createFromProvocation(
+      createProjectFromProvocationDto,
+      req.user.id,
+    );
+    return {
+      message: 'Project created successfully from provocation',
       data: project,
     };
   }
