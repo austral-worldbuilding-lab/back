@@ -308,9 +308,8 @@ export class ProjectController {
   async findAllProvocations(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
   ): Promise<DataResponse<ProvocationDto[]>> {
-    const provocations = await this.projectService.findAllProvocations(
-      projectId,
-    );
+    const provocations =
+      await this.projectService.findAllProvocations(projectId);
 
     return {
       data: provocations,

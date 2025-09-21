@@ -556,7 +556,8 @@ export const ApiFindAllProvocations = () =>
     }),
     ApiResponse({
       status: 200,
-      description: 'Lista de provocaciones generadas por el proyecto obtenida exitosamente',
+      description:
+        'Lista de provocaciones generadas por el proyecto obtenida exitosamente',
       schema: {
         type: 'object',
         properties: {
@@ -576,7 +577,8 @@ export const ApiFindAllProvocations = () =>
         properties: {
           message: {
             type: 'string',
-            example: 'Project with ID "a1b2c3d4-e5f6-7890-1234-567890abcdef" not found',
+            example:
+              'Project with ID "a1b2c3d4-e5f6-7890-1234-567890abcdef" not found',
           },
           error: { type: 'string', example: 'Not Found' },
           statusCode: { type: 'number', example: 404 },
