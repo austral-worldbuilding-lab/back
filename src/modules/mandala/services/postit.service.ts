@@ -341,11 +341,7 @@ export class PostitService {
     }
 
     // If dimension and section are provided, generate coordinates
-    if (
-      mandala &&
-      postit.dimension &&
-      postit.section
-    ) {
+    if (mandala && postit.dimension && postit.section) {
       const dimensions = mandala.configuration.dimensions.map((d) => d.name);
       const scales = mandala.configuration.scales;
       const allCoordinates = existingPostits.map((p) => p.coordinates);
