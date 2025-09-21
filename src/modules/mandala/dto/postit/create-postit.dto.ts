@@ -41,29 +41,37 @@ export class CreatePostitDto {
   content!: string;
 
   @ApiProperty({
-    description: 'Coordinates of the post-it',
+    description:
+      'Coordinates of the post-it. If passed, they will be used instead of the dimension and section to determine the position in the mandala',
     type: PostitCoordinatesDto,
+    required: false,
   })
+  @IsOptional()
   @ValidateNested()
   @Type(() => PostitCoordinatesDto)
   @IsObject()
-  coordinates!: PostitCoordinatesDto;
+  coordinates?: PostitCoordinatesDto;
 
   @ApiProperty({
-    description: 'Dimension of the post-it',
-    example: 'Resources',
+    description:
+      'Dimension of the post-it. If passed with the section (and no coords), they will be used instead of the coordinates to determine the position in the mandala',
+    example: 'Gobierno',
+    required: false,
   })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  dimension!: string;
+  dimension?: string;
 
   @ApiProperty({
     description: 'Section of the post-it',
-    example: 'Person',
+    example: 'Institución',
+    required: false,
   })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  section!: string;
+  section?: string;
 
   @ApiProperty({
     description: 'Tags associated with the post-it',

@@ -232,6 +232,7 @@ export class MandalaController {
       mandala.projectId,
       mandalaId,
       createPostitDto,
+      mandala,
     );
 
     return {
