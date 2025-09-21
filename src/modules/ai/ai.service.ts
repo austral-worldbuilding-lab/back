@@ -3,7 +3,6 @@ import {
   AiPostitResponse,
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
-import { AiSolutionResponse } from '@modules/project/types/solutions.type';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
 import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
@@ -15,6 +14,8 @@ import {
   createCleanMandalaForQuestions,
   createCleanMandalaForSummary,
 } from './utils/mandala-cleaned-for-ai.util';
+
+import { AiProvocationResponse } from '@/modules/project/types/provocations.type';
 
 @Injectable()
 export class AiService {
@@ -125,7 +126,7 @@ export class AiService {
     return result;
   }
 
-  async generateSolutions(
+  async generateProvocations(
     projectId: string,
     projectName: string,
     projectDescription: string,
@@ -133,14 +134,16 @@ export class AiService {
     scales: string[],
     mandalasDocument: FirestoreMandalaDocument[],
     selectedFiles?: string[],
-  ): Promise<AiSolutionResponse[]> {
-    this.logger.log(`Starting solutions generation for project: ${projectId}`);
+  ): Promise<AiProvocationResponse[]> {
+    this.logger.log(
+      `Starting provocations generation for project: ${projectId}`,
+    );
 
     const cleanMandalasDocument = mandalasDocument.map((m) =>
       createCleanMandalaForSummary(m),
     );
 
-    const result = await this.aiProvider.generateSolutions(
+    const result = await this.aiProvider.generateProvocations(
       projectId,
       projectName,
       projectDescription,
@@ -151,7 +154,7 @@ export class AiService {
     );
 
     this.logger.log(
-      `Generated ${result.length} solutions for project: ${projectId}`,
+      `Generated ${result.length} provocations for project: ${projectId}`,
     );
 
     return result;

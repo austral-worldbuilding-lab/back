@@ -10,7 +10,7 @@ export class CacheService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   buildCacheKey(
-    type: 'questions' | 'postits' | 'solutions',
+    type: 'questions' | 'postits' | 'provocations',
     userId: string,
     scopeId: string,
   ): string {

@@ -6,7 +6,7 @@ import {
   replacePostitPlaceholders,
   replaceQuestionPlaceholders,
   replaceComparisonPlaceholders,
-  replaceSolutionPlaceholders,
+  replaceProvocationPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -129,27 +129,27 @@ export class AiPromptBuilderService {
   }
 
   /**
-   * Builds complete prompt for solution generation
+   * Builds complete prompt for provocation generation
    * @param mandalasAiSummary - Document containing the mandalas to be compared
    * @returns Complete prompt ready for AI processing
    */
-  async buildSolutionPrompt(
+  async buildProvocationPrompt(
     projectName: string,
     projectDescription: string,
     mandalasAiSummary: string,
   ): Promise<string> {
     const promptFilePath = path.resolve(
       __dirname,
-      '../resources/prompts/prompt_generar_soluciones.txt',
+      '../resources/prompts/prompt_generar_provocaciones.txt',
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
-    const promptTask = replaceSolutionPlaceholders(promptTemplate, {
+    const promptTask = replaceProvocationPlaceholders(promptTemplate, {
       projectName: projectName,
       projectDescription: projectDescription,
       mandalaDocument: mandalasAiSummary,
-      maxResults: this.utilsService.getMaxResults(),
-      minResults: this.utilsService.getMinResults(),
+      maxResults: this.utilsService.getMaxProvocations(),
+      minResults: this.utilsService.getMinProvocations(),
     });
     return this.buildPromptWithCiclo3Instructions(promptTask);
   }

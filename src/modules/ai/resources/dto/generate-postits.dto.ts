@@ -42,7 +42,7 @@ export const createPostitsSummaryResponseSchema = (limits: {
   maxItems: limits.maxItems,
 });
 
-export const createSolutionsResponseSchema = (limits: {
+export const createProvocationsResponseSchema = (limits: {
   minItems: number;
   maxItems: number;
 }) => ({
@@ -52,10 +52,10 @@ export const createSolutionsResponseSchema = (limits: {
     properties: {
       title: { type: 'string' },
       description: { type: 'string' },
-      provocation: { type: 'string' },
+      question: { type: 'string' },
     },
-    required: ['title', 'description', 'provocation'],
-    propertyOrdering: ['title', 'description', 'provocation'],
+    required: ['title', 'description', 'question'],
+    propertyOrdering: ['title', 'description', 'question'],
   },
   minItems: limits.minItems,
   maxItems: limits.maxItems,

@@ -10,7 +10,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { AiSolutionResponseDto } from '../dto/ai-solution-response.dto';
+import { AiProvocationResponseDto } from '../dto/ai-provocation-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { TagDto } from '../dto/tag.dto';
@@ -381,12 +381,12 @@ export const ApiRemoveUserFromProject = () =>
     }),
   );
 
-export const ApiCreateProjectSolutions = () =>
+export const ApiGenerateProjectProvocations = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Generar soluciones para un proyecto',
+      summary: 'Generar provocaciones para un proyecto',
       description:
-        'Genera soluciones de IA basadas en las mandalas y descripción del proyecto',
+        'Genera provocaciones con IA basadas en las mandalas y archivos y descripción del proyecto',
     }),
     ApiParam({
       name: 'id',
@@ -396,7 +396,7 @@ export const ApiCreateProjectSolutions = () =>
     }),
     ApiResponse({
       status: 200,
-      description: 'Soluciones generadas exitosamente',
+      description: 'Provocaciones generadas exitosamente',
       schema: {
         type: 'object',
         properties: {
@@ -414,7 +414,7 @@ export const ApiCreateProjectSolutions = () =>
                   example:
                     'Se propone la creación de un espacio dedicado dentro del campus universitario para la celebración de festejos de graduación. Este "Festejódromo" contaría con una infraestructura específica que facilitaría la limpieza inmediata, promovería la donación de alimentos sobrantes para fomentar festejos solidarios y sostenibles, y ofrecería mensajes inspiradores sobre una nueva etapa para los graduados. Aborda la problemática de la huella ecológica y el mal prestigio al centralizar y regular las celebraciones, y satisface el deseo de los alumnos de festejar dentro del campus con sus seres queridos, gestionando las preocupaciones de seguridad y orden con la comunidad local.',
                 },
-                provocation: {
+                question: {
                   type: 'string',
                   example:
                     '¿Qué pasaría si la universidad creara un espacio dedicado para la celebración de festejos de graduación?',
@@ -427,7 +427,7 @@ export const ApiCreateProjectSolutions = () =>
     }),
     ApiBadRequestResponse({
       description:
-        'Solicitud incorrecta - El proyecto no cumple con los requisitos mínimos para generar soluciones',
+        'Solicitud incorrecta - El proyecto no cumple con los requisitos mínimos para generar provocaciones',
       schema: {
         type: 'object',
         properties: {
@@ -437,32 +437,32 @@ export const ApiCreateProjectSolutions = () =>
               missingDescription: {
                 summary: 'Falta descripción del proyecto',
                 value:
-                  'Se requiere una descripción del proyecto para generar soluciones.',
+                  'Se requiere una descripción del proyecto para generar provocaciones.',
               },
               missingDimensions: {
                 summary: 'Faltan dimensiones del proyecto',
                 value:
-                  'Se requieren dimensiones del proyecto para generar soluciones.',
+                  'Se requieren dimensiones del proyecto para generar provocaciones.',
               },
               missingScales: {
                 summary: 'Faltan escalas del proyecto',
                 value:
-                  'Se requieren escalas del proyecto para generar soluciones.',
+                  'Se requieren escalas del proyecto para generar provocaciones.',
               },
               insufficientMandalas: {
                 summary: 'Insuficientes mandalas',
                 value:
-                  'El proyecto no cumple el minimo de mandalas para generar soluciones.',
+                  'El proyecto no cumple el minimo de mandalas para generar provocaciones.',
               },
               insufficientPostits: {
                 summary: 'Insuficientes postits',
                 value:
-                  'El proyecto no cumple el minimo de postits en todas las mandalas para generar soluciones.',
+                  'El proyecto no cumple el minimo de postits en todas las mandalas para generar provocaciones.',
               },
               insufficientFiles: {
                 summary: 'Insuficientes archivos',
                 value:
-                  'El proyecto no cumple el minimo de archivos para generar soluciones.',
+                  'El proyecto no cumple el minimo de archivos para generar provocaciones.',
               },
             },
           },
@@ -509,12 +509,12 @@ export const ApiCreateProjectSolutions = () =>
     }),
   );
 
-export const ApiGetCachedSolutions = () =>
+export const ApiGetCachedProvocations = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Obtener soluciones del cache',
+      summary: 'Obtener provocaciones del cache',
       description:
-        'Obtiene todas las soluciones generadas previamente para un proyecto desde el cache',
+        'Obtiene todas las provocaciones generadas previamente para un proyecto desde el cache',
     }),
     ApiParam({
       name: 'id',
@@ -523,8 +523,8 @@ export const ApiGetCachedSolutions = () =>
     }),
     ApiResponse({
       status: 200,
-      description: 'Soluciones obtenidas exitosamente del cache',
-      type: [AiSolutionResponseDto],
+      description: 'Provocaciones obtenidas exitosamente del cache',
+      type: [AiProvocationResponseDto],
     }),
     ApiResponse({
       status: 403,

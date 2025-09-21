@@ -185,7 +185,7 @@ const comparisonReplacer = composeReplacers(
   replaceMinResults,
 );
 
-const solutionReplacer = composeReplacers(
+const provocationReplacer = composeReplacers(
   replaceProjectName,
   replaceProjectDescription,
   replaceMandalaDocument,
@@ -265,19 +265,19 @@ export function replaceComparisonPlaceholders(
 }
 
 /**
- * Replace placeholders for solution generation prompts
+ * Replace placeholders for provocation generation prompts
  * @param promptTemplate - The template string containing placeholders
  * @param config - Configuration object with values to replace placeholders
  * @returns The prompt with all placeholders replaced
  */
-export function replaceSolutionPlaceholders(
+export function replaceProvocationPlaceholders(
   promptTemplate: string,
   config: PromptReplacementConfig = {},
 ): string {
   return replaceWithReplacer(
     promptTemplate,
     config,
-    solutionReplacer,
-    'solution',
+    provocationReplacer,
+    'provocation',
   );
 }
