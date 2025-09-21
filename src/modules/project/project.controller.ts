@@ -44,8 +44,11 @@ import {
   ApiGenerateProjectProvocations,
   ApiGetCachedProvocations,
   ApiCreateProvocation,
+  ApiFindAllProvocations,
+  ApiCreateProjectFromProvocation,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
+import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -85,6 +88,24 @@ export class ProjectController {
     );
     return {
       message: 'Project created successfully',
+      data: project,
+    };
+  }
+
+  @Post('from-provocation')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
+  @ApiCreateProjectFromProvocation()
+  async createFromProvocation(
+    @Body() createProjectFromProvocationDto: CreateProjectFromProvocationDto,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.createFromProvocation(
+      createProjectFromProvocationDto,
+      req.user.id,
+    );
+    return {
+      message: 'Project created successfully from provocation',
       data: project,
     };
   }
@@ -277,6 +298,21 @@ export class ProjectController {
 
     return {
       data: cachedProvocations,
+    };
+  }
+
+  @Get(':projectId/provocations')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiFindAllProvocations()
+  async findAllProvocations(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<ProvocationDto[]>> {
+    const provocations =
+      await this.projectService.findAllProvocations(projectId);
+
+    return {
+      data: provocations,
     };
   }
 
