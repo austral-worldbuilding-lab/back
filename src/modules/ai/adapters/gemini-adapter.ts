@@ -20,7 +20,7 @@ import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
-import { AiProvocationResponse } from '@/modules/project/types/provocations.type';
+import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 
 interface GeminiUploadedFile {
   uri: string;
