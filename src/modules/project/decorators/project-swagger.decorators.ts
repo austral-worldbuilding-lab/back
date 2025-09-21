@@ -617,6 +617,9 @@ export const ApiCreateProvocation = () =>
             type: 'string',
             example: 'Provocation created successfully',
           },
+          data: {
+            $ref: '#/components/schemas/ProvocationDto',
+          },
         },
       },
     }),
