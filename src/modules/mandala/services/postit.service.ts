@@ -327,10 +327,52 @@ export class PostitService {
     );
   }
 
+  private generateCoordinatesForPostit(
+    postit: CreatePostitDto,
+    mandala: MandalaDto | undefined,
+    existingPostits: PostitWithCoordinates[],
+  ): PostitCoordinates {
+    // If coordinates are explicitly provided, use them
+    if (postit.coordinates) {
+      return {
+        x: postit.coordinates.x,
+        y: postit.coordinates.y,
+      };
+    }
+
+    // If dimension and section are provided, generate coordinates
+    if (
+      mandala &&
+      postit.dimension &&
+      postit.section
+    ) {
+      const dimensions = mandala.configuration.dimensions.map((d) => d.name);
+      const scales = mandala.configuration.scales;
+      const allCoordinates = existingPostits.map((p) => p.coordinates);
+
+      const smartCoordinates = this.findOptimalCoordinates(
+        postit.dimension,
+        postit.section,
+        dimensions,
+        scales,
+        [],
+        allCoordinates,
+      );
+
+      if (smartCoordinates) {
+        return smartCoordinates;
+      }
+    }
+
+    // Default fallback
+    return { x: 0, y: 0 };
+  }
+
   async createPostit(
     projectId: string,
     mandalaId: string,
     postit: CreatePostitDto,
+    mandala?: MandalaDto,
   ): Promise<PostitWithCoordinates> {
     const currentDocument = (await this.firebaseDataService.getDocument(
       projectId,
@@ -383,21 +425,26 @@ export class PostitService {
       presignedUrl = presignedUrls[0]?.url;
     }
 
+    // Generate optimal coordinates for the postit
+    const existingPostits = currentDocument.postits || [];
+    const finalCoordinates = this.generateCoordinatesForPostit(
+      postit,
+      mandala,
+      existingPostits,
+    );
+
     // Convert DTO to plain object to avoid Firestore serialization issues
     const plainPostit = {
       id: newPostitId,
       content: postit.content,
-      dimension: postit.dimension,
-      section: postit.section,
+      dimension: postit.dimension || '',
+      section: postit.section || '',
       tags: postit.tags.map((tag) => ({
         name: tag.name,
         color: tag.color,
       })),
       childrens: [], // Initialize empty children array
-      coordinates: {
-        x: postit.coordinates.x,
-        y: postit.coordinates.y,
-      },
+      coordinates: finalCoordinates,
       ...(postit.imageFileName && { imageFileName: postit.imageFileName }),
       ...(presignedUrl && { presignedUrl }),
     };
