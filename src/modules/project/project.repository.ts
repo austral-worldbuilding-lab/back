@@ -90,7 +90,7 @@ export class ProjectRepository {
   private async findParentByProvocation(
     tx: Prisma.TransactionClient,
     provocationId: string,
-  ): Promise<{ projectId: string; project: Project } | null> {
+  ): Promise<Project | null> {
     const parentProjectLink = await tx.projectProvocationLink.findFirst({
       where: {
         provocationId,
@@ -101,12 +101,12 @@ export class ProjectRepository {
       },
     });
 
-    return parentProjectLink;
+    return parentProjectLink?.project || null;
   }
 
-  // TODO: when we have method to find initial project, replace `${parentProjectFromLink.project.name}: ...` for `${initialProject.name}: ...`
-  private buildProjectName(
-    parentProject: { projectId: string; project: Project } | null,
+  // TODO: when we have method to find initial project, replace `${parentProject.name}: ...` for `${initialProject.name}: ...`
+  private buildProvocationProjectName(
+    parentProject: Project | null,
     provocationQuestion: string,
     provocationContent: { title?: string; description?: string } | null,
     providedName?: string,
@@ -114,7 +114,7 @@ export class ProjectRepository {
     const provocationTitle = provocationContent?.title || provocationQuestion;
 
     if (parentProject) {
-      return `${parentProject.project.name}: ${provocationTitle}`;
+      return `${parentProject.name}: ${provocationTitle}`;
     } else {
       if (!providedName) {
         throw new BadRequestException(
@@ -125,30 +125,27 @@ export class ProjectRepository {
     }
   }
 
-  private buildProjectDescription(
+  private buildProvocationProjectDescription(
     provocationQuestion: string,
     provocationContent: { title?: string; description?: string } | null,
   ): string {
     return provocationContent?.description || provocationQuestion;
   }
 
-  private validateProvidedValuesMatchParent(
-    parentProjectFromLink: { projectId: string; project: Project },
+  private validateProvocationProjectValuesMatchParent(
+    parentProject: Project,
     organizationId?: string,
     dimensions?: DimensionDto[],
     scales?: string[],
   ): void {
     const parentConfig = this.parseToProjectConfiguration(
-      parentProjectFromLink.project.configuration,
+      parentProject.configuration,
     );
 
     // Validate organizationId matches parent if provided
-    if (
-      organizationId &&
-      organizationId !== parentProjectFromLink.project.organizationId
-    ) {
+    if (organizationId && organizationId !== parentProject.organizationId) {
       throw new BadRequestException(
-        `Organization ID must match parent project's organization (${parentProjectFromLink.project.organizationId}) or be omitted to inherit it.`,
+        `Organization ID must match parent project's organization (${parentProject.organizationId}) or be omitted to inherit it.`,
       );
     }
 
@@ -183,8 +180,8 @@ export class ProjectRepository {
     }
   }
 
-  private setProjectConfigurationValues(
-    parentProjectFromLink: { projectId: string; project: Project } | null,
+  private setProvocationProjectConfigurationValues(
+    parentProject: Project | null,
     providedDimensions?: DimensionDto[],
     providedScales?: string[],
     providedOrganizationId?: string,
@@ -199,9 +196,9 @@ export class ProjectRepository {
 
     // Set dimensions: use provided, inherit from parent, or use defaults
     if (!providedDimensions || providedDimensions.length === 0) {
-      if (parentProjectFromLink) {
+      if (parentProject) {
         const parentConfig = this.parseToProjectConfiguration(
-          parentProjectFromLink.project.configuration,
+          parentProject.configuration,
         );
         dimensions = parentConfig.dimensions;
       } else {
@@ -214,9 +211,9 @@ export class ProjectRepository {
 
     // Set scales: use provided, inherit from parent, or use defaults
     if (!providedScales || providedScales.length === 0) {
-      if (parentProjectFromLink) {
+      if (parentProject) {
         const parentConfig = this.parseToProjectConfiguration(
-          parentProjectFromLink.project.configuration,
+          parentProject.configuration,
         );
         scales = parentConfig.scales;
       } else {
@@ -229,8 +226,8 @@ export class ProjectRepository {
 
     // Set organizationId: use provided, inherit from parent, or throw error
     if (!providedOrganizationId) {
-      if (parentProjectFromLink) {
-        organizationId = parentProjectFromLink.project.organizationId;
+      if (parentProject) {
+        organizationId = parentProject.organizationId;
       } else {
         throw new ResourceNotFoundException(
           'Organization',
@@ -251,36 +248,6 @@ export class ProjectRepository {
     roleId: string,
   ): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
-      let parentProjectId: string | undefined = undefined;
-      let provocationId: string | undefined = undefined;
-
-      if (createProjectDto.fromProvocation) {
-        const provocation = await tx.provocation.findFirst({
-          where: {
-            id: createProjectDto.fromProvocation,
-            isActive: true,
-          },
-        });
-
-        if (!provocation) {
-          throw new ResourceNotFoundException(
-            'Provocation',
-            createProjectDto.fromProvocation,
-          );
-        }
-
-        const parentProjectFromLink = await this.findParentByProvocation(
-          tx,
-          createProjectDto.fromProvocation,
-        );
-
-        if (parentProjectFromLink) {
-          parentProjectId = parentProjectFromLink.projectId;
-        }
-
-        provocationId = createProjectDto.fromProvocation;
-      }
-
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
@@ -290,19 +257,8 @@ export class ProjectRepository {
             scales: createProjectDto.scales!,
           }),
           organizationId: createProjectDto.organizationId,
-          parentProjectId,
         },
       });
-
-      if (provocationId) {
-        await tx.projectProvocationLink.create({
-          data: {
-            projectId: project.id,
-            provocationId,
-            role: ProjProvLinkRole.ORIGIN,
-          },
-        });
-      }
 
       await tx.userProjectRole.create({
         data: {
@@ -341,28 +297,26 @@ export class ProjectRepository {
         description?: string;
       } | null;
 
-      const parentProjectFromLink = await this.findParentByProvocation(
+      const parentProject = await this.findParentByProvocation(
         tx,
         createProjectFromProvocationDto.fromProvocationId,
       );
 
-      const parentProjectId: string | undefined = undefined;
-
-      const projectName = this.buildProjectName(
-        parentProjectFromLink,
+      const projectName = this.buildProvocationProjectName(
+        parentProject,
         provocation.question,
         provocationContent,
         createProjectFromProvocationDto.name,
       );
-      const projectDescription = this.buildProjectDescription(
+      const projectDescription = this.buildProvocationProjectDescription(
         provocation.question,
         provocationContent,
       );
 
       // Validate provided values match parent if parent exists
-      if (parentProjectFromLink) {
-        this.validateProvidedValuesMatchParent(
-          parentProjectFromLink,
+      if (parentProject) {
+        this.validateProvocationProjectValuesMatchParent(
+          parentProject,
           createProjectFromProvocationDto.organizationId,
           createProjectFromProvocationDto.dimensions,
           createProjectFromProvocationDto.scales,
@@ -371,8 +325,8 @@ export class ProjectRepository {
 
       // Set configuration values: use provided, inherit from parent, or use defaults
       const { dimensions, scales, organizationId } =
-        this.setProjectConfigurationValues(
-          parentProjectFromLink,
+        this.setProvocationProjectConfigurationValues(
+          parentProject,
           createProjectFromProvocationDto.dimensions,
           createProjectFromProvocationDto.scales,
           createProjectFromProvocationDto.organizationId,
@@ -388,7 +342,7 @@ export class ProjectRepository {
             scales,
           }),
           organizationId,
-          parentProjectId,
+          parentProjectId: parentProject?.id,
         },
       });
 
