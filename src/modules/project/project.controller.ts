@@ -44,6 +44,7 @@ import {
   ApiGenerateProjectProvocations,
   ApiGetCachedProvocations,
   ApiCreateProvocation,
+  ApiFindAllProvocations,
   ApiCreateProjectFromProvocation,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
@@ -297,6 +298,22 @@ export class ProjectController {
 
     return {
       data: cachedProvocations,
+    };
+  }
+
+  @Get(':projectId/provocations')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiFindAllProvocations()
+  async findAllProvocations(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<ProvocationDto[]>> {
+    const provocations = await this.projectService.findAllProvocations(
+      projectId,
+    );
+
+    return {
+      data: provocations,
     };
   }
 

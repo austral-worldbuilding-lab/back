@@ -825,4 +825,28 @@ export class ProjectRepository {
 
     return this.parseToProvocationDto(provocation);
   }
+
+  async findAllProvocationsByProjectId(
+    projectId: string,
+  ): Promise<ProvocationDto[]> {
+    const provocationLinks = await this.prisma.projectProvocationLink.findMany({
+      where: {
+        projectId,
+        role: ProjProvLinkRole.GENERATED,
+        provocation: {
+          isActive: true,
+        },
+      },
+      include: {
+        provocation: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return provocationLinks.map((link) =>
+      this.parseToProvocationDto(link.provocation),
+    );
+  }
 }

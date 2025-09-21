@@ -381,4 +381,10 @@ export class ProjectService {
       createProvocationDto,
     );
   }
+
+  async findAllProvocations(projectId: string): Promise<ProvocationDto[]> {
+    await this.findOne(projectId);
+
+    return this.projectRepository.findAllProvocationsByProjectId(projectId);
+  }
 }

@@ -539,6 +539,58 @@ export const ApiGetCachedProvocations = () =>
     }),
   );
 
+export const ApiFindAllProvocations = () =>
+  applyDecorators(
+    ApiExtraModels(ProvocationDto),
+    ApiOperation({
+      summary: 'Obtener provocaciones generadas por un proyecto',
+      description:
+        'Retorna una lista de todas las provocaciones que fueron generadas por el proyecto especificado (rol GENERATED). Solo incluye los datos básicos de cada provocación, sin relaciones padre/hijo.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: 'string',
+      format: 'uuid',
+      example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de provocaciones generadas por el proyecto obtenida exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/ProvocationDto',
+            },
+          },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Project with ID "a1b2c3d4-e5f6-7890-1234-567890abcdef" not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description: 'Prohibido - No tiene permisos para acceder al proyecto',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
 export const ApiCreateProvocation = () =>
   applyDecorators(
     ApiOperation({
@@ -562,7 +614,7 @@ export const ApiCreateProvocation = () =>
           message: {
             type: 'string',
             example: 'Provocation created successfully',
-          }
+          },
         },
       },
     }),
