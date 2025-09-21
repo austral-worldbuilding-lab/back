@@ -86,17 +86,21 @@ export const ApiUpdateProject = () =>
         },
         'actualizar-descripcion': {
           summary: 'Actualizar solo la descripción',
-          description: 'Ejemplo de actualización de la descripción del proyecto',
+          description:
+            'Ejemplo de actualización de la descripción del proyecto',
           value: {
-            description: 'Esta es una descripción actualizada del proyecto que busca mejorar la experiencia del comedor universitario.',
+            description:
+              'Esta es una descripción actualizada del proyecto que busca mejorar la experiencia del comedor universitario.',
           },
         },
         'actualizar-completo': {
           summary: 'Actualización completa',
-          description: 'Ejemplo de actualización de múltiples campos del proyecto',
+          description:
+            'Ejemplo de actualización de múltiples campos del proyecto',
           value: {
             name: 'Proyecto Comedor Austral Mejorado',
-            description: 'Este proyecto busca mejorar significativamente la experiencia del comedor universitario mediante el análisis profundo de las necesidades de los usuarios y la implementación de mejoras innovadoras.',
+            description:
+              'Este proyecto busca mejorar significativamente la experiencia del comedor universitario mediante el análisis profundo de las necesidades de los usuarios y la implementación de mejoras innovadoras.',
             dimensions: [
               { name: 'Recursos', color: '#FF0000' },
               { name: 'Tiempo', color: '#00FF00' },

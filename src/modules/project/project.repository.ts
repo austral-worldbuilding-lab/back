@@ -454,7 +454,12 @@ export class ProjectRepository {
     id: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
-    const updateData: any = {};
+    const updateData: {
+      name?: string;
+      description?: string;
+      organizationId?: string;
+      configuration?: Prisma.InputJsonValue;
+    } = {};
 
     if (updateProjectDto.name !== undefined) {
       updateData.name = updateProjectDto.name;
@@ -468,15 +473,20 @@ export class ProjectRepository {
       updateData.organizationId = updateProjectDto.organizationId;
     }
 
-    if (updateProjectDto.dimensions !== undefined || updateProjectDto.scales !== undefined) {
+    if (
+      updateProjectDto.dimensions !== undefined ||
+      updateProjectDto.scales !== undefined
+    ) {
       const currentProject = await this.prisma.project.findUnique({
         where: { id },
         select: { configuration: true },
       });
 
       if (currentProject) {
-        const currentConfig = this.parseToProjectConfiguration(currentProject.configuration);
-        
+        const currentConfig = this.parseToProjectConfiguration(
+          currentProject.configuration,
+        );
+
         updateData.configuration = this.parseToJson({
           dimensions: updateProjectDto.dimensions ?? currentConfig.dimensions,
           scales: updateProjectDto.scales ?? currentConfig.scales,
