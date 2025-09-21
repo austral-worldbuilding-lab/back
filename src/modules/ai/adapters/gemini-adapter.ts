@@ -368,7 +368,9 @@ export class GeminiAdapter implements AiProvider {
     scales: string[],
     mandalasAiSummary: string,
   ): Promise<AiProvocationResponse[]> {
-    this.logger.log(`Starting provocations generation for project: ${projectId}`);
+    this.logger.log(
+      `Starting provocations generation for project: ${projectId}`,
+    );
 
     const model = this.geminiModel;
     const finalPromptTask =
