@@ -932,7 +932,7 @@ export class MandalaService {
           overlappedConfiguration.scales,
         );
 
-      await this.firebaseDataService.updateDocument(
+      await this.firebaseDataService.upsertDocument(
         targetProjectId,
         {
           postits: aiSummaryPostitsWithCoordinates,
