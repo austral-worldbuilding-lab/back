@@ -187,11 +187,17 @@ export class FileService {
     return this.storageService.deleteFile(scope, fileName, 'files');
   }
 
-  private getActualFileScope(file: EffectiveFile, requestedScope: FileScope): FileScope {
+  private getActualFileScope(
+    file: EffectiveFile,
+    requestedScope: FileScope,
+  ): FileScope {
     if (file.source_scope === 'org') {
       return { orgId: requestedScope.orgId };
     } else if (file.source_scope === 'project') {
-      return { orgId: requestedScope.orgId, projectId: requestedScope.projectId };
+      return {
+        orgId: requestedScope.orgId,
+        projectId: requestedScope.projectId,
+      };
     } else {
       return requestedScope;
     }
@@ -201,7 +207,7 @@ export class FileService {
     scope: FileScope,
   ): Promise<EffectiveFileWithSelection[]> {
     const files = await this.getFiles(scope);
-    
+
     const filesByScope = new Map<string, EffectiveFile[]>();
     for (const file of files) {
       const actualScope = this.getActualFileScope(file, scope);
@@ -215,8 +221,9 @@ export class FileService {
     const allSelections = new Map<string, boolean>();
     for (const [scopeKey, scopeFiles] of filesByScope) {
       const actualScope = JSON.parse(scopeKey) as FileScope;
-      const fileSelections = await this.fileSelectionRepository.getFileSelections(actualScope);
-      
+      const fileSelections =
+        await this.fileSelectionRepository.getFileSelections(actualScope);
+
       for (const file of scopeFiles) {
         const selected = fileSelections.get(file.file_name) ?? true;
         allSelections.set(file.file_name, selected);
@@ -248,9 +255,11 @@ export class FileService {
     }
 
     const selectionsByScope = new Map<string, UpdateFileSelectionDto[]>();
-    
+
     for (const selection of selections) {
-      const file = existingFiles.find(f => f.file_name === selection.fileName);
+      const file = existingFiles.find(
+        (f) => f.file_name === selection.fileName,
+      );
       if (file) {
         const actualScope = this.getActualFileScope(file, scope);
         const scopeKey = JSON.stringify(actualScope);
@@ -263,7 +272,10 @@ export class FileService {
 
     for (const [scopeKey, scopeSelections] of selectionsByScope) {
       const actualScope = JSON.parse(scopeKey) as FileScope;
-      await this.fileSelectionRepository.updateFileSelections(actualScope, scopeSelections);
+      await this.fileSelectionRepository.updateFileSelections(
+        actualScope,
+        scopeSelections,
+      );
     }
 
     await this.fileSelectionRepository.deleteSelectionsForMissingFiles(
