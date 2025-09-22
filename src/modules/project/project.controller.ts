@@ -226,7 +226,7 @@ export class ProjectController {
   @ApiRemoveUserFromProject()
   async removeUserFromProject(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Param('userId', new UuidValidationPipe()) userId: string,
+    @Param('userId') userId: string,
     @Req() req: RequestWithUser,
   ): Promise<MessageResponse<ProjectUserDto>> {
     const removedUser = await this.projectService.removeUserFromProject(
