@@ -6,14 +6,24 @@ import { buildPrefix } from '@modules/storage/path-builder';
 import { Injectable } from '@nestjs/common';
 
 import { CreateFileDto } from './dto/create-file.dto';
+import { UpdateFileSelectionDto } from './dto/file-selection.dto';
+import { FileSelectionRepository } from './repositories/file-selection.repository';
 import { FileBuffer } from './types/file-buffer.interface';
-import { FileScope, FileSource, EffectiveFile } from './types/file-scope.type';
+import {
+  FileScope,
+  FileSource,
+  EffectiveFile,
+  EffectiveFileWithSelection,
+} from './types/file-scope.type';
 
 @Injectable()
 export class FileService {
   private storageService = new AzureBlobStorageService();
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private fileSelectionRepository: FileSelectionRepository,
+  ) {}
 
   async resolveScope(
     scopeType: 'org' | 'project' | 'mandala',
@@ -175,5 +185,52 @@ export class FileService {
 
   async deleteFile(scope: FileScope, fileName: string): Promise<void> {
     return this.storageService.deleteFile(scope, fileName, 'files');
+  }
+
+  async getFilesWithSelection(
+    scope: FileScope,
+  ): Promise<EffectiveFileWithSelection[]> {
+    const files = await this.getFiles(scope);
+
+    const selections =
+      await this.fileSelectionRepository.getFileSelections(scope);
+
+    return files.map((file) => ({
+      ...file,
+      selected: selections.get(file.file_name) ?? true,
+    }));
+  }
+
+  async updateFileSelections(
+    scope: FileScope,
+    selections: UpdateFileSelectionDto[],
+  ): Promise<void> {
+    const existingFiles = await this.getFiles(scope);
+    const existingFileNames = existingFiles.map((file) => file.file_name);
+    const invalidFiles = selections
+      .map((s) => s.fileName)
+      .filter((fileName) => !existingFileNames.includes(fileName));
+
+    if (invalidFiles.length > 0) {
+      throw new ResourceNotFoundException(
+        'Files',
+        invalidFiles.join(', '),
+        'These files do not exist in the specified scope',
+      );
+    }
+
+    await this.fileSelectionRepository.updateFileSelections(scope, selections);
+
+    await this.fileSelectionRepository.deleteSelectionsForMissingFiles(
+      scope,
+      existingFileNames,
+    );
+  }
+
+  async getSelectedFileNames(scope: FileScope): Promise<string[]> {
+    const filesWithSelection = await this.getFilesWithSelection(scope);
+    return filesWithSelection
+      .filter((file) => file.selected)
+      .map((file) => file.file_name);
   }
 }
