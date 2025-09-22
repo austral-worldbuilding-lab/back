@@ -1,3 +1,4 @@
+import { ConsumptionService } from '@modules/consumption/consumption.service';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
@@ -6,6 +7,7 @@ import {
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 import { Injectable, Logger, Inject } from '@nestjs/common';
+import { AiService as AiServiceEnum, AiModel } from '@prisma/client';
 
 import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
 import { MandalaDto } from '../mandala/dto/mandala.dto';
@@ -21,7 +23,10 @@ import {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
-  constructor(@Inject(AI_PROVIDER) private aiProvider: AiProvider) {
+  constructor(
+    @Inject(AI_PROVIDER) private aiProvider: AiProvider,
+    private readonly consumptionService: ConsumptionService,
+  ) {
     this.logger.log(
       `AI Service initialized with ${this.aiProvider.constructor.name}`,
     );
@@ -36,10 +41,12 @@ export class AiService {
     tags: string[],
     selectedFiles?: string[],
     mandalaId?: string,
+    userId?: string,
+    organizationId?: string,
   ): Promise<AiPostitResponse[]> {
     this.logger.log(`Starting postit generation for project: ${projectId}`);
 
-    const result = await this.aiProvider.generatePostits(
+    const response = await this.aiProvider.generatePostits(
       projectId,
       dimensions,
       scales,
@@ -50,10 +57,26 @@ export class AiService {
       mandalaId,
     );
 
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_POSTITS,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
     this.logger.log(
-      `Generated ${result.length} postits for project: ${projectId}`,
+      `Generated ${response.data.length} postits for project: ${projectId}`,
     );
-    return result;
+    return response.data;
   }
 
   async generateQuestions(
@@ -66,6 +89,8 @@ export class AiService {
     centerCharacter: string,
     centerCharacterDescription: string,
     selectedFiles?: string[],
+    userId?: string,
+    organizationId?: string,
   ): Promise<AiQuestionResponse[]> {
     this.logger.log(`Starting question generation for project: ${projectId}`, {
       dimensions: dimensions.length,
@@ -77,7 +102,7 @@ export class AiService {
 
     const cleanMandalaDocument = createCleanMandalaForQuestions(mandala);
 
-    const result = await this.aiProvider.generateQuestions(
+    const response = await this.aiProvider.generateQuestions(
       projectId,
       mandalaId,
       dimensions,
@@ -89,16 +114,34 @@ export class AiService {
       selectedFiles,
     );
 
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_QUESTIONS,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
     this.logger.log(
-      `Generated ${result.length} questions for project: ${projectId}`,
+      `Generated ${response.data.length} questions for project: ${projectId}`,
     );
-    return result;
+    return response.data;
   }
 
   async generatePostitsSummary(
     projectId: string,
     mandalas: MandalaDto[],
     mandalasDocument: FirestoreMandalaDocument[],
+    userId?: string,
+    organizationId?: string,
   ): Promise<{
     comparisons: AiPostitComparisonResponse[];
     report: AiMandalaReport;
@@ -115,18 +158,34 @@ export class AiService {
       createCleanMandalaForSummary(m),
     );
 
-    const result = await this.aiProvider.generatePostitsSummary(
+    const response = await this.aiProvider.generatePostitsSummary(
       projectId,
       allDimensions,
       allScales,
       cleanMandalasDocument.map((m) => JSON.stringify(m)).join('\n'),
     );
 
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_SUMMARY,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
     this.logger.log(
-      `Generated ${result.comparisons.length} postits summary for project: ${projectId}`,
+      `Generated ${response.data.comparisons.length} postits summary for project: ${projectId}`,
     );
 
-    return result;
+    return response.data;
   }
 
   async generateProvocations(
@@ -137,6 +196,8 @@ export class AiService {
     scales: string[],
     mandalasDocument: FirestoreMandalaDocument[],
     selectedFiles?: string[],
+    userId?: string,
+    organizationId?: string,
   ): Promise<AiProvocationResponse[]> {
     this.logger.log(
       `Starting provocations generation for project: ${projectId}`,
@@ -146,7 +207,7 @@ export class AiService {
       createCleanMandalaForSummary(m),
     );
 
-    const result = await this.aiProvider.generateProvocations(
+    const response = await this.aiProvider.generateProvocations(
       projectId,
       projectName,
       projectDescription,
@@ -156,10 +217,26 @@ export class AiService {
       selectedFiles,
     );
 
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_POSTITS,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
     this.logger.log(
-      `Generated ${result.length} provocations for project: ${projectId}`,
+      `Generated ${response.data.length} provocations for project: ${projectId}`,
     );
 
-    return result;
+    return response.data;
   }
 }
