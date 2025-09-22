@@ -154,7 +154,7 @@ export class AiPromptBuilderService {
     return this.buildPromptWithCiclo3Instructions(promptTask);
   }
 
-  /* Builds complete prompt for mandala summary generation
+  /** Builds complete prompt for mandala summary generation
    * @param dimensions - Array of dimensions
    * @param scales - Array of scales
    * @param centerCharacter - The center character
