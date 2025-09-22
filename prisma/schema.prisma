@@ -255,3 +255,19 @@ model ProjectProvocationLink {
   @@index([provocationId, role])
   @@index([projectId, role])
 }
+
+model FileSelection {
+  id        String   @id @default(uuid())
+  orgId     String
+  projectId String?
+  mandalaId String?
+  fileName  String
+  selected  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orgId, fileName], name: "org_file_unique")
+  @@unique([orgId, projectId, fileName], name: "project_file_unique") 
+  @@unique([orgId, projectId, mandalaId, fileName], name: "mandala_file_unique")
+  @@map("file_selections")
+}
