@@ -1,0 +1,21 @@
+Eres una IA especializada en analizar mandalas de construcción de mundos.
+Tu tarea es generar un resumen narrativo completo de la mandala provista.
+
+DATOS DE LA MANDALA:
+{{mandalaDocument}}
+
+CONFIGURACIÓN DE LA MANDALA:
+- Dimensiones: {{dimensions}}
+- Escalas: {{scales}}
+- Personaje central: {{centerCharacter}}
+- Descripción del personaje central: {{centerCharacterDescription}}
+
+TAREA:
+Escribe un único resumen cohesivo que:
+1. Describa el contexto general y el análisis del mundo.
+2. Destaque los post-its, archivos o provocaciones relevantes si los hubiera.
+3. Identifique los principales problemas o tensiones.
+4. Señale oportunidades o fortalezas detectadas.
+5. Produzca conclusiones e ideas claras.
+
+La respuesta debe ser un **único texto plano de resumen** (sin JSON, sin listas, sin metadatos).

@@ -483,4 +483,52 @@ export class GeminiAdapter implements AiProvider {
 
     return { comparisons, report };
   }
+
+  async generateMandalaSummary(
+    projectId: string,
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    cleanMandalaDocument: string,
+  ): Promise<string> {
+    this.logger.log(
+      `Starting summary generation for mandala ${mandalaId} in project ${projectId}`,
+    );
+
+    const finalPromptTask =
+      await this.promptBuilderService.buildMandalaSummaryPrompt(
+        dimensions,
+        scales,
+        centerCharacter,
+        centerCharacterDescription,
+        cleanMandalaDocument,
+      );
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      dimensions,
+      scales,
+    );
+
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+
+    const responseText = await this.generateContentWithFiles(
+      this.geminiModel,
+      finalPromptTask,
+      geminiFiles,
+      { type: 'string' }, // Simple string schema for plain text response
+    );
+
+    if (!responseText) {
+      throw new Error('No response text received from Gemini API');
+    }
+
+    this.logger.log(
+      `Summary generation completed for mandala ${mandalaId} in project ${projectId}`,
+    );
+
+    return responseText;
+  }
 }

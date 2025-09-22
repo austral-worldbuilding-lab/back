@@ -102,4 +102,31 @@ export interface AiProvider {
     mandalasAiSummary: string,
     selectedFiles?: string[],
   ): Promise<AiProvocationResponse[]>;
+
+  /**
+   * Generates a consolidated summary of a mandala using AI analysis
+   *
+   * This method takes the configuration, postits, characters, and other context
+   * from a mandala and produces a single narrative summary. The AI analyzes the
+   * world, dimensions, scales, central character, tensions, insights,
+   * and other elements to generate a comprehensive overview.
+   *
+   * @param projectId - Unique identifier of the project containing the mandala
+   * @param mandalaId - Unique identifier of the mandala to summarize
+   * @param dimensions - Array of dimension names belonging to the mandala
+   * @param scales - Array of scale names belonging to the mandala
+   * @param centerCharacter - The main character at the center of the mandala
+   * @param centerCharacterDescription - Description of the center character
+   * @param cleanMandalaDocument - Serialized mandala document cleaned for AI input
+   * @returns Promise resolving to a string containing the consolidated summary
+   */
+  generateMandalaSummary(
+    projectId: string,
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    cleanMandalaDocument: string,
+  ): Promise<string>;
 }
