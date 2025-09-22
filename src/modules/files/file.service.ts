@@ -6,14 +6,24 @@ import { buildPrefix } from '@modules/storage/path-builder';
 import { Injectable } from '@nestjs/common';
 
 import { CreateFileDto } from './dto/create-file.dto';
+import { UpdateFileSelectionDto } from './dto/file-selection.dto';
+import { FileSelectionRepository } from './repositories/file-selection.repository';
 import { FileBuffer } from './types/file-buffer.interface';
-import { FileScope, FileSource, EffectiveFile } from './types/file-scope.type';
+import {
+  FileScope,
+  FileSource,
+  EffectiveFile,
+  EffectiveFileWithSelection,
+} from './types/file-scope.type';
 
 @Injectable()
 export class FileService {
   private storageService = new AzureBlobStorageService();
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private fileSelectionRepository: FileSelectionRepository,
+  ) {}
 
   async resolveScope(
     scopeType: 'org' | 'project' | 'mandala',
@@ -175,5 +185,109 @@ export class FileService {
 
   async deleteFile(scope: FileScope, fileName: string): Promise<void> {
     return this.storageService.deleteFile(scope, fileName, 'files');
+  }
+
+  private getActualFileScope(
+    file: EffectiveFile,
+    requestedScope: FileScope,
+  ): FileScope {
+    if (file.source_scope === 'org') {
+      return { orgId: requestedScope.orgId };
+    } else if (file.source_scope === 'project') {
+      return {
+        orgId: requestedScope.orgId,
+        projectId: requestedScope.projectId,
+      };
+    } else {
+      return requestedScope;
+    }
+  }
+
+  async getFilesWithSelection(
+    scope: FileScope,
+  ): Promise<EffectiveFileWithSelection[]> {
+    const files = await this.getFiles(scope);
+
+    const filesByScope = new Map<string, EffectiveFile[]>();
+    for (const file of files) {
+      const actualScope = this.getActualFileScope(file, scope);
+      const scopeKey = JSON.stringify(actualScope);
+      if (!filesByScope.has(scopeKey)) {
+        filesByScope.set(scopeKey, []);
+      }
+      filesByScope.get(scopeKey)!.push(file);
+    }
+
+    const allSelections = new Map<string, boolean>();
+    for (const [scopeKey, scopeFiles] of filesByScope) {
+      const actualScope = JSON.parse(scopeKey) as FileScope;
+      const fileSelections =
+        await this.fileSelectionRepository.getFileSelections(actualScope);
+
+      for (const file of scopeFiles) {
+        const selected = fileSelections.get(file.file_name) ?? true;
+        allSelections.set(file.file_name, selected);
+      }
+    }
+
+    return files.map((file) => ({
+      ...file,
+      selected: allSelections.get(file.file_name) ?? true,
+    }));
+  }
+
+  async updateFileSelections(
+    scope: FileScope,
+    selections: UpdateFileSelectionDto[],
+  ): Promise<void> {
+    const existingFiles = await this.getFiles(scope);
+    const existingFileNames = existingFiles.map((file) => file.file_name);
+    const invalidFiles = selections
+      .map((s) => s.fileName)
+      .filter((fileName) => !existingFileNames.includes(fileName));
+
+    if (invalidFiles.length > 0) {
+      throw new ResourceNotFoundException(
+        'Files',
+        invalidFiles.join(', '),
+        'These files do not exist in the specified scope',
+      );
+    }
+
+    const selectionsByScope = new Map<string, UpdateFileSelectionDto[]>();
+
+    for (const selection of selections) {
+      const file = existingFiles.find(
+        (f) => f.file_name === selection.fileName,
+      );
+      if (file) {
+        const actualScope = this.getActualFileScope(file, scope);
+        const scopeKey = JSON.stringify(actualScope);
+        if (!selectionsByScope.has(scopeKey)) {
+          selectionsByScope.set(scopeKey, []);
+        }
+        selectionsByScope.get(scopeKey)!.push(selection);
+      }
+    }
+
+    for (const [scopeKey, scopeSelections] of selectionsByScope) {
+      const actualScope = JSON.parse(scopeKey) as FileScope;
+      await this.fileSelectionRepository.updateFileSelections(
+        actualScope,
+        scopeSelections,
+      );
+    }
+
+    await this.fileSelectionRepository.deleteSelectionsForMissingFiles(
+      scope,
+      existingFileNames,
+    );
+  }
+
+  async getSelectedFileNames(scope: FileScope): Promise<string[]> {
+    const filesWithSelection = await this.getFilesWithSelection(scope);
+    return filesWithSelection
+      .filter((file) => file.selected)
+      .map((file) => file.file_name);
   }
 }

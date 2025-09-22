@@ -13,3 +13,7 @@ export type EffectiveFile = {
   full_path: string;
   url: string;
 };
+
+export type EffectiveFileWithSelection = EffectiveFile & {
+  selected: boolean;
+};

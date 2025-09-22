@@ -107,23 +107,41 @@ export class AiAdapterUtilsService {
     const allFileBuffers =
       await this.fileService.readAllFilesAsBuffersWithMetadata(scope);
 
-    // Filter out video files and apply selectedFiles filter
+    // Determine which files to use:
+    // 1. If selectedFiles is provided explicitly (backward compatibility), use it
+    // 2. Otherwise, use persisted file selections from database
+    let filesToUse: string[];
+    if (selectedFiles?.length) {
+      this.logger.debug(
+        `Using explicitly provided selectedFiles: ${selectedFiles.length} files`,
+      );
+      filesToUse = selectedFiles;
+    } else {
+      this.logger.debug(
+        'No explicit selectedFiles provided, using persisted selections',
+      );
+      filesToUse = await this.fileService.getSelectedFileNames(scope);
+      this.logger.debug(
+        `Found ${filesToUse.length} selected files from database`,
+      );
+    }
+
+    // Filter out video files and apply file selection filter
     const fileBuffers = allFileBuffers
       .filter((file) => !file.mimeType.startsWith('video/'))
-      .filter(
-        (file) =>
-          !selectedFiles?.length || selectedFiles.includes(file.fileName),
-      );
+      .filter((file) => filesToUse.includes(file.fileName));
 
     if (fileBuffers.length === 0) {
       const errorMessage = selectedFiles?.length
-        ? `No files found matching the selected files: ${selectedFiles.join(', ')}`
-        : 'No files found for project';
+        ? `No files found matching the explicitly selected files: ${selectedFiles.join(', ')}`
+        : filesToUse.length === 0
+          ? 'No files are currently selected for processing'
+          : `No files found matching the selected files: ${filesToUse.join(', ')}`;
       throw new Error(errorMessage);
     }
 
     this.logger.debug(
-      `Loaded ${allFileBuffers.length} files, ${selectedFiles?.length ? `filtered to ${fileBuffers.length} selected files, ` : ''}validating...`,
+      `Loaded ${allFileBuffers.length} files, filtered to ${fileBuffers.length} selected files, validating...`,
     );
 
     const validationResult = this.validator.validateAiRequest(

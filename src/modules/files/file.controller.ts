@@ -10,9 +10,18 @@ import {
   Body,
   UseGuards,
   Delete,
+  Patch,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+import {
+  ApiUpdateOrganizationFileSelection,
+  ApiGetOrganizationFilesWithSelection,
+  ApiUpdateProjectFileSelection,
+  ApiGetProjectFilesWithSelection,
+  ApiUpdateMandalaFileSelection,
+  ApiGetMandalaFilesWithSelection,
+} from './decorators/file-selection-swagger.decorators';
 import {
   ApiGetOrganizationFiles,
   ApiUploadOrganizationFiles,
@@ -27,11 +36,15 @@ import {
   ApiGetProjectBuffers,
 } from './decorators/file-swagger.decorators';
 import { CreateFileDto } from './dto/create-file.dto';
+import { FileSelectionBatchDto } from './dto/file-selection.dto';
 import { FileService } from './file.service';
 import { MandalaFileRoleGuard } from './guards/mandala-file-role.guard';
 import { OrganizationFileRoleGuard } from './guards/organization-file-role.guard';
 import { ProjectFileRoleGuard } from './guards/project-file-role.guard';
-import { EffectiveFile } from './types/file-scope.type';
+import {
+  EffectiveFile,
+  EffectiveFileWithSelection,
+} from './types/file-scope.type';
 
 @ApiTags('Files')
 @Controller('files')
@@ -165,5 +178,74 @@ export class FileController {
     const scope = await this.fileService.resolveScope('project', projectId);
     const response = await this.fileService.readAllFilesAsBuffers(scope);
     return { data: response };
+  }
+
+  @Patch('organization/:orgId/selection')
+  @UseGuards(OrganizationFileRoleGuard)
+  @ApiUpdateOrganizationFileSelection()
+  async updateOrganizationFileSelection(
+    @Param('orgId', new UuidValidationPipe()) orgId: string,
+    @Body() body: FileSelectionBatchDto,
+  ): Promise<MessageOnlyResponse> {
+    const scope = await this.fileService.resolveScope('org', orgId);
+    await this.fileService.updateFileSelections(scope, body.selections);
+    return { message: 'File selections updated successfully' };
+  }
+
+  @Get('organization/:orgId/with-selection')
+  @UseGuards(OrganizationFileRoleGuard)
+  @ApiGetOrganizationFilesWithSelection()
+  async getOrganizationFilesWithSelection(
+    @Param('orgId', new UuidValidationPipe()) orgId: string,
+  ): Promise<DataResponse<EffectiveFileWithSelection[]>> {
+    const scope = await this.fileService.resolveScope('org', orgId);
+    const files = await this.fileService.getFilesWithSelection(scope);
+    return { data: files };
+  }
+
+  @Patch('project/:projectId/selection')
+  @UseGuards(ProjectFileRoleGuard)
+  @ApiUpdateProjectFileSelection()
+  async updateProjectFileSelection(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Body() body: FileSelectionBatchDto,
+  ): Promise<MessageOnlyResponse> {
+    const scope = await this.fileService.resolveScope('project', projectId);
+    await this.fileService.updateFileSelections(scope, body.selections);
+    return { message: 'File selections updated successfully' };
+  }
+
+  @Get('project/:projectId/with-selection')
+  @UseGuards(ProjectFileRoleGuard)
+  @ApiGetProjectFilesWithSelection()
+  async getProjectFilesWithSelection(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<EffectiveFileWithSelection[]>> {
+    const scope = await this.fileService.resolveScope('project', projectId);
+    const files = await this.fileService.getFilesWithSelection(scope);
+    return { data: files };
+  }
+
+  @Patch('mandala/:mandalaId/selection')
+  @UseGuards(MandalaFileRoleGuard)
+  @ApiUpdateMandalaFileSelection()
+  async updateMandalaFileSelection(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Body() body: FileSelectionBatchDto,
+  ): Promise<MessageOnlyResponse> {
+    const scope = await this.fileService.resolveScope('mandala', mandalaId);
+    await this.fileService.updateFileSelections(scope, body.selections);
+    return { message: 'File selections updated successfully' };
+  }
+
+  @Get('mandala/:mandalaId/with-selection')
+  @UseGuards(MandalaFileRoleGuard)
+  @ApiGetMandalaFilesWithSelection()
+  async getMandalaFilesWithSelection(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+  ): Promise<DataResponse<EffectiveFileWithSelection[]>> {
+    const scope = await this.fileService.resolveScope('mandala', mandalaId);
+    const files = await this.fileService.getFilesWithSelection(scope);
+    return { data: files };
   }
 }
