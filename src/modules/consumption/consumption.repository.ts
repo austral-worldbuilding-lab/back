@@ -32,26 +32,7 @@ export class ConsumptionRepository {
     take: number,
     filter?: ConsumptionFilterDto,
   ): Promise<[ConsumptionDto[], number]> {
-    const whereClause: Prisma.AiUsageWhereInput = {};
-
-    if (filter) {
-      if (filter.userId) whereClause.userId = filter.userId;
-      if (filter.projectId) whereClause.projectId = filter.projectId;
-      if (filter.organizationId)
-        whereClause.organizationId = filter.organizationId;
-      if (filter.service) whereClause.service = filter.service;
-      if (filter.model) whereClause.model = filter.model;
-
-      if (filter.startDate || filter.endDate) {
-        whereClause.timestamp = {};
-        if (filter.startDate) {
-          whereClause.timestamp.gte = new Date(filter.startDate);
-        }
-        if (filter.endDate) {
-          whereClause.timestamp.lte = new Date(filter.endDate);
-        }
-      }
-    }
+    const whereClause = this.buildWhereClause(filter);
 
     const [consumptions, total] = await this.prisma.$transaction([
       this.prisma.aiUsage.findMany({
@@ -150,10 +131,11 @@ export class ConsumptionRepository {
     projectId?: string,
     organizationId?: string,
   ) {
-    const whereClause: Prisma.AiUsageWhereInput = {};
-    if (userId) whereClause.userId = userId;
-    if (projectId) whereClause.projectId = projectId;
-    if (organizationId) whereClause.organizationId = organizationId;
+    const whereClause = this.buildBasicWhereClause(
+      userId,
+      projectId,
+      organizationId,
+    );
 
     return this.prisma.aiUsage.groupBy({
       by: ['service'],
@@ -168,10 +150,11 @@ export class ConsumptionRepository {
     projectId?: string,
     organizationId?: string,
   ) {
-    const whereClause: Prisma.AiUsageWhereInput = {};
-    if (userId) whereClause.userId = userId;
-    if (projectId) whereClause.projectId = projectId;
-    if (organizationId) whereClause.organizationId = organizationId;
+    const whereClause = this.buildBasicWhereClause(
+      userId,
+      projectId,
+      organizationId,
+    );
 
     return this.prisma.aiUsage.groupBy({
       by: ['model'],
@@ -179,6 +162,49 @@ export class ConsumptionRepository {
       _sum: { quantity: true },
       _count: { id: true },
     });
+  }
+
+  private buildBasicWhereClause(
+    userId?: string,
+    projectId?: string,
+    organizationId?: string,
+  ): Prisma.AiUsageWhereInput {
+    const whereClause: Prisma.AiUsageWhereInput = {};
+
+    if (userId) whereClause.userId = userId;
+    if (projectId) whereClause.projectId = projectId;
+    if (organizationId) whereClause.organizationId = organizationId;
+
+    return whereClause;
+  }
+
+  private buildWhereClause(
+    filter?: ConsumptionFilterDto,
+  ): Prisma.AiUsageWhereInput {
+    if (!filter) {
+      return {};
+    }
+
+    const whereClause: Prisma.AiUsageWhereInput = {};
+
+    if (filter.userId) whereClause.userId = filter.userId;
+    if (filter.projectId) whereClause.projectId = filter.projectId;
+    if (filter.organizationId)
+      whereClause.organizationId = filter.organizationId;
+    if (filter.service) whereClause.service = filter.service;
+    if (filter.model) whereClause.model = filter.model;
+
+    if (filter.startDate || filter.endDate) {
+      whereClause.timestamp = {};
+      if (filter.startDate) {
+        whereClause.timestamp.gte = new Date(filter.startDate);
+      }
+      if (filter.endDate) {
+        whereClause.timestamp.lte = new Date(filter.endDate);
+      }
+    }
+
+    return whereClause;
   }
 
   private parseToConsumptionDto(aiUsage: AiUsage): ConsumptionDto {
