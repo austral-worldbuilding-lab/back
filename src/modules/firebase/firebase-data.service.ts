@@ -46,7 +46,7 @@ export class FirebaseDataService {
     const db = this.firebaseConfig.getDB();
     const docRef = db.collection(collectionPath).doc(documentId);
 
-    await docRef.update(data);
+    await docRef.set(data, { merge: true });
   }
 
   async deleteDocument(
