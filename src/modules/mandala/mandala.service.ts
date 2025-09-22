@@ -1071,5 +1071,4 @@ export class MandalaService {
 
     return { summaryReport };
   }
-
 }

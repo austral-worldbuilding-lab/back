@@ -169,7 +169,9 @@ export class AiService {
     mandala: MandalaDto,
     mandalaDocument: FirestoreMandalaDocument,
   ): Promise<string> {
-    this.logger.log(`Starting mandala summary generation for project: ${projectId}`);
+    this.logger.log(
+      `Starting mandala summary generation for project: ${projectId}`,
+    );
 
     const cleanMandalaDocument = createCleanMandalaForSummary(mandalaDocument);
 
