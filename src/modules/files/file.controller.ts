@@ -11,7 +11,6 @@ import {
   UseGuards,
   Delete,
   Patch,
-  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 

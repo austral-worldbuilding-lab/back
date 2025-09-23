@@ -3,7 +3,7 @@ import { PresignedUrl } from '@common/types/presigned-url';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { buildPrefix } from '@modules/storage/path-builder';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileSelectionDto } from './dto/file-selection.dto';

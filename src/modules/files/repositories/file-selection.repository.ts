@@ -28,8 +28,6 @@ export class FileSelectionRepository {
         };
       case 'mandala':
         return currentScope;
-      default:
-        throw new Error(`Invalid source scope: ${sourceScope}`);
     }
   }
 
@@ -47,11 +45,11 @@ export class FileSelectionRepository {
 
         const contextPath = buildContextPathForSource(
           scope,
-          selection.sourceScope as any,
+          selection.sourceScope as 'org' | 'project' | 'mandala',
         );
         const targetScope = this.parseScopeFromSourceScope(
           scope,
-          selection.sourceScope as any,
+          selection.sourceScope as 'org' | 'project' | 'mandala',
         );
 
         await tx.fileSelection.upsert({
