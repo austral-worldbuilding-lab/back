@@ -8,6 +8,8 @@ import {
   IsIn,
 } from 'class-validator';
 
+export type SourceScope = 'org' | 'project' | 'mandala';
+
 export class UpdateFileSelectionDto {
   @ApiProperty({
     description: 'Name of the file to update selection for',
@@ -30,7 +32,7 @@ export class UpdateFileSelectionDto {
   })
   @IsString()
   @IsIn(['org', 'project', 'mandala'])
-  sourceScope!: string;
+  sourceScope!: SourceScope;
 }
 
 export class FileSelectionBatchDto {

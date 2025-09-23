@@ -1,7 +1,7 @@
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { UpdateFileSelectionDto, SourceScope } from '../dto/file-selection.dto';
+import { SourceScope, UpdateFileSelectionDto } from '../dto/file-selection.dto';
 import { FileScope } from '../types/file-scope.type';
 import {
   buildContextPath,
@@ -45,11 +45,11 @@ export class FileSelectionRepository {
 
         const contextPath = buildContextPathForSource(
           scope,
-          selection.sourceScope as 'org' | 'project' | 'mandala',
+          selection.sourceScope,
         );
         const targetScope = this.parseScopeFromSourceScope(
           scope,
-          selection.sourceScope as 'org' | 'project' | 'mandala',
+          selection.sourceScope,
         );
 
         await tx.fileSelection.upsert({

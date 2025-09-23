@@ -1,4 +1,5 @@
 import { FileScope } from '../types/file-scope.type';
+import { SourceScope } from '../dto/file-selection.dto';
 
 export const buildContextPath = (scope: FileScope): string => {
   let path = `/org/${scope.orgId}`;
@@ -16,7 +17,7 @@ export const buildContextPath = (scope: FileScope): string => {
 
 export const buildContextPathForSource = (
   currentScope: FileScope,
-  sourceScope: 'org' | 'project' | 'mandala',
+  sourceScope: SourceScope,
 ): string => {
   switch (sourceScope) {
     case 'org':
