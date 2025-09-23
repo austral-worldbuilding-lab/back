@@ -1,7 +1,7 @@
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { UpdateFileSelectionDto } from '../dto/file-selection.dto';
+import { UpdateFileSelectionDto, SourceScope } from '../dto/file-selection.dto';
 import { FileScope } from '../types/file-scope.type';
 import {
   buildContextPath,
@@ -16,7 +16,7 @@ export class FileSelectionRepository {
 
   private parseScopeFromSourceScope(
     currentScope: FileScope,
-    sourceScope: 'org' | 'project' | 'mandala',
+    sourceScope: SourceScope,
   ): FileScope {
     switch (sourceScope) {
       case 'org':
