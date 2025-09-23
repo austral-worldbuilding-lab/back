@@ -257,17 +257,21 @@ model ProjectProvocationLink {
 }
 
 model FileSelection {
-  id        String   @id @default(uuid())
+  id          String   @id @default(uuid())
+  contextPath String   // /org/orgId/project/projectId/mandala/mandalaId
+  fileName    String
+  selected    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   orgId     String
   projectId String?
   mandalaId String?
-  fileName  String
-  selected  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@unique([orgId, fileName], name: "org_file_unique")
-  @@unique([orgId, projectId, fileName], name: "project_file_unique") 
-  @@unique([orgId, projectId, mandalaId, fileName], name: "mandala_file_unique")
+  @@unique([contextPath, fileName])
+  @@index([orgId])
+  @@index([orgId, projectId])
+  @@index([orgId, projectId, mandalaId])
+  @@index([contextPath])
   @@map("file_selections")
 }
