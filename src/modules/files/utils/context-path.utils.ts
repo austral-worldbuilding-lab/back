@@ -1,5 +1,5 @@
-import { FileScope } from '../types/file-scope.type';
 import { SourceScope } from '../dto/file-selection.dto';
+import { FileScope } from '../types/file-scope.type';
 
 export const buildContextPath = (scope: FileScope): string => {
   let path = `/org/${scope.orgId}`;
