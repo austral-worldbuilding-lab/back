@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsString, ValidateNested, IsIn } from 'class-validator';
 
 export class UpdateFileSelectionDto {
   @ApiProperty({
@@ -16,6 +16,15 @@ export class UpdateFileSelectionDto {
   })
   @IsBoolean()
   selected!: boolean;
+
+  @ApiProperty({
+    description: 'Source scope of the file (where it actually exists)',
+    example: 'org',
+    enum: ['org', 'project', 'mandala'],
+  })
+  @IsString()
+  @IsIn(['org', 'project', 'mandala'])
+  sourceScope!: string;
 }
 
 export class FileSelectionBatchDto {
@@ -23,8 +32,8 @@ export class FileSelectionBatchDto {
     description: 'Array of file selection updates to apply',
     type: [UpdateFileSelectionDto],
     example: [
-      { fileName: 'document.pdf', selected: true },
-      { fileName: 'image.png', selected: false },
+      { fileName: 'document.pdf', selected: true, sourceScope: 'org' },
+      { fileName: 'image.png', selected: false, sourceScope: 'project' },
     ],
   })
   @IsArray()

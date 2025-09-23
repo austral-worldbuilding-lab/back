@@ -3,7 +3,7 @@ import { PresignedUrl } from '@common/types/presigned-url';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { buildPrefix } from '@modules/storage/path-builder';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileSelectionDto } from './dto/file-selection.dto';
@@ -218,7 +218,8 @@ export class FileService {
       filesByScope.get(scopeKey)!.push(file);
     }
 
-    const allSelections = new Map<string, boolean>();
+    const selectionsByScopeAndFile = new Map<string, boolean>();
+    
     for (const [scopeKey, scopeFiles] of filesByScope) {
       const actualScope = JSON.parse(scopeKey) as FileScope;
       const fileSelections =
@@ -226,14 +227,21 @@ export class FileService {
 
       for (const file of scopeFiles) {
         const selected = fileSelections.get(file.file_name) ?? true;
-        allSelections.set(file.file_name, selected);
+        const uniqueKey = `${scopeKey}:${file.file_name}`;
+        selectionsByScopeAndFile.set(uniqueKey, selected);
       }
     }
 
-    return files.map((file) => ({
-      ...file,
-      selected: allSelections.get(file.file_name) ?? true,
-    }));
+    return files.map((file) => {
+      const actualScope = this.getActualFileScope(file, scope);
+      const scopeKey = JSON.stringify(actualScope);
+      const uniqueKey = `${scopeKey}:${file.file_name}`;
+      
+      return {
+        ...file,
+        selected: selectionsByScopeAndFile.get(uniqueKey) ?? true,
+      };
+    });
   }
 
   async updateFileSelections(
@@ -241,10 +249,24 @@ export class FileService {
     selections: UpdateFileSelectionDto[],
   ): Promise<void> {
     const existingFiles = await this.getFiles(scope);
-    const existingFileNames = existingFiles.map((file) => file.file_name);
-    const invalidFiles = selections
-      .map((s) => s.fileName)
-      .filter((fileName) => !existingFileNames.includes(fileName));
+    
+    // Create a map of file existence by fileName and sourceScope
+    const fileExistenceMap = new Map<string, Set<string>>();
+    for (const file of existingFiles) {
+      if (!fileExistenceMap.has(file.file_name)) {
+        fileExistenceMap.set(file.file_name, new Set());
+      }
+      fileExistenceMap.get(file.file_name)!.add(file.source_scope);
+    }
+
+    // Validate that each selection references an existing file in the correct scope
+    const invalidFiles: string[] = [];
+    for (const selection of selections) {
+      const availableScopes = fileExistenceMap.get(selection.fileName);
+      if (!availableScopes || !availableScopes.has(selection.sourceScope)) {
+        invalidFiles.push(`${selection.fileName} (scope: ${selection.sourceScope})`);
+      }
+    }
 
     if (invalidFiles.length > 0) {
       throw new ResourceNotFoundException(
@@ -257,17 +279,26 @@ export class FileService {
     const selectionsByScope = new Map<string, UpdateFileSelectionDto[]>();
 
     for (const selection of selections) {
-      const file = existingFiles.find(
-        (f) => f.file_name === selection.fileName,
+      const targetFile = existingFiles.find(
+        file => file.file_name === selection.fileName && 
+                file.source_scope === selection.sourceScope
       );
-      if (file) {
-        const actualScope = this.getActualFileScope(file, scope);
-        const scopeKey = JSON.stringify(actualScope);
-        if (!selectionsByScope.has(scopeKey)) {
-          selectionsByScope.set(scopeKey, []);
-        }
-        selectionsByScope.get(scopeKey)!.push(selection);
+      
+      if (!targetFile) {
+        throw new ResourceNotFoundException(
+          'File',
+          `${selection.fileName} (scope: ${selection.sourceScope})`,
+          'File not found in the specified scope'
+        );
       }
+      
+      const actualScope = this.getActualFileScope(targetFile, scope);
+      
+      const scopeKey = JSON.stringify(actualScope);
+      if (!selectionsByScope.has(scopeKey)) {
+        selectionsByScope.set(scopeKey, []);
+      }
+      selectionsByScope.get(scopeKey)!.push(selection);
     }
 
     for (const [scopeKey, scopeSelections] of selectionsByScope) {
@@ -278,6 +309,7 @@ export class FileService {
       );
     }
 
+    const existingFileNames = existingFiles.map((file) => file.file_name);
     await this.fileSelectionRepository.deleteSelectionsForMissingFiles(
       scope,
       existingFileNames,
