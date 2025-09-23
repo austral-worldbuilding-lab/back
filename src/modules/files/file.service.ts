@@ -219,7 +219,7 @@ export class FileService {
     }
 
     const selectionsByScopeAndFile = new Map<string, boolean>();
-    
+
     for (const [scopeKey, scopeFiles] of filesByScope) {
       const actualScope = JSON.parse(scopeKey) as FileScope;
       const fileSelections =
@@ -236,7 +236,7 @@ export class FileService {
       const actualScope = this.getActualFileScope(file, scope);
       const scopeKey = JSON.stringify(actualScope);
       const uniqueKey = `${scopeKey}:${file.file_name}`;
-      
+
       return {
         ...file,
         selected: selectionsByScopeAndFile.get(uniqueKey) ?? true,
@@ -249,7 +249,7 @@ export class FileService {
     selections: UpdateFileSelectionDto[],
   ): Promise<void> {
     const existingFiles = await this.getFiles(scope);
-    
+
     // Create a map of file existence by fileName and sourceScope
     const fileExistenceMap = new Map<string, Set<string>>();
     for (const file of existingFiles) {
@@ -264,7 +264,9 @@ export class FileService {
     for (const selection of selections) {
       const availableScopes = fileExistenceMap.get(selection.fileName);
       if (!availableScopes || !availableScopes.has(selection.sourceScope)) {
-        invalidFiles.push(`${selection.fileName} (scope: ${selection.sourceScope})`);
+        invalidFiles.push(
+          `${selection.fileName} (scope: ${selection.sourceScope})`,
+        );
       }
     }
 
@@ -280,20 +282,21 @@ export class FileService {
 
     for (const selection of selections) {
       const targetFile = existingFiles.find(
-        file => file.file_name === selection.fileName && 
-                file.source_scope === selection.sourceScope
+        (file) =>
+          file.file_name === selection.fileName &&
+          file.source_scope === selection.sourceScope,
       );
-      
+
       if (!targetFile) {
         throw new ResourceNotFoundException(
           'File',
           `${selection.fileName} (scope: ${selection.sourceScope})`,
-          'File not found in the specified scope'
+          'File not found in the specified scope',
         );
       }
-      
+
       const actualScope = this.getActualFileScope(targetFile, scope);
-      
+
       const scopeKey = JSON.stringify(actualScope);
       if (!selectionsByScope.has(scopeKey)) {
         selectionsByScope.set(scopeKey, []);

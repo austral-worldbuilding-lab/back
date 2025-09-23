@@ -3,7 +3,10 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { UpdateFileSelectionDto } from '../dto/file-selection.dto';
 import { FileScope } from '../types/file-scope.type';
-import { buildContextPath, buildContextPathForSource } from '../utils/context-path.utils';
+import {
+  buildContextPath,
+  buildContextPathForSource,
+} from '../utils/context-path.utils';
 
 @Injectable()
 export class FileSelectionRepository {
@@ -13,15 +16,15 @@ export class FileSelectionRepository {
 
   private parseScopeFromSourceScope(
     currentScope: FileScope,
-    sourceScope: 'org' | 'project' | 'mandala'
+    sourceScope: 'org' | 'project' | 'mandala',
   ): FileScope {
     switch (sourceScope) {
       case 'org':
         return { orgId: currentScope.orgId };
       case 'project':
-        return { 
-          orgId: currentScope.orgId, 
-          projectId: currentScope.projectId 
+        return {
+          orgId: currentScope.orgId,
+          projectId: currentScope.projectId,
         };
       case 'mandala':
         return currentScope;
@@ -41,10 +44,16 @@ export class FileSelectionRepository {
     await this.prisma.$transaction(async (tx) => {
       for (const selection of selections) {
         this.logger.debug(`Processing selection: ${JSON.stringify(selection)}`);
-        
-        const contextPath = buildContextPathForSource(scope, selection.sourceScope as any);
-        const targetScope = this.parseScopeFromSourceScope(scope, selection.sourceScope as any);
-        
+
+        const contextPath = buildContextPathForSource(
+          scope,
+          selection.sourceScope as any,
+        );
+        const targetScope = this.parseScopeFromSourceScope(
+          scope,
+          selection.sourceScope as any,
+        );
+
         await tx.fileSelection.upsert({
           where: {
             contextPath_fileName: {
@@ -123,7 +132,7 @@ export class FileSelectionRepository {
 
   async getExplicitlySelectedFileNames(scope: FileScope): Promise<string[]> {
     const contextPath = buildContextPath(scope);
-    
+
     const selections = await this.prisma.fileSelection.findMany({
       where: {
         contextPath: contextPath,

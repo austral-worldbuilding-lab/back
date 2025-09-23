@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsString, ValidateNested, IsIn } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsString,
+  ValidateNested,
+  IsIn,
+} from 'class-validator';
 
 export class UpdateFileSelectionDto {
   @ApiProperty({
