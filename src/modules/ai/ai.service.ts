@@ -221,7 +221,7 @@ export class AiService {
     if (userId) {
       await this.consumptionService.trackAiUsage(
         userId,
-        AiServiceEnum.GENERATE_POSTITS,
+        AiServiceEnum.GENERATE_PROVOCATIONS,
         AiModel.GEMINI_25_FLASH,
         response.usage.totalTokens,
         projectId,
