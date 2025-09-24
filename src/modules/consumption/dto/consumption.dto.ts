@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsUUID,
   IsDateString,
+  IsPositive,
 } from 'class-validator';
 
 export class ConsumptionDto {
@@ -22,9 +23,17 @@ export class ConsumptionDto {
   @IsDateString()
   timestamp!: Date;
 
+  @ApiProperty({
+    description: 'Servicio de IA utilizado en el consumo',
+    enum: AiService,
+  })
   @IsEnum(AiService)
   service!: AiService;
 
+  @ApiProperty({
+    description: 'Modelo de IA utilizado en el consumo',
+    enum: AiModel,
+  })
   @IsEnum(AiModel)
   model!: AiModel;
 
@@ -57,5 +66,6 @@ export class ConsumptionDto {
     description: 'Cantidad de tokens consumidos',
   })
   @IsNumber()
+  @IsPositive()
   quantity!: number;
 }
