@@ -182,10 +182,7 @@ export class PostitService {
     return { comparisons, report };
   }
 
-  private mapTagsWithColors(
-    tagNames: string[],
-    projectTags: TagDto[],
-  ): Tag[] {
+  private mapTagsWithColors(tagNames: string[], projectTags: TagDto[]): Tag[] {
     if (!tagNames || tagNames.length === 0) return [];
 
     return tagNames
