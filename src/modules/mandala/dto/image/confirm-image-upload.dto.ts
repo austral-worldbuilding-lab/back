@@ -1,5 +1,13 @@
+import { CreateTagDto } from '@modules/project/dto/create-tag.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
 
 export class ConfirmImageUploadDto {
   @ApiProperty({
@@ -10,4 +18,15 @@ export class ConfirmImageUploadDto {
   @IsString()
   @IsNotEmpty()
   id!: string;
+
+  @ApiProperty({
+    description: 'Tags asociados a la imagen',
+    type: [CreateTagDto],
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateTagDto)
+  @IsArray()
+  tags?: CreateTagDto[];
 }

@@ -5,6 +5,7 @@ import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { FirestoreMandalaDocument } from '@modules/firebase/types/firestore-character.type';
+import { Tag } from '@modules/mandala/types/postits';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { Injectable } from '@nestjs/common';
 
@@ -129,6 +130,11 @@ export class ImageService {
       },
       dimension: '',
       section: '',
+      tags:
+        imageData.tags?.map((tag: Tag) => ({
+          name: tag.name,
+          color: tag.color,
+        })) || [],
     };
 
     await this.addImageToMandala(
@@ -174,14 +180,6 @@ export class ImageService {
       },
       mandalaId,
     );
-  }
-
-  async getImages(
-    projectId: string,
-    mandalaId: string,
-  ): Promise<MandalaImage[]> {
-    const mandalaDocument = await this.getMandalaDocument(projectId, mandalaId);
-    return mandalaDocument.images || [];
   }
 
   async deleteImage(

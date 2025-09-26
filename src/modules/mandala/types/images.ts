@@ -1,3 +1,5 @@
+import { Tag } from '@modules/mandala/types/postits';
+
 export interface MandalaImage {
   id: string;
   url: string;
@@ -7,10 +9,7 @@ export interface MandalaImage {
   };
   dimension: string;
   section: string;
-}
-
-export interface MandalaImageWithPresignedUrl extends MandalaImage {
-  presignedUrl?: string;
+  tags: Tag[];
 }
 
 export interface CreateMandalaImageRequest {
@@ -21,4 +20,5 @@ export interface CreateMandalaImageRequest {
 
 export interface ConfirmMandalaImageRequest {
   id: string;
+  tags?: Tag[];
 }
