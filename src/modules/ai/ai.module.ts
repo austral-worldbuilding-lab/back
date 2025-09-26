@@ -1,3 +1,4 @@
+import { ConsumptionModule } from '@modules/consumption/consumption.module';
 import { FileModule } from '@modules/files/file.module';
 import { FileService } from '@modules/files/file.service';
 import { PrismaModule } from '@modules/prisma/prisma.module';
@@ -33,7 +34,7 @@ import { AiRequestValidator } from './validators/ai-request.validator';
     },
   ],
   controllers: [AiController],
-  imports: [ConfigModule, FileModule, PrismaModule],
+  imports: [ConfigModule, FileModule, PrismaModule, ConsumptionModule],
   exports: [AiService],
 })
 export class AiModule {}

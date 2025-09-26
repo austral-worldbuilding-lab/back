@@ -1,5 +1,5 @@
 OBJETIVO:
-  Generar posibles soluciones para el proyecto. El propósito es estimular la creatividad, desafiar el "statu quo" y explorar nuevas perspectivas para la construcción de mundos sostenibles, que ayuden a resolver las problemáticas y deseos identificados en el proyecto.
+  Generar provocaciones abiertas y exploratorias que inviten a imaginar nuevos escenarios posibles para el proyecto. El propósito es estimular la creatividad, desafiar el "statu quo" y abrir caminos de exploración para la construcción de mundos sostenibles, sin proponer soluciones específicas sino promoviendo la investigación de posibilidades.
 
 CONFIGURACION DEL PROYECTO:
   • Nombre del Proyecto: ${projectName}
@@ -8,33 +8,39 @@ CONFIGURACION DE LOS PERSONAJES:
   • Contenido de los personajes del proyecto:
   ${mandalaDocument}
 CONFIGURACIÓN DE LA GENERACIÓN:
-  • Cantidad mínima de soluciones: ${minResults}
-  • Cantidad máxima de soluciones: ${maxResults}
+  • Cantidad mínima de provocaciones: ${minResults}
+  • Cantidad máxima de provocaciones: ${maxResults}
 
-REGLAS PARA LAS POSIBLES SOLUCIONES:
-  • El campo `titulo` debe ser una solucion asociada a posibles escenarios/soluciones futuras para el proyecto.
-  • El campo `description` debe ser una explicacion concisa de la solucion aplicable, abordando los problemas y deseos identificados en el proyecto.
-  • El campo `question` debe ser una provocación disruptiva, inquietante y abierta (empezar con "¿Qué pasaría si...?", "¿Por qué no...?").. asociada a la solucion.
-  • Cada solucion debe tener una sola intención y ser clara y específica (evitar provocaciones múltiples o respuestas de sí/no)..
-  • Deben desafiar el "statu quo" del mundo actual del proyecto y buscar la exploración de un escenario futuro.
+REGLAS PARA LAS PROVOCACIONES ABIERTAS:
+  • El campo `title` debe ser una provocación conceptual que explore territorios universales y abstractos, sin mencionar elementos, objetos, lugares o servicios específicos del contexto del proyecto.
+  • El campo `description` debe explicar principios, dinámicas o conceptos universales que trascienden las particularidades del proyecto, enfocándose en patrones de comportamiento humano, relaciones sociales o formas de organización.
+  • El campo `question` debe ser una provocación disruptiva y abierta (empezar con "¿Qué pasaría si...?", "¿Cómo sería un mundo donde...?", "¿Por qué no...?") que invite a reimaginar aspectos fundamentales de la experiencia humana sin sugerir implementaciones específicas.
+  • Cada provocación debe ser suficientemente abstracta para aplicarse a múltiples contextos y generar infinitas posibilidades de exploración (evitar mencionar servicios, tecnologías, espacios físicos o estructuras organizacionales específicas).
+  • Deben desafiar supuestos fundamentales sobre cómo funcionan las comunidades, las relaciones y los sistemas sociales, abriendo caminos hacia formas completamente nuevas de imaginar la convivencia humana.
+  • Las provocaciones deben ser universales y filosóficas, evitando cualquier referencia a elementos concretos como lugares, objetos, servicios, roles específicos o infraestructuras particulares del proyecto.
 
 EJEMPLO DE USO:
   Proyecto: Festejos UA
-  Descipción del proyecto: El proyecto Festejos UA se desarrolla en el campus de la Universidad Austral y se centra en las celebraciones de los estudiantes, especialmente las graduaciones. El problema principal radica en las prácticas de festejo actuales, que generan desorden, quejas del personal, una huella ecológica negativa, desperdicio de alimentos y una percepción de mal prestigio para la universidad
+  Descripción del proyecto: El proyecto Festejos UA se desarrolla en el campus de la Universidad Austral y se centra en las celebraciones de los estudiantes, especialmente las graduaciones. El problema principal radica en las prácticas de festejo actuales, que generan desorden, quejas del personal, una huella ecológica negativa, desperdicio de alimentos y una percepción de mal prestigio para la universidad
   [
     {
-      "title": "Crear un Festejódromo",
-      "description": "Se propone la creación de un espacio dedicado dentro del campus universitario para la celebración de festejos de graduación. Este 'Festejódromo' contaría con una infraestructura específica que facilitaría la limpieza inmediata, promovería la donación de alimentos sobrantes para fomentar festejos solidarios y sostenibles, y ofrecería mensajes inspiradores sobre una nueva etapa para los graduados. Aborda la problemática de la huella ecológica y el mal prestigio al centralizar y regular las celebraciones, y satisface el deseo de los alumnos de festejar dentro del campus con sus seres queridos, gestionando las preocupaciones de seguridad y orden con la comunidad local."
-      "question": "¿Qué pasaría si la universidad creara un espacio dedicado para la celebración de festejos de graduación?"
+      "title": "Reciprocidad Generativa",
+      "description": "Explorar dinámicas donde cada acción individual contribuya automáticamente al bienestar colectivo, creando círculos virtuosos donde el cuidado personal y comunitario se retroalimenten naturalmente sin necesidad de estructuras regulatorias externas."
+      "question": "¿Cómo sería un mundo donde el bienestar individual fuera inseparable del bienestar colectivo?"
     },
     {
-      "title": "Implementar 'Embajadores de una Nueva Cultura' y Plataforma de Gestión de Festejos",
-      "description": "Se desarrollaría un programa de 'Embajadores de una Nueva Cultura' entre los estudiantes, enfocado en promover prácticas de festejo más solidarias y sostenibles. Estos embajadores, apoyados por una plataforma digital de gestión de festejos (Mundo B.1), organizarían los eventos, educarían sobre el manejo de residuos y la donación de alimentos, y coordinarían con los servicios universitarios (limpieza, seguridad, secretarías) para asegurar un impacto positivo. Esto aborda el problema cultural de tirar comida y el desorden, fomentando el ADN de la universidad, y permite a los alumnos gestionar autónomamente las inscripciones e invitaciones."
-      "question": "¿Qué pasaría si la universidad creara un programa de 'Embajadores de una Nueva Cultura' entre los estudiantes, enfocado en promover prácticas de festejo más solidarias y sostenibles?"
+      "title": "Autonomía Colaborativa",
+      "description": "Considerar formas de organización social donde la autonomía personal y la colaboración comunitaria no sean fuerzas opuestas, sino que se potencien mutuamente, generando sistemas auto-organizados y resilientes."
+      "question": "¿Qué pasaría si la libertad individual y la responsabilidad colectiva fueran la misma cosa?"
     },
     {
-      "title": "Prohibición de Festejos en Campus con Espacios Alternativos",
-      "description": "La universidad implementa una política de prohibición total de festejos dentro del campus para erradicar el desorden y el impacto ambiental. Sin embargo, para no dejar a los alumnos 'sin la posibilidad de festejar', se establecerían convenios con espacios externos cercanos al campus (e.g., salones de eventos en Mariano Acosta), facilitando descuentos y logística de transporte. Esta solución elimina el problema institucional pero genera frustración en los alumnos, perdiendo el valor de la celebración en su propia casa de estudios, lo que invita a repensar la decisión desde la perspectiva de los deseos del alumno."
-      "question": "¿Qué pasaría si la universidad prohibiera los festejos dentro del campus y estableciera convenios con espacios externos cercanos al campus?"
-    }
+      "title": "Impacto Regenerativo",
+      "description": "Imaginar patrones de interacción humana que no solo minimicen el daño sino que activamente nutran y fortalezcan los sistemas de vida, donde cada encuentro y actividad contribuya a la regeneración del entorno y las relaciones."
+      "question": "¿Cómo cambiaría la sociedad si toda actividad humana dejara el mundo mejor de lo que lo encontró?"
+    },
+    {
+      "title": "Memoria Viva Transformadora",
+      "description": "Explorar cómo las experiencias colectivas pueden convertirse en sabiduría comunitaria activa, donde cada momento significativo se integre en un tejido de aprendizaje continuo que guíe futuras decisiones y relaciones."
+      "question": "¿Qué sucedería si cada experiencia comunitaria se convirtiera en sabiduría heredable para las futuras generaciones?"
+    },
   ]

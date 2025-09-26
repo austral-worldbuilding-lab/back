@@ -20,11 +20,21 @@ import {
 import { createQuestionsResponseSchema } from '../resources/dto/generate-questions.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
+import {
+  AiResponseWithUsage,
+  AiUsageInfo,
+} from '../types/ai-response-with-usage.type';
 import { AiRequestValidator } from '../validators/ai-request.validator';
 
 interface GeminiUploadedFile {
   uri: string;
   mimeType: string;
+}
+
+interface GeminiUsageMetadata {
+  totalTokenCount?: number;
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
 }
 
 @Injectable()
@@ -85,13 +95,24 @@ export class GeminiAdapter implements AiProvider {
     return uploadedFiles;
   }
 
+  /**
+   * Convierte el usageMetadata de Gemini a nuestro formato
+   */
+  private parseUsageMetadata(usageMetadata: GeminiUsageMetadata): AiUsageInfo {
+    return {
+      totalTokens: usageMetadata?.totalTokenCount || 0,
+      promptTokens: usageMetadata?.promptTokenCount || 0,
+      completionTokens: usageMetadata?.candidatesTokenCount || 0,
+    };
+  }
+
   private async generateContentWithFiles(
     model: string,
     systemInstruction: string,
     geminiFiles: GeminiUploadedFile[],
     responseSchema: unknown,
     promptTask?: string,
-  ): Promise<string | undefined> {
+  ): Promise<{ text: string | undefined; usage: AiUsageInfo }> {
     this.logger.debug('Preparing Gemini API request...');
 
     const config = {
@@ -122,10 +143,13 @@ export class GeminiAdapter implements AiProvider {
     });
 
     this.logger.log('Generation completed successfully');
+
+    const usage = this.parseUsageMetadata(response.usageMetadata || {});
     this.logger.debug('Usage metadata', response.usageMetadata);
+    this.logger.debug('Parsed usage info', usage);
     this.logger.debug('Response text', response.text);
 
-    return response.text;
+    return { text: response.text, usage };
   }
 
   async generatePostits(
@@ -137,7 +161,7 @@ export class GeminiAdapter implements AiProvider {
     centerCharacterDescription: string,
     selectedFiles?: string[],
     mandalaId?: string,
-  ): Promise<AiPostitResponse[]> {
+  ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
     const model = this.geminiModel;
     const finalPromptTask = await this.promptBuilderService.buildPostitPrompt(
       dimensions,
@@ -156,7 +180,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
-    const responseText = await this.generateContentWithFiles(
+    const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
       geminiFiles,
@@ -166,9 +190,13 @@ export class GeminiAdapter implements AiProvider {
       }),
     );
 
-    const result = this.parseAndValidatePostitResponse(responseText);
+    const result = this.parseAndValidatePostitResponse(response.text);
     this.logger.log(`Postit generation completed for project: ${projectId}`);
-    return result;
+
+    return {
+      data: result,
+      usage: response.usage,
+    };
   }
 
   private parseAndValidatePostitResponse(
@@ -221,7 +249,7 @@ export class GeminiAdapter implements AiProvider {
     centerCharacter: string,
     centerCharacterDescription: string,
     selectedFiles?: string[],
-  ): Promise<AiQuestionResponse[]> {
+  ): Promise<AiResponseWithUsage<AiQuestionResponse[]>> {
     this.logger.log(`Starting question generation for project: ${projectId}`);
 
     const model = this.geminiModel;
@@ -242,7 +270,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
-    const responseText = await this.generateContentWithFiles(
+    const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
       geminiFiles,
@@ -252,9 +280,13 @@ export class GeminiAdapter implements AiProvider {
       }),
     );
 
-    const result = this.parseAndValidateQuestionResponse(responseText);
+    const result = this.parseAndValidateQuestionResponse(response.text);
     this.logger.log(`Question generation completed for project: ${projectId}`);
-    return result;
+
+    return {
+      data: result,
+      usage: response.usage,
+    };
   }
 
   private parseAndValidateQuestionResponse(
@@ -300,10 +332,12 @@ export class GeminiAdapter implements AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
-  ): Promise<{
-    comparisons: AiPostitComparisonResponse[];
-    report: AiMandalaReport;
-  }> {
+  ): Promise<
+    AiResponseWithUsage<{
+      comparisons: AiPostitComparisonResponse[];
+      report: AiMandalaReport;
+    }>
+  > {
     this.logger.log(`Starting question generation for project: ${projectId}`);
 
     const model = this.geminiModel;
@@ -319,7 +353,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
-    const responseText = await this.generateContentWithFiles(
+    const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
       geminiFiles,
@@ -329,14 +363,19 @@ export class GeminiAdapter implements AiProvider {
       }),
     );
 
-    const { comparisons, report } =
-      this.parseAndValidateComparisonWithReport(responseText);
+    const { comparisons, report } = this.parseAndValidateComparisonWithReport(
+      response.text,
+    );
 
     this.logger.log(`Comparison + report generation completed`);
     this.logger.debug(
       '[AI REPORT][comparativa] ' + JSON.stringify(report, null, 2),
     );
-    return { comparisons, report };
+
+    return {
+      data: { comparisons, report },
+      usage: response.usage,
+    };
   }
 
   private parseAndValidateComparisonResponse(
@@ -375,7 +414,8 @@ export class GeminiAdapter implements AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
-  ): Promise<AiProvocationResponse[]> {
+    _selectedFiles?: string[],
+  ): Promise<AiResponseWithUsage<AiProvocationResponse[]>> {
     this.logger.log(
       `Starting provocations generation for project: ${projectId}`,
     );
@@ -395,7 +435,7 @@ export class GeminiAdapter implements AiProvider {
     );
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
-    const responseText = await this.generateContentWithFiles(
+    const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
       geminiFiles,
@@ -405,9 +445,13 @@ export class GeminiAdapter implements AiProvider {
       }),
     );
 
-    const result = this.parseAndValidateProvocationResponse(responseText);
+    const result = this.parseAndValidateProvocationResponse(response.text);
     this.logger.log(`Provocations generation completed`);
-    return result;
+
+    return {
+      data: result,
+      usage: response.usage,
+    };
   }
 
   private parseAndValidateProvocationResponse(

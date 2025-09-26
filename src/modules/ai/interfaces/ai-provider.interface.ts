@@ -6,6 +6,8 @@ import {
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 
+import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
+
 export interface AiProvider {
   /**
    * Generates postits for a project
@@ -28,7 +30,7 @@ export interface AiProvider {
     centerCharacterDescription: string,
     selectedFiles?: string[],
     mandalaId?: string,
-  ): Promise<AiPostitResponse[]>;
+  ): Promise<AiResponseWithUsage<AiPostitResponse[]>>;
 
   /**
    * Generates questions for a project based on mandala configuration and files
@@ -54,7 +56,7 @@ export interface AiProvider {
     centerCharacterDescription: string,
     mandalaAiSummary: string,
     selectedFiles?: string[],
-  ): Promise<AiQuestionResponse[]>;
+  ): Promise<AiResponseWithUsage<AiQuestionResponse[]>>;
 
   /**
    * Generates postit summary between multiple mandalas using AI analysis
@@ -77,10 +79,12 @@ export interface AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
-  ): Promise<{
-    comparisons: AiPostitComparisonResponse[];
-    report: AiMandalaReport;
-  }>;
+  ): Promise<
+    AiResponseWithUsage<{
+      comparisons: AiPostitComparisonResponse[];
+      report: AiMandalaReport;
+    }>
+  >;
 
   /**
    * Generates provocations for a project
@@ -101,7 +105,7 @@ export interface AiProvider {
     scales: string[],
     mandalasAiSummary: string,
     selectedFiles?: string[],
-  ): Promise<AiProvocationResponse[]>;
+  ): Promise<AiResponseWithUsage<AiProvocationResponse[]>>;
 
   /**
    * Generates a consolidated summary of a mandala using AI analysis

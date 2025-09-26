@@ -1,4 +1,4 @@
-export interface PostitTag {
+export interface Tag {
   name: string;
   color: string;
 }
@@ -26,7 +26,7 @@ export interface Postit {
   content: string;
   dimension: string;
   section: string;
-  tags: PostitTag[];
+  tags: Tag[];
   childrens: Postit[];
   imageFileName?: string;
 }
