@@ -6,7 +6,8 @@ import {
   replacePostitPlaceholders,
   replaceQuestionPlaceholders,
   replaceComparisonPlaceholders,
-  replaceProvocationPlaceholders, replaceMandalaSummaryPlaceholders,
+  replaceProvocationPlaceholders,
+  replaceMandalaSummaryPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';

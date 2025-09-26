@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { createMandalaSummaryResponseSchema } from '@modules/ai/resources/dto/generate-summary.dto';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
@@ -25,7 +26,6 @@ import {
   AiUsageInfo,
 } from '../types/ai-response-with-usage.type';
 import { AiRequestValidator } from '../validators/ai-request.validator';
-import { createMandalaSummaryResponseSchema } from '@modules/ai/resources/dto/generate-summary.dto';
 
 interface GeminiUploadedFile {
   uri: string;
