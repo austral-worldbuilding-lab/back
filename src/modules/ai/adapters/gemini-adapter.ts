@@ -25,6 +25,7 @@ import {
   AiUsageInfo,
 } from '../types/ai-response-with-usage.type';
 import { AiRequestValidator } from '../validators/ai-request.validator';
+import { createMandalaSummaryResponseSchema } from '@modules/ai/resources/dto/generate-summary.dto';
 
 interface GeminiUploadedFile {
   uri: string;
@@ -562,10 +563,10 @@ export class GeminiAdapter implements AiProvider {
       this.geminiModel,
       finalPromptTask,
       geminiFiles,
-      { type: 'string' }, // Simple string schema for plain text response
+      createMandalaSummaryResponseSchema,
     );
 
-    if (!responseText) {
+    if (!responseText || !responseText.text) {
       throw new Error('No response text received from Gemini API');
     }
 
@@ -573,6 +574,6 @@ export class GeminiAdapter implements AiProvider {
       `Summary generation completed for mandala ${mandalaId} in project ${projectId}`,
     );
 
-    return responseText;
+    return responseText.text;
   }
 }

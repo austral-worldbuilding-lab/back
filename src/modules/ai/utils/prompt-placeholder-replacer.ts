@@ -281,3 +281,21 @@ export function replaceProvocationPlaceholders(
     'provocation',
   );
 }
+
+/**
+ * Replace placeholders for mandala summary generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceMandalaSummaryPlaceholders(
+  promptTemplate: string, // The template string containing placeholders
+  config: PromptReplacementConfig = {}, // Configuration object with values to replace placeholders
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    replaceMandalaDocument,
+    'mandala summary',
+  );
+}

@@ -6,7 +6,7 @@ import {
   replacePostitPlaceholders,
   replaceQuestionPlaceholders,
   replaceComparisonPlaceholders,
-  replaceProvocationPlaceholders,
+  replaceProvocationPlaceholders, replaceMandalaSummaryPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -176,12 +176,13 @@ export class AiPromptBuilderService {
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
 
-    const promptTask = promptTemplate
-      .replace('{{dimensions}}', dimensions.join(', '))
-      .replace('{{scales}}', scales.join(', '))
-      .replace('{{centerCharacter}}', centerCharacter)
-      .replace('{{centerCharacterDescription}}', centerCharacterDescription)
-      .replace('{{mandalaDocument}}', mandalaDocument);
+    const promptTask = replaceMandalaSummaryPlaceholders(promptTemplate, {
+      dimensions: dimensions,
+      scales: scales,
+      centerCharacter: centerCharacter,
+      centerCharacterDescription: centerCharacterDescription,
+      mandalaDocument: mandalaDocument,
+    });
 
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
