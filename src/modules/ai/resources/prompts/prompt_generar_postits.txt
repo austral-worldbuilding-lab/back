@@ -6,6 +6,8 @@ CONFIGURACION DEL PERSONAJE CENTRAL:
   • Nombre: ${centerCharacter}
   • Descripción: ${centerCharacterDescription}
 CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}
   • Dimensiones habilitadas: ${dimensions}
   • Escalas habilitadas: ${scales}
   • Etiquetas disponibles: ${tags}

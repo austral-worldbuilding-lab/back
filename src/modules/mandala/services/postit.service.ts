@@ -127,8 +127,13 @@ export class PostitService {
 
     const tagNames = projectTags.map((tag) => tag.name);
 
+    // Get project information
+    const project = await this.projectService.findOne(mandala.projectId);
+    
     const aiResponse: AiPostitResponse[] = await this.aiService.generatePostits(
       mandala.projectId,
+      project.name,
+      project.description || '',
       dimensions,
       scales,
       mandala.configuration.center.name,
@@ -159,9 +164,14 @@ export class PostitService {
       mandalas[0].projectId, // Use first mandala's project for tags
     );
 
+    // Get project information
+    const project = await this.projectService.findOne(mandalas[0].projectId);
+    
     const { comparisons: aiComparisons, report } =
       await this.aiService.generatePostitsSummary(
         mandalas[0].projectId, // TODO: unificar si más adelante soportan multi-proyecto
+        project.name,
+        project.description || '',
         mandalas,
         mandalasDocument,
       );

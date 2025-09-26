@@ -34,6 +34,8 @@ export class AiService {
 
   async generatePostits(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     dimensions: string[],
     scales: string[],
     centerCharacter: string,
@@ -48,6 +50,8 @@ export class AiService {
 
     const response = await this.aiProvider.generatePostits(
       projectId,
+      projectName,
+      projectDescription,
       dimensions,
       scales,
       tags,
@@ -81,6 +85,8 @@ export class AiService {
 
   async generateQuestions(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     mandalaId: string,
     mandala: FirestoreMandalaDocument,
     dimensions: string[],
@@ -104,6 +110,8 @@ export class AiService {
 
     const response = await this.aiProvider.generateQuestions(
       projectId,
+      projectName,
+      projectDescription,
       mandalaId,
       dimensions,
       scales,
@@ -138,6 +146,8 @@ export class AiService {
 
   async generatePostitsSummary(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     mandalas: MandalaDto[],
     mandalasDocument: FirestoreMandalaDocument[],
     userId?: string,
@@ -160,6 +170,8 @@ export class AiService {
 
     const response = await this.aiProvider.generatePostitsSummary(
       projectId,
+      projectName,
+      projectDescription,
       allDimensions,
       allScales,
       cleanMandalasDocument.map((m) => JSON.stringify(m)).join('\n'),
