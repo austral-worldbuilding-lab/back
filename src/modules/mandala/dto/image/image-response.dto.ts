@@ -1,19 +1,23 @@
-import {
-  MandalaImage,
-  MandalaImageWithPresignedUrl,
-} from '@modules/mandala/types/images';
+import { MandalaImage } from '@modules/mandala/types/images';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsArray, ValidateNested } from 'class-validator';
+
+import {
+  TagResponseDto,
+  toTagResponseDto,
+} from '@/modules/project/dto/tag-response.dto';
 
 class ImageCoordinatesResponseDto {
   @ApiProperty({
     description: 'Coordenada X de la imagen',
-    example: 50.5,
+    example: 0.5,
   })
   x!: number;
 
   @ApiProperty({
     description: 'Coordenada Y de la imagen',
-    example: 25.3,
+    example: 0.3,
   })
   y!: number;
 }
@@ -51,11 +55,13 @@ export class ImageResponseDto {
   section!: string;
 
   @ApiProperty({
-    description: 'URL firmada para subir la imagen (solo al crear)',
-    example: 'https://storage.example.com/presigned-url...',
-    required: false,
+    description: 'Tags asociados a la imagen',
+    type: [TagResponseDto],
   })
-  presignedUrl?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TagResponseDto)
+  tags!: TagResponseDto[];
 }
 
 export function toImageResponseDto(image: MandalaImage): ImageResponseDto {
@@ -68,21 +74,6 @@ export function toImageResponseDto(image: MandalaImage): ImageResponseDto {
     },
     dimension: image.dimension,
     section: image.section,
-  };
-}
-
-export function toImageResponseDtoWithPresignedUrl(
-  image: MandalaImageWithPresignedUrl,
-): ImageResponseDto {
-  return {
-    id: image.id,
-    url: image.url,
-    coordinates: {
-      x: image.coordinates.x,
-      y: image.coordinates.y,
-    },
-    dimension: image.dimension,
-    section: image.section,
-    presignedUrl: image.presignedUrl,
+    tags: image.tags.map(toTagResponseDto),
   };
 }

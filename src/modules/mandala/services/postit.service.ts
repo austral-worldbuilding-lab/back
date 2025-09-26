@@ -19,7 +19,7 @@ import {
   Postit,
   PostitCoordinates,
   PostitWithCoordinates,
-  PostitTag,
+  Tag,
   AiPostitResponse,
   AiPostitComparisonResponse,
   PostitComparison,
@@ -182,10 +182,7 @@ export class PostitService {
     return { comparisons, report };
   }
 
-  private mapTagsWithColors(
-    tagNames: string[],
-    projectTags: TagDto[],
-  ): PostitTag[] {
+  private mapTagsWithColors(tagNames: string[], projectTags: TagDto[]): Tag[] {
     if (!tagNames || tagNames.length === 0) return [];
 
     return tagNames
@@ -197,7 +194,7 @@ export class PostitService {
           color: projectTag.color,
         };
       })
-      .filter((tag): tag is PostitTag => tag !== null);
+      .filter((tag): tag is Tag => tag !== null);
   }
 
   private groupPostitsBySection(postits: Postit[]): Record<string, Postit[]> {

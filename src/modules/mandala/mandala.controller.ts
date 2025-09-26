@@ -465,6 +465,7 @@ export class MandalaController {
       mandalaId,
       {
         id: confirmImageDto.id,
+        tags: confirmImageDto.tags,
       },
     );
 

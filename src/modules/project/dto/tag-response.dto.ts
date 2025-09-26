@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsHexColor, IsNotEmpty, IsString } from 'class-validator';
 
-import { PostitTag } from '@/modules/mandala/types/postits';
+import { Tag } from '@/modules/mandala/types/postits';
 
 export class TagResponseDto {
   @ApiProperty({
@@ -21,7 +21,7 @@ export class TagResponseDto {
   color!: string;
 }
 
-export function toTagResponseDto(tag: PostitTag): TagResponseDto {
+export function toTagResponseDto(tag: Tag): TagResponseDto {
   return {
     name: tag.name,
     color: tag.color,
