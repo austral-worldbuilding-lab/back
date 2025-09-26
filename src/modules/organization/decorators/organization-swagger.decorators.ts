@@ -2,6 +2,8 @@ import { ProjectDto } from '@modules/project/dto/project.dto';
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
+import { OrganizationUserRoleResponseDto } from '../dto/organization-user-role-response.dto';
+import { OrganizationUserDto } from '../dto/organization-user.dto';
 import { OrganizationDto } from '../dto/organization.dto';
 
 export const ApiCreateOrganization = () =>
@@ -127,5 +129,89 @@ export const ApiDeleteOrganization = () =>
       status: 403,
       description:
         'Prohibido - Solo el propietario puede eliminar la organización',
+    }),
+  );
+
+export const ApiGetOrganizationUsers = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Obtener usuarios de una organización' }),
+    ApiParam({
+      name: 'organizationId',
+      description: 'ID de la organización',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de usuarios de la organización',
+      type: [OrganizationUserDto],
+    }),
+    ApiResponse({ status: 404, description: 'Organización no encontrada' }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes permisos para ver los usuarios',
+    }),
+  );
+
+export const ApiUpdateOrganizationUserRole = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Actualizar rol de usuario en organización' }),
+    ApiParam({
+      name: 'organizationId',
+      description: 'ID de la organización',
+      type: String,
+    }),
+    ApiParam({
+      name: 'userId',
+      description: 'ID del usuario',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Rol de usuario actualizado exitosamente',
+      type: OrganizationUserRoleResponseDto,
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Usuario u organización no encontrada',
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes permisos para cambiar roles',
+    }),
+    ApiResponse({
+      status: 409,
+      description: 'Conflicto - No se puede degradar al último propietario',
+    }),
+  );
+
+export const ApiRemoveUserFromOrganization = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Eliminar usuario de la organización' }),
+    ApiParam({
+      name: 'organizationId',
+      description: 'ID de la organización',
+      type: String,
+    }),
+    ApiParam({
+      name: 'userId',
+      description: 'ID del usuario',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Usuario eliminado de la organización exitosamente',
+      type: OrganizationUserDto,
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Usuario u organización no encontrada',
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes permisos para eliminar usuarios',
+    }),
+    ApiResponse({
+      status: 409,
+      description: 'Conflicto - No se puede eliminar al último propietario',
     }),
   );
