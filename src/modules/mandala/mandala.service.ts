@@ -643,7 +643,7 @@ export class MandalaService {
 
     // Get project information
     const project = await this.projectService.findOne(mandala.projectId);
-    
+
     return this.aiService.generateQuestions(
       mandala.projectId,
       project.name,

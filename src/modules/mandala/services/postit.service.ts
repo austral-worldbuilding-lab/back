@@ -129,7 +129,7 @@ export class PostitService {
 
     // Get project information
     const project = await this.projectService.findOne(mandala.projectId);
-    
+
     const aiResponse: AiPostitResponse[] = await this.aiService.generatePostits(
       mandala.projectId,
       project.name,
@@ -166,7 +166,7 @@ export class PostitService {
 
     // Get project information
     const project = await this.projectService.findOne(mandalas[0].projectId);
-    
+
     const { comparisons: aiComparisons, report } =
       await this.aiService.generatePostitsSummary(
         mandalas[0].projectId, // TODO: unificar si más adelante soportan multi-proyecto
