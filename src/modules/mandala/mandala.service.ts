@@ -1037,4 +1037,38 @@ export class MandalaService {
 
     return totalPostitsCount;
   }
+
+  async generateSummaryReport(
+    mandalaId: string,
+  ): Promise<{ summaryReport: string }> {
+    const mandala = await this.findOne(mandalaId);
+    if (!mandala) {
+      throw new ResourceNotFoundException('Mandala', mandalaId);
+    }
+
+    const mandalaDoc = await this.firebaseDataService.getDocument(
+      mandala.projectId,
+      mandalaId,
+    );
+
+    if (!mandalaDoc) {
+      throw new ResourceNotFoundException('MandalaDocument', mandalaId);
+    }
+
+    // Generar resumen con IA
+    const summaryReport = await this.aiService.generateMandalaSummary(
+      mandala.projectId,
+      mandala,
+      mandalaDoc as FirestoreMandalaDocument,
+    );
+
+    // Guardar resumen en Firestore
+    await this.firebaseDataService.updateDocument(
+      mandala.projectId,
+      { summaryReport },
+      mandalaId,
+    );
+
+    return { summaryReport };
+  }
 }

@@ -491,4 +491,11 @@ export class MandalaController {
       message: 'Image deleted successfully',
     };
   }
+
+  @Post(':mandalaId/summary')
+  async generateSummaryReport(
+    @Param('mandalaId') mandalaId: string,
+  ): Promise<{ summaryReport: string }> {
+    return this.mandalaService.generateSummaryReport(mandalaId);
+  }
 }

@@ -7,6 +7,7 @@ import {
   replaceQuestionPlaceholders,
   replaceComparisonPlaceholders,
   replaceProvocationPlaceholders,
+  replaceMandalaSummaryPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -152,5 +153,38 @@ export class AiPromptBuilderService {
       minResults: this.utilsService.getMinProvocations(),
     });
     return this.buildPromptWithCiclo3Instructions(promptTask);
+  }
+
+  /** Builds complete prompt for mandala summary generation
+   * @param dimensions - Array of dimensions
+   * @param scales - Array of scales
+   * @param centerCharacter - The center character
+   * @param centerCharacterDescription - The center character description
+   * @param mandalaDocument - Clean textual summary of the mandala without technical details
+   * @returns Complete prompt ready for AI processing
+   */
+  async buildMandalaSummaryPrompt(
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    mandalaDocument: string,
+  ): Promise<string> {
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_resumen.txt',
+    );
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+
+    const promptTask = replaceMandalaSummaryPlaceholders(promptTemplate, {
+      dimensions: dimensions,
+      scales: scales,
+      centerCharacter: centerCharacter,
+      centerCharacterDescription: centerCharacterDescription,
+      mandalaDocument: mandalaDocument,
+    });
+
+    return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 }
