@@ -33,6 +33,7 @@ import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { ProjectRepository } from './project.repository';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { AiProvocationResponse } from './types/provocations.type';
+import { TimelineGraph } from './types/timeline.type';
 
 @Injectable()
 export class ProjectService {
@@ -386,5 +387,14 @@ export class ProjectService {
     await this.findOne(projectId);
 
     return this.projectRepository.findAllProvocationsByProjectId(projectId);
+  }
+
+  async getTimeline(projectId: string): Promise<TimelineGraph> {
+    const project = await this.findOne(projectId);
+
+    return this.projectRepository.getTimelineGraph(
+      project.organizationId,
+      projectId,
+    );
   }
 }

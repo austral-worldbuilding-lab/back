@@ -22,6 +22,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { ProjectConfiguration } from './types/project-configuration.type';
+import { TimelineGraph, ProjectNode, Edge } from './types/timeline.type';
 
 @Injectable()
 export class ProjectRepository {
@@ -880,5 +881,106 @@ export class ProjectRepository {
     return provocationLinks.map((link) =>
       this.parseToProvocationDto(link.provocation),
     );
+  }
+
+  private searchProjectDepths(
+    projects: Array<{
+      id: string;
+      parentProjectId: string | null;
+    }>,
+  ): Map<string, number> {
+    const projectById = new Map(projects.map((p) => [p.id, p]));
+    const depths = new Map<string, number>();
+
+    // Find roots and compute depths via BFS
+    const roots = projects.filter(
+      (p) => !p.parentProjectId || !projectById.has(p.parentProjectId),
+    );
+    const queue = roots.map((r) => ({ id: r.id, depth: 0 }));
+
+    while (queue.length > 0) {
+      const { id, depth } = queue.shift()!;
+      if (depths.has(id)) continue;
+
+      depths.set(id, depth);
+
+      // Add children to queue
+      projects
+        .filter((p) => p.parentProjectId === id)
+        .forEach((child) => queue.push({ id: child.id, depth: depth + 1 }));
+    }
+
+    return depths;
+  }
+
+  private createProjectParentEdges(
+    projects: Array<{
+      id: string;
+      createdAt: Date;
+      parentProjectId: string | null;
+    }>,
+  ): Edge[] {
+    const projectById = new Map(projects.map((p) => [p.id, p]));
+
+    return projects
+      .filter((p) => p.parentProjectId && projectById.has(p.parentProjectId))
+      .map((p) => ({
+        from: p.parentProjectId!,
+        to: p.id,
+        type: 'PROJECT_PARENT' as const,
+        createdAt: p.createdAt.toISOString(),
+      }));
+  }
+
+  async getTimelineGraph(
+    organizationId: string,
+    highlightProjectId?: string,
+  ): Promise<TimelineGraph> {
+    const projects = await this.prisma.project.findMany({
+      where: {
+        organizationId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        parentProjectId: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const projectNodes: ProjectNode[] = projects.map((p) => ({
+      id: p.id,
+      type: 'project' as const,
+      name: p.name,
+      description: p.description || undefined,
+      createdAt: p.createdAt.toISOString(),
+      parentId: p.parentProjectId,
+      label: p.name,
+      isHighlighted: p.id === highlightProjectId,
+    }));
+
+    const depths = this.searchProjectDepths(projects);
+
+    projectNodes.forEach((node) => {
+      node.depth = depths.get(node.id) || 0;
+    });
+
+    const projectParentEdges = this.createProjectParentEdges(projects);
+
+    const edges: Edge[] = [...projectParentEdges];
+
+    const allNodes = [...projectNodes];
+    allNodes.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    return {
+      nodes: allNodes,
+      edges,
+    };
   }
 }
