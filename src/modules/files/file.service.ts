@@ -15,6 +15,7 @@ import {
   EffectiveFile,
   EffectiveFileWithSelection,
 } from './types/file-scope.type';
+import { UniqueFileNameGenerator } from './utils/unique-filename.utils';
 
 @Injectable()
 export class FileService {
@@ -116,7 +117,26 @@ export class FileService {
     files: CreateFileDto[],
     scope: FileScope,
   ): Promise<PresignedUrl[]> {
-    return this.storageService.uploadFiles(files, scope, 'files');
+    this.validateFilesForUpload(files);
+
+    const existingFiles = await this.storageService.getFiles(scope);
+    const existingFileNames = existingFiles.map((file) => file.file_name);
+
+    const nameMapping = UniqueFileNameGenerator.generateUniqueFileNames(
+      files,
+      existingFileNames,
+    );
+
+    const filesWithUniqueNames = files.map((file, index) => ({
+      ...file,
+      file_name: nameMapping[index].uniqueName,
+    }));
+
+    return this.storageService.uploadFiles(
+      filesWithUniqueNames,
+      scope,
+      'files',
+    );
   }
 
   async getFiles(scope: FileScope): Promise<EffectiveFile[]> {
@@ -324,5 +344,23 @@ export class FileService {
     return filesWithSelection
       .filter((file) => file.selected)
       .map((file) => file.file_name);
+  }
+
+  private validateFilesForUpload(files: CreateFileDto[]): void {
+    if (!files || files.length === 0) {
+      throw new Error('No files provided for upload');
+    }
+
+    files.forEach((file, index) => {
+      if (!file.file_name || file.file_name.trim() === '') {
+        throw new Error(`File at index ${index} has invalid name`);
+      }
+
+      if (file.file_name.length > 255) {
+        throw new Error(
+          `File name at index ${index} is too long (max 255 characters)`,
+        );
+      }
+    });
   }
 }
