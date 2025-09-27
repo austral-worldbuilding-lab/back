@@ -348,19 +348,27 @@ export class FileService {
 
   private validateFilesForUpload(files: CreateFileDto[]): void {
     if (!files || files.length === 0) {
-      throw new ResourceNotFoundException('Files', 'upload batch', 'No files provided for upload');
+      throw new ResourceNotFoundException(
+        'Files',
+        'upload batch',
+        'No files provided for upload',
+      );
     }
 
     files.forEach((file, index) => {
       if (!file.file_name || file.file_name.trim() === '') {
-        throw new ResourceNotFoundException('File', `at index ${index}`, 'File name is invalid or empty');
+        throw new ResourceNotFoundException(
+          'File',
+          `at index ${index}`,
+          'File name is invalid or empty',
+        );
       }
 
       if (file.file_name.length > 255) {
         throw new ResourceNotFoundException(
-          'File', 
-          file.file_name, 
-          `File name is too long (max 255 characters, got ${file.file_name.length})`
+          'File',
+          file.file_name,
+          `File name is too long (max 255 characters, got ${file.file_name.length})`,
         );
       }
     });
