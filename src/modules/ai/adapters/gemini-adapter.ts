@@ -1,5 +1,4 @@
 import { GoogleGenAI } from '@google/genai';
-import { createMandalaSummaryResponseSchema } from '@modules/ai/resources/dto/generate-summary.dto';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
@@ -19,6 +18,7 @@ import {
   createProvocationsResponseSchema,
 } from '../resources/dto/generate-postits.dto';
 import { createQuestionsResponseSchema } from '../resources/dto/generate-questions.dto';
+import { createMandalaSummaryResponseSchema } from '../resources/dto/generate-summary.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import {
@@ -563,7 +563,7 @@ export class GeminiAdapter implements AiProvider {
       this.geminiModel,
       finalPromptTask,
       geminiFiles,
-      createMandalaSummaryResponseSchema,
+      createMandalaSummaryResponseSchema(),
     );
 
     if (!responseText || !responseText.text) {
