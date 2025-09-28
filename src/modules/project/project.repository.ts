@@ -97,7 +97,7 @@ export class ProjectRepository {
       parentProvocationId: provocation.parentProvocationId ?? undefined,
       createdAt: provocation.createdAt,
       updatedAt: provocation.updatedAt,
-      projects: parsedOriginProjects,
+      projectsOrigin: parsedOriginProjects,
     };
     return provocationDto;
   }

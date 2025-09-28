@@ -1,40 +1,104 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export type NodeType = 'project';
 export type EdgeType = 'PROJECT_PARENT';
 
-export interface NodeBaseDto {
-  id: string;
-  type: NodeType;
-  createdAt: string;
+export class NodeBaseDto {
+  @ApiProperty({
+    description: 'Unique identifier of the node',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id!: string;
+
+  @ApiProperty({
+    description: 'Type of the node',
+    enum: ['project'],
+    example: 'project',
+  })
+  type!: NodeType;
+
+  @ApiProperty({
+    description: 'Creation date',
+    example: '2024-01-15T10:30:00.000Z',
+  })
+  createdAt!: string;
+
+  @ApiPropertyOptional({
+    description: 'Display label for the node',
+    example: 'Campus Sustainability Initiative',
+  })
   label?: string;
+
+  @ApiPropertyOptional({
+    description: 'Whether this node should be highlighted',
+    example: true,
+  })
   isHighlighted?: boolean;
 }
 
-export interface ProjectNodeDto extends NodeBaseDto {
-  type: NodeType;
-  name: string;
+export class ProjectNodeDto extends NodeBaseDto {
+  @ApiProperty({
+    description: 'Name of the project',
+    example: 'Campus Sustainability Initiative',
+  })
+  name!: string;
+
+  @ApiPropertyOptional({
+    description: 'Description of the project',
+    example: 'A comprehensive project to improve campus sustainability',
+  })
   description?: string;
-  parentId: string | null;
+
+  @ApiProperty({
+    description: 'ID of the parent project',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+    nullable: true,
+  })
+  parentId!: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Depth level in the project hierarchy',
+    example: 2,
+  })
   depth?: number;
 }
 
-export interface EdgeDto {
-  from: string;
-  to: string;
-  type: EdgeType;
+export class EdgeDto {
+  @ApiProperty({
+    description: 'ID of the source node',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  from!: string;
+
+  @ApiProperty({
+    description: 'ID of the target node',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
+  to!: string;
+
+  @ApiProperty({
+    description: 'Type of the edge relationship',
+    enum: ['PROJECT_PARENT'],
+    example: 'PROJECT_PARENT',
+  })
+  type!: EdgeType;
+
+  @ApiPropertyOptional({
+    description: 'Creation date of the relationship',
+    example: '2024-01-15T10:30:00.000Z',
+  })
   createdAt?: string;
 }
 
 export class TimelineGraphDto {
   @ApiProperty({
-    type: [Object],
-    description: 'Array of nodes ordered chronologically',
+    type: [ProjectNodeDto],
+    description: 'Array of project nodes ordered chronologically',
   })
-  nodes: Array<ProjectNodeDto> = [];
+  nodes: ProjectNodeDto[] = [];
 
   @ApiProperty({
-    type: [Object],
+    type: [EdgeDto],
     description: 'Array of edges connecting nodes',
   })
   edges: EdgeDto[] = [];

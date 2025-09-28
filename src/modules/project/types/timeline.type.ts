@@ -10,7 +10,6 @@ export interface NodeBase {
 }
 
 export interface ProjectNode extends NodeBase {
-  type: NodeType;
   name: string;
   description?: string;
   parentId: string | null;
