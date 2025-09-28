@@ -1084,7 +1084,7 @@ export class MandalaService {
       .map((doc) => (doc.summaryReport ? doc.summaryReport : ''))
       .filter((summary) => summary !== '');
 
-    this.logger.log('Found ${summaries.length} summaries with AI content');
+    this.logger.log(`Found ${summaries.length} summaries with AI content`);
 
     return summaries.join('\n\n');
   }
