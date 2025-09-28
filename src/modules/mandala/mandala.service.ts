@@ -857,7 +857,7 @@ export class MandalaService {
 
   async createOverlapSummary(
     createOverlapDto: CreateOverlappedMandalaDto,
-  ): Promise<{ mandala: MandalaDto; report: AiMandalaReport }> {
+  ): Promise<{ mandala: MandalaDto; summaryReport: AiMandalaReport }> {
     this.logger.log(
       `Starting overlap summary operation for ${createOverlapDto.mandalas.length} mandalas`,
     );
@@ -936,7 +936,7 @@ export class MandalaService {
         targetProjectId,
         {
           postits: aiSummaryPostitsWithCoordinates,
-          report: report,
+          summaryReport: report,
         },
         newMandala.id,
       );
@@ -945,7 +945,7 @@ export class MandalaService {
         `Successfully created overlapped mandala ${newMandala.id}`,
       );
 
-      return { mandala: newMandala, report: report };
+      return { mandala: newMandala, summaryReport: report };
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -1080,20 +1080,11 @@ export class MandalaService {
       `Getting all AI-generated summaries for project ${projectId}`,
     );
 
-    const summaries: string[] = mandalaDocs.map((doc) => {
-      const mandalaId =
-        typeof doc.mandala === 'object' && 'id' in doc.mandala
-          ? (doc.mandala as { id: string }).id
-          : 'unknown';
+    const summaries: string[] = mandalaDocs
+      .map((doc) => (doc.summaryReport ? doc.summaryReport : ''))
+      .filter((summary) => summary !== '');
 
-      if (!doc.summaryReport || doc.summaryReport.trim() === '') {
-        throw new ResourceNotFoundException(
-          'MandalaSummary',
-          `No AI summary found for mandala ${mandalaId}`,
-        );
-      }
-      return doc.summaryReport;
-    });
+    this.logger.log('Found ${summaries.length} summaries with AI content');
 
     return summaries.join('\n\n');
   }
