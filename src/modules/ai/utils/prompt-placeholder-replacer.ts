@@ -5,6 +5,7 @@ export interface PromptReplacementConfig {
   centerCharacterDescription?: string;
   tags?: string[];
   mandalaDocument?: string;
+  mandalaSummaryWithAi?: string;
   maxResults?: number;
   minResults?: number;
   projectName?: string;

@@ -94,6 +94,7 @@ export interface AiProvider {
    * @param dimensions - Array of dimensions to be used in LoadAndValidateFiles //TODO get Files as input to avoid this
    * @param scales - Array of scales to be used in LoadAndValidateFiles //TODO get Files as input to avoid this
    * @param mandalasAiSummary - Document containing the mandalas to be used in the prompt
+   * @param mandalaSummaryWithAi - Summaries of the mandalas generated with AI to be used in the prompt
    * @param selectedFiles - Optional array of file names to filter context
    * @returns Promise resolving to an array of provocation responses
    */
@@ -104,6 +105,7 @@ export interface AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
+    mandalaSummaryWithAi: string,
     selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiProvocationResponse[]>>;
 
@@ -127,8 +129,8 @@ export interface AiProvider {
   generateMandalaSummary(
     projectId: string,
     mandalaId: string,
-    dimensions: string[],
-    scales: string[],
+    dimensions: string,
+    scales: string,
     centerCharacter: string,
     centerCharacterDescription: string,
     cleanMandalaDocument: string,

@@ -1046,7 +1046,7 @@ export class MandalaService {
       throw new ResourceNotFoundException('Mandala', mandalaId);
     }
 
-    const mandalaDoc = await this.firebaseDataService.getDocument(
+    const mandalaDoc = await this.getFirestoreDocument(
       mandala.projectId,
       mandalaId,
     );
@@ -1058,8 +1058,7 @@ export class MandalaService {
     // Generar resumen con IA
     const summaryReport = await this.aiService.generateMandalaSummary(
       mandala.projectId,
-      mandala,
-      mandalaDoc as FirestoreMandalaDocument,
+      mandalaDoc,
     );
 
     // Guardar resumen en Firestore
@@ -1070,5 +1069,26 @@ export class MandalaService {
     );
 
     return { summaryReport };
+  }
+
+  getAllMandalaSummariesWithAi(
+    projectId: string,
+    mandalaDocs: FirestoreMandalaDocument[],
+  ): string {
+    this.logger.log(
+      `Getting all AI-generated summaries for project ${projectId}`,
+    );
+
+    const summaries: string[] = mandalaDocs.map((doc) => {
+      if (!doc.summaryReport || doc.summaryReport.trim() === '') {
+        throw new ResourceNotFoundException(
+          'MandalaSummary',
+          `No AI summary found for mandala ${doc.mandala?.id ?? 'unknown'}`,
+        );
+      }
+      return doc.summaryReport;
+    });
+
+    return summaries.join('\n\n');
   }
 }
