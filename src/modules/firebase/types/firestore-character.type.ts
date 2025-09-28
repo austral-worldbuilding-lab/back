@@ -24,27 +24,3 @@ export interface FirestoreMandalaDocument {
   updatedAt?: Date;
   summaryReport?: string;
 }
-
-export interface FirestoreMandala {
-  id: string;
-  name: string;
-  type: string;
-  projectId: string;
-
-  configuration: {
-    dimensions: { name: string; color?: string }[];
-    scales: string[];
-    center: {
-      name: string;
-      description?: string;
-      color?: string;
-      characters?: any[];
-    };
-  };
-
-  parentIds?: string[];
-  childrenIds?: string[];
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-  characters?: any[];
-}

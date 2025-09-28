@@ -1081,10 +1081,15 @@ export class MandalaService {
     );
 
     const summaries: string[] = mandalaDocs.map((doc) => {
+      const mandalaId =
+        typeof doc.mandala === 'object' && 'id' in doc.mandala
+          ? (doc.mandala as { id: string }).id
+          : 'unknown';
+
       if (!doc.summaryReport || doc.summaryReport.trim() === '') {
         throw new ResourceNotFoundException(
           'MandalaSummary',
-          `No AI summary found for mandala ${doc.mandala?.id ?? 'unknown'}`,
+          `No AI summary found for mandala ${mandalaId}`,
         );
       }
       return doc.summaryReport;
