@@ -323,7 +323,7 @@ export class ProjectService {
       ),
     );
 
-    const mandalaSummariesWithAi: string =
+    const mandalasSummariesWithAi: string =
       this.mandalaService.getAllMandalaSummariesWithAi(
         projectId,
         mandalasDocument,
@@ -336,7 +336,7 @@ export class ProjectService {
       project.configuration.dimensions.map((d) => d.name),
       project.configuration.scales,
       mandalasDocument,
-      mandalaSummariesWithAi,
+      mandalasSummariesWithAi,
       selectedFiles,
     );
 

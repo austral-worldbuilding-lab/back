@@ -9,7 +9,7 @@ CONFIGURACION DE LOS PERSONAJES:
   ${mandalaDocument}
 CONFIGURACIÓN DE LAS MANDALAS:
   • Información resumida de las mandalas del proyecto:
-  ${mandalaSummaryWithAi}
+  ${mandalasSummariesWithAi}
 CONFIGURACIÓN DE LA GENERACIÓN:
   • Cantidad mínima de provocaciones: ${minResults}
   • Cantidad máxima de provocaciones: ${maxResults}
