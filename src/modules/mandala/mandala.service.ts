@@ -1046,7 +1046,7 @@ export class MandalaService {
       throw new ResourceNotFoundException('Mandala', mandalaId);
     }
 
-    const mandalaDoc = await this.getFirestoreDocument(
+    const mandalaDoc = await this.firebaseDataService.getDocument(
       mandala.projectId,
       mandalaId,
     );
@@ -1058,7 +1058,8 @@ export class MandalaService {
     // Generar resumen con IA
     const summaryReport = await this.aiService.generateMandalaSummary(
       mandala.projectId,
-      mandalaDoc,
+      mandala,
+      mandalaDoc as FirestoreMandalaDocument,
     );
 
     // Guardar resumen en Firestore

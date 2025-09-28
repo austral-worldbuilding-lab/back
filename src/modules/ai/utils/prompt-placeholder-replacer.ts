@@ -159,6 +159,14 @@ const composeReplacers = (
   };
 };
 
+const summaryReplacer = composeReplacers(
+  replaceDimensions,
+  replaceScales,
+  replaceCenterCharacter,
+  replaceCenterCharacterDescription,
+  replaceMandalaDocument,
+);
+
 const postitReplacer = composeReplacers(
   replaceDimensions,
   replaceScales,
@@ -296,7 +304,7 @@ export function replaceMandalaSummaryPlaceholders(
   return replaceWithReplacer(
     promptTemplate,
     config,
-    replaceMandalaDocument,
+    summaryReplacer,
     'mandala summary',
   );
 }

@@ -129,8 +129,8 @@ export interface AiProvider {
   generateMandalaSummary(
     projectId: string,
     mandalaId: string,
-    dimensions: string,
-    scales: string,
+    dimensions: string[],
+    scales: string[],
     centerCharacter: string,
     centerCharacterDescription: string,
     cleanMandalaDocument: string,

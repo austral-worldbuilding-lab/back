@@ -9,10 +9,7 @@ import { AiProvocationResponse } from '@modules/project/types/provocations.type'
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { AiService as AiServiceEnum, AiModel } from '@prisma/client';
 
-import {
-  FirestoreMandala,
-  FirestoreMandalaDocument,
-} from '../firebase/types/firestore-character.type';
+import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
 import { MandalaDto } from '../mandala/dto/mandala.dto';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
@@ -247,23 +244,17 @@ export class AiService {
 
   async generateMandalaSummary(
     projectId: string,
-    mandalaDoc: FirestoreMandalaDocument,
+    mandala: MandalaDto,
+    mandalaDocument: FirestoreMandalaDocument,
   ): Promise<string> {
     this.logger.log(
       `Starting mandala summary generation for project: ${projectId}`,
     );
 
-    const cleanMandalaDocument = createCleanMandalaForSummary(mandalaDoc);
+    const cleanMandalaDocument = createCleanMandalaForSummary(mandalaDocument);
 
-    const mandala = mandalaDoc.mandala as FirestoreMandala;
-    if (!mandala || !mandala.configuration) {
-      throw new Error('Mandala configuration is missing');
-    }
-
-    const dimensions = (mandala.configuration?.dimensions ?? [])
-      .map((d) => d.name)
-      .join(', ');
-    const scales = (mandala.configuration?.scales ?? []).join(', ');
+    const dimensions = mandala.configuration.dimensions.map((d) => d.name);
+    const scales = mandala.configuration.scales;
     const centerCharacter = mandala.configuration.center.name;
     const centerCharacterDescription =
       mandala.configuration.center.description || 'No description';
