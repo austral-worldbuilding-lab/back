@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+import { ProjectDto } from './project.dto';
+
 export class ProvocationDto {
   @ApiProperty({
     description: 'ID único de la provocación',
@@ -45,18 +47,6 @@ export class ProvocationDto {
   })
   updatedAt!: Date;
 
-  @ApiProperty({
-    description: 'Indica si la provocación está activa',
-    example: true,
-  })
-  isActive!: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Fecha de eliminación (soft delete)',
-    example: null,
-  })
-  deletedAt?: Date;
-
   @ApiPropertyOptional({
     description: 'Provocaciones hijas (sub-provocaciones)',
     type: [ProvocationDto],
@@ -70,23 +60,7 @@ export class ProvocationDto {
   parent?: ProvocationDto;
 
   @ApiPropertyOptional({
-    description: 'Proyectos relacionados con esta provocación',
-    example: [
-      {
-        id: '123e4567-e89b-12d3-a456-426614174002',
-        role: 'ORIGIN',
-        createdAt: '2024-01-15T10:30:00.000Z',
-      },
-    ],
+    description: 'Proyectos generados por esta provocación', //ROLE ORIGIN
   })
-  projects?: {
-    id: string;
-    projectId: string;
-    role: 'ORIGIN' | 'GENERATED' | 'REFERENCE';
-    createdAt: Date;
-    project?: {
-      id: string;
-      name: string;
-    };
-  }[];
+  projectsOrigin?: ProjectDto[];
 }

@@ -17,6 +17,7 @@ import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { ProvocationDto } from '../dto/provocation.dto';
 import { TagDto } from '../dto/tag.dto';
+import { TimelineGraphDto } from '../dto/timeline.dto';
 
 export const ApiCreateProject = () =>
   applyDecorators(
@@ -794,6 +795,34 @@ export const ApiCreateProjectFromProvocation = () =>
     ApiForbiddenResponse({
       description:
         'Prohibido - No tiene permisos suficientes en la organización',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiGetProjectTimeline = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener timeline de proyecto',
+      description:
+        'Obtiene el grafo completo de proyectos ordenado cronológicamente',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del proyecto',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Timeline obtenido exitosamente',
+      type: TimelineGraphDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+    }),
+    ApiForbiddenResponse({
+      description: 'Prohibido - No tiene permisos para acceder a este proyecto',
     }),
     ApiUnauthorizedResponse({
       description: 'No autorizado - Token de acceso requerido',

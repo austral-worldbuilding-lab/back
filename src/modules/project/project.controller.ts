@@ -46,6 +46,7 @@ import {
   ApiCreateProvocation,
   ApiFindAllProvocations,
   ApiCreateProjectFromProvocation,
+  ApiGetProjectTimeline,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
@@ -57,6 +58,7 @@ import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
 import { TagDto } from './dto/tag.dto';
+import { TimelineGraphDto } from './dto/timeline.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
@@ -332,6 +334,19 @@ export class ProjectController {
     return {
       message: 'Provocation created successfully',
       data: createdProvocation,
+    };
+  }
+
+  @Get(':id/timeline')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiGetProjectTimeline()
+  async getTimeline(
+    @Param('id', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<TimelineGraphDto>> {
+    const timeline = await this.projectService.getTimeline(projectId);
+    return {
+      data: timeline,
     };
   }
 }

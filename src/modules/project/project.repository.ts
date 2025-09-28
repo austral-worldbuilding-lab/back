@@ -2,13 +2,17 @@ import { DimensionDto } from '@common/dto/dimension.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable, BadRequestException } from '@nestjs/common';
-import {
-  Prisma,
-  Project,
-  Provocation,
-  Tag,
-  ProjProvLinkRole,
-} from '@prisma/client';
+import { Prisma, Project, Tag, ProjProvLinkRole } from '@prisma/client';
+
+type ProvocationWithProjects = Prisma.ProvocationGetPayload<{
+  include: {
+    projects: {
+      include: {
+        project: true;
+      };
+    };
+  };
+}>;
 
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -22,6 +26,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { ProjectConfiguration } from './types/project-configuration.type';
+import { TimelineGraph, ProjectNode, Edge } from './types/timeline.type';
 
 @Injectable()
 export class ProjectRepository {
@@ -69,12 +74,22 @@ export class ProjectRepository {
     } as TagDto;
   }
 
-  private parseToProvocationDto(provocation: Provocation): ProvocationDto {
+  private parseToProvocationDto(
+    provocation: ProvocationWithProjects,
+  ): ProvocationDto {
     const content = provocation.content as {
       title?: string;
       description?: string;
     } | null;
-    return {
+
+    const originProjects = provocation.projects.filter(
+      (project) => project.role === ProjProvLinkRole.ORIGIN,
+    );
+    const parsedOriginProjects = originProjects.map((project) =>
+      this.parseToProjectDto(project.project),
+    );
+
+    const provocationDto = {
       id: provocation.id,
       question: provocation.question,
       title: content?.title,
@@ -82,16 +97,17 @@ export class ProjectRepository {
       parentProvocationId: provocation.parentProvocationId ?? undefined,
       createdAt: provocation.createdAt,
       updatedAt: provocation.updatedAt,
-      isActive: provocation.isActive,
-      deletedAt: provocation.deletedAt ?? undefined,
+      projectsOrigin: parsedOriginProjects,
     };
+    return provocationDto;
   }
 
-  private async findParentByProvocation(
+  // find wich project generated this provocation
+  private async findGeneratedProjectByProvocation(
     tx: Prisma.TransactionClient,
     provocationId: string,
   ): Promise<Project | null> {
-    const parentProjectLink = await tx.projectProvocationLink.findFirst({
+    const generatedProjectLink = await tx.projectProvocationLink.findFirst({
       where: {
         provocationId,
         role: ProjProvLinkRole.GENERATED,
@@ -101,20 +117,20 @@ export class ProjectRepository {
       },
     });
 
-    return parentProjectLink?.project || null;
+    return generatedProjectLink?.project || null;
   }
 
   // TODO: when we have method to find initial project, replace `${parentProject.name}: ...` for `${initialProject.name}: ...`
   private buildProvocationProjectName(
-    parentProject: Project | null,
+    generatedProject: Project | null,
     provocationQuestion: string,
     provocationContent: { title?: string; description?: string } | null,
     providedName?: string,
   ): string {
     const provocationTitle = provocationContent?.title || provocationQuestion;
 
-    if (parentProject) {
-      return `${parentProject.name}: ${provocationTitle}`;
+    if (generatedProject) {
+      return `${generatedProject.name}: ${provocationTitle}`;
     } else {
       if (!providedName) {
         throw new BadRequestException(
@@ -133,19 +149,19 @@ export class ProjectRepository {
   }
 
   private validateProvocationProjectValuesMatchParent(
-    parentProject: Project,
+    generatedProject: Project,
     organizationId?: string,
     dimensions?: DimensionDto[],
     scales?: string[],
   ): void {
     const parentConfig = this.parseToProjectConfiguration(
-      parentProject.configuration,
+      generatedProject.configuration,
     );
 
     // Validate organizationId matches parent if provided
-    if (organizationId && organizationId !== parentProject.organizationId) {
+    if (organizationId && organizationId !== generatedProject.organizationId) {
       throw new BadRequestException(
-        `Organization ID must match parent project's organization (${parentProject.organizationId}) or be omitted to inherit it.`,
+        `Organization ID must match parent project's organization (${generatedProject.organizationId}) or be omitted to inherit it.`,
       );
     }
 
@@ -297,7 +313,7 @@ export class ProjectRepository {
         description?: string;
       } | null;
 
-      const parentProject = await this.findParentByProvocation(
+      const parentProject = await this.findGeneratedProjectByProvocation(
         tx,
         createProjectFromProvocationDto.fromProvocationId,
       );
@@ -853,6 +869,13 @@ export class ProjectRepository {
           },
         },
       },
+      include: {
+        projects: {
+          include: {
+            project: true,
+          },
+        },
+      },
     });
 
     return this.parseToProvocationDto(provocation);
@@ -870,7 +893,15 @@ export class ProjectRepository {
         },
       },
       include: {
-        provocation: true,
+        provocation: {
+          include: {
+            projects: {
+              include: {
+                project: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -880,5 +911,106 @@ export class ProjectRepository {
     return provocationLinks.map((link) =>
       this.parseToProvocationDto(link.provocation),
     );
+  }
+
+  private searchProjectDepths(
+    projects: Array<{
+      id: string;
+      parentProjectId: string | null;
+    }>,
+  ): Map<string, number> {
+    const projectById = new Map(projects.map((p) => [p.id, p]));
+    const depths = new Map<string, number>();
+
+    // Find roots and compute depths via BFS
+    const roots = projects.filter(
+      (p) => !p.parentProjectId || !projectById.has(p.parentProjectId),
+    );
+    const queue = roots.map((r) => ({ id: r.id, depth: 0 }));
+
+    while (queue.length > 0) {
+      const { id, depth } = queue.shift()!;
+      if (depths.has(id)) continue;
+
+      depths.set(id, depth);
+
+      // Add children to queue
+      projects
+        .filter((p) => p.parentProjectId === id)
+        .forEach((child) => queue.push({ id: child.id, depth: depth + 1 }));
+    }
+
+    return depths;
+  }
+
+  private createProjectParentEdges(
+    projects: Array<{
+      id: string;
+      createdAt: Date;
+      parentProjectId: string | null;
+    }>,
+  ): Edge[] {
+    const projectById = new Map(projects.map((p) => [p.id, p]));
+
+    return projects
+      .filter((p) => p.parentProjectId && projectById.has(p.parentProjectId))
+      .map((p) => ({
+        from: p.parentProjectId!,
+        to: p.id,
+        type: 'PROJECT_PARENT' as const,
+        createdAt: p.createdAt.toISOString(),
+      }));
+  }
+
+  async getTimelineGraph(
+    organizationId: string,
+    highlightProjectId?: string,
+  ): Promise<TimelineGraph> {
+    const projects = await this.prisma.project.findMany({
+      where: {
+        organizationId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        parentProjectId: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const projectNodes: ProjectNode[] = projects.map((p) => ({
+      id: p.id,
+      type: 'project' as const,
+      name: p.name,
+      description: p.description || undefined,
+      createdAt: p.createdAt.toISOString(),
+      parentId: p.parentProjectId,
+      label: p.name,
+      isHighlighted: p.id === highlightProjectId,
+    }));
+
+    const depths = this.searchProjectDepths(projects);
+
+    projectNodes.forEach((node) => {
+      node.depth = depths.get(node.id) || 0;
+    });
+
+    const projectParentEdges = this.createProjectParentEdges(projects);
+
+    const edges: Edge[] = [...projectParentEdges];
+
+    const allNodes = [...projectNodes];
+    allNodes.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    return {
+      nodes: allNodes,
+      edges,
+    };
   }
 }
