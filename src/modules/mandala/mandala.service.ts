@@ -857,7 +857,7 @@ export class MandalaService {
 
   async createOverlapSummary(
     createOverlapDto: CreateOverlappedMandalaDto,
-  ): Promise<{ mandala: MandalaDto; report: AiMandalaReport }> {
+  ): Promise<{ mandala: MandalaDto; summaryReport: AiMandalaReport }> {
     this.logger.log(
       `Starting overlap summary operation for ${createOverlapDto.mandalas.length} mandalas`,
     );
@@ -936,7 +936,7 @@ export class MandalaService {
         targetProjectId,
         {
           postits: aiSummaryPostitsWithCoordinates,
-          report: report,
+          summaryReport: report,
         },
         newMandala.id,
       );
@@ -945,7 +945,7 @@ export class MandalaService {
         `Successfully created overlapped mandala ${newMandala.id}`,
       );
 
-      return { mandala: newMandala, report: report };
+      return { mandala: newMandala, summaryReport: report };
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -1070,5 +1070,22 @@ export class MandalaService {
     );
 
     return { summaryReport };
+  }
+
+  getAllMandalaSummariesWithAi(
+    projectId: string,
+    mandalaDocs: FirestoreMandalaDocument[],
+  ): string {
+    this.logger.log(
+      `Getting all AI-generated summaries for project ${projectId}`,
+    );
+
+    const summaries: string[] = mandalaDocs
+      .map((doc) => (doc.summaryReport ? doc.summaryReport : ''))
+      .filter((summary) => summary !== '');
+
+    this.logger.log(`Found ${summaries.length} summaries with AI content`);
+
+    return summaries.join('\n\n');
   }
 }

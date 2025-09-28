@@ -131,13 +131,17 @@ export class AiPromptBuilderService {
 
   /**
    * Builds complete prompt for provocation generation
+   * @param projectName
+   * @param projectDescription
    * @param mandalasAiSummary - Document containing the mandalas to be compared
+   * @param mandalasSummariesWithAi - Summaries of the mandalas generated with AI to be used in the prompt
    * @returns Complete prompt ready for AI processing
    */
   async buildProvocationPrompt(
     projectName: string,
     projectDescription: string,
     mandalasAiSummary: string,
+    mandalasSummariesWithAi: string,
   ): Promise<string> {
     const promptFilePath = path.resolve(
       __dirname,
@@ -149,6 +153,7 @@ export class AiPromptBuilderService {
       projectName: projectName,
       projectDescription: projectDescription,
       mandalaDocument: mandalasAiSummary,
+      mandalasSummariesWithAi: mandalasSummariesWithAi,
       maxResults: this.utilsService.getMaxProvocations(),
       minResults: this.utilsService.getMinProvocations(),
     });

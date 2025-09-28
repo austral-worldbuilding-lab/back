@@ -323,6 +323,12 @@ export class ProjectService {
       ),
     );
 
+    const mandalasSummariesWithAi: string =
+      this.mandalaService.getAllMandalaSummariesWithAi(
+        projectId,
+        mandalasDocument,
+      );
+
     const provocations = await this.aiService.generateProvocations(
       projectId,
       project.name,
@@ -330,6 +336,7 @@ export class ProjectService {
       project.configuration.dimensions.map((d) => d.name),
       project.configuration.scales,
       mandalasDocument,
+      mandalasSummariesWithAi,
       selectedFiles,
     );
 

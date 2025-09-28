@@ -5,6 +5,7 @@ export interface PromptReplacementConfig {
   centerCharacterDescription?: string;
   tags?: string[];
   mandalaDocument?: string;
+  mandalasSummariesWithAi?: string;
   maxResults?: number;
   minResults?: number;
   projectName?: string;
@@ -102,6 +103,24 @@ const replaceMandalaDocument: PlaceholderReplacer = (prompt, config) => {
   return prompt.replace(/\$\{mandalaDocument}/g, config.mandalaDocument);
 };
 
+const replaceMandalasSummariesWithAi: PlaceholderReplacer = (
+  prompt,
+  config,
+) => {
+  if (!/\$\{mandalasSummariesWithAi\}/g.test(prompt)) {
+    throw new Error('Missing placeholder ${mandalasSummariesWithAi} in prompt');
+  }
+  if (config.mandalasSummariesWithAi === undefined) {
+    throw new Error(
+      'mandalasSummariesWithAi config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(
+    /\$\{mandalasSummariesWithAi}/g,
+    config.mandalasSummariesWithAi,
+  );
+};
+
 const replaceMaxResults: PlaceholderReplacer = (prompt, config) => {
   if (!/\$\{maxResults\}/g.test(prompt)) {
     throw new Error('Missing placeholder ${maxResults} in prompt');
@@ -158,6 +177,14 @@ const composeReplacers = (
   };
 };
 
+const summaryReplacer = composeReplacers(
+  replaceDimensions,
+  replaceScales,
+  replaceCenterCharacter,
+  replaceCenterCharacterDescription,
+  replaceMandalaDocument,
+);
+
 const postitReplacer = composeReplacers(
   replaceDimensions,
   replaceScales,
@@ -189,6 +216,7 @@ const provocationReplacer = composeReplacers(
   replaceProjectName,
   replaceProjectDescription,
   replaceMandalaDocument,
+  replaceMandalasSummariesWithAi,
   replaceMaxResults,
   replaceMinResults,
 );
@@ -295,7 +323,7 @@ export function replaceMandalaSummaryPlaceholders(
   return replaceWithReplacer(
     promptTemplate,
     config,
-    replaceMandalaDocument,
+    summaryReplacer,
     'mandala summary',
   );
 }

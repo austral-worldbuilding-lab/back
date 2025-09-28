@@ -415,6 +415,7 @@ export class GeminiAdapter implements AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
+    mandalasSummariesWithAi: string,
     _selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiProvocationResponse[]>> {
     this.logger.log(
@@ -427,6 +428,7 @@ export class GeminiAdapter implements AiProvider {
         projectName,
         projectDescription,
         mandalasAiSummary,
+        mandalasSummariesWithAi,
       );
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(

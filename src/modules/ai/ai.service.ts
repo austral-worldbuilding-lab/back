@@ -195,6 +195,7 @@ export class AiService {
     dimensions: string[],
     scales: string[],
     mandalasDocument: FirestoreMandalaDocument[],
+    mandalasSummariesWithAi: string,
     selectedFiles?: string[],
     userId?: string,
     organizationId?: string,
@@ -214,6 +215,7 @@ export class AiService {
       dimensions,
       scales,
       cleanMandalasDocument.map((m) => JSON.stringify(m)).join('\n'),
+      mandalasSummariesWithAi,
       selectedFiles,
     );
 

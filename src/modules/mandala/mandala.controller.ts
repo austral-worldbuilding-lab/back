@@ -418,7 +418,7 @@ export class MandalaController {
   async createOverlapSummary(
     @Body() overlapDto: CreateOverlappedMandalaDto,
   ): Promise<
-    MessageResponse<{ mandala: MandalaDto; report: AiMandalaReport }>
+    MessageResponse<{ mandala: MandalaDto; summaryReport: AiMandalaReport }>
   > {
     const result = await this.mandalaService.createOverlapSummary(overlapDto);
     return {
