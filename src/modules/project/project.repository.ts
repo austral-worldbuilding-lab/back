@@ -82,7 +82,6 @@ export class ProjectRepository {
       description?: string;
     } | null;
 
-    // Handle cases where projects relationship might not be included
     const originProjects = provocation.projects.filter(
       (project) => project.role === ProjProvLinkRole.ORIGIN,
     );
@@ -103,7 +102,7 @@ export class ProjectRepository {
     return provocationDto;
   }
 
-  //find wich project generated this provocation
+  // find wich project generated this provocation
   private async findGeneratedProjectByProvocation(
     tx: Prisma.TransactionClient,
     provocationId: string,
