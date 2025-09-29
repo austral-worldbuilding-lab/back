@@ -1,3 +1,4 @@
+import { AppLogger } from '@common/services/logger.service';
 import { ConsumptionService } from '@modules/consumption/consumption.service';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
@@ -6,7 +7,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { AiService as AiServiceEnum, AiModel } from '@prisma/client';
 
 import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
@@ -22,12 +23,12 @@ import {
 
 @Injectable()
 export class AiService {
-  private readonly logger = new Logger(AiService.name);
-
   constructor(
     @Inject(AI_PROVIDER) private aiProvider: AiProvider,
     private readonly consumptionService: ConsumptionService,
+    private readonly logger: AppLogger,
   ) {
+    this.logger.setContext(AiService.name);
     this.logger.log(
       `AI Service initialized with ${this.aiProvider.constructor.name}`,
     );

@@ -6,6 +6,7 @@ import {
   ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
 import { CacheService } from '@common/services/cache.service';
+import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
@@ -13,11 +14,11 @@ import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import {
-  FirestoreMandalaDocument,
   FirestoreCharacter,
+  FirestoreMandalaDocument,
 } from '../firebase/types/firestore-character.type';
 
 import {
@@ -26,23 +27,23 @@ import {
 } from './constants/overlap-error-messages';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
+  CreateMandalaCenterDto,
   CreateMandalaCenterWithOriginDto,
   CreateMandalaDto,
-  CreateMandalaCenterDto,
   CreateOverlappedMandalaDto,
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
-import { MandalaDto, hasCharacters } from './dto/mandala.dto';
+import { hasCharacters, MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
 import {
+  getTargetProjectId,
   validateSameDimensions,
   validateSameScales,
-  getTargetProjectId,
 } from './utils/overlap-validation.utils';
 
 const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
@@ -51,8 +52,6 @@ const DEFAULT_CHARACTER_DIMENSION = '';
 
 @Injectable()
 export class MandalaService {
-  private readonly logger = new Logger(MandalaService.name);
-
   constructor(
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
@@ -61,7 +60,10 @@ export class MandalaService {
     private projectService: ProjectService,
     private aiService: AiService,
     private cacheService: CacheService,
-  ) {}
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(MandalaService.name);
+  }
 
   private async completeMissingConfiguration(
     createMandalaDto: CreateMandalaDto,
@@ -848,7 +850,10 @@ export class MandalaService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to overlap mandalas: ${errorMessage}`, error);
+      this.logger.error(
+        `Failed to overlap mandalas: ${errorMessage}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw new InternalServerErrorException({
         message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
         error: OVERLAP_ERROR_TYPES.OVERLAP_OPERATION_ERROR,
@@ -954,7 +959,10 @@ export class MandalaService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to overlap mandalas: ${errorMessage}`, error);
+      this.logger.error(
+        `Failed to overlap mandalas: ${errorMessage}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw new InternalServerErrorException({
         message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
         error: OVERLAP_ERROR_TYPES.OVERLAP_OPERATION_ERROR,
@@ -1035,12 +1043,10 @@ export class MandalaService {
       ),
     );
 
-    const totalPostitsCount = mandalasDocument.reduce((acc, doc) => {
+    return mandalasDocument.reduce((acc, doc) => {
       const postits = doc.postits || [];
       return acc + postits.length;
     }, 0);
-
-    return totalPostitsCount;
   }
 
   async generateSummaryReport(

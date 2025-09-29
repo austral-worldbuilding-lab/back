@@ -1,9 +1,10 @@
+import { AppLogger } from '@common/services/logger.service';
 import { AiService } from '@modules/ai/ai.service';
 import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import {
   HealthCheckResult,
@@ -13,14 +14,17 @@ import {
 
 @Injectable()
 export class HealthService {
-  private readonly logger = new Logger(HealthService.name);
   private readonly startTime = Date.now();
 
   constructor(
     private readonly prismaService: PrismaService,
     private readonly firebaseDataService: FirebaseDataService,
     private readonly aiService: AiService,
-  ) {}
+    private readonly logger: AppLogger,
+    private readonly azureBlobStorageService: AzureBlobStorageService,
+  ) {
+    this.logger.setContext(HealthService.name);
+  }
 
   async checkHealth(): Promise<HealthCheckResult> {
     this.logger.log('Starting health check...');
@@ -116,9 +120,8 @@ export class HealthService {
     const startTime = Date.now();
 
     try {
-      const azureBlobStorageService = new AzureBlobStorageService();
       const healthCheckScope: FileScope = { orgId: 'health-check-test' };
-      await azureBlobStorageService.getFiles(healthCheckScope);
+      await this.azureBlobStorageService.getFiles(healthCheckScope);
       const responseTime = Date.now() - startTime;
 
       return {

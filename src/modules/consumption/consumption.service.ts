@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { AppLogger } from '@common/services/logger.service';
+import { Injectable } from '@nestjs/common';
 
 import { ConsumptionRepository } from './consumption.repository';
 import { ConsumptionFilterDto } from './dto/consumption-filter.dto';
@@ -7,9 +8,12 @@ import { CreateConsumptionDto } from './dto/create-consumption.dto';
 
 @Injectable()
 export class ConsumptionService {
-  private readonly logger = new Logger(ConsumptionService.name);
-
-  constructor(private readonly consumptionRepository: ConsumptionRepository) {}
+  constructor(
+    private readonly consumptionRepository: ConsumptionRepository,
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(ConsumptionService.name);
+  }
 
   async create(
     createConsumptionDto: CreateConsumptionDto,

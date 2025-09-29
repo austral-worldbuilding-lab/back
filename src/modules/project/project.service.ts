@@ -4,6 +4,7 @@ import {
   StateConflictException,
 } from '@common/exceptions/custom-exceptions';
 import { CacheService } from '@common/services/cache.service';
+import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { getProjectValidationConfig } from '@config/project-validation.config';
 import { AiService } from '@modules/ai/ai.service';
@@ -15,7 +16,6 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-  Logger,
   Inject,
   forwardRef,
 } from '@nestjs/common';
@@ -37,7 +37,6 @@ import { TimelineGraph } from './types/timeline.type';
 
 @Injectable()
 export class ProjectService {
-  private readonly logger = new Logger(ProjectService.name);
   constructor(
     private projectRepository: ProjectRepository,
     private roleService: RoleService,
@@ -46,7 +45,10 @@ export class ProjectService {
     private mandalaService: MandalaService,
     private fileService: FileService,
     private cacheService: CacheService,
-  ) {}
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(ProjectService.name);
+  }
 
   private getDimensions(dimensions?: DimensionDto[]): DimensionDto[] {
     return !dimensions || dimensions.length === 0
