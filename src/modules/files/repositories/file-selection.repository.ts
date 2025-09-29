@@ -84,10 +84,6 @@ export class FileSelectionRepository {
 
   async getFileSelections(scope: FileScope): Promise<Map<string, boolean>> {
     const contextPath = buildContextPath(scope);
-    this.logger.debug(
-      `Retrieving file selections for contextPath: ${contextPath}`,
-    );
-
     const selections = await this.prisma.fileSelection.findMany({
       where: {
         contextPath: contextPath,
