@@ -7,22 +7,23 @@ import {
   ExternalServiceException,
   ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
+import { AppLogger } from '@common/services/logger.service';
 import { PresignedUrl } from '@common/types/presigned-url';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { FileScope } from '@modules/files/types/file-scope.type';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { buildPrefix, StorageFolder } from './path-builder';
 import { StorageService } from './StorageService';
 
 @Injectable()
 export class AzureBlobStorageService implements StorageService {
-  private readonly logger = new Logger(AzureBlobStorageService.name);
   private containerName = process.env.AZURE_STORAGE_CONTAINER_NAME!;
   private blobServiceClient: BlobServiceClient;
 
-  constructor() {
+  constructor(private readonly logger: AppLogger) {
+    this.logger.setContext(AzureBlobStorageService.name);
     const account = process.env.AZURE_STORAGE_ACCOUNT!;
     const accountKey = process.env.AZURE_STORAGE_ACCESS_KEY!;
     const sharedKeyCredential = new StorageSharedKeyCredential(

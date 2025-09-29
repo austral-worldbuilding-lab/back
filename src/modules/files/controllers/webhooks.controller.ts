@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Logger, HttpCode } from '@nestjs/common';
+import { AppLogger } from '@common/services/logger.service';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { ApiBlobUploadWebhook } from '../decorators/webhook-swagger.decorators';
@@ -36,11 +37,12 @@ type AzureEventGridEvent = AzureBlobEvent | AzureValidationEvent;
 @ApiTags('Webhooks')
 @Controller('webhooks')
 export class WebhooksController {
-  private readonly logger = new Logger(WebhooksController.name);
-
   constructor(
     private readonly videoProcessingService: VideoProcessingService,
-  ) {}
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(WebhooksController.name);
+  }
 
   @Post('blob-upload')
   @HttpCode(200)
@@ -76,8 +78,7 @@ export class WebhooksController {
           continue;
         }
 
-        const blobEvent = event;
-        const { url, contentType } = blobEvent.data;
+        const { url, contentType } = event.data;
         const fileName = this.extractFileName(url);
 
         this.logger.log(`Processing file: ${fileName} (${contentType})`);

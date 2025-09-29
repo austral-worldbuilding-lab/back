@@ -19,11 +19,10 @@ import { UniqueFileNameGenerator } from './utils/unique-filename.utils';
 
 @Injectable()
 export class FileService {
-  private storageService = new AzureBlobStorageService();
-
   constructor(
     private prisma: PrismaService,
     private fileSelectionRepository: FileSelectionRepository,
+    private storageService: AzureBlobStorageService,
   ) {}
 
   async resolveScope(

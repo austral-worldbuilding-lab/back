@@ -1,13 +1,17 @@
+import { AppLogger } from '@common/services/logger.service';
 import { CacheUtils } from '@common/utils/cache.utils';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
 @Injectable()
 export class CacheService {
-  private readonly logger = new Logger(CacheService.name);
-
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(CacheService.name);
+  }
 
   buildCacheKey(
     type: 'questions' | 'postits' | 'provocations',

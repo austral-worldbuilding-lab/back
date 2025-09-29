@@ -6,9 +6,10 @@ import {
   ResourceNotFoundException,
   ValidationException,
 } from '@common/exceptions/custom-exceptions';
+import { AppLogger } from '@common/services/logger.service';
 import { getAiValidationConfig } from '@config/ai-validation.config';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { AiValidationException } from '../exceptions/ai-validation.exception';
@@ -19,7 +20,6 @@ import { FileValidationService } from './file-validation.service';
 
 @Injectable()
 export class AiAdapterUtilsService {
-  private readonly logger = new Logger(AiAdapterUtilsService.name);
   private readonly minResults: number;
   private readonly maxResults: number;
   private readonly minPostits: number;
@@ -33,7 +33,9 @@ export class AiAdapterUtilsService {
     private fileLoader: FileLoaderService,
     private fileValidator: FileValidationService,
     private aiRequestValidator: AiRequestValidationService,
+    private readonly logger: AppLogger,
   ) {
+    this.logger.setContext(AiAdapterUtilsService.name);
     const config = getAiValidationConfig();
     this.minResults = config.minResultsPerRequest;
     this.maxResults = config.maxResultsPerRequest;

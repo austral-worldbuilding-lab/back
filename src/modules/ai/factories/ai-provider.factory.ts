@@ -1,3 +1,4 @@
+import { AppLogger } from '@common/services/logger.service';
 import { ConfigService } from '@nestjs/config';
 
 import { GeminiAdapter } from '../adapters/gemini-adapter';
@@ -13,6 +14,7 @@ export function aiProviderFactory(
   validator: AiRequestValidationService,
   utilsService: AiAdapterUtilsService,
   promptBuilderService: AiPromptBuilderService,
+  logger: AppLogger,
 ): AiProvider {
   const aiProvider = configService.get<string>('AI_PROVIDER', 'gemini');
 
@@ -23,6 +25,7 @@ export function aiProviderFactory(
         validator,
         utilsService,
         promptBuilderService,
+        logger,
       );
     default:
       throw new Error(
