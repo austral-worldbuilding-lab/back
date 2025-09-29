@@ -22,8 +22,6 @@ import { AppLogger } from '@/common/services/logger.service';
 
 @Injectable()
 export class AiService {
-
-
   constructor(
     @Inject(AI_PROVIDER) private aiProvider: AiProvider,
     private readonly consumptionService: ConsumptionService,
