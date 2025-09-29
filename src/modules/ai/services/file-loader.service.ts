@@ -5,6 +5,7 @@ import {
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Injectable, Logger } from '@nestjs/common';
+import { FileScope } from '@modules/files/types/file-scope.type';
 
 @Injectable()
 export class FileLoaderService {
@@ -35,7 +36,7 @@ export class FileLoaderService {
 
   private async determineFilesToUse(
     selectedFiles: string[] | undefined,
-    scope: any,
+    scope: FileScope,
   ): Promise<string[]> {
     if (selectedFiles?.length) {
       return selectedFiles;
