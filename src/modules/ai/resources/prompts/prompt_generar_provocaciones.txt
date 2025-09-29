@@ -8,7 +8,7 @@ CONFIGURACIÓN DE LOS PERSONAJES:
   • Contenido de los personajes del mundo:
   ${mandalaDocument}
 CONFIGURACIÓN DE LAS MANDALAS:
-  • Información resumida de las mandalas del proyecto:
+  • Información resumida de las mandalas del mundo:
   ${mandalasSummariesWithAi}
 CONFIGURACIÓN DE LA GENERACIÓN:
   • Cantidad mínima de provocaciones: ${minResults}
