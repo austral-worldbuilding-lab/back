@@ -18,6 +18,7 @@ import {
   createProvocationsResponseSchema,
 } from '../resources/dto/generate-postits.dto';
 import { createQuestionsResponseSchema } from '../resources/dto/generate-questions.dto';
+import { createMandalaSummaryResponseSchema } from '../resources/dto/generate-summary.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import {
@@ -426,6 +427,7 @@ export class GeminiAdapter implements AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
+    mandalasSummariesWithAi: string,
     _selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiProvocationResponse[]>> {
     this.logger.log(
@@ -438,6 +440,7 @@ export class GeminiAdapter implements AiProvider {
         projectName,
         projectDescription,
         mandalasAiSummary,
+        mandalasSummariesWithAi,
       );
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
@@ -538,5 +541,53 @@ export class GeminiAdapter implements AiProvider {
     };
 
     return { comparisons, report };
+  }
+
+  async generateMandalaSummary(
+    projectId: string,
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    cleanMandalaDocument: string,
+  ): Promise<string> {
+    this.logger.log(
+      `Starting summary generation for mandala ${mandalaId} in project ${projectId}`,
+    );
+
+    const finalPromptTask =
+      await this.promptBuilderService.buildMandalaSummaryPrompt(
+        dimensions,
+        scales,
+        centerCharacter,
+        centerCharacterDescription,
+        cleanMandalaDocument,
+      );
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      dimensions,
+      scales,
+    );
+
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+
+    const responseText = await this.generateContentWithFiles(
+      this.geminiModel,
+      finalPromptTask,
+      geminiFiles,
+      createMandalaSummaryResponseSchema(),
+    );
+
+    if (!responseText || !responseText.text) {
+      throw new Error('No response text received from Gemini API');
+    }
+
+    this.logger.log(
+      `Summary generation completed for mandala ${mandalaId} in project ${projectId}`,
+    );
+
+    return responseText.text;
   }
 }

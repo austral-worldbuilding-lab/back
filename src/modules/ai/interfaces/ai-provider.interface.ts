@@ -106,6 +106,7 @@ export interface AiProvider {
    * @param dimensions - Array of dimensions to be used in LoadAndValidateFiles //TODO get Files as input to avoid this
    * @param scales - Array of scales to be used in LoadAndValidateFiles //TODO get Files as input to avoid this
    * @param mandalasAiSummary - Document containing the mandalas to be used in the prompt
+   * @param mandalasSummariesWithAi - Summaries of the mandalas generated with AI to be used in the prompt
    * @param selectedFiles - Optional array of file names to filter context
    * @returns Promise resolving to an array of provocation responses
    */
@@ -116,6 +117,34 @@ export interface AiProvider {
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
+    mandalasSummariesWithAi: string,
     selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiProvocationResponse[]>>;
+
+  /**
+   * Generates a consolidated summary of a mandala using AI analysis
+   *
+   * This method takes the configuration, postits, characters, and other context
+   * from a mandala and produces a single narrative summary. The AI analyzes the
+   * world, dimensions, scales, central character, tensions, insights,
+   * and other elements to generate a comprehensive overview.
+   *
+   * @param projectId - Unique identifier of the project containing the mandala
+   * @param mandalaId - Unique identifier of the mandala to summarize
+   * @param dimensions - Array of dimension names belonging to the mandala
+   * @param scales - Array of scale names belonging to the mandala
+   * @param centerCharacter - The main character at the center of the mandala
+   * @param centerCharacterDescription - Description of the center character
+   * @param cleanMandalaDocument - Serialized mandala document cleaned for AI input
+   * @returns Promise resolving to a string containing the consolidated summary
+   */
+  generateMandalaSummary(
+    projectId: string,
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    cleanMandalaDocument: string,
+  ): Promise<string>;
 }

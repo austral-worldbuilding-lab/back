@@ -207,6 +207,7 @@ export class AiService {
     dimensions: string[],
     scales: string[],
     mandalasDocument: FirestoreMandalaDocument[],
+    mandalasSummariesWithAi: string,
     selectedFiles?: string[],
     userId?: string,
     organizationId?: string,
@@ -226,6 +227,7 @@ export class AiService {
       dimensions,
       scales,
       cleanMandalasDocument.map((m) => JSON.stringify(m)).join('\n'),
+      mandalasSummariesWithAi,
       selectedFiles,
     );
 
@@ -250,5 +252,37 @@ export class AiService {
     );
 
     return response.data;
+  }
+
+  async generateMandalaSummary(
+    projectId: string,
+    mandala: MandalaDto,
+    mandalaDocument: FirestoreMandalaDocument,
+  ): Promise<string> {
+    this.logger.log(
+      `Starting mandala summary generation for project: ${projectId}`,
+    );
+
+    const cleanMandalaDocument = createCleanMandalaForSummary(mandalaDocument);
+
+    const dimensions = mandala.configuration.dimensions.map((d) => d.name);
+    const scales = mandala.configuration.scales;
+    const centerCharacter = mandala.configuration.center.name;
+    const centerCharacterDescription =
+      mandala.configuration.center.description || 'No description';
+
+    const summary = await this.aiProvider.generateMandalaSummary(
+      projectId,
+      mandala.id,
+      dimensions,
+      scales,
+      centerCharacter,
+      centerCharacterDescription,
+      JSON.stringify(cleanMandalaDocument),
+    );
+
+    this.logger.log(`Summary report generated for mandala ${mandala.id}`);
+
+    return summary;
   }
 }

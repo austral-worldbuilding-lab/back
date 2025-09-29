@@ -22,4 +22,5 @@ export interface FirestoreMandalaDocument {
   characters?: FirestoreCharacter[];
   images?: MandalaImage[];
   updatedAt?: Date;
+  summaryReport?: string;
 }

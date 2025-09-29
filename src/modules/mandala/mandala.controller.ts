@@ -418,7 +418,7 @@ export class MandalaController {
   async createOverlapSummary(
     @Body() overlapDto: CreateOverlappedMandalaDto,
   ): Promise<
-    MessageResponse<{ mandala: MandalaDto; report: AiMandalaReport }>
+    MessageResponse<{ mandala: MandalaDto; summaryReport: AiMandalaReport }>
   > {
     const result = await this.mandalaService.createOverlapSummary(overlapDto);
     return {
@@ -465,6 +465,7 @@ export class MandalaController {
       mandalaId,
       {
         id: confirmImageDto.id,
+        tags: confirmImageDto.tags,
       },
     );
 
@@ -489,5 +490,12 @@ export class MandalaController {
     return {
       message: 'Image deleted successfully',
     };
+  }
+
+  @Post(':mandalaId/summary')
+  async generateSummaryReport(
+    @Param('mandalaId') mandalaId: string,
+  ): Promise<{ summaryReport: string }> {
+    return this.mandalaService.generateSummaryReport(mandalaId);
   }
 }

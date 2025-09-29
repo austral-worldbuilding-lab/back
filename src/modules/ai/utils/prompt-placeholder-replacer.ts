@@ -5,6 +5,7 @@ export interface PromptReplacementConfig {
   centerCharacterDescription?: string;
   tags?: string[];
   mandalaDocument?: string;
+  mandalasSummariesWithAi?: string;
   maxResults?: number;
   minResults?: number;
   projectName?: string;
@@ -102,6 +103,24 @@ const replaceMandalaDocument: PlaceholderReplacer = (prompt, config) => {
   return prompt.replace(/\$\{mandalaDocument}/g, config.mandalaDocument);
 };
 
+const replaceMandalasSummariesWithAi: PlaceholderReplacer = (
+  prompt,
+  config,
+) => {
+  if (!/\$\{mandalasSummariesWithAi\}/g.test(prompt)) {
+    throw new Error('Missing placeholder ${mandalasSummariesWithAi} in prompt');
+  }
+  if (config.mandalasSummariesWithAi === undefined) {
+    throw new Error(
+      'mandalasSummariesWithAi config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(
+    /\$\{mandalasSummariesWithAi}/g,
+    config.mandalasSummariesWithAi,
+  );
+};
+
 const replaceMaxResults: PlaceholderReplacer = (prompt, config) => {
   if (!/\$\{maxResults\}/g.test(prompt)) {
     throw new Error('Missing placeholder ${maxResults} in prompt');
@@ -158,6 +177,14 @@ const composeReplacers = (
   };
 };
 
+const summaryReplacer = composeReplacers(
+  replaceDimensions,
+  replaceScales,
+  replaceCenterCharacter,
+  replaceCenterCharacterDescription,
+  replaceMandalaDocument,
+);
+
 const postitReplacer = composeReplacers(
   replaceProjectName,
   replaceProjectDescription,
@@ -195,6 +222,7 @@ const provocationReplacer = composeReplacers(
   replaceProjectName,
   replaceProjectDescription,
   replaceMandalaDocument,
+  replaceMandalasSummariesWithAi,
   replaceMaxResults,
   replaceMinResults,
 );
@@ -285,5 +313,23 @@ export function replaceProvocationPlaceholders(
     config,
     provocationReplacer,
     'provocation',
+  );
+}
+
+/**
+ * Replace placeholders for mandala summary generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceMandalaSummaryPlaceholders(
+  promptTemplate: string, // The template string containing placeholders
+  config: PromptReplacementConfig = {}, // Configuration object with values to replace placeholders
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    summaryReplacer,
+    'mandala summary',
   );
 }
