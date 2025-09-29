@@ -3,17 +3,19 @@ import * as os from 'os';
 import * as path from 'path';
 import { URL } from 'url';
 
+import { AppLogger } from '@common/services/logger.service';
 import { Injectable } from '@nestjs/common';
 import * as ffmpeg from 'fluent-ffmpeg';
 
 import { AzureBlobStorageService } from '../../storage/AzureBlobStorageService';
 import { FileScope } from '../types/file-scope.type';
-import { AppLogger } from '@common/services/logger.service';
 
 @Injectable()
 export class VideoProcessingService {
-
-  constructor(private readonly storageService: AzureBlobStorageService, private readonly logger: AppLogger,) {
+  constructor(
+    private readonly storageService: AzureBlobStorageService,
+    private readonly logger: AppLogger,
+  ) {
     this.logger.setContext(VideoProcessingService.name);
   }
 

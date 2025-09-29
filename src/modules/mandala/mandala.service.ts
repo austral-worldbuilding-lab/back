@@ -14,7 +14,7 @@ import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import {
   FirestoreMandalaDocument,
@@ -847,7 +847,7 @@ export class MandalaService {
         error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(
         `Failed to overlap mandalas: ${errorMessage}`,
-        error instanceof Error ? error.stack : String(error)
+        error instanceof Error ? error.stack : String(error),
       );
       throw new InternalServerErrorException({
         message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
@@ -956,7 +956,7 @@ export class MandalaService {
         error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(
         `Failed to overlap mandalas: ${errorMessage}`,
-        error instanceof Error ? error.stack : String(error)
+        error instanceof Error ? error.stack : String(error),
       );
       throw new InternalServerErrorException({
         message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
