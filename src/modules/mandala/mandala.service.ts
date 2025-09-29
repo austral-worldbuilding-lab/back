@@ -16,9 +16,15 @@ import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
-import { FirestoreCharacter, FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
+import {
+  FirestoreCharacter,
+  FirestoreMandalaDocument,
+} from '../firebase/types/firestore-character.type';
 
-import { OVERLAP_ERROR_MESSAGES, OVERLAP_ERROR_TYPES } from './constants/overlap-error-messages';
+import {
+  OVERLAP_ERROR_MESSAGES,
+  OVERLAP_ERROR_TYPES,
+} from './constants/overlap-error-messages';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaCenterDto,
@@ -34,7 +40,11 @@ import { MandalaRepository } from './mandala.repository';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
-import { getTargetProjectId, validateSameDimensions, validateSameScales } from './utils/overlap-validation.utils';
+import {
+  getTargetProjectId,
+  validateSameDimensions,
+  validateSameScales,
+} from './utils/overlap-validation.utils';
 
 const DEFAULT_CHARACTER_POSITION = { x: 0, y: 0 };
 const DEFAULT_CHARACTER_SECTION = '';
