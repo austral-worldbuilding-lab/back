@@ -1,3 +1,4 @@
+import { AppLogger } from '@common/services/logger.service';
 import { ConsumptionModule } from '@modules/consumption/consumption.module';
 import { FileModule } from '@modules/files/file.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
@@ -32,6 +33,7 @@ import { FileValidationService } from './services/file-validation.service';
         AiRequestValidationService,
         AiAdapterUtilsService,
         AiPromptBuilderService,
+        AppLogger,
       ],
     },
   ],
