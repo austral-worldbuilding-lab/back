@@ -1,5 +1,5 @@
 import { AppLogger } from '@common/services/logger.service';
-import { Controller, Post, Body, HttpCode } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { ApiBlobUploadWebhook } from '../decorators/webhook-swagger.decorators';
@@ -78,8 +78,7 @@ export class WebhooksController {
           continue;
         }
 
-        const blobEvent = event;
-        const { url, contentType } = blobEvent.data;
+        const { url, contentType } = event.data;
         const fileName = this.extractFileName(url);
 
         this.logger.log(`Processing file: ${fileName} (${contentType})`);
