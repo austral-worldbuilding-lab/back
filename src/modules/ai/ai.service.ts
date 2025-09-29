@@ -1,3 +1,4 @@
+import { AppLogger } from '@common/services/logger.service';
 import { ConsumptionService } from '@modules/consumption/consumption.service';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
@@ -18,8 +19,6 @@ import {
   createCleanMandalaForQuestions,
   createCleanMandalaForSummary,
 } from './utils/mandala-cleaned-for-ai.util';
-
-import { AppLogger } from '@/common/services/logger.service';
 
 @Injectable()
 export class AiService {
