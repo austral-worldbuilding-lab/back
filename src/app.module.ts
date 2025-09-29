@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import * as process from 'node:process';
 
 import { CommonModule } from '@common/common.module';
+import { HttpExceptionFilter } from '@common/filters/http-exception.filter';
 import { UserThrottlerGuard } from '@common/guards/user-throttler.guard';
 import { AppLogger } from '@common/services/logger.service';
 import { AiModule } from '@modules/ai/ai.module';
@@ -20,7 +21,7 @@ import { RoleModule } from '@modules/role/role.module';
 import { UserModule } from '@modules/user/user.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
 
@@ -74,6 +75,10 @@ import { AppService } from './app.service';
     {
       provide: APP_GUARD,
       useClass: UserThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
     },
   ],
   exports: [PrismaService, AppLogger],

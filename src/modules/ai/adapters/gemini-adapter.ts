@@ -1,3 +1,4 @@
+import { AppLogger } from '@common/services/logger.service';
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
@@ -7,7 +8,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { AiValidationException } from '../exceptions/ai-validation.exception';
@@ -41,13 +42,14 @@ interface GeminiUsageMetadata {
 @Injectable()
 export class GeminiAdapter implements AiProvider {
   private ai: GoogleGenAI;
-  private readonly logger = new Logger(GeminiAdapter.name);
   private readonly geminiModel: string;
+
   constructor(
     private configService: ConfigService,
     private readonly validator: AiRequestValidationService,
     private readonly utilsService: AiAdapterUtilsService,
     private readonly promptBuilderService: AiPromptBuilderService,
+    private readonly logger: AppLogger,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -57,6 +59,7 @@ export class GeminiAdapter implements AiProvider {
     }
     this.ai = new GoogleGenAI({ apiKey });
     this.geminiModel = this.utilsService.validateConfiguration('GEMINI_MODEL');
+    this.logger.setContext(GeminiAdapter.name);
     this.logger.log('Gemini Adapter initialized');
   }
 

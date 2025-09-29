@@ -2,16 +2,20 @@ import {
   ResourceNotFoundException,
   ValidationException,
 } from '@common/exceptions/custom-exceptions';
+import { AppLogger } from '@common/services/logger.service';
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { FileScope } from '@modules/files/types/file-scope.type';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class FileLoaderService {
-  private readonly logger = new Logger(FileLoaderService.name);
-
-  constructor(private fileService: FileService) {}
+  constructor(
+    private fileService: FileService,
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(FileLoaderService.name);
+  }
 
   async loadFiles(
     projectId: string,

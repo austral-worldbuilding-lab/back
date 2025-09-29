@@ -6,6 +6,7 @@ import {
   ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
 import { CacheService } from '@common/services/cache.service';
+import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
@@ -51,8 +52,6 @@ const DEFAULT_CHARACTER_DIMENSION = '';
 
 @Injectable()
 export class MandalaService {
-  private readonly logger = new Logger(MandalaService.name);
-
   constructor(
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
@@ -61,7 +60,10 @@ export class MandalaService {
     private projectService: ProjectService,
     private aiService: AiService,
     private cacheService: CacheService,
-  ) {}
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(MandalaService.name);
+  }
 
   private async completeMissingConfiguration(
     createMandalaDto: CreateMandalaDto,
@@ -843,7 +845,10 @@ export class MandalaService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to overlap mandalas: ${errorMessage}`, error);
+      this.logger.error(
+        `Failed to overlap mandalas: ${errorMessage}`,
+        error instanceof Error ? error.stack : String(error)
+      );
       throw new InternalServerErrorException({
         message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
         error: OVERLAP_ERROR_TYPES.OVERLAP_OPERATION_ERROR,
@@ -949,7 +954,10 @@ export class MandalaService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to overlap mandalas: ${errorMessage}`, error);
+      this.logger.error(
+        `Failed to overlap mandalas: ${errorMessage}`,
+        error instanceof Error ? error.stack : String(error)
+      );
       throw new InternalServerErrorException({
         message: OVERLAP_ERROR_MESSAGES.OVERLAP_OPERATION_FAILED,
         error: OVERLAP_ERROR_TYPES.OVERLAP_OPERATION_ERROR,

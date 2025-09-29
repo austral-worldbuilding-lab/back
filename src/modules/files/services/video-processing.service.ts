@@ -3,17 +3,19 @@ import * as os from 'os';
 import * as path from 'path';
 import { URL } from 'url';
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as ffmpeg from 'fluent-ffmpeg';
 
 import { AzureBlobStorageService } from '../../storage/AzureBlobStorageService';
 import { FileScope } from '../types/file-scope.type';
+import { AppLogger } from '@common/services/logger.service';
 
 @Injectable()
 export class VideoProcessingService {
-  private readonly logger = new Logger(VideoProcessingService.name);
 
-  constructor(private readonly storageService: AzureBlobStorageService) {}
+  constructor(private readonly storageService: AzureBlobStorageService, private readonly logger: AppLogger,) {
+    this.logger.setContext(VideoProcessingService.name);
+  }
 
   async processVideoFile(fileUrl: string, fileName: string): Promise<string> {
     this.logger.log(`Starting video processing for: ${fileName}`);

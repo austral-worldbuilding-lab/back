@@ -1,11 +1,14 @@
+import { AppLogger } from '@common/services/logger.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { ValidationResult } from './ai-request-validation.service';
 
 @Injectable()
 export class FileValidationService {
-  private readonly logger = new Logger(FileValidationService.name);
+  constructor(private readonly logger: AppLogger) {
+    this.logger.setContext(FileValidationService.name);
+  }
 
   validateFiles(fileBuffers: FileBuffer[]): ValidationResult {
     const errors: string[] = [];

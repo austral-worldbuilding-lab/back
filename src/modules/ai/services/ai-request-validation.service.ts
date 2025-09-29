@@ -1,9 +1,10 @@
+import { AppLogger } from '@common/services/logger.service';
 import {
   AiValidationConfig,
   getAiValidationConfig,
 } from '@config/ai-validation.config';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -20,10 +21,10 @@ export interface FileValidationError {
 
 @Injectable()
 export class AiRequestValidationService {
-  private readonly logger = new Logger(AiRequestValidationService.name);
   private readonly config: AiValidationConfig;
 
-  constructor() {
+  constructor(private readonly logger: AppLogger) {
+    this.logger.setContext(AiRequestValidationService.name);
     this.config = getAiValidationConfig();
     this.logger.log('AI Request Validation Service initialized with config:', {
       maxFileSize: this.formatBytes(this.config.maxFileSize),

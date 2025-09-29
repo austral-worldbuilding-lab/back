@@ -8,8 +8,7 @@ interface LogData {
   level: string;
   message: string;
   timestamp: string;
-  trace?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 @Injectable({ scope: Scope.TRANSIENT })
@@ -18,53 +17,69 @@ export class AppLogger implements LoggerService {
 
   constructor(private readonly cls: ClsService) {}
 
-  setContext(context: string) {
+  setContext(context: string): void {
     this.context = context;
   }
 
   private buildLogData(
     level: string,
-    message: string,
-    metadata?: Record<string, any>,
-    trace?: string,
+    message: unknown,
+    optionalParams: unknown[],
   ): LogData {
-    return {
+    const messageStr =
+      typeof message === 'string' ? message : JSON.stringify(message);
+
+    const data: LogData = {
       timestamp: new Date().toISOString(),
       level,
       requestId: this.cls.getId(),
       userId: this.cls.get('userId'),
       context: this.context,
-      message,
-      ...(trace && { trace }),
-      ...(metadata && metadata),
+      message: messageStr,
     };
+
+    optionalParams.forEach((param, index) => {
+      if (param instanceof Error) {
+        data.trace = param.stack;
+        data.error = {
+          name: param.name,
+          message: param.message,
+        };
+      } else if (typeof param === 'object' && param !== null) {
+        Object.assign(data, param);
+      } else {
+        data[`param_${index}`] = param;
+      }
+    });
+
+    return data;
   }
 
-  private output(logData: LogData) {
+  private output(logData: LogData): void {
     const cleanData = Object.fromEntries(
-      Object.entries(logData).filter(([_, v]) => v !== undefined),
+      Object.entries(logData).filter(([, value]) => value !== undefined),
     );
 
     console.log(JSON.stringify(cleanData));
   }
 
-  log(message: string, metadata?: Record<string, any>) {
-    this.output(this.buildLogData('log', message, metadata));
+  log(message: unknown, ...optionalParams: unknown[]): void {
+    this.output(this.buildLogData('log', message, optionalParams));
   }
 
-  error(message: string, trace?: string, metadata?: Record<string, any>) {
-    this.output(this.buildLogData('error', message, metadata, trace));
+  error(message: unknown, ...optionalParams: unknown[]): void {
+    this.output(this.buildLogData('error', message, optionalParams));
   }
 
-  warn(message: string, metadata?: Record<string, any>) {
-    this.output(this.buildLogData('warn', message, metadata));
+  warn(message: unknown, ...optionalParams: unknown[]): void {
+    this.output(this.buildLogData('warn', message, optionalParams));
   }
 
-  debug(message: string, metadata?: Record<string, any>) {
-    this.output(this.buildLogData('debug', message, metadata));
+  debug(message: unknown, ...optionalParams: unknown[]): void {
+    this.output(this.buildLogData('debug', message, optionalParams));
   }
 
-  verbose(message: string, metadata?: Record<string, any>) {
-    this.output(this.buildLogData('verbose', message, metadata));
+  verbose(message: unknown, ...optionalParams: unknown[]): void {
+    this.output(this.buildLogData('verbose', message, optionalParams));
   }
 }

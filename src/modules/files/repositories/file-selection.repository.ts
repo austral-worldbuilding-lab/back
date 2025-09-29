@@ -1,5 +1,6 @@
+import { AppLogger } from '@common/services/logger.service';
 import { PrismaService } from '@modules/prisma/prisma.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { SourceScope, UpdateFileSelectionDto } from '../dto/file-selection.dto';
 import { FileScope } from '../types/file-scope.type';
@@ -10,9 +11,12 @@ import {
 
 @Injectable()
 export class FileSelectionRepository {
-  private readonly logger = new Logger(FileSelectionRepository.name);
-
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(FileSelectionRepository.name);
+  }
 
   private parseScopeFromSourceScope(
     currentScope: FileScope,
