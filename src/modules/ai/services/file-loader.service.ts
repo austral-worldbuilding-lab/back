@@ -4,8 +4,8 @@ import {
 } from '@common/exceptions/custom-exceptions';
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { Injectable, Logger } from '@nestjs/common';
 import { FileScope } from '@modules/files/types/file-scope.type';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class FileLoaderService {
