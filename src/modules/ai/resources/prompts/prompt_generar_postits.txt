@@ -10,8 +10,8 @@ CONFIGURACIÓN DEL MUNDO:
   • Escalas habilitadas: ${scales}
   • Etiquetas disponibles: ${tags}
 CONFIGURACIÓN DE LA GENERACIÓN:
-  • Cantidad mínima de post-its: ${minResults}
-  • Cantidad máxima de post-its: ${maxResults}
+  • Cantidad mínima de post-its: ${minPostits}
+  • Cantidad máxima de post-its: ${maxPostits}
 
 PROCESAMIENTO DE LA INFORMACIÓN:
   • Lee entrevistas, encuestas, informes y archivos cargados.
