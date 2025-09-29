@@ -9,11 +9,16 @@ const validScales = ['Persona', 'Comunidad', 'Institución'];
 const validCenterCharacter = 'Alumno';
 const validCenterCharacterDescription = 'Un alumno generico de la UA';
 const validTags = ['educación', 'tecnología'];
+const validProjectName = 'Proyecto Test';
+const validProjectDescription = 'Un proyecto de prueba para worldbuilding';
 const validMandalaDocument =
   'Mandala 1: Sistema UA, Mandala 2: Sistema Educativo';
 
 describe('generatePostitsPromptTemplate', () => {
   const postitPromptTemplate = `
+CONFIGURACIÓN DEL MUNDO:
+• Nombre del Mundo: \${projectName}
+• Descripción del Mundo: \${projectDescription}
 • Personaje central: \${centerCharacter}
 • Descripción del personaje: \${centerCharacterDescription}
 • Dimensiones habilitadas: \${dimensions}
@@ -25,6 +30,8 @@ describe('generatePostitsPromptTemplate', () => {
 
   it('should successfully replace all postit placeholders with valid data', () => {
     const result = replacePostitPlaceholders(postitPromptTemplate, {
+      projectName: validProjectName,
+      projectDescription: validProjectDescription,
       dimensions: validDimensions,
       scales: validScales,
       centerCharacter: validCenterCharacter,
@@ -34,6 +41,10 @@ describe('generatePostitsPromptTemplate', () => {
       minResults: 6,
     });
 
+    expect(result).toContain('Nombre del Mundo: Proyecto Test');
+    expect(result).toContain(
+      'Descripción del Mundo: Un proyecto de prueba para worldbuilding',
+    );
     expect(result).toContain('Personaje central: Alumno');
     expect(result).toContain(
       'Descripción del personaje: Un alumno generico de la UA',
@@ -52,6 +63,8 @@ describe('generatePostitsPromptTemplate', () => {
 
   it('should handle empty tags array', () => {
     const result = replacePostitPlaceholders(postitPromptTemplate, {
+      projectName: validProjectName,
+      projectDescription: validProjectDescription,
       dimensions: validDimensions,
       scales: validScales,
       centerCharacter: validCenterCharacter,
@@ -60,6 +73,10 @@ describe('generatePostitsPromptTemplate', () => {
       maxResults: 24,
       minResults: 6,
     });
+    expect(result).toContain('Nombre del Mundo: Proyecto Test');
+    expect(result).toContain(
+      'Descripción del Mundo: Un proyecto de prueba para worldbuilding',
+    );
     expect(result).toContain('Personaje central: Alumno');
     expect(result).toContain(
       'Descripción del personaje: Un alumno generico de la UA',
@@ -78,6 +95,8 @@ describe('generatePostitsPromptTemplate', () => {
 
   it('should handle empty character description', () => {
     const result = replacePostitPlaceholders(postitPromptTemplate, {
+      projectName: validProjectName,
+      projectDescription: validProjectDescription,
       dimensions: validDimensions,
       scales: validScales,
       centerCharacter: validCenterCharacter,
@@ -86,6 +105,10 @@ describe('generatePostitsPromptTemplate', () => {
       maxResults: 24,
       minResults: 6,
     });
+    expect(result).toContain('Nombre del Mundo: Proyecto Test');
+    expect(result).toContain(
+      'Descripción del Mundo: Un proyecto de prueba para worldbuilding',
+    );
     expect(result).toContain('Personaje central: Alumno');
     expect(result).toContain('Descripción del personaje: ');
     expect(result).toContain(
@@ -102,6 +125,9 @@ describe('generatePostitsPromptTemplate', () => {
 
   it('should throw if prompt misses a required placeholder (dimensions)', () => {
     const badTemplate = `
+CONFIGURACIÓN DEL MUNDO:
+• Nombre del Mundo: \${projectName}
+• Descripción del Mundo: \${projectDescription}
 • Personaje central: \${centerCharacter}
 • Descripción del personaje: \${centerCharacterDescription}
 • Escalas habilitadas: \${scales}
@@ -111,11 +137,15 @@ describe('generatePostitsPromptTemplate', () => {
     `;
     expect(() => {
       replacePostitPlaceholders(badTemplate, {
+        projectName: validProjectName,
+        projectDescription: validProjectDescription,
         dimensions: validDimensions,
         scales: validScales,
         centerCharacter: validCenterCharacter,
         centerCharacterDescription: validCenterCharacterDescription,
         tags: validTags,
+        maxResults: 24,
+        minResults: 6,
       });
     }).toThrow('Missing placeholder ${dimensions} in prompt');
   });
@@ -123,7 +153,9 @@ describe('generatePostitsPromptTemplate', () => {
 
 describe('generateQuestionsPromptTemplate', () => {
   const questionPromptTemplate = `
-Configuración del proyecto
+CONFIGURACIÓN DEL MUNDO:
+• Nombre del Mundo: \${projectName}
+• Descripción del Mundo: \${projectDescription}
 • Personaje central: \${centerCharacter}
 • Descripción del personaje: \${centerCharacterDescription}
 • Dimensiones habilitadas: \${dimensions}
@@ -137,6 +169,8 @@ Estado actual de la Mandala: \${mandalaDocument}
 
   it('should replace all question placeholders with valid data', () => {
     const result = replaceQuestionPlaceholders(questionPromptTemplate, {
+      projectName: validProjectName,
+      projectDescription: validProjectDescription,
       dimensions: validDimensions,
       scales: validScales,
       centerCharacter: validCenterCharacter,
@@ -147,6 +181,10 @@ Estado actual de la Mandala: \${mandalaDocument}
       mandalaDocument: validMandalaDocument,
     });
 
+    expect(result).toContain('Nombre del Mundo: Proyecto Test');
+    expect(result).toContain(
+      'Descripción del Mundo: Un proyecto de prueba para worldbuilding',
+    );
     expect(result).toContain('Personaje central: Alumno');
     expect(result).toContain(
       'Descripción del personaje: Un alumno generico de la UA',
@@ -168,6 +206,8 @@ Estado actual de la Mandala: \${mandalaDocument}
 
   it('should allow empty centerCharacterDescription and tags and replace to empty', () => {
     const result = replaceQuestionPlaceholders(questionPromptTemplate, {
+      projectName: validProjectName,
+      projectDescription: validProjectDescription,
       dimensions: validDimensions,
       scales: validScales,
       centerCharacter: validCenterCharacter,
@@ -187,7 +227,9 @@ Estado actual de la Mandala: \${mandalaDocument}
 
   it('should throw if prompt misses a required placeholder (dimensions)', () => {
     const badTemplate = `
-Configuración del proyecto
+CONFIGURACIÓN DEL MUNDO:
+• Nombre del Mundo: \${projectName}
+• Descripción del Mundo: \${projectDescription}
 • Personaje central: \${centerCharacter}
 • Descripción del personaje: \${centerCharacterDescription}
 • Escalas habilitadas: \${scales}
@@ -200,6 +242,8 @@ Estado actual de la Mandala
     `;
     expect(() => {
       replaceQuestionPlaceholders(badTemplate, {
+        projectName: validProjectName,
+        projectDescription: validProjectDescription,
         dimensions: validDimensions,
         scales: validScales,
         centerCharacter: validCenterCharacter,
@@ -215,6 +259,9 @@ Estado actual de la Mandala
 
 describe('generateComparisonPromptTemplate', () => {
   const comparisonPromptTemplate = `
+CONFIGURACIÓN DEL MUNDO:
+• Nombre del Mundo: \${projectName}
+• Descripción del Mundo: \${projectDescription}
 • Limite maximo de post-its: \${maxResults}
 • Limite minimo de post-its: \${minResults}
 
@@ -223,10 +270,16 @@ Contenido existente en las mandalas para comparar: \${mandalaDocument}
 
   it('should replace all comparison placeholders with valid data', () => {
     const result = replaceComparisonPlaceholders(comparisonPromptTemplate, {
+      projectName: validProjectName,
+      projectDescription: validProjectDescription,
       maxResults: 24,
       minResults: 6,
       mandalaDocument: validMandalaDocument,
     });
+    expect(result).toContain('Nombre del Mundo: Proyecto Test');
+    expect(result).toContain(
+      'Descripción del Mundo: Un proyecto de prueba para worldbuilding',
+    );
     expect(result).toContain('Limite minimo de post-its: 6');
     expect(result).toContain('Limite maximo de post-its: 24');
     expect(result).toContain(
@@ -237,6 +290,9 @@ Contenido existente en las mandalas para comparar: \${mandalaDocument}
 
   it('should throw if prompt misses a required placeholder (mandalaDocument)', () => {
     const badTemplate = `
+CONFIGURACIÓN DEL MUNDO:
+• Nombre del Mundo: \${projectName}
+• Descripción del Mundo: \${projectDescription}
 • Dimensiones habilitadas: \${dimensions}
 • Escalas habilitadas: \${scales}
 • Limite maximo de post-its: \${maxResults}
@@ -244,6 +300,8 @@ Contenido existente en las mandalas para comparar: \${mandalaDocument}
     `;
     expect(() => {
       replaceComparisonPlaceholders(badTemplate, {
+        projectName: validProjectName,
+        projectDescription: validProjectDescription,
         dimensions: validDimensions,
         scales: validScales,
         maxResults: 24,
