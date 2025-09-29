@@ -1,6 +1,8 @@
 import { ConsumptionModule } from '@modules/consumption/consumption.module';
 import { FileModule } from '@modules/files/file.module';
+import { MandalaModule } from '@modules/mandala/mandala.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
+import { ProjectModule } from '@modules/project/project.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -36,7 +38,14 @@ import { FileValidationService } from './services/file-validation.service';
     },
   ],
   controllers: [AiController],
-  imports: [ConfigModule, FileModule, PrismaModule, ConsumptionModule],
+  imports: [
+    ConfigModule,
+    FileModule,
+    PrismaModule,
+    ConsumptionModule,
+    MandalaModule,
+    ProjectModule,
+  ],
   exports: [AiService],
 })
 export class AiModule {}

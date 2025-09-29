@@ -14,6 +14,7 @@ import { MandalaDto } from '../mandala/dto/mandala.dto';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
+import { AiEncyclopediaResponse } from './types/ai-encyclopedia-response.type';
 import {
   createCleanMandalaForQuestions,
   createCleanMandalaForSummary,
@@ -169,7 +170,7 @@ export class AiService {
     if (userId) {
       await this.consumptionService.trackAiUsage(
         userId,
-        AiServiceEnum.GENERATE_SUMMARY,
+        AiServiceEnum.GENERATE_ENCYCLOPEDIA,
         AiModel.GEMINI_25_FLASH,
         response.usage.totalTokens,
         projectId,
@@ -272,5 +273,53 @@ export class AiService {
     this.logger.log(`Summary report generated for mandala ${mandala.id}`);
 
     return summary;
+  }
+
+  async generateEncyclopedia(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    mandalasSummariesWithAi: string,
+    selectedFiles?: string[],
+    userId?: string,
+    organizationId?: string,
+  ): Promise<AiEncyclopediaResponse> {
+    this.logger.log(
+      `Starting encyclopedia generation for project: ${projectId}`,
+    );
+
+    const response = await this.aiProvider.generateEncyclopedia(
+      projectId,
+      projectName,
+      projectDescription,
+      dimensions,
+      scales,
+      mandalasSummariesWithAi,
+      selectedFiles,
+    );
+
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_ENCYCLOPEDIA,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
+    this.logger.log(
+      `Encyclopedia generation completed for project: ${projectId}`,
+    );
+
+    return response.data;
   }
 }
