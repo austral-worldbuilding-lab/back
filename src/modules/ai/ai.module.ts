@@ -1,6 +1,5 @@
 import { ConsumptionModule } from '@modules/consumption/consumption.module';
 import { FileModule } from '@modules/files/file.module';
-import { FileService } from '@modules/files/file.service';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -13,21 +12,24 @@ import {
 } from './factories/ai-provider.factory';
 import { AiAdapterUtilsService } from './services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from './services/ai-prompt-builder.service';
-import { AiRequestValidator } from './validators/ai-request.validator';
+import { AiRequestValidationService } from './services/ai-request-validation.service';
+import { FileLoaderService } from './services/file-loader.service';
+import { FileValidationService } from './services/file-validation.service';
 
 @Module({
   providers: [
     AiService,
-    AiRequestValidator,
     AiAdapterUtilsService,
     AiPromptBuilderService,
+    FileLoaderService,
+    FileValidationService,
+    AiRequestValidationService,
     {
       provide: AI_PROVIDER,
       useFactory: aiProviderFactory,
       inject: [
         ConfigService,
-        FileService,
-        AiRequestValidator,
+        AiRequestValidationService,
         AiAdapterUtilsService,
         AiPromptBuilderService,
       ],

@@ -1,18 +1,16 @@
-import { FileService } from '@modules/files/file.service';
 import { ConfigService } from '@nestjs/config';
 
 import { GeminiAdapter } from '../adapters/gemini-adapter';
 import { AiProvider } from '../interfaces/ai-provider.interface';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
-import { AiRequestValidator } from '../validators/ai-request.validator';
+import { AiRequestValidationService } from '../services/ai-request-validation.service';
 
 export const AI_PROVIDER = 'AI_PROVIDER';
 
 export function aiProviderFactory(
   configService: ConfigService,
-  fileService: FileService,
-  validator: AiRequestValidator,
+  validator: AiRequestValidationService,
   utilsService: AiAdapterUtilsService,
   promptBuilderService: AiPromptBuilderService,
 ): AiProvider {
