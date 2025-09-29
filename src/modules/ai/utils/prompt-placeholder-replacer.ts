@@ -279,6 +279,14 @@ const provocationReplacer = composeReplacers(
   replaceMinResults,
 );
 
+const encyclopediaReplacer = composeReplacers(
+  replaceDimensions,
+  replaceScales,
+  replaceProjectName,
+  replaceProjectDescription,
+  replaceMandalasSummariesWithAi,
+);
+
 function replaceWithReplacer(
   promptTemplate: string,
   config: PromptReplacementConfig,
@@ -383,5 +391,23 @@ export function replaceMandalaSummaryPlaceholders(
     config,
     summaryReplacer,
     'mandala summary',
+  );
+}
+
+/**
+ * Replace placeholders for encyclopedia generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceEncyclopediaPlaceholders(
+  promptTemplate: string,
+  config: PromptReplacementConfig = {},
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    encyclopediaReplacer,
+    'encyclopedia',
   );
 }

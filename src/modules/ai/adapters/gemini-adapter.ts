@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { AiValidationException } from '../exceptions/ai-validation.exception';
 import { AiProvider } from '../interfaces/ai-provider.interface';
+import { createEncyclopediaResponseSchema } from '../resources/dto/generate-encyclopedia.dto';
 import {
   createPostitsSummaryResponseSchema,
   createPostitsResponseSchema,
@@ -23,6 +24,7 @@ import { createMandalaSummaryResponseSchema } from '../resources/dto/generate-su
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import { AiRequestValidationService } from '../services/ai-request-validation.service';
+import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import {
   AiResponseWithUsage,
   AiUsageInfo,
@@ -569,5 +571,65 @@ export class GeminiAdapter implements AiProvider {
     );
 
     return responseText.text;
+  }
+
+  async generateEncyclopedia(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    mandalasSummariesWithAi: string,
+    selectedFiles?: string[],
+  ): Promise<AiResponseWithUsage<AiEncyclopediaResponse>> {
+    this.logger.log(
+      `Starting encyclopedia generation for project: ${projectId}`,
+    );
+
+    const finalPromptTask =
+      await this.promptBuilderService.buildEncyclopediaPrompt(
+        projectName,
+        projectDescription,
+        dimensions,
+        scales,
+        mandalasSummariesWithAi,
+      );
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      selectedFiles,
+    );
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+
+    const response = await this.generateContentWithFiles(
+      this.geminiModel,
+      finalPromptTask,
+      geminiFiles,
+      createEncyclopediaResponseSchema(),
+    );
+
+    const result = this.parseAndValidateEncyclopediaResponse(response.text);
+    this.logger.log(
+      `Encyclopedia generation completed for project: ${projectId}`,
+    );
+
+    return {
+      data: result,
+      usage: response.usage,
+    };
+  }
+
+  private parseAndValidateEncyclopediaResponse(
+    responseText: string | undefined,
+  ): AiEncyclopediaResponse {
+    if (!responseText) {
+      throw new Error('No response text received from Gemini API');
+    }
+
+    this.logger.log('Successfully parsed encyclopedia response from AI');
+
+    return {
+      encyclopedia: responseText,
+    };
   }
 }

@@ -6,8 +6,15 @@ import {
   DataResponse,
   PaginatedResponse,
 } from '@common/types/responses';
+import { AiService } from '@modules/ai/ai.service';
+import {
+  GenerateEncyclopediaDto,
+  AiEncyclopediaResponseDto,
+} from '@modules/ai/dto/generate-encyclopedia.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
+import { MandalaService } from '@modules/mandala/mandala.service';
 import {
   OrganizationRoleGuard,
   RequireOrganizationRoles,
@@ -28,6 +35,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import {
   ApiCreateProject,
@@ -47,6 +55,7 @@ import {
   ApiFindAllProvocations,
   ApiCreateProjectFromProvocation,
   ApiGetProjectTimeline,
+  ApiGenerateProjectEncyclopedia,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
@@ -74,7 +83,11 @@ import { AiProvocationResponse } from './types/provocations.type';
 @UseGuards(FirebaseAuthGuard)
 @ApiBearerAuth()
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(
+    private readonly projectService: ProjectService,
+    private readonly aiService: AiService,
+    private readonly mandalaService: MandalaService,
+  ) {}
 
   @Post()
   @UseGuards(OrganizationRoleGuard)
@@ -348,5 +361,51 @@ export class ProjectController {
     return {
       data: timeline,
     };
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 3600000 } })
+  @Post(':projectId/encyclopedia')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiGenerateProjectEncyclopedia()
+  async generateEncyclopedia(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Body() generateEncyclopediaDto: GenerateEncyclopediaDto,
+  ): Promise<AiEncyclopediaResponseDto> {
+    const project = await this.projectService.findOne(projectId);
+    const mandalas: MandalaDto[] = await this.mandalaService.findAll(projectId);
+    const mandalaDocs = await Promise.all(
+      mandalas.map((mandala: MandalaDto) =>
+        this.mandalaService.getFirestoreDocument(projectId, mandala.id),
+      ),
+    );
+    const allDimensions: string[] = [
+      ...new Set(
+        mandalas.flatMap((m: MandalaDto) =>
+          m.configuration.dimensions.map((d: { name: string }) => d.name),
+        ),
+      ),
+    ];
+    const allScales: string[] = [
+      ...new Set(mandalas.flatMap((m: MandalaDto) => m.configuration.scales)),
+    ];
+
+    // Obtener los resúmenes consolidados (usa report directamente para OVERLAP_SUMMARY)
+    const mandalasSummariesWithAi =
+      this.mandalaService.getAllMandalaSummariesWithAi(
+        projectId,
+        mandalaDocs,
+        mandalas,
+      );
+
+    return this.aiService.generateEncyclopedia(
+      projectId,
+      project.name,
+      project.description || '',
+      allDimensions,
+      allScales,
+      mandalasSummariesWithAi,
+      generateEncyclopediaDto.selectedFiles,
+    );
   }
 }

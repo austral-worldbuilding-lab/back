@@ -8,6 +8,7 @@ import {
   replaceComparisonPlaceholders,
   replaceProvocationPlaceholders,
   replaceMandalaSummaryPlaceholders,
+  replaceEncyclopediaPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -210,6 +211,38 @@ export class AiPromptBuilderService {
       mandalaDocument: mandalaDocument,
     });
 
+    return this.buildPromptWithCiclo1Instructions(promptTask);
+  }
+
+  /**
+   * Builds complete prompt for encyclopedia generation
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param dimensions - Array of dimensions present in the project
+   * @param scales - Array of scales present in the project
+   * @param mandalasSummariesWithAi - Consolidated summaries of all mandalas in the project
+   * @returns Complete prompt ready for AI processing
+   */
+  async buildEncyclopediaPrompt(
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    mandalasSummariesWithAi: string,
+  ): Promise<string> {
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_enciclopedia.txt',
+    );
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const promptTask = replaceEncyclopediaPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
+      dimensions: dimensions,
+      scales: scales,
+      mandalasSummariesWithAi: mandalasSummariesWithAi,
+    });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 }

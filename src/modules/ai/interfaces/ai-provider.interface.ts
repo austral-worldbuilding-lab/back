@@ -6,6 +6,7 @@ import {
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
 
+import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
 
 export interface AiProvider {
@@ -147,4 +148,32 @@ export interface AiProvider {
     centerCharacterDescription: string,
     cleanMandalaDocument: string,
   ): Promise<string>;
+
+  /**
+   * Generates a comprehensive encyclopedia of the project world using AI analysis
+   *
+   * This method takes all the mandala summaries from a project and produces a consolidated
+   * encyclopedia that serves as a knowledge base for future AI generation of solutions and
+   * project chaining. The AI analyzes the world, characters, dimensions, scales, patterns,
+   * and insights to generate a comprehensive overview that can be used as input for
+   * future AI operations.
+   *
+   * @param projectId - Unique identifier of the project
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param dimensions - Array of dimension names present in the project
+   * @param scales - Array of scale names present in the project
+   * @param mandalasSummariesWithAi - Consolidated summaries from all project mandalas
+   * @param selectedFiles - Optional array of file names to filter context
+   * @returns Promise resolving to an encyclopedia response containing the world knowledge
+   */
+  generateEncyclopedia(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    mandalasSummariesWithAi: string,
+    selectedFiles?: string[],
+  ): Promise<AiResponseWithUsage<AiEncyclopediaResponse>>;
 }

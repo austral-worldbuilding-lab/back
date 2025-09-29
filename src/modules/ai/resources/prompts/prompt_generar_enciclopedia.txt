@@ -1,0 +1,56 @@
+OBJETIVO:
+  Crear una enciclopedia comprehensiva del mundo del proyecto que sirva como conocimiento de base para la generación futura de soluciones y la cadena de proyectos. La enciclopedia debe consolidar toda la información disponible sobre el mundo, sus personajes, dimensiones, escalas y contexto en un formato narrativo y estructurado que la IA pueda usar efectivamente como input.
+
+INFORMACIÓN DEL PROYECTO:
+  • Nombre del proyecto: ${projectName}
+  • Descripción del proyecto: ${projectDescription}
+  • Dimensiones del mundo: ${dimensions}  
+  • Escalas del mundo: ${scales}
+
+RESÚMENES DE MANDALAS DISPONIBLES:
+  Los siguientes resúmenes contienen la información consolidada de cada mandala del proyecto:
+  ${mandalasSummariesWithAi}
+
+ESTRUCTURA DE LA ENCICLOPEDIA:
+  La enciclopedia debe incluir las siguientes secciones organizadas de manera coherente:
+
+  1. CONTEXTO DEL MUNDO
+     • Descripción general del mundo y su problemática central
+     • Características principales del entorno y sus desafíos
+     • Factores clave que definen la realidad del mundo
+
+  2. PERSONAJES Y PERSPECTIVAS  
+     • Descripción de los personajes centrales y sus roles
+     • Perspectivas, motivaciones y comportamientos distintivos
+     • Relaciones y dinámicas entre personajes
+
+  3. DIMENSIONES Y ESCALAS
+     • Análisis detallado de cada dimensión presente en el mundo
+     • Cómo se manifiestan las diferentes escalas (individual, grupal, institucional, etc.)
+     • Interacciones entre dimensiones y escalas
+
+  4. PATRONES Y TENDENCIAS
+     • Similitudes identificadas entre personajes y situaciones
+     • Diferencias significativas y contrastes
+     • Tensiones recurrentes y puntos de conflicto
+
+  5. INSIGHTS Y OPORTUNIDADES
+     • Descubrimientos clave sobre el funcionamiento del mundo
+     • Áreas de oportunidad para intervención o cambio  
+     • Hipótesis sobre causas y efectos observados
+
+CRITERIOS DE REDACCIÓN:
+  • Escritura clara, profesional y analítica estilo informe ejecutivo
+  • Organización lógica con transiciones fluidas entre secciones
+  • Síntesis efectiva que evite redundancias innecesarias
+  • Mantenimiento de un tono objetivo y basado en evidencia
+  • Uso de lenguaje prudente ("indicios", "sugiere", "tiende a") cuando la evidencia es limitada
+
+LIMITACIONES:
+  • No inventar información que no esté presente en los resúmenes
+  • No hacer afirmaciones absolutas sin evidencia suficiente
+  • Mantener coherencia con la información original de los resúmenes
+  • Longitud: entre 800-1500 palabras (máximo 10,000 caracteres)
+
+FORMATO DE SALIDA:
+  Proporcionar únicamente el texto de la enciclopedia en formato narrativo, sin estructura JSON ni metadatos adicionales. El texto debe ser directamente utilizable como contexto para futuras generaciones de IA.
