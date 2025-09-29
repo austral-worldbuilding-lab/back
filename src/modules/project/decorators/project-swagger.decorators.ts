@@ -828,3 +828,50 @@ export const ApiGetProjectTimeline = () =>
       description: 'No autorizado - Token de acceso requerido',
     }),
   );
+
+export const ApiGenerateProjectEncyclopedia = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar enciclopedia del proyecto usando IA',
+      description:
+        'Genera una enciclopedia comprehensiva del mundo del proyecto usando IA basada en todos los resúmenes de mandalas',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto para generar la enciclopedia',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Enciclopedia generada exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          encyclopedia: {
+            type: 'string',
+            description: 'La enciclopedia completa del mundo del proyecto',
+            example: 'Esta es la enciclopedia del mundo del proyecto...',
+          },
+        },
+      },
+    }),
+    ApiBadRequestResponse({
+      description:
+        'Solicitud incorrecta - El proyecto no tiene mandalas suficientes o resúmenes',
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+    }),
+    ApiForbiddenResponse({
+      description: 'Prohibido - No tiene permisos para acceder a este proyecto',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+    ApiResponse({
+      status: 429,
+      description:
+        'Demasiadas peticiones - límite de throttling alcanzado (10 requests/hora)',
+    }),
+  );

@@ -327,6 +327,7 @@ export class ProjectService {
       this.mandalaService.getAllMandalaSummariesWithAi(
         projectId,
         mandalasDocument,
+        projectMandalas,
       );
 
     const provocations = await this.aiService.generateProvocations(

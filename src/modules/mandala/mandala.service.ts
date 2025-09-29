@@ -1080,16 +1080,44 @@ export class MandalaService {
   getAllMandalaSummariesWithAi(
     projectId: string,
     mandalaDocs: FirestoreMandalaDocument[],
+    mandalas: MandalaDto[],
   ): string {
     this.logger.log(
       `Getting all AI-generated summaries for project ${projectId}`,
     );
 
-    const summaries: string[] = mandalaDocs
-      .map((doc) => (doc.summaryReport ? doc.summaryReport : ''))
-      .filter((summary) => summary !== '');
+    const summaries: string[] = [];
 
-    this.logger.log(`Found ${summaries.length} summaries with AI content`);
+    for (let i = 0; i < mandalaDocs.length; i++) {
+      const doc = mandalaDocs[i];
+      const mandala = mandalas[i];
+
+      let summary = '';
+
+      if (mandala.type === MandalaType.OVERLAP_SUMMARY) {
+        // Para OVERLAP_SUMMARY, usar el report directamente (no generar nuevo resumen)
+        if (doc.summaryReport) {
+          try {
+            const reportData = JSON.parse(doc.summaryReport) as {
+              summary?: string;
+            };
+            summary = reportData.summary || doc.summaryReport;
+          } catch {
+            summary = doc.summaryReport;
+          }
+        }
+      } else {
+        summary = doc.summaryReport || '';
+      }
+
+      if (summary) {
+        summaries.push(summary);
+      }
+    }
+
+    this.logger.log(
+      `Found ${summaries.length} summaries with AI content (including ${mandalas.filter((m) => m.type === MandalaType.OVERLAP_SUMMARY).length} OVERLAP_SUMMARY reports)`,
+    );
 
     return summaries.join('\n\n');
   }
