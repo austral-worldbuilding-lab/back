@@ -62,20 +62,24 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
   ),
   minResultsPerRequest: parseInt(process.env.AI_MIN_RESULTS_PER_REQUEST || '6'),
   minPostitsPerRequest: parseInt(
-    process.env.AI_MIN_POSTITS_PER_REQUEST || 
-    process.env.AI_MIN_RESULTS_PER_REQUEST || '6',
+    process.env.AI_MIN_POSTITS_PER_REQUEST ||
+      process.env.AI_MIN_RESULTS_PER_REQUEST ||
+      '6',
   ),
   maxPostitsPerRequest: parseInt(
-    process.env.AI_MAX_POSTITS_PER_REQUEST || 
-    process.env.AI_MAX_RESULTS_PER_REQUEST || '24',
+    process.env.AI_MAX_POSTITS_PER_REQUEST ||
+      process.env.AI_MAX_RESULTS_PER_REQUEST ||
+      '24',
   ),
   minQuestionsPerRequest: parseInt(
-    process.env.AI_MIN_QUESTIONS_PER_REQUEST || 
-    process.env.AI_MIN_RESULTS_PER_REQUEST || '6',
+    process.env.AI_MIN_QUESTIONS_PER_REQUEST ||
+      process.env.AI_MIN_RESULTS_PER_REQUEST ||
+      '6',
   ),
   maxQuestionsPerRequest: parseInt(
-    process.env.AI_MAX_QUESTIONS_PER_REQUEST || 
-    process.env.AI_MAX_RESULTS_PER_REQUEST || '24',
+    process.env.AI_MAX_QUESTIONS_PER_REQUEST ||
+      process.env.AI_MAX_RESULTS_PER_REQUEST ||
+      '24',
   ),
   minProvocationsPerRequest: parseInt(
     process.env.AI_MIN_PROVOCATIONS_PER_REQUEST || '3',
