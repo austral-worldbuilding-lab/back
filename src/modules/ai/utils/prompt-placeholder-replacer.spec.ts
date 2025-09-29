@@ -19,8 +19,8 @@ describe('generatePostitsPromptTemplate', () => {
 • Dimensiones habilitadas: \${dimensions}
 • Escalas habilitadas: \${scales}
 • Etiquetas disponibles: \${tags}
-• Limite maximo de post-its: \${maxResults}
-• Limite minimo de post-its: \${minResults}
+• Limite maximo de post-its: \${maxPostits}
+• Limite minimo de post-its: \${minPostits}
   `;
 
   it('should successfully replace all postit placeholders with valid data', () => {
@@ -30,8 +30,8 @@ describe('generatePostitsPromptTemplate', () => {
       centerCharacter: validCenterCharacter,
       centerCharacterDescription: validCenterCharacterDescription,
       tags: validTags,
-      maxResults: 24,
-      minResults: 6,
+      maxPostits: 24,
+      minPostits: 6,
     });
 
     expect(result).toContain('Personaje central: Alumno');
@@ -57,8 +57,8 @@ describe('generatePostitsPromptTemplate', () => {
       centerCharacter: validCenterCharacter,
       centerCharacterDescription: validCenterCharacterDescription,
       tags: [], // Empty array should replace placeholder with empty string
-      maxResults: 24,
-      minResults: 6,
+      maxPostits: 24,
+      minPostits: 6,
     });
     expect(result).toContain('Personaje central: Alumno');
     expect(result).toContain(
@@ -83,8 +83,8 @@ describe('generatePostitsPromptTemplate', () => {
       centerCharacter: validCenterCharacter,
       centerCharacterDescription: '',
       tags: validTags,
-      maxResults: 24,
-      minResults: 6,
+      maxPostits: 24,
+      minPostits: 6,
     });
     expect(result).toContain('Personaje central: Alumno');
     expect(result).toContain('Descripción del personaje: ');
@@ -106,8 +106,8 @@ describe('generatePostitsPromptTemplate', () => {
 • Descripción del personaje: \${centerCharacterDescription}
 • Escalas habilitadas: \${scales}
 • Etiquetas disponibles: \${tags}
-• Limite maximo de post-its: \${maxResults}
-• Limite minimo de post-its: \${minResults}
+• Limite maximo de post-its: \${maxPostits}
+• Limite minimo de post-its: \${minPostits}
     `;
     expect(() => {
       replacePostitPlaceholders(badTemplate, {
@@ -129,8 +129,8 @@ Configuración del proyecto
 • Dimensiones habilitadas: \${dimensions}
 • Escalas habilitadas: \${scales}
 • Etiquetas disponibles: \${tags}
-• Limite maximo de preguntas: \${maxResults}
-• Limite minimo de preguntas: \${minResults}
+• Limite maximo de preguntas: \${maxQuestions}
+• Limite minimo de preguntas: \${minQuestions}
 
 Estado actual de la Mandala: \${mandalaDocument}
   `;
@@ -142,8 +142,8 @@ Estado actual de la Mandala: \${mandalaDocument}
       centerCharacter: validCenterCharacter,
       centerCharacterDescription: validCenterCharacterDescription,
       tags: validTags,
-      maxResults: 24,
-      minResults: 6,
+      maxQuestions: 24,
+      minQuestions: 6,
       mandalaDocument: validMandalaDocument,
     });
 
@@ -173,8 +173,8 @@ Estado actual de la Mandala: \${mandalaDocument}
       centerCharacter: validCenterCharacter,
       centerCharacterDescription: '',
       tags: [],
-      maxResults: 5,
-      minResults: 2,
+      maxQuestions: 5,
+      minQuestions: 2,
       mandalaDocument: validMandalaDocument,
     });
 
@@ -192,8 +192,8 @@ Configuración del proyecto
 • Descripción del personaje: \${centerCharacterDescription}
 • Escalas habilitadas: \${scales}
 • Etiquetas disponibles: \${tags}
-• Limite maximo de preguntas: \${maxResults}
-• Limite minimo de preguntas: \${minResults}
+• Limite maximo de preguntas: \${maxQuestions}
+• Limite minimo de preguntas: \${minQuestions}
 
 Estado actual de la Mandala
 • Contenido existente: \${mandalaDocument}
@@ -205,8 +205,8 @@ Estado actual de la Mandala
         centerCharacter: validCenterCharacter,
         centerCharacterDescription: validCenterCharacterDescription,
         tags: validTags,
-        maxResults: 24,
-        minResults: 6,
+        maxQuestions: 24,
+        minQuestions: 6,
         mandalaDocument: validMandalaDocument,
       });
     }).toThrow('Missing placeholder ${dimensions} in prompt');
