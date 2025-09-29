@@ -1,7 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import * as process from 'node:process';
 
 import { CommonModule } from '@common/common.module';
 import { UserThrottlerGuard } from '@common/guards/user-throttler.guard';
+import { AppLogger } from '@common/services/logger.service';
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
@@ -20,12 +22,22 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ClsModule } from 'nestjs-cls';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
   imports: [
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        setup: (cls) => {
+          cls.set('requestId', randomUUID());
+        },
+      },
+    }),
     CommonModule,
     PrismaModule,
     ProjectModule,
@@ -58,11 +70,12 @@ import { AppService } from './app.service';
   providers: [
     AppService,
     PrismaService,
+    AppLogger,
     {
       provide: APP_GUARD,
       useClass: UserThrottlerGuard,
     },
   ],
-  exports: [PrismaService],
+  exports: [PrismaService, AppLogger],
 })
 export class AppModule {}
