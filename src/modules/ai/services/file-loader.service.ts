@@ -1,10 +1,10 @@
-import { FileService } from '@modules/files/file.service';
-import { FileBuffer } from '@modules/files/types/file-buffer.interface';
-import { Injectable, Logger } from '@nestjs/common';
 import {
   ResourceNotFoundException,
   ValidationException,
 } from '@common/exceptions/custom-exceptions';
+import { FileService } from '@modules/files/file.service';
+import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class FileLoaderService {
@@ -30,11 +30,7 @@ export class FileLoaderService {
 
     const filesToUse = await this.determineFilesToUse(selectedFiles, scope);
 
-    const filteredFiles = allFileBuffers.filter((file) =>
-      filesToUse.includes(file.fileName),
-    );
-
-    return filteredFiles;
+    return allFileBuffers.filter((file) => filesToUse.includes(file.fileName));
   }
 
   private async determineFilesToUse(
@@ -44,8 +40,7 @@ export class FileLoaderService {
     if (selectedFiles?.length) {
       return selectedFiles;
     }
-    const persistedFiles = await this.fileService.getSelectedFileNames(scope);
-    return persistedFiles;
+    return await this.fileService.getSelectedFileNames(scope);
   }
 
   validateFilesLoaded(

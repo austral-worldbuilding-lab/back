@@ -27,7 +27,12 @@ import { FileValidationService } from './services/file-validation.service';
     {
       provide: AI_PROVIDER,
       useFactory: aiProviderFactory,
-      inject: [ConfigService, AiRequestValidationService, AiAdapterUtilsService, AiPromptBuilderService],
+      inject: [
+        ConfigService,
+        AiRequestValidationService,
+        AiAdapterUtilsService,
+        AiPromptBuilderService,
+      ],
     },
   ],
   controllers: [AiController],

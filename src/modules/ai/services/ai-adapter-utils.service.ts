@@ -2,7 +2,6 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 
 import {
-  BusinessLogicException,
   ExternalServiceException,
   ResourceNotFoundException,
   ValidationException,
@@ -13,6 +12,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { AiValidationException } from '../exceptions/ai-validation.exception';
+
 import { AiRequestValidationService } from './ai-request-validation.service';
 import { FileLoaderService } from './file-loader.service';
 import { FileValidationService } from './file-validation.service';
@@ -85,7 +85,11 @@ export class AiAdapterUtilsService {
         originalError: errorMessage,
       };
 
-      throw new BusinessLogicException(promptFilePath, errorDetails);
+      throw new ExternalServiceException(
+        'PromptTemplate',
+        `Failed to read prompt template`,
+        errorDetails,
+      );
     }
   }
 
