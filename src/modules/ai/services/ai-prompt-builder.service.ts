@@ -41,6 +41,8 @@ export class AiPromptBuilderService {
 
   /**
    * Builds complete prompt for postit generation
+   * @param projectName - Project name (displayed as world name)
+   * @param projectDescription - Project description (displayed as world description)
    * @param dimensions - Array of dimensions
    * @param scales - Array of scales
    * @param centerCharacter - The center character
@@ -49,6 +51,8 @@ export class AiPromptBuilderService {
    * @returns Complete prompt ready for AI processing
    */
   async buildPostitPrompt(
+    projectName: string,
+    projectDescription: string,
     dimensions: string[],
     scales: string[],
     centerCharacter: string,
@@ -62,19 +66,23 @@ export class AiPromptBuilderService {
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
     const promptTask = replacePostitPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
       dimensions: dimensions,
       scales: scales,
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
       tags: tags,
-      maxResults: this.utilsService.getMaxResults(),
-      minResults: this.utilsService.getMinResults(),
+      maxPostits: this.utilsService.getMaxPostits(),
+      minPostits: this.utilsService.getMinPostits(),
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 
   /**
    * Builds complete prompt for question generation
+   * @param projectName - Project name (displayed as world name)
+   * @param projectDescription - Project description (displayed as world description)
    * @param dimensions - Array of dimensions
    * @param scales - Array of scales
    * @param tags - Array of tags
@@ -84,6 +92,8 @@ export class AiPromptBuilderService {
    * @returns Complete prompt ready for AI processing
    */
   async buildQuestionPrompt(
+    projectName: string,
+    projectDescription: string,
     dimensions: string[],
     scales: string[],
     tags: string[],
@@ -98,24 +108,32 @@ export class AiPromptBuilderService {
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
     const promptTask = replaceQuestionPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
       dimensions: dimensions,
       scales: scales,
       tags: tags,
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
       mandalaDocument: mandalaAiSummary,
-      maxResults: this.utilsService.getMaxResults(),
-      minResults: this.utilsService.getMinResults(),
+      maxQuestions: this.utilsService.getMaxQuestions(),
+      minQuestions: this.utilsService.getMinQuestions(),
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 
   /**
    * Builds complete prompt for postit summary generation
+   * @param projectName - Project name (displayed as world name)
+   * @param projectDescription - Project description (displayed as world description)
    * @param mandalasAiSummary - Document containing the mandalas to be compared
    * @returns Complete prompt ready for AI processing
    */
-  async buildPostitSummaryPrompt(mandalasAiSummary: string): Promise<string> {
+  async buildPostitSummaryPrompt(
+    projectName: string,
+    projectDescription: string,
+    mandalasAiSummary: string,
+  ): Promise<string> {
     const promptFilePath = path.resolve(
       __dirname,
       '../resources/prompts/prompt_resumen_postits.txt',
@@ -123,6 +141,8 @@ export class AiPromptBuilderService {
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
     const promptTask = replaceComparisonPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
       mandalaDocument: mandalasAiSummary,
       maxResults: this.utilsService.getMaxResults(),
       minResults: this.utilsService.getMinResults(),

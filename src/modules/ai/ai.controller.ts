@@ -14,6 +14,8 @@ import {
 } from './dto/generate-encyclopedia.dto';
 
 interface AiRequestBody {
+  projectName: string;
+  projectDescription: string;
   dimensions: string[];
   scales: string[];
   centerCharacter: string;
@@ -53,6 +55,8 @@ export class AiController {
   ): Promise<AiPostitResponse[]> {
     return this.aiService.generatePostits(
       projectId,
+      aiRequestBody.projectName,
+      aiRequestBody.projectDescription,
       aiRequestBody.dimensions,
       aiRequestBody.scales,
       aiRequestBody.centerCharacter,

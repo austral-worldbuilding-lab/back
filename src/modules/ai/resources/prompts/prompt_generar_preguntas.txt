@@ -8,12 +8,14 @@ CONFIGURACIÓN DEL PERSONAJE CENTRAL:
   • Contenido del personaje central:
   ${mandalaDocument}
 CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}
   • Dimensiones habilitadas: ${dimensions}
   • Escalas habilitadas: ${scales}
   • Etiquetas disponibles: ${tags}
 CONFIGURACIÓN DE LA GENERACIÓN:
-  • Cantidad mínima de preguntas: ${minResults}
-  • Cantidad máxima de preguntas: ${maxResults}
+  • Cantidad mínima de preguntas: ${minQuestions}
+  • Cantidad máxima de preguntas: ${maxQuestions}
 
 PROCESAMIENTO DE LA INFORMACIÓN:
   • Lee entrevistas, encuestas, informes y archivos cargados.

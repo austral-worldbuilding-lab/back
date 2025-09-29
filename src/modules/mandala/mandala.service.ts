@@ -641,8 +641,13 @@ export class MandalaService {
       mandala.id,
     );
 
+    // Get project information
+    const project = await this.projectService.findOne(mandala.projectId);
+
     return this.aiService.generateQuestions(
       mandala.projectId,
+      project.name,
+      project.description || '',
       mandala.id,
       mandalaDocument as FirestoreMandalaDocument,
       effectiveDimensions,

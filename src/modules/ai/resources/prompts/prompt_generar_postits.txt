@@ -6,12 +6,14 @@ CONFIGURACION DEL PERSONAJE CENTRAL:
   • Nombre: ${centerCharacter}
   • Descripción: ${centerCharacterDescription}
 CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}
   • Dimensiones habilitadas: ${dimensions}
   • Escalas habilitadas: ${scales}
   • Etiquetas disponibles: ${tags}
 CONFIGURACIÓN DE LA GENERACIÓN:
-  • Cantidad mínima de post-its: ${minResults}
-  • Cantidad máxima de post-its: ${maxResults}
+  • Cantidad mínima de post-its: ${minPostits}
+  • Cantidad máxima de post-its: ${maxPostits}
 
 PROCESAMIENTO DE LA INFORMACIÓN:
   • Lee entrevistas, encuestas, informes y archivos cargados.

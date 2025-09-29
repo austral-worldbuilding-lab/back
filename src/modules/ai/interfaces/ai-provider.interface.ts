@@ -13,17 +13,21 @@ export interface AiProvider {
   /**
    * Generates postits for a project
    * @param projectId - The ID of the project to generate postits for
-   * @param mandalaId - The ID of the mandala to generate postits for
+   * @param projectName - The name of the project (displayed as world name)
+   * @param projectDescription - The description of the project (displayed as world description)
    * @param dimensions - Array of dimensions
    * @param scales - Array of scales
    * @param tags - Array of tags to be used for connecting postits across dimensions
    * @param centerCharacter
    * @param centerCharacterDescription
    * @param selectedFiles - Optional array of file names to filter context
+   * @param mandalaId - The ID of the mandala to generate postits for
    * @returns An array of AiPostitResponse objects (with string tags)
    */
   generatePostits(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     dimensions: string[],
     scales: string[],
     tags: string[],
@@ -36,6 +40,8 @@ export interface AiProvider {
   /**
    * Generates questions for a project based on mandala configuration and files
    * @param projectId
+   * @param projectName - The name of the project (displayed as world name)
+   * @param projectDescription - The description of the project (displayed as world description)
    * @param mandalaId
    * @param mandalaTextSummary - Clean textual summary of the mandala without technical details
    * Project configuration:
@@ -49,6 +55,8 @@ export interface AiProvider {
    */
   generateQuestions(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     mandalaId: string,
     dimensions: string[],
     scales: string[],
@@ -68,6 +76,8 @@ export interface AiProvider {
    * that can be used for mandala analysis and insights.
    *
    * @param projectId - The unique identifier of the project containing the mandalas
+   * @param projectName - The name of the project (displayed as world name)
+   * @param projectDescription - The description of the project (displayed as world description)
    * @param dimensions - Array of dimensions to consider during the comparison analysis
    * @param scales - Array of scales to consider during the comparison analysis
    * @param mandalasAiSummary - Document containing the mandalas to be compared
@@ -77,6 +87,8 @@ export interface AiProvider {
    */
   generatePostitsSummary(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
