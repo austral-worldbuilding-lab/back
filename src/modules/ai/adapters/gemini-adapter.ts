@@ -21,11 +21,11 @@ import { createQuestionsResponseSchema } from '../resources/dto/generate-questio
 import { createMandalaSummaryResponseSchema } from '../resources/dto/generate-summary.dto';
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
+import { AiRequestValidationService } from '../services/ai-request-validation.service';
 import {
   AiResponseWithUsage,
   AiUsageInfo,
 } from '../types/ai-response-with-usage.type';
-import { AiRequestValidator } from '../validators/ai-request.validator';
 
 interface GeminiUploadedFile {
   uri: string;
@@ -45,7 +45,7 @@ export class GeminiAdapter implements AiProvider {
   private readonly geminiModel: string;
   constructor(
     private configService: ConfigService,
-    private readonly validator: AiRequestValidator,
+    private readonly validator: AiRequestValidationService,
     private readonly utilsService: AiAdapterUtilsService,
     private readonly promptBuilderService: AiPromptBuilderService,
   ) {
@@ -178,8 +178,6 @@ export class GeminiAdapter implements AiProvider {
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
-      dimensions,
-      scales,
       selectedFiles,
       mandalaId,
     );
@@ -272,8 +270,6 @@ export class GeminiAdapter implements AiProvider {
     );
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
-      dimensions,
-      scales,
       selectedFiles,
       mandalaId,
     );
@@ -359,11 +355,7 @@ export class GeminiAdapter implements AiProvider {
         mandalasAiSummary,
       );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(
-      projectId,
-      dimensions,
-      scales,
-    );
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(projectId);
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
     const response = await this.generateContentWithFiles(
@@ -443,11 +435,7 @@ export class GeminiAdapter implements AiProvider {
         mandalasSummariesWithAi,
       );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(
-      projectId,
-      dimensions,
-      scales,
-    );
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(projectId);
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
     const response = await this.generateContentWithFiles(
@@ -565,11 +553,7 @@ export class GeminiAdapter implements AiProvider {
         cleanMandalaDocument,
       );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(
-      projectId,
-      dimensions,
-      scales,
-    );
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(projectId);
 
     const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
 
