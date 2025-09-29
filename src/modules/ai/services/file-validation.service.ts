@@ -59,13 +59,8 @@ export class FileValidationService {
     }
 
     fileBuffers.forEach((fileBuffer, index) => {
-      if (!fileBuffer.fileName || fileBuffer.fileName.trim().length === 0) {
-        errors.push(`File at index ${index} has no name`);
-      }
-
-      if (fileBuffer.buffer.length === 0) {
-        errors.push(`File '${fileBuffer.fileName}' is empty`);
-      }
+      const basicValidation = this.validateBasicFileProperties(fileBuffer, index);
+      errors.push(...basicValidation.errors);
     });
 
     return {
@@ -83,19 +78,14 @@ export class FileValidationService {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    fileBuffers.forEach((fileBuffer) => {
-      const { fileName, mimeType, buffer } = fileBuffer;
+    fileBuffers.forEach((fileBuffer, index) => {
+      const { fileName, mimeType } = fileBuffer;
 
-      if (!fileName || fileName.trim().length === 0) {
-        errors.push(`File has no name`);
-      }
+      const basicValidation = this.validateBasicFileProperties(fileBuffer, index);
+      errors.push(...basicValidation.errors);
 
       if (!mimeType || mimeType.trim().length === 0) {
         errors.push(`File '${fileName}' has no MIME type`);
-      }
-
-      if (buffer.length === 0) {
-        errors.push(`File '${fileName}' is empty`);
       }
 
       if (fileName && fileName.includes('..')) {
@@ -111,6 +101,26 @@ export class FileValidationService {
       isValid: errors.length === 0,
       errors,
       warnings,
+    };
+  }
+
+  private validateBasicFileProperties(fileBuffer: FileBuffer, index: number): ValidationResult {
+    const errors: string[] = [];
+    const { fileName, buffer } = fileBuffer;
+
+    if (!fileName || fileName.trim().length === 0) {
+      errors.push(`File at index ${index} has no name`);
+    }
+
+    if (buffer.length === 0) {
+      const displayName = fileName || `at index ${index}`;
+      errors.push(`File '${displayName}' is empty`);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings: [],
     };
   }
 }
