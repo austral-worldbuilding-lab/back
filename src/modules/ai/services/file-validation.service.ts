@@ -59,7 +59,10 @@ export class FileValidationService {
     }
 
     fileBuffers.forEach((fileBuffer, index) => {
-      const basicValidation = this.validateBasicFileProperties(fileBuffer, index);
+      const basicValidation = this.validateBasicFileProperties(
+        fileBuffer,
+        index,
+      );
       errors.push(...basicValidation.errors);
     });
 
@@ -81,7 +84,10 @@ export class FileValidationService {
     fileBuffers.forEach((fileBuffer, index) => {
       const { fileName, mimeType } = fileBuffer;
 
-      const basicValidation = this.validateBasicFileProperties(fileBuffer, index);
+      const basicValidation = this.validateBasicFileProperties(
+        fileBuffer,
+        index,
+      );
       errors.push(...basicValidation.errors);
 
       if (!mimeType || mimeType.trim().length === 0) {
@@ -104,7 +110,10 @@ export class FileValidationService {
     };
   }
 
-  private validateBasicFileProperties(fileBuffer: FileBuffer, index: number): ValidationResult {
+  private validateBasicFileProperties(
+    fileBuffer: FileBuffer,
+    index: number,
+  ): ValidationResult {
     const errors: string[] = [];
     const { fileName, buffer } = fileBuffer;
 
