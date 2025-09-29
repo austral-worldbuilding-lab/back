@@ -112,7 +112,10 @@ export class AiRequestValidationService {
     };
   }
 
-  private validateSingleFileForAi(fileBuffer: FileBuffer, index: number): string[] {
+  private validateSingleFileForAi(
+    fileBuffer: FileBuffer,
+    index: number,
+  ): string[] {
     const errors: string[] = [];
     const { fileName, mimeType, buffer } = fileBuffer;
 
@@ -146,10 +149,10 @@ export class AiRequestValidationService {
 
   private validateTotalInputSize(fileBuffers: FileBuffer[]): ValidationResult {
     const totalInputSize = this.getTotalInputSize(fileBuffers);
-    
+
     if (totalInputSize > this.config.maxInputSize) {
       const error = `Total input size (${this.formatBytes(totalInputSize)}) exceeds maximum allowed (${this.formatBytes(this.config.maxInputSize)})`;
-      
+
       this.logger.error('Input size validation failed', {
         totalInputSize,
         maxInputSize: this.config.maxInputSize,
@@ -173,7 +176,7 @@ export class AiRequestValidationService {
   private validateResultsCount(results: number): ValidationResult {
     if (results > this.config.maxResultsPerRequest) {
       const error = `Expected results count (${results}) exceeds maximum allowed (${this.config.maxResultsPerRequest})`;
-      
+
       this.logger.error('Results count validation failed', {
         expectedResults: results,
         maxResultsPerRequest: this.config.maxResultsPerRequest,

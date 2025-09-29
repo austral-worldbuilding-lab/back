@@ -1,7 +1,10 @@
 import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Injectable, Logger } from '@nestjs/common';
-import { ResourceNotFoundException, ValidationException } from '@common/exceptions/custom-exceptions';
+import {
+  ResourceNotFoundException,
+  ValidationException,
+} from '@common/exceptions/custom-exceptions';
 
 @Injectable()
 export class FileLoaderService {
@@ -58,26 +61,26 @@ export class FileLoaderService {
         selectedFiles: selectedFiles || [],
         filesToUse: filesToUse || [],
       };
-      
+
       if (selectedFiles?.length) {
         throw new ResourceNotFoundException(
           'Files',
           selectedFiles.join(', '),
-          errorDetails
+          errorDetails,
         );
       } else if (filesToUse?.length === 0) {
         throw new ValidationException(
           'fileSelection',
           filesToUse,
           'No files are currently selected for processing',
-          errorDetails
+          errorDetails,
         );
       } else {
         throw new ValidationException(
           'fileSelection',
           filesToUse || [],
           'No matching files found for processing',
-          errorDetails
+          errorDetails,
         );
       }
     }
