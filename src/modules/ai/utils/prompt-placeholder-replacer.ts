@@ -186,6 +186,8 @@ const summaryReplacer = composeReplacers(
 );
 
 const postitReplacer = composeReplacers(
+  replaceProjectName,
+  replaceProjectDescription,
   replaceDimensions,
   replaceScales,
   replaceCenterCharacter,
@@ -196,6 +198,8 @@ const postitReplacer = composeReplacers(
 );
 
 const questionReplacer = composeReplacers(
+  replaceProjectName,
+  replaceProjectDescription,
   replaceDimensions,
   replaceScales,
   replaceTags,
@@ -207,6 +211,8 @@ const questionReplacer = composeReplacers(
 );
 
 const comparisonReplacer = composeReplacers(
+  replaceProjectName,
+  replaceProjectDescription,
   replaceMandalaDocument,
   replaceMaxResults,
   replaceMinResults,

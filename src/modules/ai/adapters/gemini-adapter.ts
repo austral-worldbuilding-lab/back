@@ -155,6 +155,8 @@ export class GeminiAdapter implements AiProvider {
 
   async generatePostits(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     dimensions: string[],
     scales: string[],
     tags: string[],
@@ -165,6 +167,8 @@ export class GeminiAdapter implements AiProvider {
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
     const model = this.geminiModel;
     const finalPromptTask = await this.promptBuilderService.buildPostitPrompt(
+      projectName,
+      projectDescription,
       dimensions,
       scales,
       centerCharacter,
@@ -240,19 +244,23 @@ export class GeminiAdapter implements AiProvider {
 
   async generateQuestions(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     mandalaId: string,
     dimensions: string[],
     scales: string[],
     tags: string[],
-    mandalaAiSummary: string,
     centerCharacter: string,
     centerCharacterDescription: string,
+    mandalaAiSummary: string,
     selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiQuestionResponse[]>> {
     this.logger.log(`Starting question generation for project: ${projectId}`);
 
     const model = this.geminiModel;
     const finalPromptTask = await this.promptBuilderService.buildQuestionPrompt(
+      projectName,
+      projectDescription,
       dimensions,
       scales,
       tags,
@@ -326,6 +334,8 @@ export class GeminiAdapter implements AiProvider {
 
   async generatePostitsSummary(
     projectId: string,
+    projectName: string,
+    projectDescription: string,
     dimensions: string[],
     scales: string[],
     mandalasAiSummary: string,
@@ -340,6 +350,8 @@ export class GeminiAdapter implements AiProvider {
     const model = this.geminiModel;
     const finalPromptTask =
       await this.promptBuilderService.buildPostitSummaryPrompt(
+        projectName,
+        projectDescription,
         mandalasAiSummary,
       );
 

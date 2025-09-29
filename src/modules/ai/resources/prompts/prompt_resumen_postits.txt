@@ -5,6 +5,9 @@ OBJETIVO:
   • Diferencias: contradicciones o enfoques opuestos.
   • Aspectos únicos: elementos exclusivos de un personaje sin equivalentes.
 
+CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}
 CONFIGURACIÓN DE LOS PERSONAJES:
   • Contenido de los personajes individuales a comparar:
   ${mandalaDocument}
