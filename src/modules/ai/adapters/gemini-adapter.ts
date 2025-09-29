@@ -69,11 +69,7 @@ export class GeminiAdapter implements AiProvider {
     this.logger.debug(`Uploading ${fileBuffers.length} files to Gemini...`);
 
     const uploadedFiles = await Promise.all(
-      fileBuffers.map(async (fileBuffer, index) => {
-        this.logger.debug(
-          `Uploading file ${fileBuffer.fileName} (${index + 1}/${fileBuffers.length})`,
-        );
-
+      fileBuffers.map(async (fileBuffer) => {
         const blob = new Blob([fileBuffer.buffer], {
           type: fileBuffer.mimeType,
         });
@@ -99,9 +95,6 @@ export class GeminiAdapter implements AiProvider {
     return uploadedFiles;
   }
 
-  /**
-   * Convierte el usageMetadata de Gemini a nuestro formato
-   */
   private parseUsageMetadata(usageMetadata: GeminiUsageMetadata): AiUsageInfo {
     return {
       totalTokens: usageMetadata?.totalTokenCount || 0,
