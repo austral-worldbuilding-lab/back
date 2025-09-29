@@ -184,8 +184,8 @@ export class GeminiAdapter implements AiProvider {
       finalPromptTask,
       geminiFiles,
       createPostitsResponseSchema({
-        minItems: this.utilsService.getMinResults(),
-        maxItems: this.utilsService.getMaxResults(),
+        minItems: this.utilsService.getMinPostits(),
+        maxItems: this.utilsService.getMaxPostits(),
       }),
     );
 
@@ -217,14 +217,14 @@ export class GeminiAdapter implements AiProvider {
       );
 
       const config = this.validator.getConfig();
-      if (postits.length > config.maxResultsPerRequest) {
+      if (postits.length > config.maxPostitsPerRequest) {
         this.logger.error(`Generated postits count exceeds limit`, {
           generatedCount: postits.length,
-          maxAllowed: config.maxResultsPerRequest,
+          maxAllowed: config.maxPostitsPerRequest,
           timestamp: new Date().toISOString(),
         });
         throw new AiValidationException([
-          `Generated ${postits.length} postits, but maximum allowed is ${config.maxResultsPerRequest}`,
+          `Generated ${postits.length} postits, but maximum allowed is ${config.maxPostitsPerRequest}`,
         ]);
       }
 
@@ -272,8 +272,8 @@ export class GeminiAdapter implements AiProvider {
       finalPromptTask,
       geminiFiles,
       createQuestionsResponseSchema({
-        minItems: this.utilsService.getMinResults(),
-        maxItems: this.utilsService.getMaxResults(),
+        minItems: this.utilsService.getMinQuestions(),
+        maxItems: this.utilsService.getMaxQuestions(),
       }),
     );
 
@@ -300,14 +300,14 @@ export class GeminiAdapter implements AiProvider {
       );
 
       const config = this.validator.getConfig();
-      if (questions.length > config.maxResultsPerRequest) {
+      if (questions.length > config.maxQuestionsPerRequest) {
         this.logger.error(`Generated questions count exceeds limit`, {
           generatedCount: questions.length,
-          maxAllowed: config.maxResultsPerRequest,
+          maxAllowed: config.maxQuestionsPerRequest,
           timestamp: new Date().toISOString(),
         });
         throw new AiValidationException([
-          `Generated ${questions.length} questions, but maximum allowed is ${config.maxResultsPerRequest}`,
+          `Generated ${questions.length} questions, but maximum allowed is ${config.maxQuestionsPerRequest}`,
         ]);
       }
 
