@@ -44,7 +44,7 @@ export class AiValidationService {
 
   validateBeforeAiRequest(
     fileBuffers: FileBuffer[],
-    expectedPostits: number,
+    results: number,
   ): ValidationResult {
     const errors: string[] = [];
     const fileValidations: FileValidationDetails[] = [];
@@ -80,12 +80,12 @@ export class AiValidationService {
       });
     }
 
-    // Validate expected postits count
-    if (expectedPostits > this.config.maxPostits) {
-      const error = `Expected postits count (${expectedPostits}) exceeds maximum allowed (${this.config.maxPostits})`;
+    // Validate expected results count
+    if (results > this.config.maxPostits) {
+      const error = `Expected results count (${results}) exceeds maximum allowed (${this.config.maxPostits})`;
       errors.push(error);
-      this.logger.warn('Postits count validation failed', {
-        expectedPostits,
+      this.logger.warn('Results count validation failed', {
+        results,
         maxAllowed: this.config.maxPostits,
       });
     }
@@ -96,7 +96,7 @@ export class AiValidationService {
       this.logger.log('All validations passed', {
         filesCount: fileBuffers.length,
         totalSize: this.formatBytes(totalSize),
-        expectedPostits,
+        results,
       });
     } else {
       this.logger.error('Validation failed - AI request will be rejected', {
@@ -104,7 +104,7 @@ export class AiValidationService {
         errors,
         filesCount: fileBuffers.length,
         totalSize: this.formatBytes(totalSize),
-        expectedPostits,
+        results,
       });
     }
 

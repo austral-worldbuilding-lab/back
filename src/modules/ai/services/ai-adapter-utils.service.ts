@@ -1,27 +1,34 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 
+import {
+  BusinessLogicException,
+  ExternalServiceException,
+  ResourceNotFoundException,
+  ValidationException,
+} from '@common/exceptions/custom-exceptions';
 import { getAiValidationConfig } from '@config/ai-validation.config';
-import { FileService } from '@modules/files/file.service';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { AiValidationException } from '../exceptions/ai-validation.exception';
-import { AiRequestValidator } from '../validators/ai-request.validator';
+import { AiRequestValidationService } from './ai-request-validation.service';
+import { FileLoaderService } from './file-loader.service';
+import { FileValidationService } from './file-validation.service';
 
 @Injectable()
 export class AiAdapterUtilsService {
   private readonly logger = new Logger(AiAdapterUtilsService.name);
-  // TODO: split min and max results to postits and questions
   private readonly minResults: number;
   private readonly maxResults: number;
   private readonly minProvocations: number;
   private readonly maxProvocations: number;
   constructor(
     private configService: ConfigService,
-    private fileService: FileService,
-    private validator: AiRequestValidator,
+    private fileLoader: FileLoaderService,
+    private fileValidator: FileValidationService,
+    private aiRequestValidator: AiRequestValidationService,
   ) {
     const config = getAiValidationConfig();
     this.minResults = config.minResultsPerRequest;
@@ -47,31 +54,38 @@ export class AiAdapterUtilsService {
   }
 
   validateConfiguration(modelConfigKey: string): string {
-    this.logger.debug(`Validating configuration...`);
-
     const model = this.configService.get<string>(modelConfigKey);
     if (!model) {
-      throw new Error(
-        `${modelConfigKey} is not configured in environment variables`,
+      const errorDetails = {
+        configKey: modelConfigKey,
+        availableKeys: Object.keys(process.env).filter((key) =>
+          key.includes('AI'),
+        ),
+      };
+
+      throw new ValidationException(
+        modelConfigKey,
+        model,
+        'Configuration key is not set in environment variables',
+        errorDetails,
       );
     }
 
-    this.logger.debug(`Configuration valid - using model: ${model}`);
     return model;
   }
 
   async readPromptTemplate(promptFilePath: string): Promise<string> {
-    this.logger.debug(`Reading prompt template from: ${promptFilePath}`);
-
     try {
-      const promptTemplate = await fs.readFile(promptFilePath, 'utf-8');
-      this.logger.debug(`Prompt template read successfully`);
-      return promptTemplate;
+      return await fs.readFile(promptFilePath, 'utf-8');
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to read prompt template:`, error);
-      throw new Error(`Failed to read prompt template: ${errorMessage}`);
+      const errorDetails = {
+        promptFilePath,
+        originalError: errorMessage,
+      };
+
+      throw new BusinessLogicException(promptFilePath, errorDetails);
     }
   }
 
@@ -93,74 +107,67 @@ export class AiAdapterUtilsService {
 
   async loadAndValidateFiles(
     projectId: string,
-    dimensions: string[],
-    scales: string[],
     selectedFiles?: string[],
     mandalaId?: string,
   ): Promise<FileBuffer[]> {
-    this.logger.debug(
-      `Loading files for project: ${projectId}${mandalaId ? `, mandala: ${mandalaId}` : ''}`,
-    );
-    const scope = mandalaId
-      ? await this.fileService.resolveScope('mandala', mandalaId)
-      : await this.fileService.resolveScope('project', projectId);
-    const allFileBuffers =
-      await this.fileService.readAllFilesAsBuffersWithMetadata(scope);
+    try {
+      const loadedFiles = await this.fileLoader.loadFiles(
+        projectId,
+        selectedFiles,
+        mandalaId,
+      );
 
-    // Determine which files to use:
-    // 1. If selectedFiles is provided explicitly (backward compatibility), use it
-    // 2. Otherwise, use persisted file selections from database
-    let filesToUse: string[];
-    if (selectedFiles?.length) {
-      this.logger.debug(
-        `Using explicitly provided selectedFiles: ${selectedFiles.length} files`,
+      this.fileLoader.validateFilesLoaded(loadedFiles, selectedFiles);
+
+      const fileValidationResult =
+        this.fileValidator.validateFiles(loadedFiles);
+      if (!fileValidationResult.isValid) {
+        throw new AiValidationException(fileValidationResult.errors, projectId);
+      }
+
+      const processableFiles = this.fileValidator.excludeVideos(loadedFiles);
+
+      const aiValidationResult = this.aiRequestValidator.validateResponseForAi(
+        processableFiles,
+        this.maxResults,
       );
-      filesToUse = selectedFiles;
-    } else {
-      this.logger.debug(
-        'No explicit selectedFiles provided, using persisted selections',
+
+      if (!aiValidationResult.isValid) {
+        throw new AiValidationException(aiValidationResult.errors, projectId);
+      }
+
+      return processableFiles;
+    } catch (error) {
+      if (error instanceof AiValidationException) {
+        throw error;
+      }
+
+      if (
+        error instanceof ResourceNotFoundException ||
+        error instanceof ValidationException
+      ) {
+        throw error;
+      }
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorDetails = {
+        projectId,
+        selectedFilesCount: selectedFiles?.length || 0,
+        mandalaId,
+        originalError: errorMessage,
+      };
+
+      this.logger.error(
+        `loadAndValidateFiles failed for project ${projectId}`,
+        errorDetails,
       );
-      filesToUse = await this.fileService.getSelectedFileNames(scope);
-      this.logger.debug(
-        `Found ${filesToUse.length} selected files from database`,
+
+      throw new ExternalServiceException(
+        'FileProcessing',
+        `Failed to load and validate files: ${errorMessage}`,
+        errorDetails,
       );
     }
-
-    // Filter out video files and apply file selection filter
-    const fileBuffers = allFileBuffers
-      .filter((file) => !file.mimeType.startsWith('video/'))
-      .filter((file) => filesToUse.includes(file.fileName));
-
-    if (fileBuffers.length === 0) {
-      const errorMessage = selectedFiles?.length
-        ? `No files found matching the explicitly selected files: ${selectedFiles.join(', ')}`
-        : filesToUse.length === 0
-          ? 'No files are currently selected for processing'
-          : `No files found matching the selected files: ${filesToUse.join(', ')}`;
-      throw new Error(errorMessage);
-    }
-
-    this.logger.debug(
-      `Loaded ${allFileBuffers.length} files, filtered to ${fileBuffers.length} selected files, validating...`,
-    );
-
-    const validationResult = this.validator.validateAiRequest(
-      fileBuffers,
-      projectId,
-      dimensions,
-      scales,
-      this.maxResults,
-    );
-
-    if (!validationResult.isValid) {
-      this.logger.error(`File validation failed for project ${projectId}`, {
-        errors: validationResult.errors,
-        warnings: validationResult.warnings,
-      });
-      throw new AiValidationException(validationResult.errors, projectId);
-    }
-
-    this.logger.debug(`File validation passed for project ${projectId}`);
-    return fileBuffers;
   }
 }

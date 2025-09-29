@@ -174,8 +174,6 @@ export class GeminiAdapter implements AiProvider {
 
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
-      dimensions,
-      scales,
       selectedFiles,
       mandalaId,
     );
@@ -264,8 +262,6 @@ export class GeminiAdapter implements AiProvider {
     );
     const fileBuffers = await this.utilsService.loadAndValidateFiles(
       projectId,
-      dimensions,
-      scales,
       selectedFiles,
       mandalaId,
     );
