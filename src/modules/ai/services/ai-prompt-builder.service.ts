@@ -72,8 +72,8 @@ export class AiPromptBuilderService {
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
       tags: tags,
-      maxResults: this.utilsService.getMaxResults(),
-      minResults: this.utilsService.getMinResults(),
+      maxPostits: this.utilsService.getMaxPostits(),
+      minPostits: this.utilsService.getMinPostits(),
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
@@ -115,8 +115,8 @@ export class AiPromptBuilderService {
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
       mandalaDocument: mandalaAiSummary,
-      maxResults: this.utilsService.getMaxResults(),
-      minResults: this.utilsService.getMinResults(),
+      maxQuestions: this.utilsService.getMaxQuestions(),
+      minQuestions: this.utilsService.getMinQuestions(),
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }

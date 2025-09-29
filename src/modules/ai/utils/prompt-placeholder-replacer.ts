@@ -8,6 +8,10 @@ export interface PromptReplacementConfig {
   mandalasSummariesWithAi?: string;
   maxResults?: number;
   minResults?: number;
+  maxPostits?: number;
+  minPostits?: number;
+  maxQuestions?: number;
+  minQuestions?: number;
   projectName?: string;
   projectDescription?: string;
 }
@@ -18,7 +22,7 @@ type PlaceholderReplacer = (
 ) => string;
 
 const replaceDimensions: PlaceholderReplacer = (prompt, config) => {
-  if (!/\$\{dimensions\}/g.test(prompt)) {
+  if (!/\$\{dimensions}/.test(prompt)) {
     throw new Error('Missing placeholder ${dimensions} in prompt');
   }
   if (config.dimensions === undefined) {
@@ -30,7 +34,7 @@ const replaceDimensions: PlaceholderReplacer = (prompt, config) => {
 };
 
 const replaceScales: PlaceholderReplacer = (prompt, config) => {
-  if (!/\$\{scales\}/g.test(prompt)) {
+  if (!/\$\{scales}/.test(prompt)) {
     throw new Error('Missing placeholder ${scales} in prompt');
   }
   if (config.scales === undefined) {
@@ -42,7 +46,7 @@ const replaceScales: PlaceholderReplacer = (prompt, config) => {
 };
 
 const replaceCenterCharacter: PlaceholderReplacer = (prompt, config) => {
-  if (!/\$\{centerCharacter\}/g.test(prompt)) {
+  if (!/\$\{centerCharacter}/.test(prompt)) {
     throw new Error('Missing placeholder ${centerCharacter} in prompt');
   }
   if (config.centerCharacter === undefined) {
@@ -57,7 +61,7 @@ const replaceCenterCharacterDescription: PlaceholderReplacer = (
   prompt,
   config,
 ) => {
-  if (!/\$\{centerCharacterDescription\}/g.test(prompt)) {
+  if (!/\$\{centerCharacterDescription}/.test(prompt)) {
     throw new Error(
       'Missing placeholder ${centerCharacterDescription} in prompt',
     );
@@ -77,7 +81,7 @@ const replaceCenterCharacterDescription: PlaceholderReplacer = (
 };
 
 const replaceTags: PlaceholderReplacer = (prompt, config) => {
-  if (!/\$\{tags\}/g.test(prompt)) {
+  if (!/\$\{tags}/.test(prompt)) {
     throw new Error('Missing placeholder ${tags} in prompt');
   }
   if (config.tags === undefined) {
@@ -92,7 +96,7 @@ const replaceTags: PlaceholderReplacer = (prompt, config) => {
 };
 
 const replaceMandalaDocument: PlaceholderReplacer = (prompt, config) => {
-  if (!/\$\{mandalaDocument\}/g.test(prompt)) {
+  if (!/\$\{mandalaDocument}/.test(prompt)) {
     throw new Error('Missing placeholder ${mandalaDocument} in prompt');
   }
   if (config.mandalaDocument === undefined) {
@@ -107,7 +111,7 @@ const replaceMandalasSummariesWithAi: PlaceholderReplacer = (
   prompt,
   config,
 ) => {
-  if (!/\$\{mandalasSummariesWithAi\}/g.test(prompt)) {
+  if (!/\$\{mandalasSummariesWithAi}/.test(prompt)) {
     throw new Error('Missing placeholder ${mandalasSummariesWithAi} in prompt');
   }
   if (config.mandalasSummariesWithAi === undefined) {
@@ -122,7 +126,7 @@ const replaceMandalasSummariesWithAi: PlaceholderReplacer = (
 };
 
 const replaceMaxResults: PlaceholderReplacer = (prompt, config) => {
-  if (!/\$\{maxResults\}/g.test(prompt)) {
+  if (!/\$\{maxResults}/.test(prompt)) {
     throw new Error('Missing placeholder ${maxResults} in prompt');
   }
   if (config.maxResults === undefined) {
@@ -134,7 +138,7 @@ const replaceMaxResults: PlaceholderReplacer = (prompt, config) => {
 };
 
 const replaceMinResults: PlaceholderReplacer = (prompt, config) => {
-  if (!/\$\{minResults\}/g.test(prompt)) {
+  if (!/\$\{minResults}/.test(prompt)) {
     throw new Error('Missing placeholder ${minResults} in prompt');
   }
   if (config.minResults === undefined) {
@@ -146,7 +150,7 @@ const replaceMinResults: PlaceholderReplacer = (prompt, config) => {
 };
 
 const replaceProjectName: PlaceholderReplacer = (prompt, config) => {
-  if (!/\$\{projectName\}/g.test(prompt)) {
+  if (!/\$\{projectName}/.test(prompt)) {
     throw new Error('Missing placeholder ${projectName} in prompt');
   }
   if (config.projectName === undefined) {
@@ -164,6 +168,54 @@ const replaceProjectDescription: PlaceholderReplacer = (prompt, config) => {
     );
   }
   return prompt.replace(/\$\{projectDescription}/g, config.projectDescription);
+};
+
+const replaceMaxPostits: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{maxPostits}/.test(prompt)) {
+    throw new Error('Missing placeholder ${maxPostits} in prompt');
+  }
+  if (config.maxPostits === undefined) {
+    throw new Error(
+      'maxPostits config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{maxPostits}/g, config.maxPostits.toString());
+};
+
+const replaceMinPostits: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{minPostits}/.test(prompt)) {
+    throw new Error('Missing placeholder ${minPostits} in prompt');
+  }
+  if (config.minPostits === undefined) {
+    throw new Error(
+      'minPostits config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{minPostits}/g, config.minPostits.toString());
+};
+
+const replaceMaxQuestions: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{maxQuestions}/.test(prompt)) {
+    throw new Error('Missing placeholder ${maxQuestions} in prompt');
+  }
+  if (config.maxQuestions === undefined) {
+    throw new Error(
+      'maxQuestions config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{maxQuestions}/g, config.maxQuestions.toString());
+};
+
+const replaceMinQuestions: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{minQuestions}/.test(prompt)) {
+    throw new Error('Missing placeholder ${minQuestions} in prompt');
+  }
+  if (config.minQuestions === undefined) {
+    throw new Error(
+      'minQuestions config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{minQuestions}/g, config.minQuestions.toString());
 };
 
 const composeReplacers = (
@@ -193,8 +245,8 @@ const postitReplacer = composeReplacers(
   replaceCenterCharacter,
   replaceCenterCharacterDescription,
   replaceTags,
-  replaceMaxResults,
-  replaceMinResults,
+  replaceMaxPostits,
+  replaceMinPostits,
 );
 
 const questionReplacer = composeReplacers(
@@ -206,8 +258,8 @@ const questionReplacer = composeReplacers(
   replaceCenterCharacter,
   replaceCenterCharacterDescription,
   replaceMandalaDocument,
-  replaceMaxResults,
-  replaceMinResults,
+  replaceMaxQuestions,
+  replaceMinQuestions,
 );
 
 const comparisonReplacer = composeReplacers(

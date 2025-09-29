@@ -22,6 +22,10 @@ export class AiAdapterUtilsService {
   private readonly logger = new Logger(AiAdapterUtilsService.name);
   private readonly minResults: number;
   private readonly maxResults: number;
+  private readonly minPostits: number;
+  private readonly maxPostits: number;
+  private readonly minQuestions: number;
+  private readonly maxQuestions: number;
   private readonly minProvocations: number;
   private readonly maxProvocations: number;
   constructor(
@@ -33,6 +37,10 @@ export class AiAdapterUtilsService {
     const config = getAiValidationConfig();
     this.minResults = config.minResultsPerRequest;
     this.maxResults = config.maxResultsPerRequest;
+    this.minPostits = config.minPostitsPerRequest;
+    this.maxPostits = config.maxPostitsPerRequest;
+    this.minQuestions = config.minQuestionsPerRequest;
+    this.maxQuestions = config.maxQuestionsPerRequest;
     this.minProvocations = config.minProvocationsPerRequest;
     this.maxProvocations = config.maxProvocationsPerRequest;
   }
@@ -51,6 +59,22 @@ export class AiAdapterUtilsService {
 
   getMaxProvocations(): number {
     return this.maxProvocations;
+  }
+
+  getMinPostits(): number {
+    return this.minPostits;
+  }
+
+  getMaxPostits(): number {
+    return this.maxPostits;
+  }
+
+  getMinQuestions(): number {
+    return this.minQuestions;
+  }
+
+  getMaxQuestions(): number {
+    return this.maxQuestions;
   }
 
   validateConfiguration(modelConfigKey: string): string {

@@ -14,8 +14,8 @@ CONFIGURACIÓN DEL MUNDO:
   • Escalas habilitadas: ${scales}
   • Etiquetas disponibles: ${tags}
 CONFIGURACIÓN DE LA GENERACIÓN:
-  • Cantidad mínima de preguntas: ${minResults}
-  • Cantidad máxima de preguntas: ${maxResults}
+  • Cantidad mínima de preguntas: ${minQuestions}
+  • Cantidad máxima de preguntas: ${maxQuestions}
 
 PROCESAMIENTO DE LA INFORMACIÓN:
   • Lee entrevistas, encuestas, informes y archivos cargados.
