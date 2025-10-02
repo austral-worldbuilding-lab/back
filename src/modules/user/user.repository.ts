@@ -14,6 +14,7 @@ export class UserRepository {
       data: {
         id: createUserDto.firebaseUid,
         username: createUserDto.username,
+        fullName: createUserDto.fullName,
         email: createUserDto.email,
         is_active: createUserDto.is_active,
       },
@@ -33,6 +34,7 @@ export class UserRepository {
         select: {
           id: true,
           username: true,
+          fullName: true,
           email: true,
           is_active: true,
         },
@@ -49,6 +51,7 @@ export class UserRepository {
       select: {
         id: true,
         username: true,
+        fullName: true,
         email: true,
         is_active: true,
       },
@@ -62,6 +65,7 @@ export class UserRepository {
       select: {
         id: true,
         username: true,
+        fullName: true,
         email: true,
         is_active: true,
       },
@@ -75,6 +79,7 @@ export class UserRepository {
       select: {
         id: true,
         username: true,
+        fullName: true,
         email: true,
         is_active: true,
       },

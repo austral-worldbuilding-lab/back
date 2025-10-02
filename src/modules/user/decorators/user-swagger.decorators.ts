@@ -83,3 +83,14 @@ export const ApiDeleteUser = () =>
       description: 'Solo puedes desactivar tu propio perfil.',
     }),
   );
+
+export const ApiGetCurrentUser = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Obtener el usuario autenticado (me)' }),
+    ApiResponse({
+      status: 200,
+      description: 'Devuelve el usuario autenticado',
+      type: UserDto,
+    }),
+    ApiResponse({ status: 401, description: 'Sin autorización.' }),
+  );
