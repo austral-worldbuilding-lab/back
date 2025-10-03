@@ -103,11 +103,13 @@ export class ProjectRepository {
   }
 
   // find wich project generated this provocation
-  private async findGeneratedProjectByProvocation(
-    tx: Prisma.TransactionClient,
+  async findGeneratedProjectByProvocation(
     provocationId: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<Project | null> {
-    const generatedProjectLink = await tx.projectProvocationLink.findFirst({
+    const client = tx || this.prisma;
+    
+    const generatedProjectLink = await client.projectProvocationLink.findFirst({
       where: {
         provocationId,
         role: ProjProvLinkRole.GENERATED,
@@ -314,8 +316,8 @@ export class ProjectRepository {
       } | null;
 
       const parentProject = await this.findGeneratedProjectByProvocation(
-        tx,
         createProjectFromProvocationDto.fromProvocationId,
+        tx,
       );
 
       const projectName = this.buildProvocationProjectName(
@@ -802,6 +804,82 @@ export class ProjectRepository {
         },
       });
     }
+  }
+
+  async copyProjectMembersFromParent(
+    newProjectId: string,
+    parentProjectId: string,
+    executorUserId: string,
+    ownerRoleId: string,
+  ): Promise<void> {
+    const parentMembers = await this.getParentProjectMembers(parentProjectId);
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.copyMembersToNewProject(tx, parentMembers, newProjectId);
+      await this.ensureExecutorIsOwner(
+        tx,
+        executorUserId,
+        newProjectId,
+        ownerRoleId,
+      );
+    });
+  }
+
+  private async getParentProjectMembers(parentProjectId: string) {
+    return this.prisma.userProjectRole.findMany({
+      where: { projectId: parentProjectId },
+      select: {
+        userId: true,
+        roleId: true,
+      },
+    });
+  }
+
+  private async copyMembersToNewProject(
+    tx: Prisma.TransactionClient,
+    members: Array<{ userId: string; roleId: string }>,
+    newProjectId: string,
+  ): Promise<void> {
+    const upsertPromises = members.map((member) =>
+      tx.userProjectRole.upsert({
+        where: {
+          userId_projectId: {
+            userId: member.userId,
+            projectId: newProjectId,
+          },
+        },
+        update: { roleId: member.roleId },
+        create: {
+          userId: member.userId,
+          projectId: newProjectId,
+          roleId: member.roleId,
+        },
+      }),
+    );
+
+    await Promise.all(upsertPromises);
+  }
+
+  private async ensureExecutorIsOwner(
+    tx: Prisma.TransactionClient,
+    executorUserId: string,
+    projectId: string,
+    ownerRoleId: string,
+  ): Promise<void> {
+    await tx.userProjectRole.upsert({
+      where: {
+        userId_projectId: {
+          userId: executorUserId,
+          projectId,
+        },
+      },
+      update: { roleId: ownerRoleId },
+      create: {
+        userId: executorUserId,
+        projectId,
+        roleId: ownerRoleId,
+      },
+    });
   }
 
   async findProjectsByUserAndOrganization(

@@ -144,10 +144,24 @@ export class ProjectService {
         ownerRole.id,
       );
 
-    await this.projectRepository.autoAssignOrganizationMembers(
-      project.id,
-      project.organizationId,
-    );
+    const parentProject =
+      await this.projectRepository.findGeneratedProjectByProvocation(
+        createProjectFromProvocationDto.fromProvocationId,
+      );
+
+    if (parentProject) {
+      await this.projectRepository.copyProjectMembersFromParent(
+        project.id,
+        parentProject.id,
+        userId,
+        ownerRole.id,
+      );
+    } else {
+      await this.projectRepository.autoAssignOrganizationMembers(
+        project.id,
+        project.organizationId,
+      );
+    }
 
     return project;
   }
