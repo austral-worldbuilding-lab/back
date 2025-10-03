@@ -108,7 +108,7 @@ export class ProjectRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Project | null> {
     const client = tx || this.prisma;
-    
+
     const generatedProjectLink = await client.projectProvocationLink.findFirst({
       where: {
         provocationId,
