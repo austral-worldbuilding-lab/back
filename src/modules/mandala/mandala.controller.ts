@@ -9,7 +9,6 @@ import {
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
-import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   Controller,
   Get,
@@ -417,14 +416,12 @@ export class MandalaController {
   @ApiOverlapSummary()
   async createOverlapSummary(
     @Body() overlapDto: CreateOverlappedMandalaDto,
-  ): Promise<
-    MessageResponse<{ mandala: MandalaDto; summaryReport: AiMandalaReport }>
-  > {
+  ): Promise<DataResponse<{ id: string }>> {
     const result = await this.mandalaService.createOverlapSummary(overlapDto);
     return {
-      message:
-        'Mandala superpuesto de resumen comparativo creado correctamente',
-      data: result,
+      data: {
+        id: result.mandala.id,
+      },
     };
   }
 
