@@ -63,8 +63,10 @@ export class ProjectNodeDto extends NodeBaseDto {
   depth?: number;
 
   @ApiPropertyOptional({
-    description: 'Question from the provocation that originated this project (role ORIGIN)',
-    example: '¿Qué pasaría si la universidad creara un espacio dedicado para la celebración de festejos de graduación?',
+    description:
+      'Question from the provocation that originated this project (role ORIGIN)',
+    example:
+      '¿Qué pasaría si la universidad creara un espacio dedicado para la celebración de festejos de graduación?',
     nullable: true,
   })
   originQuestion?: string | null;
