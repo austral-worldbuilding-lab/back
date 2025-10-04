@@ -1003,7 +1003,10 @@ export class ProjectRepository {
       // Obtener todos los descendientes (hijos, nietos, etc.)
       const queue = [highlightProjectId];
       while (queue.length > 0) {
-        const currentId = queue.shift()!;
+        const currentId = queue.shift();
+        if (currentId === undefined) {
+          continue;
+        }
         const children = allProjects.filter(
           (p) => p.parentProjectId === currentId,
         );
