@@ -981,6 +981,28 @@ export class ProjectRepository {
       orderBy: { createdAt: 'asc' },
     });
 
+    // Obtener las provocaciones con rol ORIGIN para todos los proyectos
+    const projectIds = projects.map((p) => p.id);
+    const originProvocations = await this.prisma.projectProvocationLink.findMany({
+      where: {
+        projectId: { in: projectIds },
+        role: ProjProvLinkRole.ORIGIN,
+      },
+      include: {
+        provocation: {
+          select: {
+            question: true,
+          },
+        },
+      },
+    });
+
+    // Crear un mapa de projectId -> question
+    const originQuestionMap = new Map<string, string>();
+    originProvocations.forEach((link) => {
+      originQuestionMap.set(link.projectId, link.provocation.question);
+    });
+
     const projectNodes: ProjectNode[] = projects.map((p) => ({
       id: p.id,
       type: 'project' as const,
@@ -990,6 +1012,7 @@ export class ProjectRepository {
       parentId: p.parentProjectId,
       label: p.name,
       isHighlighted: p.id === highlightProjectId,
+      originQuestion: originQuestionMap.get(p.id) || null,
     }));
 
     const depths = this.searchProjectDepths(projects);

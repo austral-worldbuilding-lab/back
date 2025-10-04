@@ -14,6 +14,7 @@ export interface ProjectNode extends NodeBase {
   description?: string;
   parentId: string | null;
   depth?: number;
+  originQuestion?: string | null;
 }
 
 export interface Edge {
