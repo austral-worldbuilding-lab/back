@@ -1050,7 +1050,7 @@ export class ProjectRepository {
       parentId: p.parentProjectId,
       label: p.name,
       isHighlighted: p.id === highlightProjectId,
-      originQuestion: originQuestionMap.get(p.id) || null,
+      originQuestion: originQuestionMap.get(p.id) ?? null,
     }));
 
     const depths = this.searchProjectDepths(projects);
