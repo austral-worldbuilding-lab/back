@@ -15,6 +15,7 @@ type ProvocationWithProjects = Prisma.ProvocationGetPayload<{
 }>;
 
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
+import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -367,6 +368,70 @@ export class ProjectRepository {
         data: {
           projectId: project.id,
           provocationId: createProjectFromProvocationDto.fromProvocationId,
+          role: ProjProvLinkRole.ORIGIN,
+        },
+      });
+
+      // Create the user role relationship
+      await tx.userProjectRole.create({
+        data: {
+          userId,
+          projectId: project.id,
+          roleId: roleId,
+        },
+      });
+
+      return this.parseToProjectDto(project);
+    });
+  }
+
+  async createFromQuestion(
+    createProjectFromQuestionDto: CreateProjectFromQuestionDto,
+    userId: string,
+    roleId: string,
+  ): Promise<ProjectDto> {
+    return this.prisma.$transaction(async (tx) => {
+      const { question, name, dimensions, scales, organizationId } =
+        createProjectFromQuestionDto;
+
+      // Set configuration values: use provided or use defaults
+      const finalDimensions =
+        dimensions && dimensions.length > 0 ? dimensions : DEFAULT_DIMENSIONS;
+      const finalScales = scales && scales.length > 0 ? scales : DEFAULT_SCALES;
+
+      // Determine project name
+      const projectName = name || question;
+
+      // Create the provocation first (with empty title and description)
+      const provocation = await tx.provocation.create({
+        data: {
+          question,
+          content: {
+            title: '',
+            description: '',
+          },
+        },
+      });
+
+      // Create the project
+      const project = await tx.project.create({
+        data: {
+          name: projectName,
+          description: question,
+          configuration: this.parseToJson({
+            dimensions: finalDimensions,
+            scales: finalScales,
+          }),
+          organizationId,
+          parentProjectId: null, // No parent project
+        },
+      });
+
+      // Create the link with role ORIGIN
+      await tx.projectProvocationLink.create({
+        data: {
+          projectId: project.id,
+          provocationId: provocation.id,
           role: ProjProvLinkRole.ORIGIN,
         },
       });

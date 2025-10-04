@@ -59,6 +59,7 @@ import {
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
+import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -107,7 +108,7 @@ export class ProjectController {
     };
   }
 
-  @Post('from-provocation')
+  @Post('from-provocationId')
   @UseGuards(OrganizationRoleGuard)
   @RequireOrganizationRoles('owner', 'admin')
   @ApiCreateProjectFromProvocation()
@@ -121,6 +122,25 @@ export class ProjectController {
     );
     return {
       message: 'Project created successfully from provocation',
+      data: project,
+    };
+  }
+
+  // Create a provocation and a project from a question
+  @Post('from-provocation')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
+  @ApiCreateProjectFromProvocation()
+  async createFromQuestion(
+    @Body() createProjectFromQuestionDto: CreateProjectFromQuestionDto,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.createFromQuestion(
+      createProjectFromQuestionDto,
+      req.user.id,
+    );
+    return {
+      message: 'Project created successfully from question',
       data: project,
     };
   }
