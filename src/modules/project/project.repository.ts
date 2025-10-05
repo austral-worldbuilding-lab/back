@@ -391,16 +391,27 @@ export class ProjectRepository {
     roleId: string,
   ): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
-      const { question, name, dimensions, scales, organizationId } =
-        createProjectFromQuestionDto;
+      const {
+        question,
+        name,
+        description,
+        dimensions,
+        scales,
+        organizationId,
+      } = createProjectFromQuestionDto;
 
       // Set configuration values: use provided or use defaults
-      const finalDimensions =
-        dimensions && dimensions.length > 0 ? dimensions : DEFAULT_DIMENSIONS;
-      const finalScales = scales && scales.length > 0 ? scales : DEFAULT_SCALES;
+      const { dimensions: finalDimensions, scales: finalScales } =
+        this.setProvocationProjectConfigurationValues(
+          null,
+          dimensions,
+          scales,
+          organizationId,
+        );
 
-      // Determine project name
+      // Determine project namen and description
       const projectName = name || question;
+      const projectDescription = description || question;
 
       // Create the provocation first (with empty title and description)
       const provocation = await tx.provocation.create({
@@ -417,7 +428,7 @@ export class ProjectRepository {
       const project = await tx.project.create({
         data: {
           name: projectName,
-          description: question,
+          description: projectDescription,
           configuration: this.parseToJson({
             dimensions: finalDimensions,
             scales: finalScales,

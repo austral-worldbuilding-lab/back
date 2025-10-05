@@ -41,6 +41,16 @@ export class CreateProjectFromQuestionDto {
   name?: string;
 
   @ApiProperty({
+    description: 'Descripción del proyecto.',
+    example:
+      'Este proyecto busca crear un espacio dedicado para la celebración de festejos de graduación en la universidad, promoviendo la convivencia y el sentido de comunidad entre los estudiantes.',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
     description:
       'Dimensiones del proyecto. Si no se especifican, se usarán las dimensiones por defecto.',
     type: [DimensionDto],

@@ -53,9 +53,10 @@ import {
   ApiGetCachedProvocations,
   ApiCreateProvocation,
   ApiFindAllProvocations,
-  ApiCreateProjectFromProvocation,
+  ApiCreateProjectFromProvocationId,
   ApiGetProjectTimeline,
   ApiGenerateProjectEncyclopedia,
+  ApiCreateProjectFromProvocation,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
@@ -111,7 +112,7 @@ export class ProjectController {
   @Post('from-provocationId')
   @UseGuards(OrganizationRoleGuard)
   @RequireOrganizationRoles('owner', 'admin')
-  @ApiCreateProjectFromProvocation()
+  @ApiCreateProjectFromProvocationId()
   async createFromProvocation(
     @Body() createProjectFromProvocationDto: CreateProjectFromProvocationDto,
     @Req() req: RequestWithUser,
