@@ -966,7 +966,8 @@ export class ProjectRepository {
     organizationId: string,
     highlightProjectId?: string,
   ): Promise<TimelineGraph> {
-    const projects = await this.prisma.project.findMany({
+    // Obtener todos los proyectos de la organización
+    const allProjects = await this.prisma.project.findMany({
       where: {
         organizationId,
         isActive: true,
@@ -981,6 +982,68 @@ export class ProjectRepository {
       orderBy: { createdAt: 'asc' },
     });
 
+    // Si no hay projectId destacado, devolver todos los proyectos
+    let projects = allProjects;
+
+    // Si hay un projectId, filtrar solo los proyectos relacionados
+    if (highlightProjectId) {
+      const projectMap = new Map(allProjects.map((p) => [p.id, p]));
+      const relatedProjectIds = new Set<string>();
+
+      // Agregar el proyecto solicitado
+      relatedProjectIds.add(highlightProjectId);
+
+      // Obtener todos los ancestros (padres, abuelos, etc.)
+      let current = projectMap.get(highlightProjectId);
+      while (current?.parentProjectId) {
+        relatedProjectIds.add(current.parentProjectId);
+        current = projectMap.get(current.parentProjectId);
+      }
+
+      // Obtener todos los descendientes (hijos, nietos, etc.)
+      const queue = [highlightProjectId];
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        if (currentId === undefined) {
+          continue;
+        }
+        const children = allProjects.filter(
+          (p) => p.parentProjectId === currentId,
+        );
+
+        children.forEach((child) => {
+          relatedProjectIds.add(child.id);
+          queue.push(child.id);
+        });
+      }
+
+      // Filtrar solo los proyectos relacionados
+      projects = allProjects.filter((p) => relatedProjectIds.has(p.id));
+    }
+
+    // Obtener las provocaciones con rol ORIGIN para los proyectos filtrados
+    const projectIds = projects.map((p) => p.id);
+    const originProvocations =
+      await this.prisma.projectProvocationLink.findMany({
+        where: {
+          projectId: { in: projectIds },
+          role: ProjProvLinkRole.ORIGIN,
+        },
+        include: {
+          provocation: {
+            select: {
+              question: true,
+            },
+          },
+        },
+      });
+
+    // Crear un mapa de projectId -> question
+    const originQuestionMap = new Map<string, string>();
+    originProvocations.forEach((link) => {
+      originQuestionMap.set(link.projectId, link.provocation.question);
+    });
+
     const projectNodes: ProjectNode[] = projects.map((p) => ({
       id: p.id,
       type: 'project' as const,
@@ -990,6 +1053,7 @@ export class ProjectRepository {
       parentId: p.parentProjectId,
       label: p.name,
       isHighlighted: p.id === highlightProjectId,
+      originQuestion: originQuestionMap.get(p.id) ?? null,
     }));
 
     const depths = this.searchProjectDepths(projects);
