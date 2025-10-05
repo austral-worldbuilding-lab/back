@@ -409,7 +409,7 @@ export class ProjectRepository {
           organizationId,
         );
 
-      // Determine project namen and description
+      // Determine project name and description
       const projectName = name || question;
       const projectDescription = description || question;
 
