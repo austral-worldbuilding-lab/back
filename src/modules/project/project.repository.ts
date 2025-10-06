@@ -429,6 +429,15 @@ export class ProjectRepository {
     return this.parseToProjectDto(project);
   }
 
+  async findProjectWithParent(
+    id: string,
+  ): Promise<{ id: string; parentProjectId: string | null } | null> {
+    return this.prisma.project.findUnique({
+      where: { id },
+      select: { id: true, parentProjectId: true },
+    });
+  }
+
   async remove(id: string): Promise<ProjectDto> {
     const project = await this.prisma.project.update({
       where: { id },
