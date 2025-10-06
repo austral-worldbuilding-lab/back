@@ -1,18 +1,8 @@
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PrismaService } from '@modules/prisma/prisma.service';
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { Prisma, Project, Tag, ProjProvLinkRole } from '@prisma/client';
-
-type ProvocationWithProjects = Prisma.ProvocationGetPayload<{
-  include: {
-    projects: {
-      include: {
-        project: true;
-      };
-    };
-  };
-}>;
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma, Project, ProjProvLinkRole, Tag } from '@prisma/client';
 
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
@@ -27,7 +17,17 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { ProjectConfiguration } from './types/project-configuration.type';
-import { TimelineGraph, ProjectNode, Edge } from './types/timeline.type';
+import { Edge, ProjectNode, TimelineGraph } from './types/timeline.type';
+
+type ProvocationWithProjects = Prisma.ProvocationGetPayload<{
+  include: {
+    projects: {
+      include: {
+        project: true;
+      };
+    };
+  };
+}>;
 
 @Injectable()
 export class ProjectRepository {
@@ -65,6 +65,7 @@ export class ProjectRepository {
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
       organizationId: project.organizationId,
+      rootProjectId: project.rootProjectId,
     };
   }
 
@@ -90,7 +91,7 @@ export class ProjectRepository {
       this.parseToProjectDto(project.project),
     );
 
-    const provocationDto = {
+    return {
       id: provocation.id,
       question: provocation.question,
       title: content?.title,
@@ -100,7 +101,6 @@ export class ProjectRepository {
       updatedAt: provocation.updatedAt,
       projectsOrigin: parsedOriginProjects,
     };
-    return provocationDto;
   }
 
   // find wich project generated this provocation
@@ -267,6 +267,25 @@ export class ProjectRepository {
     roleId: string,
   ): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
+      let rootProjectId: string;
+      if (createProjectDto.parentProjectId) {
+        const parentProject = await tx.project.findUnique({
+          where: { id: createProjectDto.parentProjectId },
+          select: { rootProjectId: true },
+        });
+
+        if (!parentProject) {
+          throw new ResourceNotFoundException(
+            'Project',
+            createProjectDto.parentProjectId,
+          );
+        }
+
+        rootProjectId = parentProject.rootProjectId;
+      } else {
+        rootProjectId = '';
+      }
+
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
@@ -276,8 +295,18 @@ export class ProjectRepository {
             scales: createProjectDto.scales!,
           }),
           organizationId: createProjectDto.organizationId,
+          parentProjectId: createProjectDto.parentProjectId,
+          rootProjectId: rootProjectId || 'temp',
         },
       });
+
+      if (!createProjectDto.parentProjectId) {
+        await tx.project.update({
+          where: { id: project.id },
+          data: { rootProjectId: project.id },
+        });
+        project.rootProjectId = project.id;
+      }
 
       await tx.userProjectRole.create({
         data: {
@@ -351,6 +380,14 @@ export class ProjectRepository {
           createProjectFromProvocationDto.organizationId,
         );
 
+      // Determine rootProjectId
+      let rootProjectId: string;
+      if (parentProject) {
+        rootProjectId = parentProject.rootProjectId;
+      } else {
+        rootProjectId = '';
+      }
+
       // Create the project with data from the provocation
       const project = await tx.project.create({
         data: {
@@ -362,8 +399,17 @@ export class ProjectRepository {
           }),
           organizationId,
           parentProjectId: parentProject?.id,
+          rootProjectId: rootProjectId || 'temp',
         },
       });
+
+      if (!parentProject) {
+        await tx.project.update({
+          where: { id: project.id },
+          data: { rootProjectId: project.id },
+        });
+        project.rootProjectId = project.id;
+      }
 
       // Create the provocation link
       await tx.projectProvocationLink.create({
@@ -437,8 +483,16 @@ export class ProjectRepository {
           }),
           organizationId,
           parentProjectId: null, // No parent project
+          rootProjectId: 'temp', // Temporary value, will be updated
         },
       });
+
+      // Set rootProjectId to its own ID (this is a root project)
+      await tx.project.update({
+        where: { id: project.id },
+        data: { rootProjectId: project.id },
+      });
+      project.rootProjectId = project.id;
 
       // Create the link with role ORIGIN
       await tx.projectProvocationLink.create({
@@ -548,6 +602,20 @@ export class ProjectRepository {
     id: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
+    if (
+      'parentProjectId' in updateProjectDto &&
+      updateProjectDto.parentProjectId !== undefined
+    ) {
+      throw new BadRequestException('Reparenting is not allowed');
+    }
+
+    if (
+      'rootProjectId' in updateProjectDto &&
+      updateProjectDto.rootProjectId !== undefined
+    ) {
+      throw new BadRequestException('rootProjectId is not updatable via API');
+    }
+
     const updateData: {
       name?: string;
       description?: string;
