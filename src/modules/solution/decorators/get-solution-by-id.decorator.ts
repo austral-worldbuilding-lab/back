@@ -10,7 +10,7 @@ export function GetSolutionByIdDecorator() {
       description: 'Returns a specific solution by its ID',
     }),
     ApiParam({
-      name: 'solutionId',
+      name: 'id',
       description: 'ID of the solution',
       type: 'string',
     }),
