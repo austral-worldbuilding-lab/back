@@ -29,6 +29,7 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  ParseBoolPipe,
   UseGuards,
   Patch,
   Req,
@@ -159,9 +160,16 @@ export class ProjectController {
       new MaxValuePipe(100),
     )
     limit: number,
+    @Query('rootOnly', new DefaultValuePipe(false), ParseBoolPipe)
+    rootOnly: boolean,
     @Req() req: RequestWithUser,
   ): Promise<PaginatedResponse<ProjectDto>> {
-    return await this.projectService.findAllPaginated(page, limit, req.user.id);
+    return await this.projectService.findAllPaginated(
+      page,
+      limit,
+      req.user.id,
+      rootOnly,
+    );
   }
 
   @Get(':id')

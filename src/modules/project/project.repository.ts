@@ -520,6 +520,7 @@ export class ProjectRepository {
     skip: number,
     take: number,
     userId: string,
+    rootOnly: boolean = false,
   ): Promise<[ProjectDto[], number]> {
     const whereClause = {
       isActive: true,
@@ -528,7 +529,10 @@ export class ProjectRepository {
           userId: userId,
         },
       },
+      // parentProjectId = null ==> es un root project
+      ...(rootOnly && { parentProjectId: null }),
     };
+
     const [projects, total] = await this.prisma.$transaction([
       this.prisma.project.findMany({
         where: whereClause,

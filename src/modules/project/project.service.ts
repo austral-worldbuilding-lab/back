@@ -201,12 +201,14 @@ export class ProjectService {
     page: number,
     limit: number,
     userId: string,
+    rootOnly: boolean = false,
   ): Promise<PaginatedResponse<ProjectDto>> {
     const skip = (page - 1) * limit;
     const [projects, total] = await this.projectRepository.findAllPaginated(
       skip,
       limit,
       userId,
+      rootOnly,
     );
 
     return {
