@@ -62,7 +62,7 @@ import { AppService } from './app.service';
       throttlers: [
         {
           ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000'),
-          limit: parseInt(process.env.RATE_LIMIT_LIMIT || '1000000'),
+          limit: parseInt(process.env.RATE_LIMIT_LIMIT || '250'),
         },
       ],
     }),
