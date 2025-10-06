@@ -1,5 +1,5 @@
 import { PrismaService } from '@modules/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { Solution, Provocation, ImpactLevel } from '@prisma/client';
 
 import { CreateSolutionDto } from './dto/create-solution.dto';
@@ -14,6 +14,26 @@ export class SolutionRepository {
     createSolutionDto: CreateSolutionDto,
   ): Promise<SolutionDto> {
     const { provocationIds, impact, ...solutionData } = createSolutionDto;
+
+    // Validate provocations exist if provided
+    //TODO: move this to provocations service when available
+    if (provocationIds && provocationIds.length > 0) {
+      const existingProvocations = await this.prisma.provocation.findMany({
+        where: { id: { in: provocationIds } },
+        select: { id: true },
+      });
+
+      if (existingProvocations.length !== provocationIds.length) {
+        const existingIds = existingProvocations.map((p) => p.id);
+        const missingIds = provocationIds.filter(
+          (id) => !existingIds.includes(id),
+        );
+        throw new BadRequestException(
+          `Provocations not found: ${missingIds.join(', ')}`,
+        );
+      }
+    }
+
     const solution = await this.prisma.solution.create({
       data: {
         ...solutionData,
@@ -25,7 +45,7 @@ export class SolutionRepository {
             role: 'GENERATED',
           },
         },
-        provocations: provocationIds
+        provocations: provocationIds?.length
           ? {
               create: provocationIds.map((provocationId) => ({
                 provocationId,
