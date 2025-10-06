@@ -33,6 +33,7 @@ export class AuthService {
         id: true,
         username: true,
         email: true,
+        fullName: true,
         is_active: true,
       },
     });

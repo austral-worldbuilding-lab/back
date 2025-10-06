@@ -24,6 +24,14 @@ export class UserDto {
   username!: string;
 
   @ApiProperty({
+    description: 'Nombre completo del usuario',
+    example: 'John Doe',
+  })
+  @IsString()
+  @IsNotEmpty()
+  fullName!: string;
+
+  @ApiProperty({
     description: 'Correo electrónico del usuario',
     example: 'john.doe@example.com',
   })
