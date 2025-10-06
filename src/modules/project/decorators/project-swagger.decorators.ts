@@ -720,7 +720,7 @@ export const ApiCreateProvocation = () =>
     }),
   );
 
-export const ApiCreateProjectFromProvocation = () =>
+export const ApiCreateProjectFromProvocationId = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Crear proyecto desde provocación',
@@ -786,6 +786,119 @@ export const ApiCreateProjectFromProvocation = () =>
             type: 'string',
             example:
               'Provocation with ID "a1b2c3d4-e5f6-7890-1234-567890abcdef" not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description:
+        'Prohibido - No tiene permisos suficientes en la organización',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiCreateProjectFromProvocation = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear proyecto desde **una nueva** provocación',
+      description:
+        'Crea un nuevo proyecto a partir de **una nueva** provocacion. Si al proyecto no se le pasa un nombre y una descripción explícitas, estos serán la pregunta de la nueva provocacion.',
+    }),
+    ApiBody({
+      description:
+        'Datos para crear el proyecto desde una nueva provocación basada en una pregunta',
+      examples: {
+        'con-nombre-y-descripcion-explicitos': {
+          summary: 'Proyecto con nombre y descripción personalizados',
+          description:
+            'Crear un proyecto con un nombre y descripción específicos basado en una pregunta.',
+          value: {
+            question:
+              '¿Cómo podemos mejorar la experiencia del comedor universitario?',
+            organizationId: 'b2c3d4e5-f6g7-8901-2345-678901bcdefg',
+            name: 'Proyecto Comedor Austral',
+            description:
+              'Este proyecto busca crear un espacio dedicado para mejorar la experiencia del comedor universitario, promoviendo la convivencia y el sentido de comunidad entre los estudiantes.',
+            dimensions: [{ name: 'Recursos', color: '#FF0000' }],
+            scales: ['Persona', 'Comunidad', 'Institución'],
+          },
+        },
+        'solo-con-pregunta': {
+          summary: 'Proyecto usando solo la pregunta (usa defaults)',
+          description:
+            'El nombre y descripción del proyecto serán automáticamente la pregunta proporcionada, y se usarán dimensiones y escalas por defecto.',
+          value: {
+            question:
+              '¿Cómo podemos reducir el desperdicio de alimentos en el campus?',
+            organizationId: 'b2c3d4e5-f6g7-8901-2345-678901bcdefg',
+          },
+        },
+        'con-configuracion-personalizada': {
+          summary: 'Proyecto con configuración personalizada',
+          description:
+            'Usar la pregunta como nombre y descripción, pero con dimensiones y escalas personalizadas.',
+          value: {
+            question:
+              '¿Qué pasaría si la universidad creara un espacio dedicado para la celebración de festejos de graduación?',
+            organizationId: 'b2c3d4e5-f6g7-8901-2345-678901bcdefg',
+            dimensions: [
+              { name: 'Sostenibilidad', color: '#00FF00' },
+              { name: 'Comunidad', color: '#0000FF' },
+            ],
+            scales: ['Individual', 'Comunidad', 'Institución', 'Universidad'],
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Proyecto creado exitosamente desde una nueva provocación',
+      type: ProjectDto,
+    }),
+    ApiBadRequestResponse({
+      description: 'Datos de entrada inválidos',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'array',
+            items: { type: 'string' },
+            examples: [
+              ['Question is required'],
+              ['question should not be empty', 'question must be a string'],
+              [
+                'organizationId must be a UUID',
+                'organizationId should not be empty',
+              ],
+              ['name must be a string'],
+              ['description must be a string'],
+              [
+                'dimensions must be an array',
+                'each value in dimensions must be a valid object',
+              ],
+              [
+                'scales must be an array',
+                'each value in scales must be a string',
+              ],
+            ],
+          },
+          error: { type: 'string', example: 'Bad Request' },
+          statusCode: { type: 'number', example: 400 },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Organización no encontrada',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Organization not found',
           },
           error: { type: 'string', example: 'Not Found' },
           statusCode: { type: 'number', example: 404 },
