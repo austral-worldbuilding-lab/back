@@ -137,6 +137,21 @@ export class ProjectService {
   ): Promise<ProjectDto> {
     const ownerRole = await this.roleService.findOrCreate('owner');
 
+    const parentProject =
+      await this.projectRepository.findGeneratedProjectByProvocation(
+        createProjectFromProvocationDto.fromProvocationId,
+      );
+
+    if (
+      parentProject &&
+      parentProject.organizationId !==
+        createProjectFromProvocationDto.organizationId
+    ) {
+      throw new BadRequestException(
+        `Organization ID must match parent project's organization (${parentProject.organizationId}).`,
+      );
+    }
+
     const project: ProjectDto =
       await this.projectRepository.createFromProvocation(
         createProjectFromProvocationDto,
@@ -144,10 +159,19 @@ export class ProjectService {
         ownerRole.id,
       );
 
-    await this.projectRepository.autoAssignOrganizationMembers(
-      project.id,
-      project.organizationId,
-    );
+    if (parentProject) {
+      await this.projectRepository.copyProjectMembersFromParent(
+        project.id,
+        parentProject.id,
+        userId,
+        ownerRole.id,
+      );
+    } else {
+      await this.projectRepository.autoAssignOrganizationMembers(
+        project.id,
+        project.organizationId,
+      );
+    }
 
     return project;
   }
