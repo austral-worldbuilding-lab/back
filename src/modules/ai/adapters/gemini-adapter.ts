@@ -100,7 +100,7 @@ export class GeminiAdapter implements AiProvider {
     } catch (error) {
       this.logger.error('Failed to upload files to Gemini:', error);
       throw new ExternalServiceException(
-        'Gemini',
+        'Gemini API',
         'Failed to upload files to Gemini',
         error,
       );

@@ -24,7 +24,6 @@ export class AppLogger implements LoggerService {
     reset: '\x1b[0m',
     dim: '\x1b[2m',
     bold: '\x1b[1m',
-    cyan: '\x1b[36m',
   };
 
   constructor(private readonly cls: ClsService) {}
@@ -153,7 +152,7 @@ export class AppLogger implements LoggerService {
     const json = JSON.stringify(obj, null, 2);
 
     return json
-      .replace(/"([^"]+)":/g, `${this.colors.cyan}"$1"${this.colors.reset}:`) // Keys in cyan
+      .replace(/"([^"]+)":/g, `${this.colors.verbose}"$1"${this.colors.reset}:`) // Keys in cyan
       .replace(/: "([^"]*)"/g, `: ${this.colors.reset}"$1"`) // String values
       .replace(/: (\d+\.?\d*)/g, `: ${this.colors.reset}$1`) // Numbers
       .replace(
