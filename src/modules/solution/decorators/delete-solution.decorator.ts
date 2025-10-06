@@ -8,7 +8,7 @@ export function DeleteSolutionDecorator() {
       description: 'Deletes a solution by setting deletedAt and isActive=false',
     }),
     ApiParam({
-      name: 'solutionId',
+      name: 'id',
       description: 'ID of the solution',
       type: 'string',
     }),
