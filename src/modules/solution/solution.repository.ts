@@ -34,6 +34,15 @@ export class SolutionRepository {
       }
     }
 
+    const provocationLinks =
+      provocationIds && provocationIds.length > 0
+        ? {
+            create: provocationIds.map((provocationId) => ({
+              provocationId,
+            })),
+          }
+        : undefined;
+
     const solution = await this.prisma.solution.create({
       data: {
         ...solutionData,
@@ -45,13 +54,7 @@ export class SolutionRepository {
             role: 'GENERATED',
           },
         },
-        provocations: provocationIds?.length
-          ? {
-              create: provocationIds.map((provocationId) => ({
-                provocationId,
-              })),
-            }
-          : undefined,
+        provocations: provocationLinks,
       },
       include: {
         provocations: {
