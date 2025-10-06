@@ -484,8 +484,16 @@ export class ProjectRepository {
           }),
           organizationId,
           parentProjectId: null, // No parent project
+          rootProjectId: 'temp', // Temporary value, will be updated
         },
       });
+
+      // Set rootProjectId to its own ID (this is a root project)
+      await tx.project.update({
+        where: { id: project.id },
+        data: { rootProjectId: project.id },
+      });
+      project.rootProjectId = project.id;
 
       // Create the link with role ORIGIN
       await tx.projectProvocationLink.create({
