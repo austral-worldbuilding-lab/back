@@ -63,4 +63,14 @@ export class CreateProjectDto {
   @IsUUID()
   @IsNotEmpty()
   organizationId!: string;
+
+  @ApiProperty({
+    description:
+      'ID del proyecto padre (solo para proyectos generados desde provocaciones)',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  parentProjectId?: string;
 }
