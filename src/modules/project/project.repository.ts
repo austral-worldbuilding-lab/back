@@ -15,6 +15,7 @@ type ProvocationWithProjects = Prisma.ProvocationGetPayload<{
 }>;
 
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
+import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -109,7 +110,7 @@ export class ProjectRepository {
   ): Promise<Project | null> {
     const client = tx || this.prisma;
 
-    const generatedProjectLink = await client.projectProvocationLink.findFirst({
+    const generatedProjectLink = await client.projProvLink.findFirst({
       where: {
         provocationId,
         role: ProjProvLinkRole.GENERATED,
@@ -365,10 +366,85 @@ export class ProjectRepository {
       });
 
       // Create the provocation link
-      await tx.projectProvocationLink.create({
+      await tx.projProvLink.create({
         data: {
           projectId: project.id,
           provocationId: createProjectFromProvocationDto.fromProvocationId,
+          role: ProjProvLinkRole.ORIGIN,
+        },
+      });
+
+      // Create the user role relationship
+      await tx.userProjectRole.create({
+        data: {
+          userId,
+          projectId: project.id,
+          roleId: roleId,
+        },
+      });
+
+      return this.parseToProjectDto(project);
+    });
+  }
+
+  async createFromQuestion(
+    createProjectFromQuestionDto: CreateProjectFromQuestionDto,
+    userId: string,
+    roleId: string,
+  ): Promise<ProjectDto> {
+    return this.prisma.$transaction(async (tx) => {
+      const {
+        question,
+        name,
+        description,
+        dimensions,
+        scales,
+        organizationId,
+      } = createProjectFromQuestionDto;
+
+      // Set configuration values: use provided or use defaults
+      const { dimensions: finalDimensions, scales: finalScales } =
+        this.setProvocationProjectConfigurationValues(
+          null,
+          dimensions,
+          scales,
+          organizationId,
+        );
+
+      // Determine project name and description
+      const projectName = name || question;
+      const projectDescription = description || question;
+
+      // Create the provocation first (with empty title and description)
+      const provocation = await tx.provocation.create({
+        data: {
+          question,
+          content: {
+            title: '',
+            description: '',
+          },
+        },
+      });
+
+      // Create the project
+      const project = await tx.project.create({
+        data: {
+          name: projectName,
+          description: projectDescription,
+          configuration: this.parseToJson({
+            dimensions: finalDimensions,
+            scales: finalScales,
+          }),
+          organizationId,
+          parentProjectId: null, // No parent project
+        },
+      });
+
+      // Create the link with role ORIGIN
+      await tx.projProvLink.create({
+        data: {
+          projectId: project.id,
+          provocationId: provocation.id,
           role: ProjProvLinkRole.ORIGIN,
         },
       });
@@ -427,6 +503,15 @@ export class ProjectRepository {
     }
 
     return this.parseToProjectDto(project);
+  }
+
+  async findProjectWithParent(
+    id: string,
+  ): Promise<{ id: string; parentProjectId: string | null } | null> {
+    return this.prisma.project.findUnique({
+      where: { id },
+      select: { id: true, parentProjectId: true },
+    });
   }
 
   async remove(id: string): Promise<ProjectDto> {
@@ -924,13 +1009,12 @@ export class ProjectRepository {
     projectId: string,
     createProvocationDto: CreateProvocationDto,
   ): Promise<ProvocationDto> {
-    const existingOriginLink =
-      await this.prisma.projectProvocationLink.findFirst({
-        where: {
-          projectId: projectId,
-          role: ProjProvLinkRole.ORIGIN,
-        },
-      });
+    const existingOriginLink = await this.prisma.projProvLink.findFirst({
+      where: {
+        projectId: projectId,
+        role: ProjProvLinkRole.ORIGIN,
+      },
+    });
 
     const provocation = await this.prisma.provocation.create({
       data: {
@@ -962,7 +1046,7 @@ export class ProjectRepository {
   async findAllProvocationsByProjectId(
     projectId: string,
   ): Promise<ProvocationDto[]> {
-    const provocationLinks = await this.prisma.projectProvocationLink.findMany({
+    const provocationLinks = await this.prisma.projProvLink.findMany({
       where: {
         projectId,
         role: ProjProvLinkRole.GENERATED,
@@ -1101,20 +1185,19 @@ export class ProjectRepository {
 
     // Obtener las provocaciones con rol ORIGIN para los proyectos filtrados
     const projectIds = projects.map((p) => p.id);
-    const originProvocations =
-      await this.prisma.projectProvocationLink.findMany({
-        where: {
-          projectId: { in: projectIds },
-          role: ProjProvLinkRole.ORIGIN,
-        },
-        include: {
-          provocation: {
-            select: {
-              question: true,
-            },
+    const originProvocations = await this.prisma.projProvLink.findMany({
+      where: {
+        projectId: { in: projectIds },
+        role: ProjProvLinkRole.ORIGIN,
+      },
+      include: {
+        provocation: {
+          select: {
+            question: true,
           },
         },
-      });
+      },
+    });
 
     // Crear un mapa de projectId -> question
     const originQuestionMap = new Map<string, string>();

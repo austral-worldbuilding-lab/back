@@ -18,6 +18,7 @@ import { PrismaModule } from '@modules/prisma/prisma.module';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectModule } from '@modules/project/project.module';
 import { RoleModule } from '@modules/role/role.module';
+import { SolutionModule } from '@modules/solution/solution.module';
 import { UserModule } from '@modules/user/user.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
@@ -53,6 +54,7 @@ import { AppService } from './app.service';
     MailModule,
     OrganizationModule,
     HealthModule,
+    SolutionModule,
     CacheModule.register({
       ttl: parseInt(process.env.CACHE_TTL || '7200000'),
       max: parseInt(process.env.CACHE_MAX_ITEMS || '500'),
