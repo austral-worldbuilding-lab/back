@@ -128,7 +128,7 @@ export class MandalaService {
 
     if (mandala.parentIds && mandala.parentIds.length > 0) {
       for (const parentId of mandala.parentIds) {
-        await this.updateParentMandalaDocument(parentId);
+        await this.updateParentMandalaDocument(parentId, mandala.id);
         this.logger.log(
           `Parent mandala ${parentId} document updated for mandala ${mandala.id}`,
         );

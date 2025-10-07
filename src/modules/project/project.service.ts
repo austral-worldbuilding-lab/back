@@ -21,6 +21,7 @@ import {
 } from '@nestjs/common';
 
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
+import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -172,6 +173,26 @@ export class ProjectService {
         project.organizationId,
       );
     }
+
+    return project;
+  }
+
+  async createFromQuestion(
+    createProjectFromQuestionDto: CreateProjectFromQuestionDto,
+    userId: string,
+  ): Promise<ProjectDto> {
+    const ownerRole = await this.roleService.findOrCreate('owner');
+
+    const project: ProjectDto = await this.projectRepository.createFromQuestion(
+      createProjectFromQuestionDto,
+      userId,
+      ownerRole.id,
+    );
+
+    await this.projectRepository.autoAssignOrganizationMembers(
+      project.id,
+      project.organizationId,
+    );
 
     return project;
   }
