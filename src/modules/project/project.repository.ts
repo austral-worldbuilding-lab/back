@@ -441,7 +441,7 @@ export class ProjectRepository {
       });
 
       // Create the link with role ORIGIN
-      await tx.projectProvocationLink.create({
+      await tx.projProvLink.create({
         data: {
           projectId: project.id,
           provocationId: provocation.id,
