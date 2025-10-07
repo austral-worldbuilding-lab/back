@@ -43,7 +43,8 @@ model Project {
   parent          Project?          @relation("ProjParent", fields: [parentProjectId], references: [id], onDelete: SetNull)
   children        Project[]         @relation("ProjParent")
 
-  provocations      ProjectProvocationLink[]
+  provocations      ProjProvLink[]
+  solutions         ProjSolLink[] // only the root project should have solutions
 
   @@index([parentProjectId])
 }
@@ -233,7 +234,8 @@ model Provocation {
   isActive    Boolean  @default(true)
   deletedAt   DateTime?
 
-  projects     ProjectProvocationLink[]
+  projects     ProjProvLink[]
+  solutions    SolProvLink[]
 
   @@index([parentProvocationId])
 }
@@ -244,7 +246,18 @@ enum ProjProvLinkRole {
   REFERENCE
 }
 
-model ProjectProvocationLink {
+enum ImpactLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProjSolLinkRole {
+  GENERATED // PROJECT_GENERATES_SOLUTION
+  REFERENCE
+}
+
+model ProjProvLink {
   id            String      @id @default(uuid())
   projectId     String
   project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -277,4 +290,52 @@ model FileSelection {
   @@index([orgId, projectId, mandalaId])
   @@index([contextPath])
   @@map("file_selections")
+}
+
+model Solution {
+  id         String   @id @default(uuid())
+
+  title       String
+  description String
+  problem     String
+
+  impactLevel ImpactLevel?
+  impactDescription String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  deletedAt   DateTime?
+
+  projects     ProjSolLink[]
+  provocations SolProvLink[]
+}
+
+model ProjSolLink {
+  id            String      @id @default(uuid())
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  solutionId    String
+  solution      Solution    @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  
+  role          ProjSolLinkRole
+  createdAt     DateTime    @default(now())
+
+  @@unique([projectId, solutionId, role])
+  @@index([solutionId, role])
+  @@index([projectId, role])
+}
+
+model SolProvLink {
+  id            String      @id @default(uuid())
+  solutionId    String
+  solution      Solution    @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  provocationId String
+  provocation   Provocation @relation(fields: [provocationId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime    @default(now())
+
+  @@unique([solutionId, provocationId])
+  @@index([solutionId])
+  @@index([provocationId])
 }

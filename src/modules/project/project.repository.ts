@@ -110,7 +110,7 @@ export class ProjectRepository {
   ): Promise<Project | null> {
     const client = tx || this.prisma;
 
-    const generatedProjectLink = await client.projectProvocationLink.findFirst({
+    const generatedProjectLink = await client.projProvLink.findFirst({
       where: {
         provocationId,
         role: ProjProvLinkRole.GENERATED,
@@ -366,7 +366,7 @@ export class ProjectRepository {
       });
 
       // Create the provocation link
-      await tx.projectProvocationLink.create({
+      await tx.projProvLink.create({
         data: {
           projectId: project.id,
           provocationId: createProjectFromProvocationDto.fromProvocationId,
@@ -1000,13 +1000,12 @@ export class ProjectRepository {
     projectId: string,
     createProvocationDto: CreateProvocationDto,
   ): Promise<ProvocationDto> {
-    const existingOriginLink =
-      await this.prisma.projectProvocationLink.findFirst({
-        where: {
-          projectId: projectId,
-          role: ProjProvLinkRole.ORIGIN,
-        },
-      });
+    const existingOriginLink = await this.prisma.projProvLink.findFirst({
+      where: {
+        projectId: projectId,
+        role: ProjProvLinkRole.ORIGIN,
+      },
+    });
 
     const provocation = await this.prisma.provocation.create({
       data: {
@@ -1038,7 +1037,7 @@ export class ProjectRepository {
   async findAllProvocationsByProjectId(
     projectId: string,
   ): Promise<ProvocationDto[]> {
-    const provocationLinks = await this.prisma.projectProvocationLink.findMany({
+    const provocationLinks = await this.prisma.projProvLink.findMany({
       where: {
         projectId,
         role: ProjProvLinkRole.GENERATED,
@@ -1177,20 +1176,19 @@ export class ProjectRepository {
 
     // Obtener las provocaciones con rol ORIGIN para los proyectos filtrados
     const projectIds = projects.map((p) => p.id);
-    const originProvocations =
-      await this.prisma.projectProvocationLink.findMany({
-        where: {
-          projectId: { in: projectIds },
-          role: ProjProvLinkRole.ORIGIN,
-        },
-        include: {
-          provocation: {
-            select: {
-              question: true,
-            },
+    const originProvocations = await this.prisma.projProvLink.findMany({
+      where: {
+        projectId: { in: projectIds },
+        role: ProjProvLinkRole.ORIGIN,
+      },
+      include: {
+        provocation: {
+          select: {
+            question: true,
           },
         },
-      });
+      },
+    });
 
     // Crear un mapa de projectId -> question
     const originQuestionMap = new Map<string, string>();
