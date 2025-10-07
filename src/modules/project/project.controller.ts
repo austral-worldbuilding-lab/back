@@ -354,7 +354,7 @@ export class ProjectController {
 
   @Post(':projectId/provocation')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin')
+  @RequireProjectRoles('member', 'owner', 'admin')
   @ApiCreateProvocation()
   async createProvocation(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
