@@ -65,6 +65,7 @@ export class ProjectRepository {
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
       organizationId: project.organizationId,
+      rootProjectId: project.rootProjectId ?? undefined,
     };
   }
 
@@ -276,8 +277,15 @@ export class ProjectRepository {
             scales: createProjectDto.scales!,
           }),
           organizationId: createProjectDto.organizationId,
+          rootProjectId: 'temp',
         },
       });
+
+      await tx.project.update({
+        where: { id: project.id },
+        data: { rootProjectId: project.id },
+      });
+      project.rootProjectId = project.id;
 
       await tx.userProjectRole.create({
         data: {
@@ -351,6 +359,14 @@ export class ProjectRepository {
           createProjectFromProvocationDto.organizationId,
         );
 
+      // Determine rootProjectId
+      let rootProjectId: string;
+      if (parentProject) {
+        rootProjectId = parentProject.rootProjectId || parentProject.id;
+      } else {
+        rootProjectId = 'temp';
+      }
+
       // Create the project with data from the provocation
       const project = await tx.project.create({
         data: {
@@ -362,8 +378,18 @@ export class ProjectRepository {
           }),
           organizationId,
           parentProjectId: parentProject?.id,
+          rootProjectId: rootProjectId,
         },
       });
+
+      // If no parent project, set rootProjectId to its own ID
+      if (!parentProject) {
+        await tx.project.update({
+          where: { id: project.id },
+          data: { rootProjectId: project.id },
+        });
+        project.rootProjectId = project.id;
+      }
 
       // Create the provocation link
       await tx.projProvLink.create({
@@ -437,8 +463,16 @@ export class ProjectRepository {
           }),
           organizationId,
           parentProjectId: null, // No parent project
+          rootProjectId: 'temp',
         },
       });
+
+      // Set rootProjectId to its own ID (this is a root project)
+      await tx.project.update({
+        where: { id: project.id },
+        data: { rootProjectId: project.id },
+      });
+      project.rootProjectId = project.id;
 
       // Create the link with role ORIGIN
       await tx.projProvLink.create({
@@ -557,6 +591,21 @@ export class ProjectRepository {
     id: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
+    // Check for reparenting attempts
+    if (
+      'parentProjectId' in updateProjectDto &&
+      updateProjectDto.parentProjectId !== undefined
+    ) {
+      throw new BadRequestException('Reparenting is not allowed');
+    }
+
+    if (
+      'rootProjectId' in updateProjectDto &&
+      updateProjectDto.rootProjectId !== undefined
+    ) {
+      throw new BadRequestException('rootProjectId is not updatable via API');
+    }
+
     const updateData: {
       name?: string;
       description?: string;

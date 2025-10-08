@@ -42,11 +42,15 @@ model Project {
   parentProjectId String?
   parent          Project?          @relation("ProjParent", fields: [parentProjectId], references: [id], onDelete: SetNull)
   children        Project[]         @relation("ProjParent")
+  rootProjectId   String?
+  rootProject     Project?          @relation("ProjRoot", fields: [rootProjectId], references: [id], onDelete: SetNull)
+  rootChildren    Project[]         @relation("ProjRoot")
 
   provocations      ProjProvLink[]
   solutions         ProjSolLink[] // only the root project should have solutions
 
   @@index([parentProjectId])
+  @@index([rootProjectId])
 }
 
 model Role {
