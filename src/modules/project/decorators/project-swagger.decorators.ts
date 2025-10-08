@@ -48,6 +48,12 @@ export const ApiGetAllProjects = () =>
       type: Number,
       example: 10,
     }),
+    ApiQuery({
+      name: 'rootOnly',
+      description:
+        'Si es true, retorna solo proyectos raíz (rootProjectId = id)',
+      type: Boolean,
+    }),
     ApiResponse({
       status: 200,
       description: 'Retorna una lista paginada de proyectos',

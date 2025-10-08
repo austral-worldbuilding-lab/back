@@ -1,18 +1,8 @@
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { PrismaService } from '@modules/prisma/prisma.service';
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { Prisma, Project, Tag, ProjProvLinkRole } from '@prisma/client';
-
-type ProvocationWithProjects = Prisma.ProvocationGetPayload<{
-  include: {
-    projects: {
-      include: {
-        project: true;
-      };
-    };
-  };
-}>;
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma, Project, ProjProvLinkRole, Tag } from '@prisma/client';
 
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
@@ -27,7 +17,17 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
 import { DEFAULT_DIMENSIONS, DEFAULT_SCALES } from './resources/default-values';
 import { ProjectConfiguration } from './types/project-configuration.type';
-import { TimelineGraph, ProjectNode, Edge } from './types/timeline.type';
+import { Edge, ProjectNode, TimelineGraph } from './types/timeline.type';
+
+type ProvocationWithProjects = Prisma.ProvocationGetPayload<{
+  include: {
+    projects: {
+      include: {
+        project: true;
+      };
+    };
+  };
+}>;
 
 @Injectable()
 export class ProjectRepository {
@@ -36,14 +36,24 @@ export class ProjectRepository {
   private parseToProjectConfiguration(
     config: Prisma.JsonValue,
   ): ProjectConfiguration {
+    if (!config || typeof config !== 'object') {
+      return {
+        dimensions: [],
+        scales: [],
+      };
+    }
+
     const parsedConfig = config as unknown as ProjectConfiguration;
 
+    const dimensions = parsedConfig?.dimensions || [];
+    const scales = parsedConfig?.scales || [];
+
     return {
-      dimensions: parsedConfig.dimensions.map((dim) => ({
-        name: dim.name,
-        color: dim.color,
+      dimensions: dimensions.map((dim) => ({
+        name: dim?.name || 'Sin nombre',
+        color: dim?.color || '#000000',
       })),
-      scales: parsedConfig.scales,
+      scales: scales,
     };
   }
 
@@ -91,7 +101,7 @@ export class ProjectRepository {
       this.parseToProjectDto(project.project),
     );
 
-    const provocationDto = {
+    return {
       id: provocation.id,
       question: provocation.question,
       title: content?.title,
@@ -101,7 +111,6 @@ export class ProjectRepository {
       updatedAt: provocation.updatedAt,
       projectsOrigin: parsedOriginProjects,
     };
-    return provocationDto;
   }
 
   // find wich project generated this provocation
@@ -277,7 +286,6 @@ export class ProjectRepository {
             scales: createProjectDto.scales!,
           }),
           organizationId: createProjectDto.organizationId,
-          rootProjectId: 'temp',
         },
       });
 
@@ -500,8 +508,9 @@ export class ProjectRepository {
     skip: number,
     take: number,
     userId: string,
+    rootOnly: boolean = false,
   ): Promise<[ProjectDto[], number]> {
-    const whereClause = {
+    const whereClause: Prisma.ProjectWhereInput = {
       isActive: true,
       userRoles: {
         some: {
@@ -509,6 +518,13 @@ export class ProjectRepository {
         },
       },
     };
+
+    if (rootOnly) {
+      whereClause.rootProjectId = {
+        not: null,
+      };
+    }
+
     const [projects, total] = await this.prisma.$transaction([
       this.prisma.project.findMany({
         where: whereClause,
@@ -521,7 +537,14 @@ export class ProjectRepository {
       }),
     ]);
 
-    return [projects.map((project) => this.parseToProjectDto(project)), total];
+    const filteredProjects = rootOnly
+      ? projects.filter((project) => project.rootProjectId === project.id)
+      : projects;
+
+    return [
+      filteredProjects.map((project) => this.parseToProjectDto(project)),
+      total,
+    ];
   }
 
   async findOne(id: string): Promise<ProjectDto | null> {
