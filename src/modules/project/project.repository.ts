@@ -277,11 +277,10 @@ export class ProjectRepository {
             scales: createProjectDto.scales!,
           }),
           organizationId: createProjectDto.organizationId,
-          rootProjectId: 'temp', // Temporary value, will be updated
+          rootProjectId: 'temp',
         },
       });
 
-      // Set rootProjectId to its own ID (this is a root project)
       await tx.project.update({
         where: { id: project.id },
         data: { rootProjectId: project.id },
@@ -363,10 +362,9 @@ export class ProjectRepository {
       // Determine rootProjectId
       let rootProjectId: string;
       if (parentProject) {
-        // If parent has rootProjectId, use it; otherwise use parent's id
         rootProjectId = parentProject.rootProjectId || parentProject.id;
       } else {
-        rootProjectId = 'temp'; // Will be updated to project.id after creation
+        rootProjectId = 'temp';
       }
 
       // Create the project with data from the provocation
@@ -465,7 +463,7 @@ export class ProjectRepository {
           }),
           organizationId,
           parentProjectId: null, // No parent project
-          rootProjectId: 'temp', // Temporary value, will be updated
+          rootProjectId: 'temp',
         },
       });
 
@@ -601,7 +599,6 @@ export class ProjectRepository {
       throw new BadRequestException('Reparenting is not allowed');
     }
 
-    // Check for rootProjectId update attempts
     if (
       'rootProjectId' in updateProjectDto &&
       updateProjectDto.rootProjectId !== undefined
