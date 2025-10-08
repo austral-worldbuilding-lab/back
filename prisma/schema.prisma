@@ -12,37 +12,42 @@ model User {
   id                     String                   @id @default(uuid())
   username               String                   @unique
   email                  String                   @unique
-  is_active              Boolean                  @default(true)
   fullName               String
-  AiUsage                AiUsage[]
-  Invitation             Invitation[]
-  OrganizationInvitation OrganizationInvitation[]
-  organizationRoles      UserOrganizationRole[]
+  is_active              Boolean                  @default(true)
   projectRoles           UserProjectRole[]
+  Invitation             Invitation[]
+  organizationRoles      UserOrganizationRole[]
+  OrganizationInvitation OrganizationInvitation[]
+  AiUsage                AiUsage[]
 }
 
 model Project {
-  id              String                   @id @default(uuid())
-  name            String
-  createdAt       DateTime                 @default(now())
-  configuration   Json
-  deletedAt       DateTime?
-  isActive        Boolean                  @default(true)
-  organizationId  String
-  description     String?
+  id            String            @id @default(uuid())
+  name          String
+  description   String?
+  configuration Json // Contains dimensions[] and scales[]
+  createdAt     DateTime          @default(now())
+  isActive      Boolean           @default(true)
+  deletedAt     DateTime?
+  userRoles     UserProjectRole[] @relation("ProjectToUserRoles")
+  mandalas      Mandala[]         @relation("ProjectToMandalas")
+  Invitation    Invitation[]      @relation("ProjectToInvitations")
+  tags          Tag[]
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  AiUsage        AiUsage[]
+
+  // project hierarchy useful for timeline
   parentProjectId String?
-  rootProjectId   String
-  AiUsage         AiUsage[]
-  Invitation      Invitation[]             @relation("ProjectToInvitations")
-  mandalas        Mandala[]                @relation("ProjectToMandalas")
-  organization    Organization             @relation(fields: [organizationId], references: [id])
-  parent          Project?                 @relation("ProjParent", fields: [parentProjectId], references: [id])
-  children        Project[]                @relation("ProjParent")
-  rootProject     Project                  @relation("ProjRoot", fields: [rootProjectId], references: [id], onDelete: Cascade)
-  rootChildren    Project[]                @relation("ProjRoot")
-  provocations    ProjectProvocationLink[]
-  tags            Tag[]
-  userRoles       UserProjectRole[]        @relation("ProjectToUserRoles")
+  parent          Project?          @relation("ProjParent", fields: [parentProjectId], references: [id], onDelete: SetNull)
+  children        Project[]         @relation("ProjParent")
+  rootProjectId   String?
+  rootProject     Project?          @relation("ProjRoot", fields: [rootProjectId], references: [id], onDelete: SetNull)
+  rootChildren    Project[]         @relation("ProjRoot")
+
+  provocations      ProjProvLink[]
+  solutions         ProjSolLink[] // only the root project should have solutions
 
   @@index([parentProjectId])
   @@index([rootProjectId])
@@ -51,22 +56,22 @@ model Project {
 model Role {
   id                      String                   @id @default(uuid())
   name                    String                   @unique
+  userRoles               UserProjectRole[]
+  organizationRoles       UserOrganizationRole[]
   invitations             Invitation[]
   organizationInvitations OrganizationInvitation[]
-  organizationRoles       UserOrganizationRole[]
-  userRoles               UserProjectRole[]
 }
 
 model UserProjectRole {
   id        String  @id @default(uuid())
-  userId    String
-  projectId String
-  roleId    String
-  project   Project @relation("ProjectToUserRoles", fields: [projectId], references: [id], onDelete: Cascade)
-  role      Role    @relation(fields: [roleId], references: [id])
   user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  project   Project @relation("ProjectToUserRoles", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  role      Role    @relation(fields: [roleId], references: [id])
+  roleId    String
 
-  @@unique([userId, projectId])
+  @@unique([userId, projectId]) // This allows for a user to have multiple roles in project
 }
 
 model Mandala {
@@ -88,146 +93,24 @@ model Mandala {
 model Invitation {
   id          String           @id @default(uuid())
   email       String?
-  status      InvitationStatus @default(PENDING)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  projectId   String
-  invitedById String
-  expiresAt   DateTime
-  roleId      String?
   token       String           @unique
   inviteToken String?          @unique
-  invitedBy   User             @relation(fields: [invitedById], references: [id])
-  project     Project          @relation("ProjectToInvitations", fields: [projectId], references: [id], onDelete: Cascade)
-  role        Role?            @relation(fields: [roleId], references: [id])
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  project   Project @relation("ProjectToInvitations", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+  invitedById String
+
+  role   Role?   @relation(fields: [roleId], references: [id])
+  roleId String?
 
   @@unique([email, projectId])
   @@index([inviteToken])
-}
-
-model Tag {
-  id        String    @id @default(uuid())
-  name      String
-  color     String    @default(dbgenerated("('#'::text || lpad(to_hex(((random() * (16777215)::double precision))::integer), 6, '0'::text))"))
-  projectId String
-  deletedAt DateTime?
-  isActive  Boolean   @default(true)
-  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([name, projectId, isActive])
-}
-
-model Organization {
-  id                      String                   @id @default(uuid())
-  name                    String
-  createdAt               DateTime                 @default(now())
-  isActive                Boolean                  @default(true)
-  deletedAt               DateTime?
-  AiUsage                 AiUsage[]
-  organizationInvitations OrganizationInvitation[] @relation("OrganizationToInvitations")
-  projects                Project[]
-  userRoles               UserOrganizationRole[]
-}
-
-model UserOrganizationRole {
-  id             String       @id @default(uuid())
-  userId         String
-  organizationId String
-  roleId         String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  role           Role         @relation(fields: [roleId], references: [id])
-  user           User         @relation(fields: [userId], references: [id])
-
-  @@unique([userId, organizationId])
-}
-
-model OrganizationInvitation {
-  id             String           @id @default(uuid())
-  email          String?
-  token          String           @unique
-  inviteToken    String?          @unique
-  status         InvitationStatus @default(PENDING)
-  expiresAt      DateTime
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  organizationId String
-  invitedById    String
-  roleId         String?
-  invitedBy      User             @relation(fields: [invitedById], references: [id])
-  organization   Organization     @relation("OrganizationToInvitations", fields: [organizationId], references: [id], onDelete: Cascade)
-  role           Role?            @relation(fields: [roleId], references: [id])
-
-  @@unique([email, organizationId])
-  @@index([inviteToken])
-}
-
-model AiUsage {
-  id             String        @id @default(uuid())
-  timestamp      DateTime      @default(now())
-  service        AiService
-  model          AiModel
-  userId         String
-  quantity       Int
-  organizationId String?
-  projectId      String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  project        Project?      @relation(fields: [projectId], references: [id])
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, timestamp])
-  @@index([service, timestamp])
-  @@index([model, timestamp])
-  @@index([projectId, timestamp])
-  @@index([organizationId, timestamp])
-}
-
-model Provocation {
-  id                  String                   @id @default(uuid())
-  parentProvocationId String?
-  question            String
-  content             Json?
-  createdAt           DateTime                 @default(now())
-  updatedAt           DateTime                 @updatedAt
-  isActive            Boolean                  @default(true)
-  deletedAt           DateTime?
-  projects            ProjectProvocationLink[]
-  parent              Provocation?             @relation("ProvParent", fields: [parentProvocationId], references: [id])
-  children            Provocation[]            @relation("ProvParent")
-
-  @@index([parentProvocationId])
-}
-
-model ProjectProvocationLink {
-  id            String           @id @default(uuid())
-  projectId     String
-  provocationId String
-  role          ProjProvLinkRole
-  createdAt     DateTime         @default(now())
-  project       Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  provocation   Provocation      @relation(fields: [provocationId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, provocationId, role])
-  @@index([provocationId, role])
-  @@index([projectId, role])
-}
-
-model FileSelection {
-  id          String   @id @default(uuid())
-  orgId       String
-  projectId   String?
-  mandalaId   String?
-  fileName    String
-  selected    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  contextPath String
-
-  @@unique([contextPath, fileName])
-  @@index([orgId])
-  @@index([orgId, projectId])
-  @@index([orgId, projectId, mandalaId])
-  @@index([contextPath])
-  @@map("file_selections")
 }
 
 enum InvitationStatus {
@@ -243,6 +126,66 @@ enum MandalaType {
   OVERLAP_SUMMARY
 }
 
+model Tag {
+  id        String    @id @default(uuid())
+  name      String
+  color     String    @default(dbgenerated("'#' || lpad(to_hex((random() * 16777215)::int), 6, '0')"))
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+
+  @@unique([name, projectId, isActive])
+}
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+
+  projects                Project[]
+  userRoles               UserOrganizationRole[]
+  organizationInvitations OrganizationInvitation[] @relation("OrganizationToInvitations")
+  AiUsage                 AiUsage[]
+}
+
+model UserOrganizationRole {
+  id             String       @id @default(uuid())
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  role           Role         @relation(fields: [roleId], references: [id])
+  roleId         String
+
+  @@unique([userId, organizationId])
+}
+
+model OrganizationInvitation {
+  id          String           @id @default(uuid())
+  email       String?
+  token       String           @unique
+  inviteToken String?          @unique
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  organization   Organization @relation("OrganizationToInvitations", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+  invitedById String // quien manda la invitación
+
+  role   Role?   @relation(fields: [roleId], references: [id])
+  roleId String? // rol que tendrá el usuario invitado
+
+  @@unique([email, organizationId])
+  @@index([inviteToken])
+}
+
 enum AiService {
   GENERATE_POSTITS
   GENERATE_QUESTIONS
@@ -255,8 +198,148 @@ enum AiModel {
   GEMINI_25_FLASH
 }
 
+model AiUsage {
+  id        String   @id @default(uuid())
+  timestamp DateTime @default(now())
+
+  service AiService
+  model   AiModel
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  quantity Int // tokens consumed
+
+  @@index([userId, timestamp])
+  @@index([service, timestamp])
+  @@index([model, timestamp])
+  @@index([projectId, timestamp])
+  @@index([organizationId, timestamp])
+}
+
+model Provocation {
+  id         String   @id @default(uuid())
+
+  parentProvocationId String?
+  parent      Provocation?  @relation("ProvParent", fields: [parentProvocationId], references: [id], onDelete: SetNull)
+  children    Provocation[] @relation("ProvParent")
+
+  question    String
+  content     Json?         // title, description
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  deletedAt   DateTime?
+
+  projects     ProjProvLink[]
+  solutions    SolProvLink[]
+
+  @@index([parentProvocationId])
+}
+
 enum ProjProvLinkRole {
-  ORIGIN
-  GENERATED
+  ORIGIN // PROVOCATION_ORIGINATES_PROJECT
+  GENERATED // PROJECT_GENERATES_PROVOCATION
   REFERENCE
+}
+
+enum ImpactLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProjSolLinkRole {
+  GENERATED // PROJECT_GENERATES_SOLUTION
+  REFERENCE
+}
+
+model ProjProvLink {
+  id            String      @id @default(uuid())
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  provocationId String
+  provocation   Provocation @relation(fields: [provocationId], references: [id], onDelete: Cascade)
+  
+  role          ProjProvLinkRole
+  createdAt     DateTime    @default(now())
+
+  @@unique([projectId, provocationId, role])
+  @@index([provocationId, role])
+  @@index([projectId, role])
+}
+
+model FileSelection {
+  id          String   @id @default(uuid())
+  contextPath String   // /org/orgId/project/projectId/mandala/mandalaId
+  fileName    String
+  selected    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orgId     String
+  projectId String?
+  mandalaId String?
+
+  @@unique([contextPath, fileName])
+  @@index([orgId])
+  @@index([orgId, projectId])
+  @@index([orgId, projectId, mandalaId])
+  @@index([contextPath])
+  @@map("file_selections")
+}
+
+model Solution {
+  id         String   @id @default(uuid())
+
+  title       String
+  description String
+  problem     String
+
+  impactLevel ImpactLevel?
+  impactDescription String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  deletedAt   DateTime?
+
+  projects     ProjSolLink[]
+  provocations SolProvLink[]
+}
+
+model ProjSolLink {
+  id            String      @id @default(uuid())
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  solutionId    String
+  solution      Solution    @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  
+  role          ProjSolLinkRole
+  createdAt     DateTime    @default(now())
+
+  @@unique([projectId, solutionId, role])
+  @@index([solutionId, role])
+  @@index([projectId, role])
+}
+
+model SolProvLink {
+  id            String      @id @default(uuid())
+  solutionId    String
+  solution      Solution    @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  provocationId String
+  provocation   Provocation @relation(fields: [provocationId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime    @default(now())
+
+  @@unique([solutionId, provocationId])
+  @@index([solutionId])
+  @@index([provocationId])
 }

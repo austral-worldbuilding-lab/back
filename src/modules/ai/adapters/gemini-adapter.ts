@@ -1,3 +1,4 @@
+import { ExternalServiceException } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
@@ -70,31 +71,40 @@ export class GeminiAdapter implements AiProvider {
   ): Promise<GeminiUploadedFile[]> {
     this.logger.debug(`Uploading ${fileBuffers.length} files to Gemini...`);
 
-    const uploadedFiles = await Promise.all(
-      fileBuffers.map(async (fileBuffer) => {
-        const blob = new Blob([fileBuffer.buffer], {
-          type: fileBuffer.mimeType,
-        });
+    try {
+      const uploadedFiles = await Promise.all(
+        fileBuffers.map(async (fileBuffer) => {
+          const blob = new Blob([fileBuffer.buffer], {
+            type: fileBuffer.mimeType,
+          });
 
-        const file = await this.ai.files.upload({
-          file: blob,
-          config: {
-            mimeType: fileBuffer.mimeType,
-            displayName: fileBuffer.fileName,
-          },
-        });
+          const file = await this.ai.files.upload({
+            file: blob,
+            config: {
+              mimeType: fileBuffer.mimeType,
+              displayName: fileBuffer.fileName,
+            },
+          });
 
-        return {
-          uri: file.uri,
-          mimeType: file.mimeType,
-        } as GeminiUploadedFile;
-      }),
-    );
+          return {
+            uri: file.uri,
+            mimeType: file.mimeType,
+          } as GeminiUploadedFile;
+        }),
+      );
 
-    this.logger.log(
-      `Successfully uploaded ${uploadedFiles.length} files to Gemini`,
-    );
-    return uploadedFiles;
+      this.logger.log(
+        `Successfully uploaded ${uploadedFiles.length} files to Gemini`,
+      );
+      return uploadedFiles;
+    } catch (error) {
+      this.logger.error('Failed to upload files to Gemini:', error);
+      throw new ExternalServiceException(
+        'Gemini API',
+        'Failed to upload files to Gemini',
+        error,
+      );
+    }
   }
 
   private parseUsageMetadata(usageMetadata: GeminiUsageMetadata): AiUsageInfo {
@@ -112,43 +122,69 @@ export class GeminiAdapter implements AiProvider {
     responseSchema: unknown,
     promptTask?: string,
   ): Promise<{ text: string | undefined; usage: AiUsageInfo }> {
-    this.logger.debug('Preparing Gemini API request...');
+    const startTime = Date.now();
 
-    const config = {
-      responseMimeType: 'application/json',
-      responseSchema: responseSchema,
-      systemInstruction: systemInstruction,
-    };
-
-    const contents = geminiFiles.map((file: GeminiUploadedFile) => ({
-      role: 'user',
-      content: promptTask,
-      parts: [
-        {
-          fileData: {
-            fileUri: file.uri,
-            mimeType: file.mimeType,
-          },
-        },
-      ],
-    }));
-
-    this.logger.log('Sending request to Gemini API...');
-
-    const response = await this.ai.models.generateContent({
+    this.logger.log('Sending request to Gemini API', {
       model,
-      config,
-      contents,
+      fileCount: geminiFiles.length,
+      hasPromptTask: !!promptTask,
     });
 
-    this.logger.log('Generation completed successfully');
+    try {
+      const config = {
+        responseMimeType: 'application/json',
+        responseSchema: responseSchema,
+        systemInstruction: systemInstruction,
+      };
 
-    const usage = this.parseUsageMetadata(response.usageMetadata || {});
-    this.logger.debug('Usage metadata', response.usageMetadata);
-    this.logger.debug('Parsed usage info', usage);
-    this.logger.debug('Response text', response.text);
+      const contents = geminiFiles.map((file: GeminiUploadedFile) => ({
+        role: 'user',
+        content: promptTask,
+        parts: [
+          {
+            fileData: {
+              fileUri: file.uri,
+              mimeType: file.mimeType,
+            },
+          },
+        ],
+      }));
 
-    return { text: response.text, usage };
+      const response = await this.ai.models.generateContent({
+        model,
+        config,
+        contents,
+      });
+
+      const duration = Date.now() - startTime;
+      const usage = this.parseUsageMetadata(response.usageMetadata || {});
+
+      this.logger.log('Gemini API request completed successfully', {
+        model,
+        duration,
+        totalTokens: usage.totalTokens,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+      });
+
+      this.logger.debug('Response details', {
+        responseLength: response.text?.length || 0,
+        usageMetadata: response.usageMetadata,
+      });
+
+      return { text: response.text, usage };
+    } catch (error) {
+      const duration = Date.now() - startTime;
+
+      this.logger.error('Gemini API request failed', error, {
+        model,
+        duration,
+        fileCount: geminiFiles.length,
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
+
+      throw this.handleGeminiError(error);
+    }
   }
 
   async generatePostits(
@@ -631,5 +667,70 @@ export class GeminiAdapter implements AiProvider {
     return {
       encyclopedia: responseText,
     };
+  }
+
+  private handleGeminiError(error: unknown): Error {
+    if (!(error instanceof Error)) {
+      return new ExternalServiceException(
+        'Gemini API',
+        'Unknown error occurred',
+        error,
+      );
+    }
+
+    const message = error.message.toLowerCase();
+
+    // Service unavailable, rate limit, timeout, network errors
+    if (
+      message.includes('503') ||
+      message.includes('service unavailable') ||
+      message.includes('rate limit') ||
+      message.includes('quota') ||
+      message.includes('timeout') ||
+      message.includes('econnrefused') ||
+      message.includes('enotfound') ||
+      message.includes('network') ||
+      message.includes('fetch failed')
+    ) {
+      return new ExternalServiceException(
+        'Gemini API',
+        'Gemini service is temporarily unavailable. Please try again later.',
+        error,
+      );
+    }
+
+    // Bad request / validation errors
+    if (
+      message.includes('400') ||
+      message.includes('invalid') ||
+      message.includes('bad request')
+    ) {
+      return new AiValidationException([
+        'Invalid request to Gemini API: ' + error.message,
+      ]);
+    }
+
+    // Authentication errors
+    if (
+      message.includes('401') ||
+      message.includes('403') ||
+      message.includes('unauthorized') ||
+      message.includes('forbidden') ||
+      message.includes('api key')
+    ) {
+      this.logger.error('Gemini API authentication failed', error);
+      return new ExternalServiceException(
+        'Gemini API',
+        'Authentication failed with Gemini API. Please check your API key.',
+        error,
+      );
+    }
+
+    // Default: treat as external service error (503)
+    return new ExternalServiceException(
+      'Gemini API',
+      'Failed to communicate with Gemini API: ' + error.message,
+      error,
+    );
   }
 }

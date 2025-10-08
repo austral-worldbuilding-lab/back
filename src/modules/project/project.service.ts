@@ -454,4 +454,10 @@ export class ProjectService {
       projectId,
     );
   }
+
+  async isRoot(projectId: string): Promise<boolean> {
+    const project =
+      await this.projectRepository.findProjectWithParent(projectId);
+    return project?.parentProjectId === null;
+  }
 }

@@ -99,7 +99,6 @@ export class FileSelectionRepository {
       selectionMap.set(selection.fileName, selection.selected);
     });
 
-    this.logger.debug(`Retrieved ${selections.length} file selections`);
     return selectionMap;
   }
 

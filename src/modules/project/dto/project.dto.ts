@@ -61,7 +61,9 @@ export class ProjectDto {
   @ApiProperty({
     description: 'ID del proyecto raíz en la jerarquía',
     example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    required: false,
   })
   @IsUUID()
-  rootProjectId!: string;
+  @IsOptional()
+  rootProjectId?: string;
 }

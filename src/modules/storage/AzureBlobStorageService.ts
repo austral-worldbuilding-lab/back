@@ -46,6 +46,12 @@ export class AzureBlobStorageService implements StorageService {
     );
     const urls: PresignedUrl[] = [];
     const prefix = buildPrefix(scope, folderName);
+    this.logger.log('Generating presigned URLs', {
+      scope,
+      folderName,
+      prefix,
+      fileCount: files.length,
+    });
 
     for (const file of files) {
       const blobName = `${prefix}${file.file_name}`;
@@ -177,6 +183,7 @@ export class AzureBlobStorageService implements StorageService {
     const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
 
+    this.logger.log('Deleting blob', { blobName });
     try {
       await blobClient.delete();
     } catch (rawError: unknown) {
