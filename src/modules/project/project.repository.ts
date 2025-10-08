@@ -36,14 +36,24 @@ export class ProjectRepository {
   private parseToProjectConfiguration(
     config: Prisma.JsonValue,
   ): ProjectConfiguration {
+    if (!config || typeof config !== 'object') {
+      return {
+        dimensions: [],
+        scales: [],
+      };
+    }
+
     const parsedConfig = config as unknown as ProjectConfiguration;
 
+    const dimensions = parsedConfig?.dimensions || [];
+    const scales = parsedConfig?.scales || [];
+
     return {
-      dimensions: parsedConfig.dimensions.map((dim) => ({
-        name: dim.name,
-        color: dim.color,
+      dimensions: dimensions.map((dim) => ({
+        name: dim?.name || 'Sin nombre',
+        color: dim?.color || '#000000',
       })),
-      scales: parsedConfig.scales,
+      scales: scales,
     };
   }
 
@@ -276,7 +286,6 @@ export class ProjectRepository {
             scales: createProjectDto.scales!,
           }),
           organizationId: createProjectDto.organizationId,
-          rootProjectId: 'temp',
         },
       });
 
