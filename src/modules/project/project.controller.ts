@@ -74,12 +74,12 @@ import { TimelineGraphDto } from './dto/timeline.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
-import { ProjectConfiguration } from './types/project-configuration.type';
 import {
   ProjectRoleGuard,
   RequireProjectRoles,
 } from './guards/project-role.guard';
 import { ProjectService } from './project.service';
+import { ProjectConfiguration } from './types/project-configuration.type';
 import { AiProvocationResponse } from './types/provocations.type';
 
 @ApiTags('Projects')
