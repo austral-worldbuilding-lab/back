@@ -82,7 +82,8 @@ export const ApiGetProjectConfiguration = () =>
     ApiParam({ name: 'id', description: 'ID del proyecto', type: String }),
     ApiResponse({
       status: 200,
-      description: 'Retorna la configuración del proyecto (dimensiones y escalas)',
+      description:
+        'Retorna la configuración del proyecto (dimensiones y escalas)',
       type: ProjectConfiguration,
     }),
     ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),

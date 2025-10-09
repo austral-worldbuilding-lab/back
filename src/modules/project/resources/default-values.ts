@@ -8,4 +8,9 @@ export const DEFAULT_DIMENSIONS: DimensionDto[] = [
   { name: 'Gobierno', color: '#FF00FF' },
   { name: 'Ecología', color: '#00FFFF' },
 ];
-export const DEFAULT_SCALES = ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'];
+export const DEFAULT_SCALES = [
+  'MI ESQUINA',
+  'CIUDAD / BARRIO',
+  'PROVINCIA',
+  'PAÍS',
+];
