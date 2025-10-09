@@ -66,7 +66,7 @@ export class CreateProjectFromQuestionDto {
   @ApiProperty({
     description:
       'Escalas del proyecto. Si no se especifican, se usarán las escalas por defecto.',
-    example: ['Persona', 'Comunidad', 'Institución'],
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
     required: false,
   })
   @IsArray()

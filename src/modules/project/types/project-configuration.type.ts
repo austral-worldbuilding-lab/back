@@ -16,7 +16,7 @@ export class ProjectConfiguration {
   @ApiProperty({
     description: 'Escalas del proyecto',
     type: [String],
-    example: ['Persona', 'Comunidad', 'Institución'],
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
   })
   @IsArray()
   @IsString({ each: true })

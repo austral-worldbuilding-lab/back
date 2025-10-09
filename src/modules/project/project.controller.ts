@@ -41,6 +41,7 @@ import {
   ApiCreateProject,
   ApiGetAllProjects,
   ApiGetProject,
+  ApiGetProjectConfiguration,
   ApiUpdateProject,
   ApiDeleteProject,
   ApiGetProjectTags,
@@ -73,6 +74,7 @@ import { TimelineGraphDto } from './dto/timeline.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
+import { ProjectConfiguration } from './types/project-configuration.type';
 import {
   ProjectRoleGuard,
   RequireProjectRoles,
@@ -173,6 +175,18 @@ export class ProjectController {
     const project = await this.projectService.findOne(id);
     return {
       data: project,
+    };
+  }
+
+  @Get(':id/configuration')
+  @UseGuards(ProjectRoleGuard)
+  @ApiGetProjectConfiguration()
+  async getConfiguration(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<ProjectConfiguration>> {
+    const project = await this.projectService.findOne(id);
+    return {
+      data: project.configuration,
     };
   }
 
