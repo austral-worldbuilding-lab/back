@@ -42,6 +42,7 @@ import {
   ApiCreateProject,
   ApiGetAllProjects,
   ApiGetProject,
+  ApiGetProjectConfiguration,
   ApiUpdateProject,
   ApiDeleteProject,
   ApiGetProjectTags,
@@ -79,6 +80,7 @@ import {
   RequireProjectRoles,
 } from './guards/project-role.guard';
 import { ProjectService } from './project.service';
+import { ProjectConfiguration } from './types/project-configuration.type';
 import { AiProvocationResponse } from './types/provocations.type';
 
 @ApiTags('Projects')
@@ -181,6 +183,18 @@ export class ProjectController {
     const project = await this.projectService.findOne(id);
     return {
       data: project,
+    };
+  }
+
+  @Get(':id/configuration')
+  @UseGuards(ProjectRoleGuard)
+  @ApiGetProjectConfiguration()
+  async getConfiguration(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<ProjectConfiguration>> {
+    const project = await this.projectService.findOne(id);
+    return {
+      data: project.configuration,
     };
   }
 

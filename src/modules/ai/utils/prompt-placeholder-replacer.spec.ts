@@ -5,7 +5,7 @@ import {
 } from './prompt-placeholder-replacer';
 
 const validDimensions = ['Recursos', 'Cultura', 'Economía'];
-const validScales = ['Persona', 'Comunidad', 'Institución'];
+const validScales = ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'];
 const validCenterCharacter = 'Alumno';
 const validCenterCharacterDescription = 'Un alumno generico de la UA';
 const validTags = ['educación', 'tecnología'];
@@ -53,7 +53,7 @@ CONFIGURACIÓN DEL MUNDO:
       'Dimensiones habilitadas: Recursos, Cultura, Economía',
     );
     expect(result).toContain(
-      'Escalas habilitadas: Persona, Comunidad, Institución',
+      'Escalas habilitadas: MI ESQUINA, CIUDAD / BARRIO, PROVINCIA, PAÍS',
     );
     expect(result).toContain('Etiquetas disponibles: educación, tecnología');
     expect(result).toContain('Limite minimo de post-its: 6');
@@ -85,7 +85,7 @@ CONFIGURACIÓN DEL MUNDO:
       'Dimensiones habilitadas: Recursos, Cultura, Economía',
     );
     expect(result).toContain(
-      'Escalas habilitadas: Persona, Comunidad, Institución',
+      'Escalas habilitadas: MI ESQUINA, CIUDAD / BARRIO, PROVINCIA, PAÍS',
     );
     expect(result).toContain('Etiquetas disponibles: ');
     expect(result).toContain('Limite minimo de post-its: 6');
@@ -115,7 +115,7 @@ CONFIGURACIÓN DEL MUNDO:
       'Dimensiones habilitadas: Recursos, Cultura, Economía',
     );
     expect(result).toContain(
-      'Escalas habilitadas: Persona, Comunidad, Institución',
+      'Escalas habilitadas: MI ESQUINA, CIUDAD / BARRIO, PROVINCIA, PAÍS',
     );
     expect(result).toContain('Etiquetas disponibles: educación, tecnología');
     expect(result).toContain('Limite minimo de post-its: 6');
@@ -193,7 +193,7 @@ Estado actual de la Mandala: \${mandalaDocument}
       'Dimensiones habilitadas: Recursos, Cultura, Economía',
     );
     expect(result).toContain(
-      'Escalas habilitadas: Persona, Comunidad, Institución',
+      'Escalas habilitadas: MI ESQUINA, CIUDAD / BARRIO, PROVINCIA, PAÍS',
     );
     expect(result).toContain('Etiquetas disponibles: educación, tecnología');
     expect(result).toContain('Limite minimo de preguntas: 6');

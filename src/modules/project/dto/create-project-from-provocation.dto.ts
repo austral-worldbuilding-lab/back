@@ -56,7 +56,7 @@ export class CreateProjectFromProvocationDto {
   @ApiProperty({
     description:
       'Escalas del proyecto. Si no se especifican, se heredarán del proyecto padre (si existe) o se usarán las escalas por defecto. Si se especifican y existe un proyecto padre, deben coincidir exactamente con las escalas del padre.',
-    example: ['Persona', 'Comunidad', 'Institución'],
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
     required: false,
   })
   @IsArray()

@@ -18,6 +18,7 @@ import { ProjectDto } from '../dto/project.dto';
 import { ProvocationDto } from '../dto/provocation.dto';
 import { TagDto } from '../dto/tag.dto';
 import { TimelineGraphDto } from '../dto/timeline.dto';
+import { ProjectConfiguration } from '../types/project-configuration.type';
 
 export const ApiCreateProject = () =>
   applyDecorators(
@@ -77,6 +78,27 @@ export const ApiGetProject = () =>
     }),
   );
 
+export const ApiGetProjectConfiguration = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener la configuración de un proyecto',
+      description:
+        'Retorna las dimensiones y escalas configuradas para el proyecto especificado',
+    }),
+    ApiParam({ name: 'id', description: 'ID del proyecto', type: String }),
+    ApiResponse({
+      status: 200,
+      description:
+        'Retorna la configuración del proyecto (dimensiones y escalas)',
+      type: ProjectConfiguration,
+    }),
+    ApiResponse({ status: 404, description: 'Proyecto no encontrado' }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+  );
+
 export const ApiUpdateProject = () =>
   applyDecorators(
     ApiOperation({ summary: 'Actualizar un proyecto' }),
@@ -113,7 +135,7 @@ export const ApiUpdateProject = () =>
               { name: 'Tiempo', color: '#00FF00' },
               { name: 'Calidad', color: '#0000FF' },
             ],
-            scales: ['Persona', 'Comunidad', 'Institución', 'Sociedad'],
+            scales: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
           },
         },
       },
@@ -754,7 +776,7 @@ export const ApiCreateProjectFromProvocationId = () =>
             organizationId: 'b2c3d4e5-f6g7-8901-2345-678901bcdefg',
             name: 'Proyecto Comedor Austral',
             dimensions: [{ name: 'Recursos', color: '#FF0000' }],
-            scales: ['Persona', 'Comunidad', 'Institución'],
+            scales: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
           },
         },
       },
@@ -830,7 +852,7 @@ export const ApiCreateProjectFromProvocation = () =>
             description:
               'Este proyecto busca crear un espacio dedicado para mejorar la experiencia del comedor universitario, promoviendo la convivencia y el sentido de comunidad entre los estudiantes.',
             dimensions: [{ name: 'Recursos', color: '#FF0000' }],
-            scales: ['Persona', 'Comunidad', 'Institución'],
+            scales: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
           },
         },
         'solo-con-pregunta': {

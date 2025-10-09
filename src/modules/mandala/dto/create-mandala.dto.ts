@@ -127,7 +127,7 @@ export class CreateMandalaDto {
 
   @ApiProperty({
     description: 'Escalas del mandala',
-    example: ['Persona', 'Comunidad', 'Institución'],
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
     required: false,
   })
   @IsArray()
