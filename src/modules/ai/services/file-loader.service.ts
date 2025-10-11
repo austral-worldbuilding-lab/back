@@ -8,10 +8,22 @@ import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { FileScope } from '@modules/files/types/file-scope.type';
 import { Injectable } from '@nestjs/common';
 
+import {
+  CachedFileInfo,
+  GeminiFileCacheService,
+} from './gemini-file-cache.service';
+
+export interface LoadFilesResult {
+  toDownload: FileBuffer[];
+  cached: CachedFileInfo[];
+  scope: FileScope;
+}
+
 @Injectable()
 export class FileLoaderService {
   constructor(
     private fileService: FileService,
+    private geminiCacheService: GeminiFileCacheService,
     private readonly logger: AppLogger,
   ) {
     this.logger.setContext(FileLoaderService.name);
@@ -21,7 +33,7 @@ export class FileLoaderService {
     projectId: string,
     selectedFiles?: string[],
     mandalaId?: string,
-  ): Promise<FileBuffer[]> {
+  ): Promise<LoadFilesResult> {
     this.logger.debug(
       `Loading files for project: ${projectId}${mandalaId ? `, mandala: ${mandalaId}` : ''}`,
     );
@@ -30,12 +42,38 @@ export class FileLoaderService {
       ? await this.fileService.resolveScope('mandala', mandalaId)
       : await this.fileService.resolveScope('project', projectId);
 
+    const filesToUse = await this.determineFilesToUse(selectedFiles, scope);
+
+    const cached = await this.geminiCacheService.findValidCached(
+      scope,
+      filesToUse,
+    );
+
+    const cachedFileNames = new Set(cached.map((f) => f.fileName));
+    const fileNamesToDownload = filesToUse.filter(
+      (name) => !cachedFileNames.has(name),
+    );
+
+    if (fileNamesToDownload.length === 0) {
+      this.logger.log('All files found in cache, no downloads needed', {
+        totalFiles: filesToUse.length,
+      });
+      return { toDownload: [], cached, scope };
+    }
+
+    this.logger.log(
+      `Downloading ${fileNamesToDownload.length}/${filesToUse.length} files from blob storage`,
+      { cached: cached.length, toDownload: fileNamesToDownload.length },
+    );
+
     const allFileBuffers =
       await this.fileService.readAllFilesAsBuffersWithMetadata(scope);
 
-    const filesToUse = await this.determineFilesToUse(selectedFiles, scope);
+    const toDownload = allFileBuffers.filter((file) =>
+      fileNamesToDownload.includes(file.fileName),
+    );
 
-    return allFileBuffers.filter((file) => filesToUse.includes(file.fileName));
+    return { toDownload, cached, scope };
   }
 
   private async determineFilesToUse(
@@ -49,15 +87,19 @@ export class FileLoaderService {
   }
 
   validateFilesLoaded(
-    fileBuffers: FileBuffer[],
+    result: LoadFilesResult,
     selectedFiles?: string[],
     filesToUse?: string[],
   ): void {
-    if (fileBuffers.length === 0) {
+    const totalFiles = result.toDownload.length + result.cached.length;
+
+    if (totalFiles === 0) {
       const errorDetails = {
         selectedFilesCount: selectedFiles?.length || 0,
         filesToUseCount: filesToUse?.length || 0,
-        loadedFilesCount: fileBuffers.length,
+        loadedFilesCount: totalFiles,
+        cachedFilesCount: result.cached.length,
+        downloadedFilesCount: result.toDownload.length,
         selectedFiles: selectedFiles || [],
         filesToUse: filesToUse || [],
       };

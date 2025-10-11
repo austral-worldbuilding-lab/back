@@ -8,7 +8,6 @@ import {
 } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
 import { getAiValidationConfig } from '@config/ai-validation.config';
-import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -139,23 +138,26 @@ export class AiAdapterUtilsService {
     projectId: string,
     selectedFiles?: string[],
     mandalaId?: string,
-  ): Promise<FileBuffer[]> {
+  ) {
     try {
-      const loadedFiles = await this.fileLoader.loadFiles(
+      const result = await this.fileLoader.loadFiles(
         projectId,
         selectedFiles,
         mandalaId,
       );
 
-      this.fileLoader.validateFilesLoaded(loadedFiles, selectedFiles);
+      this.fileLoader.validateFilesLoaded(result, selectedFiles);
 
-      const fileValidationResult =
-        this.fileValidator.validateFiles(loadedFiles);
+      const fileValidationResult = this.fileValidator.validateFiles(
+        result.toDownload,
+      );
       if (!fileValidationResult.isValid) {
         throw new AiValidationException(fileValidationResult.errors, projectId);
       }
 
-      const processableFiles = this.fileValidator.excludeVideos(loadedFiles);
+      const processableFiles = this.fileValidator.excludeVideos(
+        result.toDownload,
+      );
 
       const aiValidationResult = this.aiRequestValidator.validateResponseForAi(
         processableFiles,
@@ -166,7 +168,11 @@ export class AiAdapterUtilsService {
         throw new AiValidationException(aiValidationResult.errors, projectId);
       }
 
-      return processableFiles;
+      return {
+        toDownload: processableFiles,
+        cached: result.cached,
+        scope: result.scope,
+      };
     } catch (error) {
       if (error instanceof AiValidationException) {
         throw error;

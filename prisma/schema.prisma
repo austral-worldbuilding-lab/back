@@ -343,3 +343,25 @@ model SolProvLink {
   @@index([solutionId])
   @@index([provocationId])
 }
+
+model GeminiFileCache {
+  id              String   @id @default(uuid())
+  
+  // Identificación única del archivo
+  fileName        String
+  fileHash        String
+  contextPath     String   // "org/123/project/456/mandala/789"
+  
+  // IDs de Gemini para reutilizar
+  geminiFileId    String   // "files/abc-123"
+  geminiUri       String   // URI reutilizable
+  
+  // Control de expiración (48 horas desde upload)
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([contextPath, fileName])
+  @@index([expiresAt])
+  @@map("gemini_file_cache")
+}

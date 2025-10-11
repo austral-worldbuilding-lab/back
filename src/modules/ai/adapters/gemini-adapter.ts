@@ -25,6 +25,10 @@ import { createMandalaSummaryResponseSchema } from '../resources/dto/generate-su
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import { AiRequestValidationService } from '../services/ai-request-validation.service';
+import {
+  CachedFileInfo,
+  GeminiFileCacheService,
+} from '../services/gemini-file-cache.service';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import {
   AiResponseWithUsage,
@@ -52,6 +56,7 @@ export class GeminiAdapter implements AiProvider {
     private readonly validator: AiRequestValidationService,
     private readonly utilsService: AiAdapterUtilsService,
     private readonly promptBuilderService: AiPromptBuilderService,
+    private readonly geminiCacheService: GeminiFileCacheService,
     private readonly logger: AppLogger,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
@@ -68,7 +73,13 @@ export class GeminiAdapter implements AiProvider {
 
   private async uploadFilesToGemini(
     fileBuffers: FileBuffer[],
+    contextPath: string,
   ): Promise<GeminiUploadedFile[]> {
+    if (fileBuffers.length === 0) {
+      this.logger.debug('No files to upload to Gemini');
+      return [];
+    }
+
     this.logger.debug(`Uploading ${fileBuffers.length} files to Gemini...`);
 
     try {
@@ -86,6 +97,30 @@ export class GeminiAdapter implements AiProvider {
             },
           });
 
+          if (!file.name || !file.uri || !file.expirationTime) {
+            this.logger.error(
+              `Gemini API returned incomplete file data for ${fileBuffer.fileName}`,
+              {
+                hasName: !!file.name,
+                hasUri: !!file.uri,
+                hasExpirationTime: !!file.expirationTime,
+              },
+            );
+            throw new ExternalServiceException(
+              'Gemini API',
+              `Incomplete file data returned for ${fileBuffer.fileName}`,
+            );
+          }
+
+          await this.geminiCacheService.upsert({
+            fileName: fileBuffer.fileName,
+            fileHash: file.sha256Hash || '',
+            contextPath,
+            geminiFileId: file.name,
+            geminiUri: file.uri,
+            expiresAt: new Date(file.expirationTime),
+          });
+
           return {
             uri: file.uri,
             mimeType: file.mimeType,
@@ -94,7 +129,7 @@ export class GeminiAdapter implements AiProvider {
       );
 
       this.logger.log(
-        `Successfully uploaded ${uploadedFiles.length} files to Gemini`,
+        `Successfully uploaded and cached ${uploadedFiles.length} files to Gemini`,
       );
       return uploadedFiles;
     } catch (error) {
@@ -105,6 +140,30 @@ export class GeminiAdapter implements AiProvider {
         error,
       );
     }
+  }
+
+  private async prepareGeminiFiles(
+    toDownload: FileBuffer[],
+    cached: CachedFileInfo[],
+    contextPath: string,
+  ): Promise<GeminiUploadedFile[]> {
+    const cachedFiles = cached.map((c) => ({
+      uri: c.geminiUri,
+      mimeType: '',
+    }));
+
+    const uploadedFiles = await this.uploadFilesToGemini(
+      toDownload,
+      contextPath,
+    );
+
+    const allFiles = [...cachedFiles, ...uploadedFiles];
+
+    this.logger.log(
+      `Prepared ${allFiles.length} files for Gemini (${cached.length} cached, ${uploadedFiles.length} uploaded)`,
+    );
+
+    return allFiles;
   }
 
   private parseUsageMetadata(usageMetadata: GeminiUsageMetadata): AiUsageInfo {
@@ -210,13 +269,22 @@ export class GeminiAdapter implements AiProvider {
       tags,
     );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+    const filesResult = await this.utilsService.loadAndValidateFiles(
       projectId,
       selectedFiles,
       mandalaId,
     );
 
-    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const contextPath = this.geminiCacheService.buildContextPath(
+      filesResult.scope,
+    );
+
+    const geminiFiles = await this.prepareGeminiFiles(
+      filesResult.toDownload,
+      filesResult.cached,
+      contextPath,
+    );
+
     const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
@@ -302,13 +370,23 @@ export class GeminiAdapter implements AiProvider {
       centerCharacterDescription,
       mandalaAiSummary,
     );
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+
+    const filesResult = await this.utilsService.loadAndValidateFiles(
       projectId,
       selectedFiles,
       mandalaId,
     );
 
-    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const contextPath = this.geminiCacheService.buildContextPath(
+      filesResult.scope,
+    );
+
+    const geminiFiles = await this.prepareGeminiFiles(
+      filesResult.toDownload,
+      filesResult.cached,
+      contextPath,
+    );
+
     const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
@@ -389,9 +467,18 @@ export class GeminiAdapter implements AiProvider {
         mandalasAiSummary,
       );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(projectId);
+    const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
 
-    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const contextPath = this.geminiCacheService.buildContextPath(
+      filesResult.scope,
+    );
+
+    const geminiFiles = await this.prepareGeminiFiles(
+      filesResult.toDownload,
+      filesResult.cached,
+      contextPath,
+    );
+
     const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
@@ -469,9 +556,18 @@ export class GeminiAdapter implements AiProvider {
         mandalasSummariesWithAi,
       );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(projectId);
+    const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
 
-    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const contextPath = this.geminiCacheService.buildContextPath(
+      filesResult.scope,
+    );
+
+    const geminiFiles = await this.prepareGeminiFiles(
+      filesResult.toDownload,
+      filesResult.cached,
+      contextPath,
+    );
+
     const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
@@ -587,9 +683,17 @@ export class GeminiAdapter implements AiProvider {
         cleanMandalaDocument,
       );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(projectId);
+    const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
 
-    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const contextPath = this.geminiCacheService.buildContextPath(
+      filesResult.scope,
+    );
+
+    const geminiFiles = await this.prepareGeminiFiles(
+      filesResult.toDownload,
+      filesResult.cached,
+      contextPath,
+    );
 
     const responseText = await this.generateContentWithFiles(
       this.geminiModel,
@@ -631,11 +735,20 @@ export class GeminiAdapter implements AiProvider {
         mandalasSummariesWithAi,
       );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+    const filesResult = await this.utilsService.loadAndValidateFiles(
       projectId,
       selectedFiles,
     );
-    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+
+    const contextPath = this.geminiCacheService.buildContextPath(
+      filesResult.scope,
+    );
+
+    const geminiFiles = await this.prepareGeminiFiles(
+      filesResult.toDownload,
+      filesResult.cached,
+      contextPath,
+    );
 
     const response = await this.generateContentWithFiles(
       this.geminiModel,
