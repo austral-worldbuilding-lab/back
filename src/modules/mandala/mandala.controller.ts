@@ -101,7 +101,7 @@ export class MandalaController {
   ): Promise<MessageResponse<MandalaDto>> {
     const mandala = await this.mandalaService.create(
       createMandalaDto,
-      MandalaType.CHARACTER,
+      createMandalaDto.type || MandalaType.CHARACTER,
     );
     return {
       message: 'Mandala created successfully',

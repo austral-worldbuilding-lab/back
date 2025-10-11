@@ -362,7 +362,7 @@ export class MandalaService {
 
     const mandala: MandalaDto = await this.create(
       createMandalaDto,
-      MandalaType.CHARACTER,
+      createMandalaDto.type || MandalaType.CHARACTER,
     );
 
     try {

@@ -10,7 +10,10 @@ import {
   ArrayMinSize,
   ValidateNested,
   IsHexColor,
+  IsEnum,
 } from 'class-validator';
+
+import { MandalaType } from '../types/mandala-type.enum';
 
 // This DTO is used to create the mandala center of the characters inside an overlap mandala (personaje de origen que fue usado para crear la mandala unificada)
 export class CreateMandalaCenterWithOriginDto {
@@ -162,6 +165,20 @@ export class CreateMandalaDto {
   @IsString({ each: true })
   @IsOptional()
   selectedFiles?: string[];
+
+  @ApiProperty({
+    description:
+      'Tipo de mandala a crear. Si no se especifica, se crea como CHARACTER por defecto.',
+    enum: MandalaType,
+    required: false,
+    example: MandalaType.CHARACTER,
+  })
+  @IsEnum(MandalaType, {
+    message:
+      'El tipo debe ser uno de los valores válidos: CHARACTER, OVERLAP, OVERLAP_SUMMARY, CONTEXT',
+  })
+  @IsOptional()
+  type?: MandalaType;
 }
 
 export class CreateOverlappedMandalaDto {
