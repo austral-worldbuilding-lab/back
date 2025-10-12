@@ -463,6 +463,113 @@ export class ProjectService {
     return project?.parentProjectId === null;
   }
 
+  /**
+   * Pipeline to generate encyclopedia ensuring all mandalas have summaries
+   * @param projectId - The project ID
+   * @param selectedFiles - Optional files to include in generation
+   * @returns Encyclopedia content and storage URL
+   */
+  async generateEncyclopedia(
+    projectId: string,
+    selectedFiles?: string[],
+  ): Promise<{ encyclopedia: string; storageUrl: string }> {
+    this.logger.log(
+      `Starting encyclopedia generation pipeline for project ${projectId}`,
+    );
+
+    const project = await this.findOne(projectId);
+
+    const mandalasWithStatus =
+      await this.mandalaService.getMandalasWithSummaryStatus(projectId);
+
+    const withoutSummary = mandalasWithStatus.filter(
+      ({ hasSummary }) => !hasSummary,
+    );
+    const allMandalas = mandalasWithStatus.map(({ mandala }) => mandala);
+
+    this.logger.log(
+      `Found ${withoutSummary.length} mandalas without summaries out of ${allMandalas.length} total mandalas`,
+    );
+
+    // Generate missing summaries in parallel
+    if (withoutSummary.length > 0) {
+      this.logger.log(
+        `Generating summaries for ${withoutSummary.length} mandalas...`,
+      );
+
+      await Promise.all(
+        withoutSummary.map(({ mandala }) =>
+          this.mandalaService
+            .generateSummaryReport(mandala.id)
+            .catch((error) => {
+              const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
+              this.logger.error(
+                `Failed to generate summary for mandala ${mandala.id}: ${errorMessage}`,
+              );
+              // Continue with other summaries even if one fails
+              return null;
+            }),
+        ),
+      );
+
+      this.logger.log(
+        `Completed summary generation for mandalas without summaries`,
+      );
+    }
+
+    const allDimensions = [
+      ...new Set(
+        allMandalas.flatMap((m) =>
+          m.configuration.dimensions.map((d) => d.name),
+        ),
+      ),
+    ];
+
+    const allScales = [
+      ...new Set(allMandalas.flatMap((m) => m.configuration.scales)),
+    ];
+
+    // Join all summaries
+    const allSummaries =
+      await this.mandalaService.getAllMandalaSummariesByProjectId(projectId);
+
+    if (!allSummaries) {
+      this.logger.warn(`No summaries available for project ${projectId}`);
+    }
+
+    // Generate encyclopedia
+    this.logger.log(`Generating encyclopedia content for project ${projectId}`);
+    const encyclopediaResponse = await this.aiService.generateEncyclopedia(
+      projectId,
+      project.name,
+      project.description || '',
+      allDimensions,
+      allScales,
+      allSummaries,
+      selectedFiles,
+    );
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `enciclopedia-${timestamp}.md`;
+
+    const storageUrl = await this.saveEncyclopedia(
+      encyclopediaResponse.encyclopedia,
+      project.organizationId,
+      project.id,
+      fileName,
+    );
+
+    this.logger.log(
+      `Encyclopedia generation pipeline completed for project ${projectId}`,
+    );
+
+    return {
+      encyclopedia: encyclopediaResponse.encyclopedia,
+      storageUrl,
+    };
+  }
+
   async saveEncyclopedia(
     content: string,
     organizationId: string,

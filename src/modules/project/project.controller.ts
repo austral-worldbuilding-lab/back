@@ -6,12 +6,9 @@ import {
   DataResponse,
   PaginatedResponse,
 } from '@common/types/responses';
-import { AiService } from '@modules/ai/ai.service';
 import { GenerateEncyclopediaDto } from '@modules/ai/dto/generate-encyclopedia.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
-import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
-import { MandalaService } from '@modules/mandala/mandala.service';
 import {
   OrganizationRoleGuard,
   RequireOrganizationRoles,
@@ -86,11 +83,7 @@ import { AiProvocationResponse } from './types/provocations.type';
 @UseGuards(FirebaseAuthGuard)
 @ApiBearerAuth()
 export class ProjectController {
-  constructor(
-    private readonly projectService: ProjectService,
-    private readonly aiService: AiService,
-    private readonly mandalaService: MandalaService,
-  ) {}
+  constructor(private readonly projectService: ProjectService) {}
 
   @Post()
   @UseGuards(OrganizationRoleGuard)
@@ -407,61 +400,16 @@ export class ProjectController {
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @Post(':projectId/encyclopedia')
   @UseGuards(ProjectRoleGuard)
+  //TODO should we have member role to generate encyclopedia?
   @RequireProjectRoles('member', 'owner', 'admin')
   @ApiGenerateProjectEncyclopedia()
   async generateEncyclopedia(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() generateEncyclopediaDto: GenerateEncyclopediaDto,
   ): Promise<ProjectEncyclopediaResponseDto> {
-    //TODO move this logic to projectService
-    const project = await this.projectService.findOne(projectId);
-    const mandalas: MandalaDto[] = await this.mandalaService.findAll(projectId);
-    const mandalaDocs = await Promise.all(
-      mandalas.map((mandala: MandalaDto) =>
-        this.mandalaService.getFirestoreDocument(projectId, mandala.id),
-      ),
-    );
-    const allDimensions: string[] = [
-      ...new Set(
-        mandalas.flatMap((m: MandalaDto) =>
-          m.configuration.dimensions.map((d: { name: string }) => d.name),
-        ),
-      ),
-    ];
-    const allScales: string[] = [
-      ...new Set(mandalas.flatMap((m: MandalaDto) => m.configuration.scales)),
-    ];
-
-    const mandalasSummariesWithAi = this.mandalaService.getAllMandalaSummaries(
+    return this.projectService.generateEncyclopedia(
       projectId,
-      mandalaDocs,
-      mandalas,
-    );
-
-    const encyclopediaResponse = await this.aiService.generateEncyclopedia(
-      projectId,
-      project.name,
-      project.description || '',
-      allDimensions,
-      allScales,
-      mandalasSummariesWithAi,
       generateEncyclopediaDto.selectedFiles,
     );
-
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `encyclopedia-${timestamp}.md`;
-
-    //TODO when handling the creation in projectService
-    const encyclopediaUrl = await this.projectService.saveEncyclopedia(
-      encyclopediaResponse.encyclopedia,
-      project.organizationId,
-      project.id,
-      fileName,
-    );
-
-    return {
-      encyclopedia: encyclopediaResponse.encyclopedia,
-      storageUrl: encyclopediaUrl,
-    };
   }
 }
