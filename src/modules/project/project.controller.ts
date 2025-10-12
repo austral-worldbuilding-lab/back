@@ -409,6 +409,7 @@ export class ProjectController {
   ): Promise<ProjectEncyclopediaResponseDto> {
     return this.projectService.generateEncyclopedia(
       projectId,
+      //TODO should we have selectedFiles?
       generateEncyclopediaDto.selectedFiles,
     );
   }
