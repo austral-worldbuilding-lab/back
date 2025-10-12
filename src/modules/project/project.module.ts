@@ -22,7 +22,12 @@ import { ProjectService } from './project.service';
     FileModule,
   ],
   controllers: [ProjectController],
-  providers: [ProjectService, ProjectRepository, ProjectRoleGuard, AzureBlobStorageService],
+  providers: [
+    ProjectService,
+    ProjectRepository,
+    ProjectRoleGuard,
+    AzureBlobStorageService,
+  ],
   exports: [ProjectService],
 })
 export class ProjectModule {}

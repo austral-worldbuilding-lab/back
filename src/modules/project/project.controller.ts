@@ -8,7 +8,6 @@ import {
 } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { GenerateEncyclopediaDto } from '@modules/ai/dto/generate-encyclopedia.dto';
-import { ProjectEncyclopediaResponseDto } from './dto/project-encyclopedia-response.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
@@ -65,6 +64,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { GenerateProvocationsDto } from './dto/generate-provocations.dto';
+import { ProjectEncyclopediaResponseDto } from './dto/project-encyclopedia-response.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
@@ -432,13 +432,11 @@ export class ProjectController {
       ...new Set(mandalas.flatMap((m: MandalaDto) => m.configuration.scales)),
     ];
 
-    // Obtener los resúmenes consolidados (usa report directamente para OVERLAP_SUMMARY)
-    const mandalasSummariesWithAi =
-      this.mandalaService.getAllMandalaSummariesWithAi(
-        projectId,
-        mandalaDocs,
-        mandalas,
-      );
+    const mandalasSummariesWithAi = this.mandalaService.getAllMandalaSummaries(
+      projectId,
+      mandalaDocs,
+      mandalas,
+    );
 
     const encyclopediaResponse = await this.aiService.generateEncyclopedia(
       projectId,

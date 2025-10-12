@@ -375,7 +375,7 @@ export class ProjectService {
     );
 
     const mandalasSummariesWithAi: string =
-      this.mandalaService.getAllMandalaSummariesWithAi(
+      this.mandalaService.getAllMandalaSummaries(
         projectId,
         mandalasDocument,
         projectMandalas,
@@ -482,7 +482,7 @@ export class ProjectService {
     };
 
     const buffer = Buffer.from(content, 'utf-8');
-    
+
     // Use the same approach as VideoProcessingService
     await this.blobStorageService.uploadBuffer(
       buffer,
