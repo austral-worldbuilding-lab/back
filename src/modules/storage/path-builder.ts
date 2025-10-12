@@ -1,6 +1,6 @@
 import { FileScope } from '@modules/files/types/file-scope.type';
 
-export type StorageFolder = 'files' | 'images' | 'encyclopedia';
+export type StorageFolder = 'files' | 'images';
 
 export function buildPrefix(
   scope: FileScope,
