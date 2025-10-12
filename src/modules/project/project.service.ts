@@ -11,6 +11,7 @@ import { AiService } from '@modules/ai/ai.service';
 import { FileService } from '@modules/files/file.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { RoleService } from '@modules/role/role.service';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
   Injectable,
   NotFoundException,
@@ -47,6 +48,7 @@ export class ProjectService {
     private fileService: FileService,
     private cacheService: CacheService,
     private readonly logger: AppLogger,
+    private readonly blobStorageService: AzureBlobStorageService,
   ) {
     this.logger.setContext(ProjectService.name);
   }
@@ -459,5 +461,51 @@ export class ProjectService {
     const project =
       await this.projectRepository.findProjectWithParent(projectId);
     return project?.parentProjectId === null;
+  }
+
+  async saveEncyclopedia(
+    content: string,
+    organizationId: string,
+    projectId: string,
+    fileName: string,
+  ): Promise<string> {
+    this.logger.log('Saving encyclopedia to blob storage', {
+      organizationId,
+      projectId,
+      fileName,
+      contentLength: content.length,
+    });
+
+    const scope = {
+      orgId: organizationId,
+      projectId: projectId,
+    };
+
+    const buffer = Buffer.from(content, 'utf-8');
+    
+    // Use the same approach as VideoProcessingService
+    await this.blobStorageService.uploadBuffer(
+      buffer,
+      fileName,
+      scope,
+      'text/markdown',
+    );
+
+    // Get the public URL
+    const publicUrl = this.blobStorageService.buildPublicUrl(
+      scope,
+      fileName,
+      'files',
+    );
+
+    this.logger.log('Successfully saved encyclopedia', {
+      organizationId,
+      projectId,
+      fileName,
+      publicUrl,
+      contentLength: content.length,
+    });
+
+    return publicUrl;
   }
 }

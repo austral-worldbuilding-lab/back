@@ -7,10 +7,8 @@ import {
   PaginatedResponse,
 } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
-import {
-  GenerateEncyclopediaDto,
-  AiEncyclopediaResponseDto,
-} from '@modules/ai/dto/generate-encyclopedia.dto';
+import { GenerateEncyclopediaDto } from '@modules/ai/dto/generate-encyclopedia.dto';
+import { ProjectEncyclopediaResponseDto } from './dto/project-encyclopedia-response.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
@@ -414,7 +412,8 @@ export class ProjectController {
   async generateEncyclopedia(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() generateEncyclopediaDto: GenerateEncyclopediaDto,
-  ): Promise<AiEncyclopediaResponseDto> {
+  ): Promise<ProjectEncyclopediaResponseDto> {
+    //TODO move this logic to projectService
     const project = await this.projectService.findOne(projectId);
     const mandalas: MandalaDto[] = await this.mandalaService.findAll(projectId);
     const mandalaDocs = await Promise.all(
@@ -441,7 +440,7 @@ export class ProjectController {
         mandalas,
       );
 
-    return this.aiService.generateEncyclopedia(
+    const encyclopediaResponse = await this.aiService.generateEncyclopedia(
       projectId,
       project.name,
       project.description || '',
@@ -450,5 +449,21 @@ export class ProjectController {
       mandalasSummariesWithAi,
       generateEncyclopediaDto.selectedFiles,
     );
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `encyclopedia-${timestamp}.md`;
+
+    //TODO when handling the creation in projectService
+    const encyclopediaUrl = await this.projectService.saveEncyclopedia(
+      encyclopediaResponse.encyclopedia,
+      project.organizationId,
+      project.id,
+      fileName,
+    );
+
+    return {
+      encyclopedia: encyclopediaResponse.encyclopedia,
+      storageUrl: encyclopediaUrl,
+    };
   }
 }

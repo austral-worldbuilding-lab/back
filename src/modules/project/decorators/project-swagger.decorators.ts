@@ -994,6 +994,11 @@ export const ApiGenerateProjectEncyclopedia = () =>
             description: 'La enciclopedia completa del mundo del proyecto',
             example: 'Esta es la enciclopedia del mundo del proyecto...',
           },
+          storageUrl: {
+            type: 'string',
+            description: 'URL para acceder al archivo de enciclopedia guardado en blob storage',
+            example: 'https://storageaccount.blob.core.windows.net/container/org/org-id/project/project-id/encyclopedia/encyclopedia-2024-01-15T10-30-45-123Z.md',
+          },
         },
       },
     }),
