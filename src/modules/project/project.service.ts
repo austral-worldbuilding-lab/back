@@ -551,7 +551,7 @@ export class ProjectService {
     );
 
     //TODO what happens if we have multiple encyclopedias?
-    const fileName = `Enciclopedia del mundo.md`;
+    const fileName = `Enciclopedia del mundo - ${project.name}.md`;
 
     const storageUrl = await this.saveEncyclopedia(
       encyclopediaResponse.encyclopedia,
