@@ -618,7 +618,6 @@ export class GeminiAdapter implements AiProvider {
     mandalasSummariesWithAi: string,
     selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiEncyclopediaResponse>> {
-
     const finalPromptTask =
       await this.promptBuilderService.buildEncyclopediaPrompt(
         projectName,

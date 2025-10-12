@@ -550,8 +550,8 @@ export class ProjectService {
       selectedFiles,
     );
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `enciclopedia-${timestamp}.md`;
+    //TODO what happens if we have multiple encyclopedias?
+    const fileName = `ENCICLOPEDIA.md`;
 
     const storageUrl = await this.saveEncyclopedia(
       encyclopediaResponse.encyclopedia,
