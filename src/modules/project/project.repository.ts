@@ -944,22 +944,26 @@ export class ProjectRepository {
     });
 
     for (const member of orgMembers) {
-      await this.prisma.userProjectRole.upsert({
+      // Check if user already has a role in this project
+      const existingRole = await this.prisma.userProjectRole.findUnique({
         where: {
           userId_projectId: {
             userId: member.userId,
             projectId: projectId,
           },
         },
-        update: {
-          roleId: member.roleId,
-        },
-        create: {
-          userId: member.userId,
-          projectId: projectId,
-          roleId: member.roleId,
-        },
       });
+
+      // Only add user if they don't already have a role (preserve existing roles)
+      if (!existingRole) {
+        await this.prisma.userProjectRole.create({
+          data: {
+            userId: member.userId,
+            projectId: projectId,
+            roleId: member.roleId,
+          },
+        });
+      }
     }
   }
 

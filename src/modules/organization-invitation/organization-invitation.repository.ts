@@ -175,7 +175,7 @@ export class OrganizationInvitationRepository {
     return this.prisma.organizationInvitation.findFirst({
       where: {
         inviteToken,
-        status: InvitationStatus.PENDING,
+        // Note: No status filter here to allow multi-user invite links
       },
     });
   }
@@ -219,22 +219,26 @@ export class OrganizationInvitationRepository {
     });
 
     for (const project of projects) {
-      await this.prisma.userProjectRole.upsert({
+      // Check if user already has a role in this project
+      const existingRole = await this.prisma.userProjectRole.findUnique({
         where: {
           userId_projectId: {
             userId,
             projectId: project.id,
           },
         },
-        update: {
-          roleId,
-        },
-        create: {
-          userId,
-          projectId: project.id,
-          roleId,
-        },
       });
+
+      // Only add user if they don't already have a role (preserve existing roles)
+      if (!existingRole) {
+        await this.prisma.userProjectRole.create({
+          data: {
+            userId,
+            projectId: project.id,
+            roleId,
+          },
+        });
+      }
     }
   }
 }
