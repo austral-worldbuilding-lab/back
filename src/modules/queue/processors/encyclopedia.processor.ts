@@ -105,22 +105,45 @@ export class EncyclopediaProcessor implements OnModuleInit {
         const summaryResults: { mandalaId: string; success: boolean }[] = [];
 
         for (const { mandala } of withoutSummary) {
-          try {
-            this.logger.log(`Generating summary for mandala ${mandala.id}`);
-            await this.mandalaService.generateSummaryReport(mandala.id);
-            summaryResults.push({ mandalaId: mandala.id, success: true });
-            this.logger.log(
-              `Successfully generated summary for mandala ${mandala.id}`,
-            );
-          } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : 'Unknown error';
+          let summarySuccess = false;
+          let lastError: Error | null = null;
+
+          // Retry logic for mandala summary generation
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+              this.logger.log(
+                `Generating summary for mandala ${mandala.id} (attempt ${attempt}/3)`,
+              );
+              await this.mandalaService.generateSummaryReport(mandala.id);
+              summaryResults.push({ mandalaId: mandala.id, success: true });
+              this.logger.log(
+                `Successfully generated summary for mandala ${mandala.id} on attempt ${attempt}`,
+              );
+              summarySuccess = true;
+              break; // Success, exit retry loop
+            } catch (error) {
+              lastError =
+                error instanceof Error ? error : new Error('Unknown error');
+              this.logger.warn(
+                `Attempt ${attempt}/3 failed for mandala ${mandala.id}: ${lastError.message}`,
+              );
+
+              // Wait before retry (exponential backoff: 2s, 4s, 8s)
+              //TODO handle each AI request with its own job
+              if (attempt < 3) {
+                const delayMs = 2000 * Math.pow(2, attempt - 1);
+                this.logger.log(`Waiting ${delayMs}ms before retry...`);
+                await this.delay(delayMs);
+              }
+            }
+          }
+
+          if (!summarySuccess) {
             this.logger.error(
-              `Failed to generate summary for mandala ${mandala.id}: ${errorMessage}`,
-              { error: error instanceof Error ? error.stack : undefined },
+              `Failed to generate summary for mandala ${mandala.id} after 3 attempts: ${lastError?.message}`,
+              { error: lastError?.stack },
             );
             summaryResults.push({ mandalaId: mandala.id, success: false });
-            // Continue with other summaries
           }
 
           currentProgress += progressPerSummary;
