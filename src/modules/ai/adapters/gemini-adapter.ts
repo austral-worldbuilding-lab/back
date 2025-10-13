@@ -1,7 +1,4 @@
-import { ExternalServiceException } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
-import { GoogleGenAI } from '@google/genai';
-import { FileScope } from '@modules/files/types/file-scope.type';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
@@ -12,261 +9,37 @@ import { AiProvocationResponse } from '@modules/project/types/provocations.type'
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { AiValidationException } from '../exceptions/ai-validation.exception';
 import { AiProvider } from '../interfaces/ai-provider.interface';
-import { createEncyclopediaResponseSchema } from '../resources/dto/generate-encyclopedia.dto';
-import {
-  createPostitsSummaryResponseSchema,
-  createPostitsResponseSchema,
-  createProvocationsResponseSchema,
-} from '../resources/dto/generate-postits.dto';
-import { createQuestionsResponseSchema } from '../resources/dto/generate-questions.dto';
-import { createMandalaSummaryResponseSchema } from '../resources/dto/generate-summary.dto';
-import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
-import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
-import { AiRequestValidationService } from '../services/ai-request-validation.service';
-import { FileBufferWithScope } from '../services/file-loader.service';
-import {
-  CachedFileInfo,
-  GeminiFileCacheService,
-} from '../services/gemini-file-cache.service';
+import { AiGenerationEngine } from '../services/ai-generation-engine.interface';
+import { AiStrategyRegistryService } from '../services/ai-strategy-registry.service';
+import { ContextPostitsInput } from '../strategies/context-postits.strategy';
+import { MandalaSummaryInput } from '../strategies/mandala-summary.strategy';
+import { PostitsSummaryInput } from '../strategies/postits-summary.strategy';
+import { PostitsInput } from '../strategies/postits.strategy';
+import { ProvocationsInput } from '../strategies/provocations.strategy';
+import { QuestionsInput } from '../strategies/questions.strategy';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
-import {
-  AiResponseWithUsage,
-  AiUsageInfo,
-} from '../types/ai-response-with-usage.type';
-
-interface GeminiUploadedFile {
-  uri: string;
-  mimeType: string;
-}
-
-interface GeminiUsageMetadata {
-  totalTokenCount?: number;
-  promptTokenCount?: number;
-  candidatesTokenCount?: number;
-}
+import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
 
 @Injectable()
 export class GeminiAdapter implements AiProvider {
-  private ai: GoogleGenAI;
   private readonly geminiModel: string;
 
   constructor(
     private configService: ConfigService,
-    private readonly validator: AiRequestValidationService,
-    private readonly utilsService: AiAdapterUtilsService,
-    private readonly promptBuilderService: AiPromptBuilderService,
-    private readonly geminiCacheService: GeminiFileCacheService,
+    private readonly engine: AiGenerationEngine,
+    private readonly strategies: AiStrategyRegistryService,
     private readonly logger: AppLogger,
   ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (!apiKey) {
+    const model = this.configService.get<string>('GEMINI_MODEL');
+    if (!model) {
       throw new Error(
-        'GEMINI_API_KEY is not configured in environment variables',
+        'GEMINI_MODEL is not configured in environment variables',
       );
     }
-    this.ai = new GoogleGenAI({ apiKey });
-    this.geminiModel = this.utilsService.validateConfiguration('GEMINI_MODEL');
+    this.geminiModel = model;
     this.logger.setContext(GeminiAdapter.name);
     this.logger.log('Gemini Adapter initialized');
-  }
-
-  private async uploadFilesToGemini(
-    fileBuffers: FileBufferWithScope[],
-    baseScope: FileScope,
-  ): Promise<GeminiUploadedFile[]> {
-    if (fileBuffers.length === 0) {
-      this.logger.debug('No files to upload to Gemini');
-      return [];
-    }
-
-    this.logger.debug(`Uploading ${fileBuffers.length} files to Gemini...`);
-
-    try {
-      const uploadedFiles = await Promise.all(
-        fileBuffers.map(async (fileBuffer) => {
-          const blob = new Blob([fileBuffer.buffer], {
-            type: fileBuffer.mimeType,
-          });
-
-          const file = await this.ai.files.upload({
-            file: blob,
-            config: {
-              mimeType: fileBuffer.mimeType,
-              displayName: fileBuffer.fileName,
-            },
-          });
-
-          if (!file.name || !file.uri || !file.expirationTime) {
-            this.logger.error(
-              `Gemini API returned incomplete file data for ${fileBuffer.fileName}`,
-              {
-                hasName: !!file.name,
-                hasUri: !!file.uri,
-                hasExpirationTime: !!file.expirationTime,
-              },
-            );
-            throw new ExternalServiceException(
-              'Gemini API',
-              `Incomplete file data returned for ${fileBuffer.fileName}`,
-            );
-          }
-
-          // Construir el scope correcto basado en el source_scope del archivo
-          const fileScope = this.buildFileScope(
-            fileBuffer.sourceScope,
-            baseScope,
-          );
-          const contextPath =
-            this.geminiCacheService.buildContextPath(fileScope);
-
-          await this.geminiCacheService.upsert({
-            fileName: fileBuffer.fileName,
-            fileHash: file.sha256Hash || '',
-            contextPath, // ← Ahora usa el contextPath basado en source_scope
-            geminiFileId: file.name,
-            geminiUri: file.uri,
-            expiresAt: new Date(file.expirationTime),
-          });
-
-          return {
-            uri: file.uri,
-            mimeType: file.mimeType,
-          } as GeminiUploadedFile;
-        }),
-      );
-
-      this.logger.log(
-        `Successfully uploaded and cached ${uploadedFiles.length} files to Gemini`,
-      );
-      return uploadedFiles;
-    } catch (error) {
-      this.logger.error('Failed to upload files to Gemini:', error);
-      throw new ExternalServiceException(
-        'Gemini API',
-        'Failed to upload files to Gemini',
-        error,
-      );
-    }
-  }
-
-  private async prepareGeminiFiles(
-    toDownload: FileBufferWithScope[],
-    cached: CachedFileInfo[],
-    baseScope: FileScope,
-  ): Promise<GeminiUploadedFile[]> {
-    const cachedFiles = cached.map((c) => ({
-      uri: c.geminiUri,
-      mimeType: '',
-    }));
-
-    const uploadedFiles = await this.uploadFilesToGemini(toDownload, baseScope);
-
-    const allFiles = [...cachedFiles, ...uploadedFiles];
-
-    this.logger.log(
-      `Prepared ${allFiles.length} files for Gemini (${cached.length} cached, ${uploadedFiles.length} uploaded)`,
-    );
-
-    return allFiles;
-  }
-
-  private buildFileScope(sourceScope: string, baseScope: FileScope): FileScope {
-    // Construir scope basado en el source_scope del archivo
-    switch (sourceScope) {
-      case 'org':
-        return { orgId: baseScope.orgId };
-      case 'project':
-        return {
-          orgId: baseScope.orgId,
-          projectId: baseScope.projectId,
-        };
-      case 'mandala':
-        return baseScope; // usar el scope completo
-      default:
-        return baseScope;
-    }
-  }
-
-  private parseUsageMetadata(usageMetadata: GeminiUsageMetadata): AiUsageInfo {
-    return {
-      totalTokens: usageMetadata?.totalTokenCount || 0,
-      promptTokens: usageMetadata?.promptTokenCount || 0,
-      completionTokens: usageMetadata?.candidatesTokenCount || 0,
-    };
-  }
-
-  private async generateContentWithFiles(
-    model: string,
-    systemInstruction: string,
-    geminiFiles: GeminiUploadedFile[],
-    responseSchema: unknown,
-    promptTask?: string,
-  ): Promise<{ text: string | undefined; usage: AiUsageInfo }> {
-    const startTime = Date.now();
-
-    this.logger.log('Sending request to Gemini API', {
-      model,
-      fileCount: geminiFiles.length,
-      hasPromptTask: !!promptTask,
-    });
-
-    try {
-      const config = {
-        responseMimeType: 'application/json',
-        responseSchema: responseSchema,
-        systemInstruction: systemInstruction,
-      };
-
-      const contents = geminiFiles.map((file: GeminiUploadedFile) => ({
-        role: 'user',
-        content: promptTask,
-        parts: [
-          {
-            fileData: {
-              fileUri: file.uri,
-              mimeType: file.mimeType,
-            },
-          },
-        ],
-      }));
-
-      const response = await this.ai.models.generateContent({
-        model,
-        config,
-        contents,
-      });
-
-      const duration = Date.now() - startTime;
-      const usage = this.parseUsageMetadata(response.usageMetadata || {});
-
-      this.logger.log('Gemini API request completed successfully', {
-        model,
-        duration,
-        totalTokens: usage.totalTokens,
-        promptTokens: usage.promptTokens,
-        completionTokens: usage.completionTokens,
-      });
-
-      this.logger.debug('Response details', {
-        responseLength: response.text?.length || 0,
-        usageMetadata: response.usageMetadata,
-      });
-
-      return { text: response.text, usage };
-    } catch (error) {
-      const duration = Date.now() - startTime;
-
-      this.logger.error('Gemini API request failed', error, {
-        model,
-        duration,
-        fileCount: geminiFiles.length,
-        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
-      });
-
-      throw this.handleGeminiError(error);
-    }
   }
 
   async generatePostits(
@@ -281,8 +54,8 @@ export class GeminiAdapter implements AiProvider {
     selectedFiles?: string[],
     mandalaId?: string,
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
-    const model = this.geminiModel;
-    const finalPromptTask = await this.promptBuilderService.buildPostitPrompt(
+    const strategy = this.strategies.getPostits();
+    const input: PostitsInput = {
       projectName,
       projectDescription,
       dimensions,
@@ -290,37 +63,18 @@ export class GeminiAdapter implements AiProvider {
       centerCharacter,
       centerCharacterDescription,
       tags,
-    );
-
-    const filesResult = await this.utilsService.loadAndValidateFiles(
-      projectId,
-      selectedFiles,
-      mandalaId,
-    );
-
-    const geminiFiles = await this.prepareGeminiFiles(
-      filesResult.toDownload,
-      filesResult.cached,
-      filesResult.scope,
-    );
-
-    const response = await this.generateContentWithFiles(
-      model,
-      finalPromptTask,
-      geminiFiles,
-      createPostitsResponseSchema({
-        minItems: this.utilsService.getMinPostits(),
-        maxItems: this.utilsService.getMaxPostits(),
-      }),
-    );
-
-    const result = this.parseAndValidatePostitResponse(response.text);
-    this.logger.log(`Postit generation completed for project: ${projectId}`);
-
-    return {
-      data: result,
-      usage: response.usage,
     };
+    const prompt = await strategy.buildPrompt(input);
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.run(
+      this.geminiModel,
+      prompt,
+      schema,
+      { projectId, selectedFiles, mandalaId },
+    );
+    const data = strategy.parseAndValidate(text);
+    this.logger.log(`Postit generation completed for project: ${projectId}`);
+    return { data, usage };
   }
 
   async generateContextPostits(
@@ -335,89 +89,29 @@ export class GeminiAdapter implements AiProvider {
     selectedFiles?: string[],
     mandalaId?: string,
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
-    const model = this.geminiModel;
-    const finalPromptTask =
-      await this.promptBuilderService.buildContextPostitPrompt(
-        projectName,
-        projectDescription,
-        dimensions,
-        scales,
-        centerContext,
-        centerContextDescription,
-        tags,
-      );
-
-    const filesResult = await this.utilsService.loadAndValidateFiles(
-      projectId,
-      selectedFiles,
-      mandalaId,
+    const strategy = this.strategies.getContextPostits();
+    const input: ContextPostitsInput = {
+      projectName,
+      projectDescription,
+      dimensions,
+      scales,
+      centerContext,
+      centerContextDescription,
+      tags,
+    };
+    const prompt = await strategy.buildPrompt(input);
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.run(
+      this.geminiModel,
+      prompt,
+      schema,
+      { projectId, selectedFiles, mandalaId },
     );
-
-    const geminiFiles = await this.prepareGeminiFiles(
-      filesResult.toDownload,
-      filesResult.cached,
-      filesResult.scope,
-    );
-
-    const response = await this.generateContentWithFiles(
-      model,
-      finalPromptTask,
-      geminiFiles,
-      createPostitsResponseSchema({
-        minItems: this.utilsService.getMinPostits(),
-        maxItems: this.utilsService.getMaxPostits(),
-      }),
-    );
-
-    const result = this.parseAndValidatePostitResponse(response.text);
+    const data = strategy.parseAndValidate(text);
     this.logger.log(
       `Context postit generation completed for project: ${projectId}`,
     );
-
-    return {
-      data: result,
-      usage: response.usage,
-    };
-  }
-
-  private parseAndValidatePostitResponse(
-    responseText: string | undefined,
-  ): AiPostitResponse[] {
-    if (!responseText) {
-      throw new Error('No response text received from Gemini API');
-    }
-
-    try {
-      // Normalize legacy key names from the AI response
-      const normalizedResponseText = responseText.replace(
-        /"scale"\s*:/g,
-        '"section":',
-      );
-      const postits = JSON.parse(normalizedResponseText) as AiPostitResponse[];
-      this.logger.log(
-        `Successfully parsed ${postits.length} postits from AI response`,
-      );
-
-      const config = this.validator.getConfig();
-      if (postits.length > config.maxPostitsPerRequest) {
-        this.logger.error(`Generated postits count exceeds limit`, {
-          generatedCount: postits.length,
-          maxAllowed: config.maxPostitsPerRequest,
-          timestamp: new Date().toISOString(),
-        });
-        throw new AiValidationException([
-          `Generated ${postits.length} postits, but maximum allowed is ${config.maxPostitsPerRequest}`,
-        ]);
-      }
-
-      return postits;
-    } catch (error) {
-      if (error instanceof AiValidationException) {
-        throw error;
-      }
-      this.logger.error('Failed to parse AI response as JSON:', error);
-      throw new Error('Invalid JSON response from Gemini API');
-    }
+    return { data, usage };
   }
 
   async generateQuestions(
@@ -434,9 +128,8 @@ export class GeminiAdapter implements AiProvider {
     selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiQuestionResponse[]>> {
     this.logger.log(`Starting question generation for project: ${projectId}`);
-
-    const model = this.geminiModel;
-    const finalPromptTask = await this.promptBuilderService.buildQuestionPrompt(
+    const strategy = this.strategies.getQuestions();
+    const input: QuestionsInput = {
       projectName,
       projectDescription,
       dimensions,
@@ -445,75 +138,18 @@ export class GeminiAdapter implements AiProvider {
       centerCharacter,
       centerCharacterDescription,
       mandalaAiSummary,
-    );
-
-    const filesResult = await this.utilsService.loadAndValidateFiles(
-      projectId,
-      selectedFiles,
-      mandalaId,
-    );
-
-    const geminiFiles = await this.prepareGeminiFiles(
-      filesResult.toDownload,
-      filesResult.cached,
-      filesResult.scope,
-    );
-
-    const response = await this.generateContentWithFiles(
-      model,
-      finalPromptTask,
-      geminiFiles,
-      createQuestionsResponseSchema({
-        minItems: this.utilsService.getMinQuestions(),
-        maxItems: this.utilsService.getMaxQuestions(),
-      }),
-    );
-
-    const result = this.parseAndValidateQuestionResponse(response.text);
-    this.logger.log(`Question generation completed for project: ${projectId}`);
-
-    return {
-      data: result,
-      usage: response.usage,
     };
-  }
-
-  private parseAndValidateQuestionResponse(
-    responseText: string | undefined,
-  ): AiQuestionResponse[] {
-    if (!responseText) {
-      throw new Error('No response text received from Gemini API');
-    }
-
-    try {
-      const questions = JSON.parse(responseText) as AiQuestionResponse[];
-      this.logger.log(
-        `Successfully parsed ${questions.length} questions from AI response`,
-      );
-
-      const config = this.validator.getConfig();
-      if (questions.length > config.maxQuestionsPerRequest) {
-        this.logger.error(`Generated questions count exceeds limit`, {
-          generatedCount: questions.length,
-          maxAllowed: config.maxQuestionsPerRequest,
-          timestamp: new Date().toISOString(),
-        });
-        throw new AiValidationException([
-          `Generated ${questions.length} questions, but maximum allowed is ${config.maxQuestionsPerRequest}`,
-        ]);
-      }
-
-      return questions;
-    } catch (error) {
-      if (error instanceof AiValidationException) {
-        throw error;
-      }
-      this.logger.error(
-        'Failed to parse AI questions response as JSON:',
-        error,
-      );
-      throw new Error('Invalid JSON response from Gemini API');
-    }
+    const prompt = await strategy.buildPrompt(input);
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.run(
+      this.geminiModel,
+      prompt,
+      schema,
+      { projectId, selectedFiles, mandalaId },
+    );
+    const data = strategy.parseAndValidate(text);
+    this.logger.log(`Question generation completed for project: ${projectId}`);
+    return { data, usage };
   }
 
   async generatePostitsSummary(
@@ -530,75 +166,26 @@ export class GeminiAdapter implements AiProvider {
     }>
   > {
     this.logger.log(`Starting question generation for project: ${projectId}`);
-
-    const model = this.geminiModel;
-    const finalPromptTask =
-      await this.promptBuilderService.buildPostitSummaryPrompt(
-        projectName,
-        projectDescription,
-        mandalasAiSummary,
-      );
-
-    const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
-
-    const geminiFiles = await this.prepareGeminiFiles(
-      filesResult.toDownload,
-      filesResult.cached,
-      filesResult.scope,
+    const strategy = this.strategies.getPostitsSummary();
+    const input: PostitsSummaryInput = {
+      projectName,
+      projectDescription,
+      mandalasAiSummary,
+    };
+    const prompt = await strategy.buildPrompt(input);
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.run(
+      this.geminiModel,
+      prompt,
+      schema,
+      { projectId },
     );
-
-    const response = await this.generateContentWithFiles(
-      model,
-      finalPromptTask,
-      geminiFiles,
-      createPostitsSummaryResponseSchema({
-        minItems: this.utilsService.getMinResults(),
-        maxItems: this.utilsService.getMaxResults(),
-      }),
-    );
-
-    const { comparisons, report } = this.parseAndValidateComparisonWithReport(
-      response.text,
-    );
-
+    const data = strategy.parseAndValidate(text);
     this.logger.log(`Comparison + report generation completed`);
     this.logger.debug(
-      '[AI REPORT][comparativa] ' + JSON.stringify(report, null, 2),
+      '[AI REPORT][comparativa] ' + JSON.stringify(data.report, null, 2),
     );
-
-    return {
-      data: { comparisons, report },
-      usage: response.usage,
-    };
-  }
-
-  private parseAndValidateComparisonResponse(
-    responseText: string | undefined,
-  ): AiPostitComparisonResponse[] {
-    if (!responseText) {
-      throw new Error('No response text received from Gemini API');
-    }
-
-    try {
-      const normalizedResponseText = responseText.replace(
-        /"scale"\s*:/g,
-        '"section":',
-      );
-      const comparisons = JSON.parse(
-        normalizedResponseText,
-      ) as AiPostitComparisonResponse[];
-      this.logger.log(
-        `Successfully parsed ${comparisons.length} comparison responses from AI`,
-      );
-
-      return comparisons;
-    } catch (error) {
-      this.logger.error(
-        'Failed to parse AI comparison response as JSON:',
-        error,
-      );
-      throw new Error('Invalid JSON response from Gemini API');
-    }
+    return { data, usage };
   }
 
   async generateProvocations(
@@ -614,115 +201,24 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log(
       `Starting provocations generation for project: ${projectId}`,
     );
-
-    const model = this.geminiModel;
-    const finalPromptTask =
-      await this.promptBuilderService.buildProvocationPrompt(
-        projectName,
-        projectDescription,
-        mandalasAiSummary,
-        mandalasSummariesWithAi,
-      );
-
-    const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
-
-    const geminiFiles = await this.prepareGeminiFiles(
-      filesResult.toDownload,
-      filesResult.cached,
-      filesResult.scope,
+    const strategy = this.strategies.getProvocations();
+    const input: ProvocationsInput = {
+      projectName,
+      projectDescription,
+      mandalasAiSummary,
+      mandalasSummariesWithAi,
+    };
+    const prompt = await strategy.buildPrompt(input);
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.run(
+      this.geminiModel,
+      prompt,
+      schema,
+      { projectId },
     );
-
-    const response = await this.generateContentWithFiles(
-      model,
-      finalPromptTask,
-      geminiFiles,
-      createProvocationsResponseSchema({
-        minItems: this.utilsService.getMinProvocations(),
-        maxItems: this.utilsService.getMaxProvocations(),
-      }),
-    );
-
-    const result = this.parseAndValidateProvocationResponse(response.text);
+    const data = strategy.parseAndValidate(text);
     this.logger.log(`Provocations generation completed`);
-
-    return {
-      data: result,
-      usage: response.usage,
-    };
-  }
-
-  private parseAndValidateProvocationResponse(
-    responseText: string | undefined,
-  ): AiProvocationResponse[] {
-    if (!responseText) {
-      throw new Error('No response text received from Gemini API');
-    }
-    try {
-      const provocations = JSON.parse(responseText) as AiProvocationResponse[];
-      this.logger.log(
-        `Successfully parsed ${provocations.length} provocation responses from AI`,
-      );
-
-      return provocations;
-    } catch (error) {
-      this.logger.error(
-        'Failed to parse AI provocation response as JSON:',
-        error,
-      );
-      throw new Error('Invalid JSON response from Gemini API');
-    }
-  }
-
-  private parseAndValidateComparisonWithReport(
-    responseText: string | undefined,
-  ): { comparisons: AiPostitComparisonResponse[]; report: AiMandalaReport } {
-    if (!responseText) {
-      throw new Error('No response text received from Gemini API');
-    }
-
-    interface GeminiComparisonWithReport {
-      comparisons?: AiPostitComparisonResponse[];
-      report?: Partial<AiMandalaReport>;
-    }
-
-    let parsed: GeminiComparisonWithReport;
-
-    try {
-      parsed = JSON.parse(responseText) as {
-        comparisons?: AiPostitComparisonResponse[];
-        report?: AiMandalaReport;
-      };
-    } catch {
-      const start = responseText.indexOf('{');
-      const end = responseText.lastIndexOf('}');
-      if (start < 0 || end < 0) {
-        this.logger.error('Invalid JSON response from Gemini API');
-        throw new Error('Invalid JSON response from Gemini API');
-      }
-      parsed = JSON.parse(
-        responseText.slice(start, end + 1),
-      ) as GeminiComparisonWithReport;
-    }
-
-    const normalizedComparisonsText = Array.isArray(parsed.comparisons)
-      ? JSON.stringify(parsed.comparisons)
-      : JSON.stringify([]);
-
-    const comparisons = this.parseAndValidateComparisonResponse(
-      normalizedComparisonsText,
-    );
-
-    const report: AiMandalaReport = {
-      summary:
-        parsed.report && typeof parsed.report.summary === 'string'
-          ? parsed.report.summary
-          : '',
-      coincidences: parsed?.report?.coincidences ?? [],
-      tensions: parsed?.report?.tensions ?? [],
-      insights: parsed?.report?.insights ?? [],
-    };
-
-    return { comparisons, report };
+    return { data, usage };
   }
 
   async generateMandalaSummary(
@@ -737,40 +233,26 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log(
       `Starting summary generation for mandala ${mandalaId} in project ${projectId}`,
     );
-
-    const finalPromptTask =
-      await this.promptBuilderService.buildMandalaSummaryPrompt(
-        dimensions,
-        scales,
-        centerCharacter,
-        centerCharacterDescription,
-        cleanMandalaDocument,
+    const strategy = this.strategies.getMandalaSummary();
+    const input: MandalaSummaryInput = {
+      dimensions,
+      scales,
+      centerCharacter,
+      centerCharacterDescription,
+      cleanMandalaDocument,
+    };
+    return (async () => {
+      const prompt = await strategy.buildPrompt(input);
+      const schema = strategy.getResponseSchema();
+      const { text } = await this.engine.run(this.geminiModel, prompt, schema, {
+        projectId,
+      });
+      const data = strategy.parseAndValidate(text);
+      this.logger.log(
+        `Summary generation completed for mandala ${mandalaId} in project ${projectId}`,
       );
-
-    const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
-
-    const geminiFiles = await this.prepareGeminiFiles(
-      filesResult.toDownload,
-      filesResult.cached,
-      filesResult.scope,
-    );
-
-    const responseText = await this.generateContentWithFiles(
-      this.geminiModel,
-      finalPromptTask,
-      geminiFiles,
-      createMandalaSummaryResponseSchema(),
-    );
-
-    if (!responseText || !responseText.text) {
-      throw new Error('No response text received from Gemini API');
-    }
-
-    this.logger.log(
-      `Summary generation completed for mandala ${mandalaId} in project ${projectId}`,
-    );
-
-    return responseText.text;
+      return data;
+    })();
   }
 
   async generateEncyclopedia(
@@ -785,121 +267,25 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log(
       `Starting encyclopedia generation for project: ${projectId}`,
     );
-
-    const finalPromptTask =
-      await this.promptBuilderService.buildEncyclopediaPrompt(
-        projectName,
-        projectDescription,
-        dimensions,
-        scales,
-        mandalasSummariesWithAi,
-      );
-
-    const filesResult = await this.utilsService.loadAndValidateFiles(
-      projectId,
-      selectedFiles,
-    );
-
-    const geminiFiles = await this.prepareGeminiFiles(
-      filesResult.toDownload,
-      filesResult.cached,
-      filesResult.scope,
-    );
-
-    const response = await this.generateContentWithFiles(
+    const strategy = this.strategies.getEncyclopedia();
+    const prompt = await strategy.buildPrompt({
+      projectName,
+      projectDescription,
+      dimensions,
+      scales,
+      mandalasSummariesWithAi,
+    });
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.run(
       this.geminiModel,
-      finalPromptTask,
-      geminiFiles,
-      createEncyclopediaResponseSchema(),
+      prompt,
+      schema,
+      { projectId, selectedFiles },
     );
-
-    const result = this.parseAndValidateEncyclopediaResponse(response.text);
+    const data = strategy.parseAndValidate(text);
     this.logger.log(
       `Encyclopedia generation completed for project: ${projectId}`,
     );
-
-    return {
-      data: result,
-      usage: response.usage,
-    };
-  }
-
-  private parseAndValidateEncyclopediaResponse(
-    responseText: string | undefined,
-  ): AiEncyclopediaResponse {
-    if (!responseText) {
-      throw new Error('No response text received from Gemini API');
-    }
-
-    this.logger.log('Successfully parsed encyclopedia response from AI');
-
-    return {
-      encyclopedia: responseText,
-    };
-  }
-
-  private handleGeminiError(error: unknown): Error {
-    if (!(error instanceof Error)) {
-      return new ExternalServiceException(
-        'Gemini API',
-        'Unknown error occurred',
-        error,
-      );
-    }
-
-    const message = error.message.toLowerCase();
-
-    // Service unavailable, rate limit, timeout, network errors
-    if (
-      message.includes('503') ||
-      message.includes('service unavailable') ||
-      message.includes('rate limit') ||
-      message.includes('quota') ||
-      message.includes('timeout') ||
-      message.includes('econnrefused') ||
-      message.includes('enotfound') ||
-      message.includes('network') ||
-      message.includes('fetch failed')
-    ) {
-      return new ExternalServiceException(
-        'Gemini API',
-        'Gemini service is temporarily unavailable. Please try again later.',
-        error,
-      );
-    }
-
-    // Bad request / validation errors
-    if (
-      message.includes('400') ||
-      message.includes('invalid') ||
-      message.includes('bad request')
-    ) {
-      return new AiValidationException([
-        'Invalid request to Gemini API: ' + error.message,
-      ]);
-    }
-
-    // Authentication errors
-    if (
-      message.includes('401') ||
-      message.includes('403') ||
-      message.includes('unauthorized') ||
-      message.includes('forbidden') ||
-      message.includes('api key')
-    ) {
-      this.logger.error('Gemini API authentication failed', error);
-      return new ExternalServiceException(
-        'Gemini API',
-        'Authentication failed with Gemini API. Please check your API key.',
-        error,
-      );
-    }
-
-    // Default: treat as external service error (503)
-    return new ExternalServiceException(
-      'Gemini API',
-      'Failed to communicate with Gemini API: ' + error.message,
-      error,
-    );
+    return { data, usage };
   }
 }
