@@ -85,6 +85,59 @@ export class AiService {
     return response.data;
   }
 
+  async generateContextPostits(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    centerContext: string,
+    centerContextDescription: string,
+    tags: string[],
+    selectedFiles?: string[],
+    mandalaId?: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<AiPostitResponse[]> {
+    this.logger.log(
+      `Starting context postit generation for project: ${projectId}`,
+    );
+
+    const response = await this.aiProvider.generateContextPostits(
+      projectId,
+      projectName,
+      projectDescription,
+      dimensions,
+      scales,
+      tags,
+      centerContext,
+      centerContextDescription,
+      selectedFiles,
+      mandalaId,
+    );
+
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_POSTITS,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
+    this.logger.log(
+      `Generated ${response.data.length} context postits for project: ${projectId}`,
+    );
+    return response.data;
+  }
+
   async generateQuestions(
     projectId: string,
     projectName: string,

@@ -15,6 +15,7 @@ import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageServic
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { CreatePostitDto } from '../dto/postit/create-postit.dto';
+import { MandalaType } from '../types/mandala-type.enum';
 import {
   Postit,
   PostitCoordinates,
@@ -130,18 +131,36 @@ export class PostitService {
     // Get project information
     const project = await this.projectService.findOne(mandala.projectId);
 
-    const aiResponse: AiPostitResponse[] = await this.aiService.generatePostits(
-      mandala.projectId,
-      project.name,
-      project.description || '',
-      dimensions,
-      scales,
-      mandala.configuration.center.name,
-      mandala.configuration.center.description || 'N/A',
-      tagNames,
-      selectedFiles,
-      mandala.id,
-    );
+    let aiResponse: AiPostitResponse[];
+
+    // Use different AI service method based on mandala type
+    if (mandala.type === MandalaType.CONTEXT) {
+      aiResponse = await this.aiService.generateContextPostits(
+        mandala.projectId,
+        project.name,
+        project.description || '',
+        dimensions,
+        scales,
+        mandala.configuration.center.name,
+        mandala.configuration.center.description || 'N/A',
+        tagNames,
+        selectedFiles,
+        mandala.id,
+      );
+    } else {
+      aiResponse = await this.aiService.generatePostits(
+        mandala.projectId,
+        project.name,
+        project.description || '',
+        dimensions,
+        scales,
+        mandala.configuration.center.name,
+        mandala.configuration.center.description || 'N/A',
+        tagNames,
+        selectedFiles,
+        mandala.id,
+      );
+    }
 
     return aiResponse.map(
       (aiPostit: AiPostitResponse): Postit => ({

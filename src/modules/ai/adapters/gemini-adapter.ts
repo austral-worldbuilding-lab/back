@@ -236,6 +236,58 @@ export class GeminiAdapter implements AiProvider {
     };
   }
 
+  async generateContextPostits(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    tags: string[],
+    centerContext: string,
+    centerContextDescription: string,
+    selectedFiles?: string[],
+    mandalaId?: string,
+  ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
+    const model = this.geminiModel;
+    const finalPromptTask =
+      await this.promptBuilderService.buildContextPostitPrompt(
+        projectName,
+        projectDescription,
+        dimensions,
+        scales,
+        centerContext,
+        centerContextDescription,
+        tags,
+      );
+
+    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+      projectId,
+      selectedFiles,
+      mandalaId,
+    );
+
+    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const response = await this.generateContentWithFiles(
+      model,
+      finalPromptTask,
+      geminiFiles,
+      createPostitsResponseSchema({
+        minItems: this.utilsService.getMinPostits(),
+        maxItems: this.utilsService.getMaxPostits(),
+      }),
+    );
+
+    const result = this.parseAndValidatePostitResponse(response.text);
+    this.logger.log(
+      `Context postit generation completed for project: ${projectId}`,
+    );
+
+    return {
+      data: result,
+      usage: response.usage,
+    };
+  }
+
   private parseAndValidatePostitResponse(
     responseText: string | undefined,
   ): AiPostitResponse[] {
