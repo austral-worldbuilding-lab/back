@@ -49,12 +49,15 @@ import {
   ApiCreateImagePresignedUrl,
   ApiConfirmImageUpload,
   ApiDeleteImage,
+  ApiCreateContextMandala,
+  ApiGenerateContextMandala,
 } from './decorators/mandala-swagger.decorators';
 import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaDto,
   CreateOverlappedMandalaDto,
+  CreateContextMandalaDto,
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { GeneratePostitsDto } from './dto/generate-postits.dto';
@@ -101,7 +104,7 @@ export class MandalaController {
   ): Promise<MessageResponse<MandalaDto>> {
     const mandala = await this.mandalaService.create(
       createMandalaDto,
-      createMandalaDto.type || MandalaType.CHARACTER,
+      MandalaType.CHARACTER,
     );
     return {
       message: 'Mandala created successfully',
@@ -213,6 +216,38 @@ export class MandalaController {
       await this.mandalaService.generate(createMandalaDto);
     return {
       message: 'Mandala generated successfully with IA',
+      data: mandalaWithPostits,
+    };
+  }
+
+  @Post('context')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiCreateContextMandala()
+  async createContext(
+    @Body() createContextDto: CreateContextMandalaDto,
+  ): Promise<MessageResponse<MandalaDto>> {
+    const mandala = await this.mandalaService.create(
+      createContextDto,
+      MandalaType.CONTEXT,
+    );
+    return {
+      message: 'Context mandala created successfully',
+      data: mandala,
+    };
+  }
+
+  @Post('context/generate')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiGenerateContextMandala()
+  async generateContext(
+    @Body() createContextDto: CreateContextMandalaDto,
+  ): Promise<MessageResponse<MandalaWithPostitsAndLinkedCentersDto>> {
+    const mandalaWithPostits =
+      await this.mandalaService.generateContext(createContextDto);
+    return {
+      message: 'Context mandala generated successfully with AI',
       data: mandalaWithPostits,
     };
   }

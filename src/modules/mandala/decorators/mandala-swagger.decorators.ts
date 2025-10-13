@@ -151,6 +151,43 @@ export const ApiGenerateMandala = () =>
     }),
   );
 
+export const ApiCreateContextMandala = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear un nuevo mandala de contexto',
+      description:
+        'Crea un nuevo mandala de tipo CONTEXT para observaciones generales del mundo sin vinculación a personajes específicos.',
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'El mandala de contexto ha sido creado exitosamente',
+      type: MandalaDto,
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tiene permisos suficientes',
+    }),
+  );
+
+export const ApiGenerateContextMandala = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar un mandala de contexto automáticamente con IA',
+      description:
+        'Crea un nuevo mandala de tipo CONTEXT con post-its generados automáticamente que representan aspectos generales del mundo usando IA.',
+    }),
+    ApiResponse({
+      status: 201,
+      description:
+        'Se generó un nuevo mandala de contexto automáticamente con sus post-its',
+      type: MandalaWithPostitsAndLinkedCentersDto,
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este proyecto',
+    }),
+  );
+
 export const ApiCreatePostit = () =>
   applyDecorators(
     ApiOperation({

@@ -31,6 +31,7 @@ import {
   CreateMandalaCenterWithOriginDto,
   CreateMandalaDto,
   CreateOverlappedMandalaDto,
+  CreateContextMandalaDto,
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
@@ -362,7 +363,7 @@ export class MandalaService {
 
     const mandala: MandalaDto = await this.create(
       createMandalaDto,
-      createMandalaDto.type || MandalaType.CHARACTER,
+      MandalaType.CHARACTER,
     );
 
     try {
@@ -403,6 +404,70 @@ export class MandalaService {
         {
           mandala: mandala,
           postits: postitsWithCoordinates,
+          characters: childrenCenter,
+        },
+        mandala.id,
+      );
+
+      return firestoreData;
+    } catch (error) {
+      await this.remove(mandala.id);
+      throw error;
+    }
+  }
+
+  async generateContext(
+    createContextDto: CreateContextMandalaDto,
+  ): Promise<MandalaWithPostitsAndLinkedCentersDto> {
+    if (!createContextDto.projectId) {
+      throw new BadRequestException(
+        'Project ID is required to generate context mandala',
+      );
+    }
+
+    const mandala: MandalaDto = await this.create(
+      createContextDto,
+      MandalaType.CONTEXT,
+    );
+
+    try {
+      const postits = await this.postitService.generatePostits(
+        mandala,
+        mandala.configuration.dimensions.map((d) => d.name),
+        mandala.configuration.scales,
+        createContextDto.selectedFiles,
+      );
+      this.logger.debug('context postits', postits);
+      const postitsWithCoordinates: PostitWithCoordinates[] =
+        this.postitService.transformToPostitsWithCoordinates(
+          mandala.id,
+          postits,
+          mandala.configuration.dimensions.map((d) => d.name),
+          mandala.configuration.scales,
+        );
+
+      const childrenCenter = (
+        await this.mandalaRepository.findChildrenMandalasCenters(mandala.id)
+      ).map((center) => ({
+        name: center.name,
+        description: center.description,
+        color: center.color,
+        position: DEFAULT_CHARACTER_POSITION,
+        section: DEFAULT_CHARACTER_SECTION,
+        dimension: DEFAULT_CHARACTER_DIMENSION,
+      }));
+
+      const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
+        mandala: mandala,
+        postits: postitsWithCoordinates,
+        childrenCenter,
+      };
+
+      await this.firebaseDataService.createDocument(
+        mandala.projectId,
+        {
+          mandala: firestoreData.mandala,
+          postits: firestoreData.postits,
           characters: childrenCenter,
         },
         mandala.id,
