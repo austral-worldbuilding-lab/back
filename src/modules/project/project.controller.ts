@@ -6,15 +6,9 @@ import {
   DataResponse,
   PaginatedResponse,
 } from '@common/types/responses';
-import { AiService } from '@modules/ai/ai.service';
-import {
-  GenerateEncyclopediaDto,
-  AiEncyclopediaResponseDto,
-} from '@modules/ai/dto/generate-encyclopedia.dto';
+import { GenerateEncyclopediaDto } from '@modules/ai/dto/generate-encyclopedia.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
-import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
-import { MandalaService } from '@modules/mandala/mandala.service';
 import {
   OrganizationRoleGuard,
   RequireOrganizationRoles,
@@ -54,6 +48,7 @@ import {
   ApiGenerateProjectProvocations,
   ApiGetCachedProvocations,
   ApiCreateProvocation,
+  ApiGetEncyclopediaJobStatus,
   ApiFindAllProvocations,
   ApiCreateProjectFromProvocationId,
   ApiGetProjectTimeline,
@@ -66,6 +61,8 @@ import { CreateProjectFromQuestionDto } from './dto/create-project-from-question
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { EncyclopediaJobResponseDto } from './dto/encyclopedia-job-response.dto';
+import { EncyclopediaJobStatusDto } from './dto/encyclopedia-job-status.dto';
 import { GenerateProvocationsDto } from './dto/generate-provocations.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
@@ -88,11 +85,7 @@ import { AiProvocationResponse } from './types/provocations.type';
 @UseGuards(FirebaseAuthGuard)
 @ApiBearerAuth()
 export class ProjectController {
-  constructor(
-    private readonly projectService: ProjectService,
-    private readonly aiService: AiService,
-    private readonly mandalaService: MandalaService,
-  ) {}
+  constructor(private readonly projectService: ProjectService) {}
 
   @Post()
   @UseGuards(OrganizationRoleGuard)
@@ -414,41 +407,42 @@ export class ProjectController {
   async generateEncyclopedia(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() generateEncyclopediaDto: GenerateEncyclopediaDto,
-  ): Promise<AiEncyclopediaResponseDto> {
-    const project = await this.projectService.findOne(projectId);
-    const mandalas: MandalaDto[] = await this.mandalaService.findAll(projectId);
-    const mandalaDocs = await Promise.all(
-      mandalas.map((mandala: MandalaDto) =>
-        this.mandalaService.getFirestoreDocument(projectId, mandala.id),
-      ),
-    );
-    const allDimensions: string[] = [
-      ...new Set(
-        mandalas.flatMap((m: MandalaDto) =>
-          m.configuration.dimensions.map((d: { name: string }) => d.name),
-        ),
-      ),
-    ];
-    const allScales: string[] = [
-      ...new Set(mandalas.flatMap((m: MandalaDto) => m.configuration.scales)),
-    ];
-
-    // Obtener los resúmenes consolidados (usa report directamente para OVERLAP_SUMMARY)
-    const mandalasSummariesWithAi =
-      this.mandalaService.getAllMandalaSummariesWithAi(
-        projectId,
-        mandalaDocs,
-        mandalas,
-      );
-
-    return this.aiService.generateEncyclopedia(
+  ): Promise<EncyclopediaJobResponseDto> {
+    const jobId = await this.projectService.queueEncyclopediaGeneration(
       projectId,
-      project.name,
-      project.description || '',
-      allDimensions,
-      allScales,
-      mandalasSummariesWithAi,
       generateEncyclopediaDto.selectedFiles,
     );
+
+    return {
+      jobId,
+      message: 'Encyclopedia generation job has been queued',
+    };
+  }
+
+  @Get(':projectId/encyclopedia/job/:jobId')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiGetEncyclopediaJobStatus()
+  async getEncyclopediaJobStatus(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('jobId') jobId: string,
+  ): Promise<EncyclopediaJobStatusDto> {
+    // Verify user has access to the project
+    await this.projectService.findOne(projectId);
+
+    const status = await this.projectService.getEncyclopediaJobStatus(jobId);
+
+    return {
+      jobId: status.jobId,
+      status: status.status,
+      progress: status.progress,
+      encyclopedia: status.result?.encyclopedia,
+      storageUrl: status.result?.storageUrl,
+      error: status.error,
+      failedReason: status.failedReason,
+      createdAt: status.createdAt,
+      processedAt: status.processedAt,
+      finishedAt: status.finishedAt,
+    };
   }
 }

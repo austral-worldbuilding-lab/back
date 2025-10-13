@@ -12,6 +12,15 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
 
+  awbl-redis:
+    image: redis:7-alpine
+    container_name: awbl-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+
   awbl-app:
     build:
       context: .
@@ -23,7 +32,11 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql://postgres:password@awbl-db:5432/postgres
+      - REDIS_HOST=awbl-redis
+      - REDIS_PORT=6379
     depends_on:
       - awbl-db
+      - awbl-redis
 volumes:
   db-data:
+  redis-data:

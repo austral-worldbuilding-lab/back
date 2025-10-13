@@ -973,9 +973,9 @@ export const ApiGetProjectTimeline = () =>
 export const ApiGenerateProjectEncyclopedia = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Generar enciclopedia del proyecto usando IA',
+      summary: 'Generar enciclopedia del proyecto usando IA (async)',
       description:
-        'Genera una enciclopedia comprehensiva del mundo del proyecto usando IA basada en todos los resúmenes de mandalas',
+        'Inicia un job asíncrono para generar una enciclopedia comprehensiva del mundo del proyecto usando IA basada en todos los resúmenes de mandalas. Retorna un job ID para consultar el estado.',
     }),
     ApiParam({
       name: 'projectId',
@@ -984,15 +984,21 @@ export const ApiGenerateProjectEncyclopedia = () =>
       format: 'uuid',
     }),
     ApiResponse({
-      status: 200,
-      description: 'Enciclopedia generada exitosamente',
+      status: 202,
+      description:
+        'Job de generación de enciclopedia iniciado exitosamente. Use el jobId para consultar el estado.',
       schema: {
         type: 'object',
         properties: {
-          encyclopedia: {
+          jobId: {
             type: 'string',
-            description: 'La enciclopedia completa del mundo del proyecto',
-            example: 'Esta es la enciclopedia del mundo del proyecto...',
+            description: 'ID del job para consultar el estado',
+            example:
+              'encyclopedia-a1b2c3d4-e5f6-7890-1234-567890abcdef-1697234567890',
+          },
+          message: {
+            type: 'string',
+            example: 'Encyclopedia generation job has been queued',
           },
         },
       },
@@ -1014,5 +1020,86 @@ export const ApiGenerateProjectEncyclopedia = () =>
       status: 429,
       description:
         'Demasiadas peticiones - límite de throttling alcanzado (10 requests/hora)',
+    }),
+  );
+
+export const ApiGetEncyclopediaJobStatus = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener estado del job de enciclopedia',
+      description:
+        'Consulta el estado de un job de generación de enciclopedia. Retorna el estado actual y el resultado si está completado.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiParam({
+      name: 'jobId',
+      description: 'ID del job de enciclopedia',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Estado del job obtenido exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          jobId: {
+            type: 'string',
+            example:
+              'encyclopedia-a1b2c3d4-e5f6-7890-1234-567890abcdef-1697234567890',
+          },
+          status: {
+            type: 'string',
+            enum: ['waiting', 'active', 'completed', 'failed', 'delayed'],
+            example: 'completed',
+          },
+          progress: {
+            type: 'number',
+            example: 100,
+            description: 'Progreso del job (0-100)',
+          },
+          encyclopedia: {
+            type: 'string',
+            description:
+              'Contenido de la enciclopedia (solo si está completed)',
+          },
+          storageUrl: {
+            type: 'string',
+            description:
+              'URL del archivo en blob storage (solo si está completed)',
+            example:
+              'https://storageaccount.blob.core.windows.net/container/encyclopedia.md',
+          },
+          error: {
+            type: 'string',
+            description: 'Mensaje de error (solo si failed)',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          processedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          finishedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Job o proyecto no encontrado',
+    }),
+    ApiForbiddenResponse({
+      description: 'Prohibido - No tiene permisos para acceder a este proyecto',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
     }),
   );
