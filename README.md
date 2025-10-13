@@ -1,7 +1,7 @@
 # Lab3 Backend – NestJS
 
 This is the backend service for the **Lab3** worldbuilding platform, built with [NestJS](https://nestjs.com/) and TypeScript. It uses **Docker Compose** for managing the database and integrates Prisma as the ORM.
- 
+
 ---
 
 ## 🚀 Getting Started
