@@ -10,6 +10,8 @@ import { getProjectValidationConfig } from '@config/project-validation.config';
 import { AiService } from '@modules/ai/ai.service';
 import { FileService } from '@modules/files/file.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
+import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
+import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
 import { RoleService } from '@modules/role/role.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
@@ -49,6 +51,8 @@ export class ProjectService {
     private cacheService: CacheService,
     private readonly logger: AppLogger,
     private readonly blobStorageService: AzureBlobStorageService,
+    @Inject(forwardRef(() => EncyclopediaQueueService))
+    private readonly encyclopediaQueueService: EncyclopediaQueueService,
   ) {
     this.logger.setContext(ProjectService.name);
   }
@@ -464,17 +468,58 @@ export class ProjectService {
   }
 
   /**
-   * Pipeline to generate encyclopedia ensuring all mandalas have summaries
+   * Queue encyclopedia generation job
    * @param projectId - The project ID
    * @param selectedFiles - Optional files to include in generation
-   * @returns Encyclopedia content and storage URL
+   * @returns Job ID for tracking
+   */
+  async queueEncyclopediaGeneration(
+    projectId: string,
+    selectedFiles?: string[],
+  ): Promise<string> {
+    this.logger.log(
+      `Queuing encyclopedia generation job for project ${projectId}`,
+    );
+
+    // Verify project exists
+    await this.findOne(projectId);
+
+    const jobId = await this.encyclopediaQueueService.addEncyclopediaJob(
+      projectId,
+      selectedFiles,
+    );
+
+    this.logger.log(
+      `Encyclopedia generation job queued for project ${projectId} with ID: ${jobId}`,
+    );
+
+    return jobId;
+  }
+
+  /**
+   * Get encyclopedia job status
+   * @param jobId - The job ID
+   * @returns Job status with result if completed
+   */
+  async getEncyclopediaJobStatus(
+    jobId: string,
+  ): Promise<EncyclopediaJobStatusResponse> {
+    return this.encyclopediaQueueService.getJobStatus(jobId);
+  }
+
+  /**
+   * DEPRECATED: Old synchronous encyclopedia generation
+   * This method is kept for reference but should not be used directly.
+   * Use queueEncyclopediaGeneration instead.
+   *
+   * @deprecated Use queueEncyclopediaGeneration for async job-based generation
    */
   async generateEncyclopedia(
     projectId: string,
     selectedFiles?: string[],
   ): Promise<{ encyclopedia: string; storageUrl: string }> {
     this.logger.log(
-      `Starting encyclopedia generation pipeline for project ${projectId}`,
+      `[DEPRECATED] Starting synchronous encyclopedia generation for project ${projectId}`,
     );
 
     const project = await this.findOne(projectId);

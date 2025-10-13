@@ -3,9 +3,12 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
 import { MandalaModule } from '@modules/mandala/mandala.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
+import { EncyclopediaProcessor } from '@modules/queue/processors/encyclopedia.processor';
+import { QueueModule } from '@modules/queue/queue.module';
 import { RoleModule } from '@modules/role/role.module';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { forwardRef, Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
 import { ProjectRoleGuard } from './guards/project-role.guard';
 import { ProjectController } from './project.controller';
@@ -14,10 +17,12 @@ import { ProjectService } from './project.service';
 
 @Module({
   imports: [
+    ConfigModule,
     PrismaModule,
     AuthModule,
     RoleModule,
     forwardRef(() => MandalaModule),
+    QueueModule,
     AiModule,
     FileModule,
   ],
@@ -27,6 +32,7 @@ import { ProjectService } from './project.service';
     ProjectRepository,
     ProjectRoleGuard,
     AzureBlobStorageService,
+    EncyclopediaProcessor,
   ],
   exports: [ProjectService],
 })

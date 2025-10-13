@@ -48,6 +48,7 @@ import {
   ApiGenerateProjectProvocations,
   ApiGetCachedProvocations,
   ApiCreateProvocation,
+  ApiGetEncyclopediaJobStatus,
   ApiFindAllProvocations,
   ApiCreateProjectFromProvocationId,
   ApiGetProjectTimeline,
@@ -60,8 +61,9 @@ import { CreateProjectFromQuestionDto } from './dto/create-project-from-question
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { EncyclopediaJobResponseDto } from './dto/encyclopedia-job-response.dto';
+import { EncyclopediaJobStatusDto } from './dto/encyclopedia-job-status.dto';
 import { GenerateProvocationsDto } from './dto/generate-provocations.dto';
-import { ProjectEncyclopediaResponseDto } from './dto/project-encyclopedia-response.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
@@ -400,17 +402,47 @@ export class ProjectController {
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @Post(':projectId/encyclopedia')
   @UseGuards(ProjectRoleGuard)
-  //TODO should we have member role to generate encyclopedia?
   @RequireProjectRoles('member', 'owner', 'admin')
   @ApiGenerateProjectEncyclopedia()
   async generateEncyclopedia(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
     @Body() generateEncyclopediaDto: GenerateEncyclopediaDto,
-  ): Promise<ProjectEncyclopediaResponseDto> {
-    return this.projectService.generateEncyclopedia(
+  ): Promise<EncyclopediaJobResponseDto> {
+    const jobId = await this.projectService.queueEncyclopediaGeneration(
       projectId,
-      //TODO should we have selectedFiles?
       generateEncyclopediaDto.selectedFiles,
     );
+
+    return {
+      jobId,
+      message: 'Encyclopedia generation job has been queued',
+    };
+  }
+
+  @Get(':projectId/encyclopedia/job/:jobId')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiGetEncyclopediaJobStatus()
+  async getEncyclopediaJobStatus(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('jobId') jobId: string,
+  ): Promise<EncyclopediaJobStatusDto> {
+    // Verify user has access to the project
+    await this.projectService.findOne(projectId);
+
+    const status = await this.projectService.getEncyclopediaJobStatus(jobId);
+
+    return {
+      jobId: status.jobId,
+      status: status.status,
+      progress: status.progress,
+      encyclopedia: status.result?.encyclopedia,
+      storageUrl: status.result?.storageUrl,
+      error: status.error,
+      failedReason: status.failedReason,
+      createdAt: status.createdAt,
+      processedAt: status.processedAt,
+      finishedAt: status.finishedAt,
+    };
   }
 }
