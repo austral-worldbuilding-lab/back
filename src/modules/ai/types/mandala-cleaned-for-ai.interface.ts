@@ -17,6 +17,13 @@ export interface ScaleWithCount {
   totalPostits: number;
 }
 
+export interface RelatedCharacter {
+  name: string;
+  description?: string;
+  section: string;
+  dimension: string;
+}
+
 export interface CleanMandalaForQuestions {
   centerCharacter: {
     name: string;
@@ -25,6 +32,7 @@ export interface CleanMandalaForQuestions {
   dimensions: DimensionWithCount[];
   scales: ScaleWithCount[];
   totalPostits: number;
+  relatedCharacters: RelatedCharacter[];
 }
 
 export interface PostitClean {
@@ -50,4 +58,5 @@ export interface CleanMandalaForSummary {
   };
   dimensions: DimensionClean[];
   scales: ScaleClean[];
+  relatedCharacters: RelatedCharacter[];
 }
