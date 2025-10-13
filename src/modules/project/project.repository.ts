@@ -133,17 +133,16 @@ export class ProjectRepository {
     return generatedProjectLink?.project || null;
   }
 
-  // TODO: when we have method to find initial project, replace `${parentProject.name}: ...` for `${initialProject.name}: ...`
   private buildProvocationProjectName(
-    generatedProject: Project | null,
+    rootProject: Project | null,
     provocationQuestion: string,
     provocationContent: { title?: string; description?: string } | null,
     providedName?: string,
   ): string {
     const provocationTitle = provocationContent?.title || provocationQuestion;
 
-    if (generatedProject) {
-      return `${generatedProject.name}: ${provocationTitle}`;
+    if (rootProject) {
+      return `${rootProject.name}: ${provocationTitle}`;
     } else {
       if (!providedName) {
         throw new BadRequestException(
@@ -337,8 +336,19 @@ export class ProjectRepository {
         tx,
       );
 
+      let rootProject: Project | null = null;
+      if (parentProject) {
+        const rootProjectId = parentProject.rootProjectId || parentProject.id;
+        rootProject = await tx.project.findFirst({
+          where: {
+            id: rootProjectId,
+            isActive: true,
+          },
+        });
+      }
+
       const projectName = this.buildProvocationProjectName(
-        parentProject,
+        rootProject,
         provocation.question,
         provocationContent,
         createProjectFromProvocationDto.name,
