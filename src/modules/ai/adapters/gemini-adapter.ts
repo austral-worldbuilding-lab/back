@@ -347,13 +347,18 @@ export class GeminiAdapter implements AiProvider {
         tags,
       );
 
-    const fileBuffers = await this.utilsService.loadAndValidateFiles(
+    const filesResult = await this.utilsService.loadAndValidateFiles(
       projectId,
       selectedFiles,
       mandalaId,
     );
 
-    const geminiFiles = await this.uploadFilesToGemini(fileBuffers);
+    const geminiFiles = await this.prepareGeminiFiles(
+      filesResult.toDownload,
+      filesResult.cached,
+      filesResult.scope,
+    );
+
     const response = await this.generateContentWithFiles(
       model,
       finalPromptTask,
