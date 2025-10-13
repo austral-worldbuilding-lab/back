@@ -1,9 +1,7 @@
 import { ExternalServiceException } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
 import { GoogleGenAI } from '@google/genai';
-import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { FileScope } from '@modules/files/types/file-scope.type';
-import { FileBufferWithScope } from '../services/file-loader.service';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
@@ -27,6 +25,7 @@ import { createMandalaSummaryResponseSchema } from '../resources/dto/generate-su
 import { AiAdapterUtilsService } from '../services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import { AiRequestValidationService } from '../services/ai-request-validation.service';
+import { FileBufferWithScope } from '../services/file-loader.service';
 import {
   CachedFileInfo,
   GeminiFileCacheService,
