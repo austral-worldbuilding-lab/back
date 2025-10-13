@@ -38,18 +38,46 @@ export interface AiProvider {
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>>;
 
   /**
+   * Generates context postits for a project (general aspects not tied to a specific character)
+   * @param projectId - The ID of the project to generate postits for
+   * @param projectName - The name of the project (displayed as world name)
+   * @param projectDescription - The description of the project (displayed as world description)
+   * @param dimensions - Array of dimensions
+   * @param scales - Array of scales
+   * @param tags - Array of tags to be used for connecting postits across dimensions
+   * @param centerContext - The center context name
+   * @param centerContextDescription - The center context description
+   * @param selectedFiles - Optional array of file names to filter context
+   * @param mandalaId - The ID of the mandala to generate postits for
+   * @returns An array of AiPostitResponse objects (with string tags)
+   */
+  generateContextPostits(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    tags: string[],
+    centerContext: string,
+    centerContextDescription: string,
+    selectedFiles?: string[],
+    mandalaId?: string,
+  ): Promise<AiResponseWithUsage<AiPostitResponse[]>>;
+
+  /**
    * Generates questions for a project based on mandala configuration and files
    * @param projectId
    * @param projectName - The name of the project (displayed as world name)
    * @param projectDescription - The description of the project (displayed as world description)
    * @param mandalaId
-   * @param mandalaTextSummary - Clean textual summary of the mandala without technical details
    * Project configuration:
    * @param dimensions - Array of dimensions to generate questions for
    * @param scales - Array of scales to generate questions for
    * Mandala configuration:
+   * @param tags
    * @param centerCharacter - The center character
    * @param centerCharacterDescription - The center character description
+   * @param mandalaAiSummary
    * @param selectedFiles - Optional array of file names to filter context
    * @returns An array of AiQuestionResponse objects
    */

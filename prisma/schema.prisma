@@ -124,6 +124,7 @@ enum MandalaType {
   CHARACTER
   OVERLAP
   OVERLAP_SUMMARY
+  CONTEXT
 }
 
 model Tag {

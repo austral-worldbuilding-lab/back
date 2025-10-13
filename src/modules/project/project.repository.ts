@@ -471,7 +471,7 @@ export class ProjectRepository {
           }),
           organizationId,
           parentProjectId: null, // No parent project
-          rootProjectId: 'temp',
+          rootProjectId: null,
         },
       });
 

@@ -9,6 +9,7 @@ import {
   replaceProvocationPlaceholders,
   replaceMandalaSummaryPlaceholders,
   replaceEncyclopediaPlaceholders,
+  replaceContextPostitPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -72,6 +73,46 @@ export class AiPromptBuilderService {
       scales: scales,
       centerCharacter: centerCharacter,
       centerCharacterDescription: centerCharacterDescription,
+      tags: tags,
+      maxPostits: this.utilsService.getMaxPostits(),
+      minPostits: this.utilsService.getMinPostits(),
+    });
+    return this.buildPromptWithCiclo1Instructions(promptTask);
+  }
+
+  /**
+   * Builds complete prompt for context postit generation
+   * @param projectName - Project name (displayed as world name)
+   * @param projectDescription - Project description (displayed as world description)
+   * @param dimensions - Array of dimensions
+   * @param scales - Array of scales
+   * @param centerContext - The center context name
+   * @param centerContextDescription - The center context description
+   * @param tags - Array of tags
+   * @returns Complete prompt ready for AI processing
+   */
+  async buildContextPostitPrompt(
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    centerContext: string,
+    centerContextDescription: string,
+    tags: string[],
+  ): Promise<string> {
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_postits_contexto.txt',
+    );
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const promptTask = replaceContextPostitPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
+      dimensions: dimensions,
+      scales: scales,
+      centerContext: centerContext,
+      centerContextDescription: centerContextDescription,
       tags: tags,
       maxPostits: this.utilsService.getMaxPostits(),
       minPostits: this.utilsService.getMinPostits(),

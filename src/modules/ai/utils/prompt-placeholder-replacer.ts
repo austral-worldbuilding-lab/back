@@ -3,6 +3,8 @@ export interface PromptReplacementConfig {
   scales?: string[];
   centerCharacter?: string;
   centerCharacterDescription?: string;
+  centerContext?: string;
+  centerContextDescription?: string;
   tags?: string[];
   mandalaDocument?: string;
   mandalasSummariesWithAi?: string;
@@ -218,6 +220,41 @@ const replaceMinQuestions: PlaceholderReplacer = (prompt, config) => {
   return prompt.replace(/\$\{minQuestions}/g, config.minQuestions.toString());
 };
 
+const replaceCenterContext: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{centerContext}/.test(prompt)) {
+    throw new Error('Missing placeholder ${centerContext} in prompt');
+  }
+  if (config.centerContext === undefined) {
+    throw new Error(
+      'centerContext config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{centerContext}/g, config.centerContext);
+};
+
+const replaceCenterContextDescription: PlaceholderReplacer = (
+  prompt,
+  config,
+) => {
+  if (!/\$\{centerContextDescription}/.test(prompt)) {
+    throw new Error(
+      'Missing placeholder ${centerContextDescription} in prompt',
+    );
+  }
+  if (config.centerContextDescription === undefined) {
+    throw new Error(
+      'centerContextDescription config placeholder is required in prompt to be replaced',
+    );
+  }
+  if (config.centerContextDescription === '') {
+    return prompt.replace(/\$\{centerContextDescription}/g, 'N/A');
+  }
+  return prompt.replace(
+    /\$\{centerContextDescription}/g,
+    config.centerContextDescription,
+  );
+};
+
 const composeReplacers = (
   ...replacers: PlaceholderReplacer[]
 ): PlaceholderReplacer => {
@@ -244,6 +281,18 @@ const postitReplacer = composeReplacers(
   replaceScales,
   replaceCenterCharacter,
   replaceCenterCharacterDescription,
+  replaceTags,
+  replaceMaxPostits,
+  replaceMinPostits,
+);
+
+const contextPostitReplacer = composeReplacers(
+  replaceProjectName,
+  replaceProjectDescription,
+  replaceDimensions,
+  replaceScales,
+  replaceCenterContext,
+  replaceCenterContextDescription,
   replaceTags,
   replaceMaxPostits,
   replaceMinPostits,
@@ -409,5 +458,23 @@ export function replaceEncyclopediaPlaceholders(
     config,
     encyclopediaReplacer,
     'encyclopedia',
+  );
+}
+
+/**
+ * Replace placeholders for context postit generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceContextPostitPlaceholders(
+  promptTemplate: string,
+  config: PromptReplacementConfig = {},
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    contextPostitReplacer,
+    'context postit',
   );
 }
