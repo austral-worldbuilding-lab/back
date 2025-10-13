@@ -16,6 +16,7 @@ import { AiPromptBuilderService } from './services/ai-prompt-builder.service';
 import { AiRequestValidationService } from './services/ai-request-validation.service';
 import { FileLoaderService } from './services/file-loader.service';
 import { FileValidationService } from './services/file-validation.service';
+import { GeminiFileCacheService } from './services/gemini-file-cache.service';
 
 @Module({
   providers: [
@@ -25,6 +26,7 @@ import { FileValidationService } from './services/file-validation.service';
     FileLoaderService,
     FileValidationService,
     AiRequestValidationService,
+    GeminiFileCacheService,
     {
       provide: AI_PROVIDER,
       useFactory: aiProviderFactory,
@@ -33,6 +35,7 @@ import { FileValidationService } from './services/file-validation.service';
         AiRequestValidationService,
         AiAdapterUtilsService,
         AiPromptBuilderService,
+        GeminiFileCacheService,
         AppLogger,
       ],
     },

@@ -24,6 +24,6 @@ import { VideoProcessingService } from './services/video-processing.service';
     ProjectFileRoleGuard,
     MandalaFileRoleGuard,
   ],
-  exports: [FileService, FileSelectionRepository],
+  exports: [FileService, FileSelectionRepository, AzureBlobStorageService],
 })
 export class FileModule {}

@@ -8,14 +8,13 @@ import {
 } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
 import { getAiValidationConfig } from '@config/ai-validation.config';
-import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { AiValidationException } from '../exceptions/ai-validation.exception';
 
 import { AiRequestValidationService } from './ai-request-validation.service';
-import { FileLoaderService } from './file-loader.service';
+import { FileLoaderService, LoadFilesResult } from './file-loader.service';
 import { FileValidationService } from './file-validation.service';
 
 @Injectable()
@@ -139,34 +138,26 @@ export class AiAdapterUtilsService {
     projectId: string,
     selectedFiles?: string[],
     mandalaId?: string,
-  ): Promise<FileBuffer[]> {
+  ): Promise<LoadFilesResult> {
     try {
-      const loadedFiles = await this.fileLoader.loadFiles(
+      const result = await this.fileLoader.loadFiles(
         projectId,
         selectedFiles,
         mandalaId,
       );
 
-      this.fileLoader.validateFilesLoaded(loadedFiles, selectedFiles);
+      this.validateHasFilesAvailable(result, selectedFiles);
 
-      const fileValidationResult =
-        this.fileValidator.validateFiles(loadedFiles);
-      if (!fileValidationResult.isValid) {
-        throw new AiValidationException(fileValidationResult.errors, projectId);
-      }
-
-      const processableFiles = this.fileValidator.excludeVideos(loadedFiles);
-
-      const aiValidationResult = this.aiRequestValidator.validateResponseForAi(
-        processableFiles,
-        this.maxResults,
+      const processableFiles = this.validateAndProcessDownloadedFiles(
+        result.toDownload,
+        projectId,
       );
 
-      if (!aiValidationResult.isValid) {
-        throw new AiValidationException(aiValidationResult.errors, projectId);
-      }
-
-      return processableFiles;
+      return {
+        toDownload: processableFiles,
+        cached: result.cached,
+        scope: result.scope,
+      };
     } catch (error) {
       if (error instanceof AiValidationException) {
         throw error;
@@ -199,5 +190,45 @@ export class AiAdapterUtilsService {
         errorDetails,
       );
     }
+  }
+
+  private validateHasFilesAvailable(
+    result: LoadFilesResult,
+    selectedFiles?: string[],
+  ): void {
+    this.fileLoader.validateFilesLoaded(result, selectedFiles);
+  }
+
+  private validateAndProcessDownloadedFiles(
+    toDownload: LoadFilesResult['toDownload'],
+    projectId: string,
+  ): LoadFilesResult['toDownload'] {
+    if (toDownload.length === 0) {
+      this.logger.debug(
+        'All files retrieved from cache, skipping file validation',
+        { projectId },
+      );
+      return [];
+    }
+
+    const fileValidationResult = this.fileValidator.validateFiles(toDownload);
+    if (!fileValidationResult.isValid) {
+      throw new AiValidationException(fileValidationResult.errors, projectId);
+    }
+
+    const processableFiles = this.fileValidator.excludeVideos(
+      toDownload,
+    ) as LoadFilesResult['toDownload'];
+
+    const aiValidationResult = this.aiRequestValidator.validateResponseForAi(
+      processableFiles,
+      this.maxResults,
+    );
+
+    if (!aiValidationResult.isValid) {
+      throw new AiValidationException(aiValidationResult.errors, projectId);
+    }
+
+    return processableFiles;
   }
 }
