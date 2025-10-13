@@ -2,6 +2,8 @@ import { ExternalServiceException } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
 import { GoogleGenAI } from '@google/genai';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
+import { FileScope } from '@modules/files/types/file-scope.type';
+import { FileBufferWithScope } from '../services/file-loader.service';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
@@ -72,8 +74,8 @@ export class GeminiAdapter implements AiProvider {
   }
 
   private async uploadFilesToGemini(
-    fileBuffers: FileBuffer[],
-    contextPath: string,
+    fileBuffers: FileBufferWithScope[],
+    baseScope: FileScope,
   ): Promise<GeminiUploadedFile[]> {
     if (fileBuffers.length === 0) {
       this.logger.debug('No files to upload to Gemini');
@@ -112,10 +114,18 @@ export class GeminiAdapter implements AiProvider {
             );
           }
 
+          // Construir el scope correcto basado en el source_scope del archivo
+          const fileScope = this.buildFileScope(
+            fileBuffer.sourceScope,
+            baseScope,
+          );
+          const contextPath =
+            this.geminiCacheService.buildContextPath(fileScope);
+
           await this.geminiCacheService.upsert({
             fileName: fileBuffer.fileName,
             fileHash: file.sha256Hash || '',
-            contextPath,
+            contextPath, // ← Ahora usa el contextPath basado en source_scope
             geminiFileId: file.name,
             geminiUri: file.uri,
             expiresAt: new Date(file.expirationTime),
@@ -143,19 +153,16 @@ export class GeminiAdapter implements AiProvider {
   }
 
   private async prepareGeminiFiles(
-    toDownload: FileBuffer[],
+    toDownload: FileBufferWithScope[],
     cached: CachedFileInfo[],
-    contextPath: string,
+    baseScope: FileScope,
   ): Promise<GeminiUploadedFile[]> {
     const cachedFiles = cached.map((c) => ({
       uri: c.geminiUri,
       mimeType: '',
     }));
 
-    const uploadedFiles = await this.uploadFilesToGemini(
-      toDownload,
-      contextPath,
-    );
+    const uploadedFiles = await this.uploadFilesToGemini(toDownload, baseScope);
 
     const allFiles = [...cachedFiles, ...uploadedFiles];
 
@@ -164,6 +171,23 @@ export class GeminiAdapter implements AiProvider {
     );
 
     return allFiles;
+  }
+
+  private buildFileScope(sourceScope: string, baseScope: FileScope): FileScope {
+    // Construir scope basado en el source_scope del archivo
+    switch (sourceScope) {
+      case 'org':
+        return { orgId: baseScope.orgId };
+      case 'project':
+        return {
+          orgId: baseScope.orgId,
+          projectId: baseScope.projectId,
+        };
+      case 'mandala':
+        return baseScope; // usar el scope completo
+      default:
+        return baseScope;
+    }
   }
 
   private parseUsageMetadata(usageMetadata: GeminiUsageMetadata): AiUsageInfo {
@@ -275,14 +299,10 @@ export class GeminiAdapter implements AiProvider {
       mandalaId,
     );
 
-    const contextPath = this.geminiCacheService.buildContextPath(
-      filesResult.scope,
-    );
-
     const geminiFiles = await this.prepareGeminiFiles(
       filesResult.toDownload,
       filesResult.cached,
-      contextPath,
+      filesResult.scope,
     );
 
     const response = await this.generateContentWithFiles(
@@ -377,14 +397,10 @@ export class GeminiAdapter implements AiProvider {
       mandalaId,
     );
 
-    const contextPath = this.geminiCacheService.buildContextPath(
-      filesResult.scope,
-    );
-
     const geminiFiles = await this.prepareGeminiFiles(
       filesResult.toDownload,
       filesResult.cached,
-      contextPath,
+      filesResult.scope,
     );
 
     const response = await this.generateContentWithFiles(
@@ -469,14 +485,10 @@ export class GeminiAdapter implements AiProvider {
 
     const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
 
-    const contextPath = this.geminiCacheService.buildContextPath(
-      filesResult.scope,
-    );
-
     const geminiFiles = await this.prepareGeminiFiles(
       filesResult.toDownload,
       filesResult.cached,
-      contextPath,
+      filesResult.scope,
     );
 
     const response = await this.generateContentWithFiles(
@@ -558,14 +570,10 @@ export class GeminiAdapter implements AiProvider {
 
     const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
 
-    const contextPath = this.geminiCacheService.buildContextPath(
-      filesResult.scope,
-    );
-
     const geminiFiles = await this.prepareGeminiFiles(
       filesResult.toDownload,
       filesResult.cached,
-      contextPath,
+      filesResult.scope,
     );
 
     const response = await this.generateContentWithFiles(
@@ -685,14 +693,10 @@ export class GeminiAdapter implements AiProvider {
 
     const filesResult = await this.utilsService.loadAndValidateFiles(projectId);
 
-    const contextPath = this.geminiCacheService.buildContextPath(
-      filesResult.scope,
-    );
-
     const geminiFiles = await this.prepareGeminiFiles(
       filesResult.toDownload,
       filesResult.cached,
-      contextPath,
+      filesResult.scope,
     );
 
     const responseText = await this.generateContentWithFiles(
@@ -740,14 +744,10 @@ export class GeminiAdapter implements AiProvider {
       selectedFiles,
     );
 
-    const contextPath = this.geminiCacheService.buildContextPath(
-      filesResult.scope,
-    );
-
     const geminiFiles = await this.prepareGeminiFiles(
       filesResult.toDownload,
       filesResult.cached,
-      contextPath,
+      filesResult.scope,
     );
 
     const response = await this.generateContentWithFiles(

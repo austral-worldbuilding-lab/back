@@ -14,7 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { AiValidationException } from '../exceptions/ai-validation.exception';
 
 import { AiRequestValidationService } from './ai-request-validation.service';
-import { FileLoaderService } from './file-loader.service';
+import { FileLoaderService, LoadFilesResult } from './file-loader.service';
 import { FileValidationService } from './file-validation.service';
 
 @Injectable()
@@ -138,7 +138,7 @@ export class AiAdapterUtilsService {
     projectId: string,
     selectedFiles?: string[],
     mandalaId?: string,
-  ) {
+  ): Promise<LoadFilesResult> {
     try {
       const result = await this.fileLoader.loadFiles(
         projectId,
@@ -146,27 +146,12 @@ export class AiAdapterUtilsService {
         mandalaId,
       );
 
-      this.fileLoader.validateFilesLoaded(result, selectedFiles);
+      this.validateHasFilesAvailable(result, selectedFiles);
 
-      const fileValidationResult = this.fileValidator.validateFiles(
+      const processableFiles = this.validateAndProcessDownloadedFiles(
         result.toDownload,
+        projectId,
       );
-      if (!fileValidationResult.isValid) {
-        throw new AiValidationException(fileValidationResult.errors, projectId);
-      }
-
-      const processableFiles = this.fileValidator.excludeVideos(
-        result.toDownload,
-      );
-
-      const aiValidationResult = this.aiRequestValidator.validateResponseForAi(
-        processableFiles,
-        this.maxResults,
-      );
-
-      if (!aiValidationResult.isValid) {
-        throw new AiValidationException(aiValidationResult.errors, projectId);
-      }
 
       return {
         toDownload: processableFiles,
@@ -205,5 +190,45 @@ export class AiAdapterUtilsService {
         errorDetails,
       );
     }
+  }
+
+  private validateHasFilesAvailable(
+    result: LoadFilesResult,
+    selectedFiles?: string[],
+  ): void {
+    this.fileLoader.validateFilesLoaded(result, selectedFiles);
+  }
+
+  private validateAndProcessDownloadedFiles(
+    toDownload: LoadFilesResult['toDownload'],
+    projectId: string,
+  ): LoadFilesResult['toDownload'] {
+    if (toDownload.length === 0) {
+      this.logger.debug(
+        'All files retrieved from cache, skipping file validation',
+        { projectId },
+      );
+      return [];
+    }
+
+    const fileValidationResult = this.fileValidator.validateFiles(toDownload);
+    if (!fileValidationResult.isValid) {
+      throw new AiValidationException(fileValidationResult.errors, projectId);
+    }
+
+    const processableFiles = this.fileValidator.excludeVideos(
+      toDownload,
+    ) as LoadFilesResult['toDownload'];
+
+    const aiValidationResult = this.aiRequestValidator.validateResponseForAi(
+      processableFiles,
+      this.maxResults,
+    );
+
+    if (!aiValidationResult.isValid) {
+      throw new AiValidationException(aiValidationResult.errors, projectId);
+    }
+
+    return processableFiles;
   }
 }

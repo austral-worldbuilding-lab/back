@@ -21,7 +21,7 @@ export class GeminiFileCacheService {
 
   async findValidCached(
     scope: FileScope,
-    fileNames: string[],
+    fileName: string,
   ): Promise<CachedFileInfo[]> {
     const contextPath = this.buildContextPath(scope);
     const now = new Date();
@@ -29,7 +29,7 @@ export class GeminiFileCacheService {
     const cached = await this.prisma.geminiFileCache.findMany({
       where: {
         contextPath,
-        fileName: { in: fileNames },
+        fileName: fileName,
         expiresAt: { gt: now },
       },
       select: {
@@ -38,17 +38,6 @@ export class GeminiFileCacheService {
         geminiFileId: true,
       },
     });
-
-    if (cached.length > 0) {
-      this.logger.log(`Cache HIT: ${cached.length}/${fileNames.length} files`, {
-        contextPath,
-      });
-    } else {
-      this.logger.debug('Cache MISS: No valid cached files found', {
-        contextPath,
-        requestedFiles: fileNames.length,
-      });
-    }
 
     return cached as CachedFileInfo[];
   }

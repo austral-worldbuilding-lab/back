@@ -40,14 +40,14 @@ model Project {
 
   // project hierarchy useful for timeline
   parentProjectId String?
-  parent          Project?          @relation("ProjParent", fields: [parentProjectId], references: [id], onDelete: SetNull)
-  children        Project[]         @relation("ProjParent")
+  parent          Project?  @relation("ProjParent", fields: [parentProjectId], references: [id], onDelete: SetNull)
+  children        Project[] @relation("ProjParent")
   rootProjectId   String?
-  rootProject     Project?          @relation("ProjRoot", fields: [rootProjectId], references: [id], onDelete: SetNull)
-  rootChildren    Project[]         @relation("ProjRoot")
+  rootProject     Project?  @relation("ProjRoot", fields: [rootProjectId], references: [id], onDelete: SetNull)
+  rootChildren    Project[] @relation("ProjRoot")
 
-  provocations      ProjProvLink[]
-  solutions         ProjSolLink[] // only the root project should have solutions
+  provocations ProjProvLink[]
+  solutions    ProjSolLink[] // only the root project should have solutions
 
   @@index([parentProjectId])
   @@index([rootProjectId])
@@ -224,22 +224,22 @@ model AiUsage {
 }
 
 model Provocation {
-  id         String   @id @default(uuid())
+  id String @id @default(uuid())
 
   parentProvocationId String?
-  parent      Provocation?  @relation("ProvParent", fields: [parentProvocationId], references: [id], onDelete: SetNull)
-  children    Provocation[] @relation("ProvParent")
+  parent              Provocation?  @relation("ProvParent", fields: [parentProvocationId], references: [id], onDelete: SetNull)
+  children            Provocation[] @relation("ProvParent")
 
-  question    String
-  content     Json?         // title, description
+  question String
+  content  Json? // title, description
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isActive    Boolean  @default(true)
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
 
-  projects     ProjProvLink[]
-  solutions    SolProvLink[]
+  projects  ProjProvLink[]
+  solutions SolProvLink[]
 
   @@index([parentProvocationId])
 }
@@ -267,9 +267,9 @@ model ProjProvLink {
   project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   provocationId String
   provocation   Provocation @relation(fields: [provocationId], references: [id], onDelete: Cascade)
-  
-  role          ProjProvLinkRole
-  createdAt     DateTime    @default(now())
+
+  role      ProjProvLinkRole
+  createdAt DateTime         @default(now())
 
   @@unique([projectId, provocationId, role])
   @@index([provocationId, role])
@@ -278,7 +278,7 @@ model ProjProvLink {
 
 model FileSelection {
   id          String   @id @default(uuid())
-  contextPath String   // /org/orgId/project/projectId/mandala/mandalaId
+  contextPath String // /org/orgId/project/projectId/mandala/mandalaId
   fileName    String
   selected    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -297,33 +297,33 @@ model FileSelection {
 }
 
 model Solution {
-  id         String   @id @default(uuid())
+  id String @id @default(uuid())
 
   title       String
   description String
   problem     String
 
-  impactLevel ImpactLevel?
+  impactLevel       ImpactLevel?
   impactDescription String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isActive    Boolean  @default(true)
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
 
   projects     ProjSolLink[]
   provocations SolProvLink[]
 }
 
 model ProjSolLink {
-  id            String      @id @default(uuid())
-  projectId     String
-  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  solutionId    String
-  solution      Solution    @relation(fields: [solutionId], references: [id], onDelete: Cascade)
-  
-  role          ProjSolLinkRole
-  createdAt     DateTime    @default(now())
+  id         String   @id @default(uuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  solutionId String
+  solution   Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+
+  role      ProjSolLinkRole
+  createdAt DateTime        @default(now())
 
   @@unique([projectId, solutionId, role])
   @@index([solutionId, role])
@@ -336,8 +336,8 @@ model SolProvLink {
   solution      Solution    @relation(fields: [solutionId], references: [id], onDelete: Cascade)
   provocationId String
   provocation   Provocation @relation(fields: [provocationId], references: [id], onDelete: Cascade)
-  
-  createdAt     DateTime    @default(now())
+
+  createdAt DateTime @default(now())
 
   @@unique([solutionId, provocationId])
   @@index([solutionId])
@@ -345,22 +345,20 @@ model SolProvLink {
 }
 
 model GeminiFileCache {
-  id              String   @id @default(uuid())
-  
-  // Identificación única del archivo
-  fileName        String
-  fileHash        String
-  contextPath     String   // "org/123/project/456/mandala/789"
-  
+  id String @id @default(uuid())
+
+  fileName    String
+  fileHash    String
+  contextPath String
+
   // IDs de Gemini para reutilizar
-  geminiFileId    String   // "files/abc-123"
-  geminiUri       String   // URI reutilizable
-  
-  // Control de expiración (48 horas desde upload)
-  expiresAt       DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  geminiFileId String
+  geminiUri    String
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([contextPath, fileName])
   @@index([expiresAt])
   @@map("gemini_file_cache")
