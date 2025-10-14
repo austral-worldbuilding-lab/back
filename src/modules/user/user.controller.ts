@@ -7,6 +7,7 @@ import {
   PaginatedResponse,
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
+import { RequestWithUser } from '@modules/auth/types/auth.types';
 import {
   Controller,
   Get,
@@ -19,9 +20,9 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 
 import {
   ApiCreateUser,
@@ -29,6 +30,7 @@ import {
   ApiGetUser,
   ApiUpdateUser,
   ApiDeleteUser,
+  ApiGetCurrentUser,
 } from './decorators/user-swagger.decorators';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -41,7 +43,6 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Throttle({ default: { limit: 5, ttl: 900000 } })
   @Post()
   @ApiCreateUser()
   async create(
@@ -50,6 +51,19 @@ export class UserController {
     const user = await this.userService.create(createUserDto);
     return {
       message: 'User created successfully',
+      data: user,
+    };
+  }
+
+  @Get('me')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiGetCurrentUser()
+  async getCurrentUser(
+    @Req() req: RequestWithUser,
+  ): Promise<DataResponse<UserDto>> {
+    const user = await this.userService.findOne(req.user.id);
+    return {
       data: user,
     };
   }

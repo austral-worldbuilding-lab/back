@@ -26,7 +26,7 @@ export class CreateMandalaConfiguration {
   @ApiProperty({
     description: 'Escalas del mandala',
     type: [String],
-    example: ['Persona', 'Comunidad', 'Institución'],
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
   })
   @IsArray()
   @IsString({ each: true })

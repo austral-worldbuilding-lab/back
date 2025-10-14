@@ -9,4 +9,12 @@ export class OrganizationDto {
 
   @ApiProperty({ description: 'Fecha de creación' })
   createdAt!: Date;
+
+  @ApiProperty({
+    description: 'Tipo de acceso del usuario a la organización',
+    enum: ['full', 'limited'],
+    example: 'full',
+    required: false,
+  })
+  accessType?: 'full' | 'limited';
 }

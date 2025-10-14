@@ -6,6 +6,7 @@ import {
   BusinessLogicException,
   StateConflictException,
 } from '@common/exceptions/custom-exceptions';
+import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { RoleService } from '@modules/role/role.service';
 import { Injectable } from '@nestjs/common';
@@ -24,7 +25,10 @@ export class OrganizationInvitationService {
     private invitationRepository: OrganizationInvitationRepository,
     private roleService: RoleService,
     private mailService: MailService,
-  ) {}
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(OrganizationInvitationService.name);
+  }
 
   async create(
     dto: CreateOrganizationInvitationDto,
@@ -172,12 +176,12 @@ export class OrganizationInvitationService {
       roleId,
     );
 
-    if (!updated) {
-      throw new BusinessLogicException('Failed to update invitation', {
-        invitationId: id,
-        operation: 'accept',
-      });
-    }
+    // Auto-assign user to all projects in the organization
+    await this.invitationRepository.autoAssignToOrganizationProjects(
+      userId,
+      invitationFromDb.organizationId,
+      roleId,
+    );
 
     return this.mapToDto(updated);
   }
@@ -288,6 +292,15 @@ export class OrganizationInvitationService {
       defaultExpiresAt,
     );
 
+    this.logger.log('Created organization invite link', {
+      invitationId: invitation.id,
+      token: inviteToken,
+      organizationId,
+      role,
+      senderId,
+      expiresAt: defaultExpiresAt.toISOString(),
+    });
+
     if (email && sendEmail) {
       await this.mailService.sendInvitationEmail({
         to: email,
@@ -307,11 +320,27 @@ export class OrganizationInvitationService {
     token: string,
     userId: string,
   ): Promise<{ organizationId: string }> {
+    this.logger.log('Attempting to accept organization invitation by token', {
+      token,
+      userId,
+    });
+
     const invitation = await this.invitationRepository.findByInviteToken(token);
 
     if (!invitation) {
+      this.logger.warn('Organization invitation not found', {
+        token,
+        userId,
+      });
       throw new ResourceNotFoundException('Invitation', token);
     }
+
+    this.logger.log('Found organization invitation', {
+      invitationId: invitation.id,
+      status: invitation.status,
+      organizationId: invitation.organizationId,
+      roleId: invitation.roleId,
+    });
     if (invitation.expiresAt && new Date() > invitation.expiresAt) {
       throw new BusinessLogicException('Invitation has expired', {
         token,
@@ -338,11 +367,24 @@ export class OrganizationInvitationService {
       roleId = memberRole.id;
     }
 
-    await this.invitationRepository.addUserToOrganization(
+    await this.invitationRepository.acceptInvitationAndAddUser(
+      invitation.id,
+      userId,
+      roleId,
+    );
+
+    await this.invitationRepository.autoAssignToOrganizationProjects(
       userId,
       invitation.organizationId,
       roleId,
     );
+
+    this.logger.log('Successfully accepted organization invitation', {
+      invitationId: invitation.id,
+      userId,
+      organizationId: invitation.organizationId,
+      roleId,
+    });
 
     return {
       organizationId: invitation.organizationId,

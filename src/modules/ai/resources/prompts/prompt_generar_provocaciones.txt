@@ -1,0 +1,49 @@
+OBJETIVO:
+  Generar provocaciones abiertas y exploratorias que inviten a imaginar nuevos escenarios posibles para el mundo. El propósito es estimular la creatividad, desafiar el "statu quo" y abrir caminos de exploración para la construcción de mundos sostenibles, sin proponer soluciones específicas sino promoviendo la investigación de posibilidades.
+
+CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}.
+CONFIGURACIÓN DE LOS PERSONAJES:
+  • Contenido de los personajes del mundo:
+  ${mandalaDocument}
+CONFIGURACIÓN DE LAS MANDALAS:
+  • Información resumida de las mandalas del mundo:
+  ${mandalasSummariesWithAi}
+CONFIGURACIÓN DE LA GENERACIÓN:
+  • Cantidad mínima de provocaciones: ${minResults}
+  • Cantidad máxima de provocaciones: ${maxResults}
+
+REGLAS PARA LAS PROVOCACIONES ABIERTAS:
+  • El campo `title` debe ser una provocación conceptual que explore territorios universales y abstractos, sin mencionar elementos, objetos, lugares o servicios específicos del contexto del mundo.
+  • El campo `description` debe explicar principios, dinámicas o conceptos universales que trascienden las particularidades del mundo, enfocándose en patrones de comportamiento humano, relaciones sociales o formas de organización.
+  • El campo `question` debe ser una provocación disruptiva y abierta (empezar con "¿Qué pasaría si...?", "¿Cómo sería un mundo donde...?", "¿Por qué no...?") que invite a reimaginar aspectos fundamentales de la experiencia humana sin sugerir implementaciones específicas.
+  • Cada provocación debe ser suficientemente abstracta para aplicarse a múltiples contextos y generar infinitas posibilidades de exploración (evitar mencionar servicios, tecnologías, espacios físicos o estructuras organizacionales específicas).
+  • Deben desafiar supuestos fundamentales sobre cómo funcionan las comunidades, las relaciones y los sistemas sociales, abriendo caminos hacia formas completamente nuevas de imaginar la convivencia humana.
+  • Las provocaciones deben ser universales y filosóficas, evitando cualquier referencia a elementos concretos como lugares, objetos, servicios, roles específicos o infraestructuras particulares del mundo.
+
+EJEMPLO DE USO:
+  Mundo: Festejos UA
+  Descripción del mundo: El mundo Festejos UA se desarrolla en el campus de la Universidad Austral y se centra en las celebraciones de los estudiantes, especialmente las graduaciones. El problema principal radica en las prácticas de festejo actuales, que generan desorden, quejas del personal, una huella ecológica negativa, desperdicio de alimentos y una percepción de mal prestigio para la universidad
+  [
+    {
+      "title": "Reciprocidad Generativa",
+      "description": "Explorar dinámicas donde cada acción individual contribuya automáticamente al bienestar colectivo, creando círculos virtuosos donde el cuidado personal y comunitario se retroalimenten naturalmente sin necesidad de estructuras regulatorias externas."
+      "question": "¿Cómo sería un mundo donde el bienestar individual fuera inseparable del bienestar colectivo?"
+    },
+    {
+      "title": "Autonomía Colaborativa",
+      "description": "Considerar formas de organización social donde la autonomía personal y la colaboración comunitaria no sean fuerzas opuestas, sino que se potencien mutuamente, generando sistemas auto-organizados y resilientes."
+      "question": "¿Qué pasaría si la libertad individual y la responsabilidad colectiva fueran la misma cosa?"
+    },
+    {
+      "title": "Impacto Regenerativo",
+      "description": "Imaginar patrones de interacción humana que no solo minimicen el daño sino que activamente nutran y fortalezcan los sistemas de vida, donde cada encuentro y actividad contribuya a la regeneración del entorno y las relaciones."
+      "question": "¿Cómo cambiaría la sociedad si toda actividad humana dejara el mundo mejor de lo que lo encontró?"
+    },
+    {
+      "title": "Memoria Viva Transformadora",
+      "description": "Explorar cómo las experiencias colectivas pueden convertirse en sabiduría comunitaria activa, donde cada momento significativo se integre en un tejido de aprendizaje continuo que guíe futuras decisiones y relaciones."
+      "question": "¿Qué sucedería si cada experiencia comunitaria se convirtiera en sabiduría heredable para las futuras generaciones?"
+    },
+  ]

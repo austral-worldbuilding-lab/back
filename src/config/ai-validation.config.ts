@@ -5,6 +5,12 @@ export interface AiValidationConfig {
   maxInputSize: number; // in bytes
   maxResultsPerRequest: number;
   minResultsPerRequest: number;
+  minPostitsPerRequest: number;
+  maxPostitsPerRequest: number;
+  minQuestionsPerRequest: number;
+  maxQuestionsPerRequest: number;
+  minProvocationsPerRequest: number;
+  maxProvocationsPerRequest: number;
 }
 
 /**
@@ -55,4 +61,30 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
     process.env.AI_MAX_RESULTS_PER_REQUEST || '24',
   ),
   minResultsPerRequest: parseInt(process.env.AI_MIN_RESULTS_PER_REQUEST || '6'),
+  minPostitsPerRequest: parseInt(
+    process.env.AI_MIN_POSTITS_PER_REQUEST ||
+      process.env.AI_MIN_RESULTS_PER_REQUEST ||
+      '6',
+  ),
+  maxPostitsPerRequest: parseInt(
+    process.env.AI_MAX_POSTITS_PER_REQUEST ||
+      process.env.AI_MAX_RESULTS_PER_REQUEST ||
+      '24',
+  ),
+  minQuestionsPerRequest: parseInt(
+    process.env.AI_MIN_QUESTIONS_PER_REQUEST ||
+      process.env.AI_MIN_RESULTS_PER_REQUEST ||
+      '6',
+  ),
+  maxQuestionsPerRequest: parseInt(
+    process.env.AI_MAX_QUESTIONS_PER_REQUEST ||
+      process.env.AI_MAX_RESULTS_PER_REQUEST ||
+      '24',
+  ),
+  minProvocationsPerRequest: parseInt(
+    process.env.AI_MIN_PROVOCATIONS_PER_REQUEST || '3',
+  ),
+  maxProvocationsPerRequest: parseInt(
+    process.env.AI_MAX_PROVOCATIONS_PER_REQUEST || '5',
+  ),
 });

@@ -58,4 +58,15 @@ export class FirebaseDataService {
 
     await docRef.delete();
   }
+
+  async upsertDocument(
+    collectionPath: string,
+    data: UpdateData<DocumentData>,
+    documentId: string,
+  ): Promise<void> {
+    const db = this.firebaseConfig.getDB();
+    const docRef = db.collection(collectionPath).doc(documentId);
+
+    await docRef.set(data, { merge: true });
+  }
 }

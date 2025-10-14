@@ -46,15 +46,29 @@ import {
   ApiOverlapSummary,
   ApiGetCachedQuestions,
   ApiGetCachedPostits,
+  ApiCreateImagePresignedUrl,
+  ApiConfirmImageUpload,
+  ApiDeleteImage,
+  ApiCreateContextMandala,
+  ApiGenerateContextMandala,
 } from './decorators/mandala-swagger.decorators';
+import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaDto,
   CreateOverlappedMandalaDto,
+  CreateContextMandalaDto,
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
 import { GeneratePostitsDto } from './dto/generate-postits.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
+import { ConfirmImageUploadDto } from './dto/image/confirm-image-upload.dto';
+import { CreateImagePresignedUrlDto } from './dto/image/create-image-presigned-url.dto';
+import {
+  ImageResponseDto,
+  toImageResponseDto,
+} from './dto/image/image-response.dto';
+import { PresignedUrlResponseDto } from './dto/image/presigned-url-response.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
@@ -65,10 +79,10 @@ import {
   RequireProjectRoles,
 } from './guards/mandala-role.guard';
 import { MandalaService } from './mandala.service';
+import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { PostitWithCoordinates } from './types/postits';
-import { AiQuestionResponse } from './types/questions';
 
 @ApiTags('Mandalas')
 @Controller('mandala')
@@ -78,10 +92,12 @@ export class MandalaController {
   constructor(
     private readonly mandalaService: MandalaService,
     private readonly postitService: PostitService,
+    private readonly imageService: ImageService,
   ) {}
 
   @Post()
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiCreateMandala()
   async create(
     @Body() createMandalaDto: CreateMandalaDto,
@@ -162,6 +178,7 @@ export class MandalaController {
 
   @Patch(':id')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiUpdateMandala()
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -190,6 +207,7 @@ export class MandalaController {
 
   @Post('generate')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiGenerateMandala()
   async generate(
     @Body() createMandalaDto: CreateMandalaDto,
@@ -202,8 +220,41 @@ export class MandalaController {
     };
   }
 
+  @Post('context')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiCreateContextMandala()
+  async createContext(
+    @Body() createContextDto: CreateContextMandalaDto,
+  ): Promise<MessageResponse<MandalaDto>> {
+    const mandala = await this.mandalaService.create(
+      createContextDto,
+      MandalaType.CONTEXT,
+    );
+    return {
+      message: 'Context mandala created successfully',
+      data: mandala,
+    };
+  }
+
+  @Post('context/generate')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiGenerateContextMandala()
+  async generateContext(
+    @Body() createContextDto: CreateContextMandalaDto,
+  ): Promise<MessageResponse<MandalaWithPostitsAndLinkedCentersDto>> {
+    const mandalaWithPostits =
+      await this.mandalaService.generateContext(createContextDto);
+    return {
+      message: 'Context mandala generated successfully with AI',
+      data: mandalaWithPostits,
+    };
+  }
+
   @Post(':mandalaId/postits')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiCreatePostit()
   async createPostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -215,6 +266,7 @@ export class MandalaController {
       mandala.projectId,
       mandalaId,
       createPostitDto,
+      mandala,
     );
 
     return {
@@ -225,6 +277,7 @@ export class MandalaController {
 
   @Patch(':mandalaId/postits/:postitId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiUpdatePostit()
   async updatePostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -248,6 +301,7 @@ export class MandalaController {
 
   @Delete(':mandalaId/postits/:postitId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiDeletePostit()
   @HttpCode(204)
   async deletePostit(
@@ -265,6 +319,7 @@ export class MandalaController {
 
   @Post(':id/link/:childId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiLinkMandala()
   async linkMandala(
     @Param('id', new UuidValidationPipe()) parentId: string,
@@ -282,6 +337,7 @@ export class MandalaController {
 
   @Delete(':id/unlink/:childId')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiUnlinkMandala()
   async unlinkMandala(
     @Param('id', new UuidValidationPipe()) parentId: string,
@@ -295,12 +351,13 @@ export class MandalaController {
 
   @Post(':id/generate-questions')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiGenerateQuestions()
   async generateQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Body() generateQuestionsDto: GenerateQuestionsDto,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiQuestionResponse[]>> {
+  ): Promise<DataResponse<AiQuestionResponseDto[]>> {
     const userId = request.user.id;
     const questions = await this.mandalaService.generateQuestions(
       userId,
@@ -317,6 +374,7 @@ export class MandalaController {
 
   @Post(':id/generate-postits')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiGeneratePostits()
   async generatePostits(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
@@ -343,7 +401,7 @@ export class MandalaController {
   async getCachedQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
     @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiQuestionResponse[]>> {
+  ): Promise<DataResponse<AiQuestionResponseDto[]>> {
     const userId = request.user.id;
     const cachedQuestions = await this.mandalaService.getCachedQuestions(
       userId,
@@ -375,6 +433,7 @@ export class MandalaController {
 
   @Post('overlap')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiOverlapMandalas()
   async overlapMandalas(
     @Body() overlapDto: CreateOverlappedMandalaDto,
@@ -388,15 +447,89 @@ export class MandalaController {
 
   @Post('overlap/summary')
   @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiOverlapSummary()
   async createOverlapSummary(
     @Body() overlapDto: CreateOverlappedMandalaDto,
-  ): Promise<MessageResponse<MandalaDto>> {
+  ): Promise<DataResponse<{ id: string }>> {
     const result = await this.mandalaService.createOverlapSummary(overlapDto);
     return {
-      message:
-        'Mandala superpuesto de resumen comparativo creado correctamente',
+      data: {
+        id: result.mandala.id,
+      },
+    };
+  }
+
+  @Post(':mandalaId/images/presigned-url')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiCreateImagePresignedUrl()
+  async createImagePresignedUrl(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Body() createImageDto: CreateImagePresignedUrlDto,
+  ): Promise<MessageResponse<PresignedUrlResponseDto>> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    const result = await this.imageService.generatePresignedUrlForImage({
+      projectId: mandala.projectId,
+      mandalaId: mandalaId,
+      fileName: createImageDto.fileName,
+    });
+
+    return {
+      message: 'Presigned URL generated successfully',
       data: result,
     };
+  }
+
+  @Post(':mandalaId/images/confirm')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiConfirmImageUpload()
+  async confirmImageUpload(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Body() confirmImageDto: ConfirmImageUploadDto,
+  ): Promise<MessageResponse<ImageResponseDto>> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    const result = await this.imageService.confirmImageUpload(
+      mandala.projectId,
+      mandalaId,
+      {
+        id: confirmImageDto.id,
+        tags: confirmImageDto.tags,
+      },
+    );
+
+    return {
+      message: 'Image uploaded and saved successfully',
+      data: toImageResponseDto(result),
+    };
+  }
+
+  @Delete(':mandalaId/images/:imageId')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiDeleteImage()
+  async deleteImage(
+    @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
+    @Param('imageId', new UuidValidationPipe()) imageId: string,
+  ): Promise<MessageOnlyResponse> {
+    const mandala = await this.mandalaService.findOne(mandalaId);
+
+    await this.imageService.deleteImage(mandala.projectId, mandalaId, imageId);
+
+    return {
+      message: 'Image deleted successfully',
+    };
+  }
+
+  @Post(':mandalaId/summary')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  async generateSummaryReport(
+    @Param('mandalaId') mandalaId: string,
+  ): Promise<{ summaryReport: string }> {
+    return this.mandalaService.generateSummaryReport(mandalaId);
   }
 }

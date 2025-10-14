@@ -21,6 +21,7 @@ import {
   ParseIntPipe,
   UseGuards,
   Patch,
+  Put,
   Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -32,9 +33,15 @@ import {
   ApiUpdateOrganization,
   ApiDeleteOrganization,
   ApiGetOrganizationProjects,
+  ApiGetOrganizationUsers,
+  ApiUpdateOrganizationUserRole,
+  ApiRemoveUserFromOrganization,
 } from './decorators/organization-swagger.decorators';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
+import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
+import { OrganizationUserDto } from './dto/organization-user.dto';
 import { OrganizationDto } from './dto/organization.dto';
+import { UpdateOrganizationUserRoleDto } from './dto/update-organization-user-role.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import {
   OrganizationRoleGuard,
@@ -126,7 +133,6 @@ export class OrganizationController {
   }
 
   @Get(':id/projects')
-  @UseGuards(OrganizationRoleGuard)
   @ApiGetOrganizationProjects()
   async findProjects(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -140,11 +146,68 @@ export class OrganizationController {
       new MaxValuePipe(100),
     )
     limit: number,
+    @Req() req: RequestWithUser,
   ): Promise<PaginatedResponse<ProjectDto>> {
     return this.organizationService.findOrganizationProjectsPaginated(
       id,
       page,
       limit,
+      req.user.id,
     );
+  }
+
+  @Get(':organizationId/users')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @ApiGetOrganizationUsers()
+  async getOrganizationUsers(
+    @Param('organizationId', new UuidValidationPipe()) organizationId: string,
+  ): Promise<DataResponse<OrganizationUserDto[]>> {
+    const users =
+      await this.organizationService.getOrganizationUsers(organizationId);
+    return {
+      data: users,
+    };
+  }
+
+  @Put(':organizationId/users/:userId/role')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
+  @ApiUpdateOrganizationUserRole()
+  async updateUserRole(
+    @Param('organizationId', new UuidValidationPipe()) organizationId: string,
+    @Param('userId') userId: string,
+    @Body() updateUserRoleDto: UpdateOrganizationUserRoleDto,
+  ): Promise<MessageResponse<OrganizationUserRoleResponseDto>> {
+    const userRole = await this.organizationService.updateUserRole(
+      organizationId,
+      userId,
+      updateUserRoleDto.role,
+    );
+    return {
+      message: 'Rol de usuario actualizado exitosamente',
+      data: userRole,
+    };
+  }
+
+  @Delete(':organizationId/users/:userId')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
+  @ApiRemoveUserFromOrganization()
+  async removeUserFromOrganization(
+    @Param('organizationId', new UuidValidationPipe()) organizationId: string,
+    @Param('userId') userId: string,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<OrganizationUserDto>> {
+    const removedUser =
+      await this.organizationService.removeUserFromOrganization(
+        organizationId,
+        userId,
+        req.user.id,
+      );
+    return {
+      message: 'Usuario eliminado de la organización exitosamente',
+      data: removedUser,
+    };
   }
 }

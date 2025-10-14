@@ -1,3 +1,4 @@
+import { MandalaImage } from '@modules/mandala/types/images';
 import { PostitWithCoordinates } from '@modules/mandala/types/postits';
 
 export interface FirestorePosition {
@@ -19,5 +20,7 @@ export interface FirestoreMandalaDocument {
   mandala?: any;
   postits?: PostitWithCoordinates[];
   characters?: FirestoreCharacter[];
+  images?: MandalaImage[];
   updatedAt?: Date;
+  summaryReport?: string;
 }

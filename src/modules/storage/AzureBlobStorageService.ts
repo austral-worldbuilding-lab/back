@@ -7,22 +7,23 @@ import {
   ExternalServiceException,
   ResourceNotFoundException,
 } from '@common/exceptions/custom-exceptions';
+import { AppLogger } from '@common/services/logger.service';
 import { PresignedUrl } from '@common/types/presigned-url';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileBuffer } from '@modules/files/types/file-buffer.interface';
 import { FileScope } from '@modules/files/types/file-scope.type';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
-import { buildPrefix } from './path-builder';
+import { buildPrefix, StorageFolder } from './path-builder';
 import { StorageService } from './StorageService';
 
 @Injectable()
 export class AzureBlobStorageService implements StorageService {
-  private readonly logger = new Logger(AzureBlobStorageService.name);
   private containerName = process.env.AZURE_STORAGE_CONTAINER_NAME!;
   private blobServiceClient: BlobServiceClient;
 
-  constructor() {
+  constructor(private readonly logger: AppLogger) {
+    this.logger.setContext(AzureBlobStorageService.name);
     const account = process.env.AZURE_STORAGE_ACCOUNT!;
     const accountKey = process.env.AZURE_STORAGE_ACCESS_KEY!;
     const sharedKeyCredential = new StorageSharedKeyCredential(
@@ -38,12 +39,19 @@ export class AzureBlobStorageService implements StorageService {
   async uploadFiles(
     files: CreateFileDto[],
     scope: FileScope,
+    folderName: StorageFolder,
   ): Promise<PresignedUrl[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const urls: PresignedUrl[] = [];
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, folderName);
+    this.logger.log('Generating presigned URLs', {
+      scope,
+      folderName,
+      prefix,
+      fileCount: files.length,
+    });
 
     for (const file of files) {
       const blobName = `${prefix}${file.file_name}`;
@@ -59,12 +67,24 @@ export class AzureBlobStorageService implements StorageService {
     return urls;
   }
 
+  buildPublicUrl(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): string {
+    const prefix = buildPrefix(scope, folderName);
+    const blobName = `${prefix}${fileName}`;
+    const account = process.env.AZURE_STORAGE_ACCOUNT!;
+
+    return `https://${account}.blob.core.windows.net/${this.containerName}/${blobName}`;
+  }
+
   async getFiles(scope: FileScope): Promise<CreateFileDto[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const descriptors: CreateFileDto[] = [];
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: prefix,
@@ -83,7 +103,7 @@ export class AzureBlobStorageService implements StorageService {
       this.containerName,
     );
     const buffers: Buffer[] = [];
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: prefix,
@@ -110,7 +130,7 @@ export class AzureBlobStorageService implements StorageService {
       this.containerName,
     );
     const fileBuffers: FileBuffer[] = [];
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: prefix,
@@ -134,15 +154,36 @@ export class AzureBlobStorageService implements StorageService {
     return fileBuffers;
   }
 
-  async deleteFile(scope: FileScope, fileName: string): Promise<void> {
+  async countFilesInScope(scope: FileScope): Promise<number> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
+    let count = 0;
+
+    for await (const _blob of containerClient.listBlobsFlat({
+      prefix: prefix,
+    })) {
+      count++;
+    }
+
+    return count;
+  }
+
+  async deleteFile(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): Promise<void> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(scope, folderName);
 
     const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
 
+    this.logger.log('Deleting blob', { blobName });
     try {
       await blobClient.delete();
     } catch (rawError: unknown) {
@@ -154,7 +195,7 @@ export class AzureBlobStorageService implements StorageService {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
     const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
 
@@ -177,7 +218,7 @@ export class AzureBlobStorageService implements StorageService {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope);
+    const prefix = buildPrefix(scope, 'files');
     const blobName = `${prefix}${fileName}`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 

@@ -127,7 +127,87 @@ export class CreateMandalaDto {
 
   @ApiProperty({
     description: 'Escalas del mandala',
-    example: ['Persona', 'Comunidad', 'Institución'],
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
+    required: false,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  @ArrayMinSize(1, {
+    message: 'Las escalas no pueden estar vacías si se proporcionan',
+  })
+  scales?: string[];
+
+  @ApiProperty({
+    description: 'ID del mandala padre al que está vinculado este mandala',
+    required: false,
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  })
+  @IsUUID()
+  @IsOptional()
+  parentId?: string | null;
+
+  @ApiProperty({
+    description:
+      'Lista opcional de nombres de archivos específicos a usar para el contexto de IA. Si no se proporciona, se usarán todos los archivos disponibles.',
+    type: [String],
+    required: false,
+    example: [
+      'entrevista_1.pdf',
+      'encuesta_resultados.docx',
+      'notas_investigacion.txt',
+    ],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  selectedFiles?: string[];
+}
+
+export class CreateContextMandalaDto {
+  @ApiProperty({
+    description: 'Nombre del mandala de contexto',
+    example: 'Mandala del Ambiente Universitario',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @ApiProperty({
+    description: 'ID del proyecto al que pertenece el mandala',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  projectId!: string;
+
+  @ApiProperty({
+    description:
+      'Contexto central del mandala (sin referencia a personajes específicos)',
+    type: CreateMandalaCenterDto,
+  })
+  @ValidateNested()
+  @Type(() => CreateMandalaCenterDto)
+  @IsNotEmpty()
+  center!: CreateMandalaCenterDto;
+
+  @ApiProperty({
+    description: 'Dimensiones del mandala',
+    type: [DimensionDto],
+    required: false,
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => DimensionDto)
+  @ArrayMinSize(1, {
+    message: 'Las dimensiones no pueden estar vacías si se proporcionan',
+  })
+  dimensions?: DimensionDto[];
+
+  @ApiProperty({
+    description: 'Escalas del mandala',
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
     required: false,
   })
   @IsArray()

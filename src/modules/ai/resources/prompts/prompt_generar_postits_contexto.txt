@@ -1,0 +1,77 @@
+OBJETIVO:
+  Generar post-its que representen aspectos generales del mundo y su contexto actual. 
+  Cada post-it debe reflejar elementos del entorno, dinámicas, situaciones o características relevantes del mundo en general, sin estar vinculados a un personaje específico.
+
+CONFIGURACION DEL CONTEXTO CENTRAL:
+  • Nombre del contexto: ${centerContext}
+  • Descripción del contexto: ${centerContextDescription}
+CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}
+  • Dimensiones habilitadas: ${dimensions}
+  • Escalas habilitadas: ${scales}
+  • Etiquetas disponibles: ${tags}
+CONFIGURACIÓN DE LA GENERACIÓN:
+  • Cantidad mínima de post-its: ${minPostits}
+  • Cantidad máxima de post-its: ${maxPostits}
+
+PROCESAMIENTO DE LA INFORMACIÓN:
+  • Lee entrevistas, encuestas, informes y archivos cargados.
+  • Extrae ideas o datos relevantes al contexto general del mundo.
+  • Si un fragmento contiene varias ideas, divídelas en post-its separados.
+  • Asocia cada idea a la dimensión y escala que mejor la describa.
+  • Usa solo dimensiones, escalas y etiquetas de las listas proporcionadas.
+
+REGLAS DE LOS POST-ITS:
+  • Contenido de 3–5 palabras, incluyendo articulo o preposicion si es necesario para mantener el sentido gramatical.
+  • Una sola idea por post-it.
+  • Sin explicaciones largas ni combinación de ideas.
+  • Enfoque en elementos del contexto, condiciones ambientales, dinámicas sociales o características generales del mundo.
+  • Redactadas de manera objetiva, como observaciones del mundo en general.
+  • Evitar referencias a personas específicas, centrándose en aspectos sistémicos, ambientales o contextuales.
+  • Procura que ninguna dimensión o escala concentre más del 30% del total salvo falta de información.
+
+REGLAS DE LAS ETIQUETAS:
+  • Podés usar entre 0 y todas las etiquetas disponibles.
+  • Selecciona solo las etiquetas relevantes al contenido del post-it.
+  • Las etiquetas sirven para conectar post-its de distintas dimensiones/escala bajo ideas comunes.
+
+COBERTURA Y BALANCE:
+  • Distribuir los post-its entre dimensiones y escalas, evitando concentrar más del ~30% en una sola, salvo que no haya evidencia suficiente en otras.
+
+EJEMPLO DE USO:
+  Problematica del mundo: Sistema educativo universitario con baja retención estudiantil
+  Contexto central: Ambiente universitario
+  Descripcion: Entorno académico y social de una universidad con alta deserción estudiantil.
+  [
+    {
+      "content": "Presión académica alta",
+      "dimension": "Cultura",
+      "scale": "Institución",
+      "tags": ["Estrés", "Rendimiento"]
+    },
+    {
+      "content": "Recursos limitados disponibles",
+      "dimension": "Recursos",
+      "scale": "Institución", 
+      "tags": ["Infraestructura"]
+    },
+    {
+      "content": "Competencia entre estudiantes",
+      "dimension": "Social",
+      "scale": "Comunidad",
+      "tags": ["Relaciones"]
+    },
+    {
+      "content": "Métodos tradicionales enseñanza",
+      "dimension": "Pedagogía",
+      "scale": "Institución",
+      "tags": ["Metodología"]
+    },
+    {
+      "content": "Falta apoyo emocional",
+      "dimension": "Bienestar",
+      "scale": "Institución",
+      "tags": ["Salud mental"]
+    }
+  ]

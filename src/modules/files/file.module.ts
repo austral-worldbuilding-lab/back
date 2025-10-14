@@ -9,6 +9,7 @@ import { FileService } from './file.service';
 import { MandalaFileRoleGuard } from './guards/mandala-file-role.guard';
 import { OrganizationFileRoleGuard } from './guards/organization-file-role.guard';
 import { ProjectFileRoleGuard } from './guards/project-file-role.guard';
+import { FileSelectionRepository } from './repositories/file-selection.repository';
 import { VideoProcessingService } from './services/video-processing.service';
 
 @Module({
@@ -16,12 +17,13 @@ import { VideoProcessingService } from './services/video-processing.service';
   controllers: [FileController, WebhooksController],
   providers: [
     FileService,
+    FileSelectionRepository,
     VideoProcessingService,
     AzureBlobStorageService,
     OrganizationFileRoleGuard,
     ProjectFileRoleGuard,
     MandalaFileRoleGuard,
   ],
-  exports: [FileService],
+  exports: [FileService, FileSelectionRepository, AzureBlobStorageService],
 })
 export class FileModule {}

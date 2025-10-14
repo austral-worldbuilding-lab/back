@@ -7,19 +7,20 @@ import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { UpdatePostitDto } from '@modules/mandala/dto/postit/update-postit.dto';
+import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { TagDto } from '@modules/project/dto/tag.dto';
 import { ProjectService } from '@modules/project/project.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { CreatePostitDto } from '../dto/postit/create-postit.dto';
-import { MandalaRepository } from '../mandala.repository';
+import { MandalaType } from '../types/mandala-type.enum';
 import {
   Postit,
   PostitCoordinates,
   PostitWithCoordinates,
-  PostitTag,
+  Tag,
   AiPostitResponse,
   AiPostitComparisonResponse,
   PostitComparison,
@@ -36,7 +37,7 @@ import { FirestoreMandalaDocument } from '@/modules/firebase/types/firestore-cha
 export class PostitService {
   constructor(
     private aiService: AiService,
-    private mandalaRepository: MandalaRepository,
+    @Inject(forwardRef(() => ProjectService))
     private projectService: ProjectService,
     private firebaseDataService: FirebaseDataService,
     private prisma: PrismaService,
@@ -115,14 +116,6 @@ export class PostitService {
     return postitsWithCoordinates;
   }
 
-  private async getMandalaOrThrow(mandalaId: string): Promise<MandalaDto> {
-    const mandala = await this.mandalaRepository.findOne(mandalaId);
-    if (!mandala) {
-      throw new BusinessLogicException('Mandala not found', { mandalaId });
-    }
-    return mandala;
-  }
-
   async generatePostits(
     mandala: MandalaDto,
     dimensions: string[],
@@ -135,16 +128,39 @@ export class PostitService {
 
     const tagNames = projectTags.map((tag) => tag.name);
 
-    const aiResponse: AiPostitResponse[] = await this.aiService.generatePostits(
-      mandala.projectId,
-      dimensions,
-      scales,
-      mandala.configuration.center.name,
-      mandala.configuration.center.description || 'N/A',
-      tagNames,
-      selectedFiles,
-      mandala.id,
-    );
+    // Get project information
+    const project = await this.projectService.findOne(mandala.projectId);
+
+    let aiResponse: AiPostitResponse[];
+
+    // Use different AI service method based on mandala type
+    if (mandala.type === MandalaType.CONTEXT) {
+      aiResponse = await this.aiService.generateContextPostits(
+        mandala.projectId,
+        project.name,
+        project.description || '',
+        dimensions,
+        scales,
+        mandala.configuration.center.name,
+        mandala.configuration.center.description || 'N/A',
+        tagNames,
+        selectedFiles,
+        mandala.id,
+      );
+    } else {
+      aiResponse = await this.aiService.generatePostits(
+        mandala.projectId,
+        project.name,
+        project.description || '',
+        dimensions,
+        scales,
+        mandala.configuration.center.name,
+        mandala.configuration.center.description || 'N/A',
+        tagNames,
+        selectedFiles,
+        mandala.id,
+      );
+    }
 
     return aiResponse.map(
       (aiPostit: AiPostitResponse): Postit => ({
@@ -162,36 +178,40 @@ export class PostitService {
   async generateComparisonPostits(
     mandalas: MandalaDto[],
     mandalasDocument: FirestoreMandalaDocument[],
-  ): Promise<PostitComparison[]> {
+  ): Promise<{ comparisons: PostitComparison[]; report: AiMandalaReport }> {
     const projectTags = await this.projectService.getProjectTags(
       mandalas[0].projectId, // Use first mandala's project for tags
     );
 
-    const aiResponse: AiPostitComparisonResponse[] =
+    // Get project information
+    const project = await this.projectService.findOne(mandalas[0].projectId);
+
+    const { comparisons: aiComparisons, report } =
       await this.aiService.generatePostitsSummary(
-        mandalas[0].projectId, // TODO update this to use the projectId of all mandalas
+        mandalas[0].projectId, // TODO: unificar si más adelante soportan multi-proyecto
+        project.name,
+        project.description || '',
         mandalas,
         mandalasDocument,
       );
 
-    return aiResponse.map(
+    const comparisons: PostitComparison[] = aiComparisons.map(
       (aiPostit: AiPostitComparisonResponse): PostitComparison => ({
         id: randomUUID(),
         content: aiPostit.content,
         dimension: aiPostit.dimension,
-        section: aiPostit.section,
+        section: aiPostit.section, // ya normalizado por el adapter (scale -> section)
         tags: this.mapTagsWithColors(aiPostit.tags, projectTags),
         childrens: [],
         type: aiPostit.type,
         fromSummary: aiPostit.fromSummary,
       }),
     );
+
+    return { comparisons, report };
   }
 
-  private mapTagsWithColors(
-    tagNames: string[],
-    projectTags: TagDto[],
-  ): PostitTag[] {
+  private mapTagsWithColors(tagNames: string[], projectTags: TagDto[]): Tag[] {
     if (!tagNames || tagNames.length === 0) return [];
 
     return tagNames
@@ -203,7 +223,7 @@ export class PostitService {
           color: projectTag.color,
         };
       })
-      .filter((tag): tag is PostitTag => tag !== null);
+      .filter((tag): tag is Tag => tag !== null);
   }
 
   private groupPostitsBySection(postits: Postit[]): Record<string, Postit[]> {
@@ -333,10 +353,48 @@ export class PostitService {
     );
   }
 
+  private generateCoordinatesForPostit(
+    postit: CreatePostitDto,
+    mandala: MandalaDto | undefined,
+    existingPostits: PostitWithCoordinates[],
+  ): PostitCoordinates {
+    // If coordinates are explicitly provided, use them
+    if (postit.coordinates) {
+      return {
+        x: postit.coordinates.x,
+        y: postit.coordinates.y,
+      };
+    }
+
+    // If dimension and section are provided, generate coordinates
+    if (mandala && postit.dimension && postit.section) {
+      const dimensions = mandala.configuration.dimensions.map((d) => d.name);
+      const scales = mandala.configuration.scales;
+      const allCoordinates = existingPostits.map((p) => p.coordinates);
+
+      const smartCoordinates = this.findOptimalCoordinates(
+        postit.dimension,
+        postit.section,
+        dimensions,
+        scales,
+        [],
+        allCoordinates,
+      );
+
+      if (smartCoordinates) {
+        return smartCoordinates;
+      }
+    }
+
+    // Default fallback
+    return { x: 0, y: 0 };
+  }
+
   async createPostit(
     projectId: string,
     mandalaId: string,
     postit: CreatePostitDto,
+    mandala?: MandalaDto,
   ): Promise<PostitWithCoordinates> {
     const currentDocument = (await this.firebaseDataService.getDocument(
       projectId,
@@ -384,25 +442,31 @@ export class PostitService {
       const presignedUrls = await this.storageService.uploadFiles(
         [createFileDto],
         fileScope,
+        'images',
       );
       presignedUrl = presignedUrls[0]?.url;
     }
+
+    // Generate optimal coordinates for the postit
+    const existingPostits = currentDocument.postits || [];
+    const finalCoordinates = this.generateCoordinatesForPostit(
+      postit,
+      mandala,
+      existingPostits,
+    );
 
     // Convert DTO to plain object to avoid Firestore serialization issues
     const plainPostit = {
       id: newPostitId,
       content: postit.content,
-      dimension: postit.dimension,
-      section: postit.section,
+      dimension: postit.dimension || '',
+      section: postit.section || '',
       tags: postit.tags.map((tag) => ({
         name: tag.name,
         color: tag.color,
       })),
       childrens: [], // Initialize empty children array
-      coordinates: {
-        x: postit.coordinates.x,
-        y: postit.coordinates.y,
-      },
+      coordinates: finalCoordinates,
       ...(postit.imageFileName && { imageFileName: postit.imageFileName }),
       ...(presignedUrl && { presignedUrl }),
     };

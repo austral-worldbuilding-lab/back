@@ -7,6 +7,8 @@ import { Throttle } from '@nestjs/throttler';
 import { AiService } from './ai.service';
 
 interface AiRequestBody {
+  projectName: string;
+  projectDescription: string;
   dimensions: string[];
   scales: string[];
   centerCharacter: string;
@@ -42,6 +44,8 @@ export class AiController {
   ): Promise<AiPostitResponse[]> {
     return this.aiService.generatePostits(
       projectId,
+      aiRequestBody.projectName,
+      aiRequestBody.projectDescription,
       aiRequestBody.dimensions,
       aiRequestBody.scales,
       aiRequestBody.centerCharacter,

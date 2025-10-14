@@ -6,14 +6,24 @@ import { buildPrefix } from '@modules/storage/path-builder';
 import { Injectable } from '@nestjs/common';
 
 import { CreateFileDto } from './dto/create-file.dto';
+import { UpdateFileSelectionDto } from './dto/file-selection.dto';
+import { FileSelectionRepository } from './repositories/file-selection.repository';
 import { FileBuffer } from './types/file-buffer.interface';
-import { FileScope, FileSource, EffectiveFile } from './types/file-scope.type';
+import {
+  FileScope,
+  FileSource,
+  EffectiveFile,
+  EffectiveFileWithSelection,
+} from './types/file-scope.type';
+import { UniqueFileNameGenerator } from './utils/unique-filename.utils';
 
 @Injectable()
 export class FileService {
-  private storageService = new AzureBlobStorageService();
-
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private fileSelectionRepository: FileSelectionRepository,
+    private storageService: AzureBlobStorageService,
+  ) {}
 
   async resolveScope(
     scopeType: 'org' | 'project' | 'mandala',
@@ -99,14 +109,33 @@ export class FileService {
   }
 
   private buildFilePath(scope: FileScope, fileName: string): string {
-    return `${buildPrefix(scope)}${fileName}`;
+    return `${buildPrefix(scope, 'files')}${fileName}`;
   }
 
   async uploadFiles(
     files: CreateFileDto[],
     scope: FileScope,
   ): Promise<PresignedUrl[]> {
-    return this.storageService.uploadFiles(files, scope);
+    this.validateFilesForUpload(files);
+
+    const existingFiles = await this.storageService.getFiles(scope);
+    const existingFileNames = existingFiles.map((file) => file.file_name);
+
+    const nameMapping = UniqueFileNameGenerator.generateUniqueFileNames(
+      files,
+      existingFileNames,
+    );
+
+    const filesWithUniqueNames = files.map((file, index) => ({
+      ...file,
+      file_name: nameMapping[index].uniqueName,
+    }));
+
+    return this.storageService.uploadFiles(
+      filesWithUniqueNames,
+      scope,
+      'files',
+    );
   }
 
   async getFiles(scope: FileScope): Promise<EffectiveFile[]> {
@@ -131,10 +160,6 @@ export class FileService {
     if (scope.mandalaId) return 'mandala';
     if (scope.projectId) return 'project';
     return 'org';
-  }
-
-  async getFilesFromScope(scope: FileScope): Promise<CreateFileDto[]> {
-    return this.storageService.getFiles(scope);
   }
 
   async readAllFilesAsBuffers(scope: FileScope): Promise<Buffer[]> {
@@ -167,17 +192,184 @@ export class FileService {
     return allFileBuffers;
   }
 
-  async readAllFilesAsBuffersFromScope(scope: FileScope): Promise<Buffer[]> {
-    return this.storageService.readAllFilesAsBuffers(scope);
-  }
+  async countProjectFiles(projectId: string): Promise<number> {
+    const scope = await this.resolveScope('project', projectId);
+    const projectScope: FileScope = {
+      orgId: scope.orgId,
+      projectId: scope.projectId,
+    };
 
-  async readAllFilesAsBuffersWithMetadataFromScope(
-    scope: FileScope,
-  ): Promise<FileBuffer[]> {
-    return this.storageService.readAllFilesAsBuffersWithMetadata(scope);
+    return this.storageService.countFilesInScope(projectScope);
   }
 
   async deleteFile(scope: FileScope, fileName: string): Promise<void> {
-    return this.storageService.deleteFile(scope, fileName);
+    return this.storageService.deleteFile(scope, fileName, 'files');
+  }
+
+  private getActualFileScope(
+    file: EffectiveFile,
+    requestedScope: FileScope,
+  ): FileScope {
+    if (file.source_scope === 'org') {
+      return { orgId: requestedScope.orgId };
+    } else if (file.source_scope === 'project') {
+      return {
+        orgId: requestedScope.orgId,
+        projectId: requestedScope.projectId,
+      };
+    } else {
+      return requestedScope;
+    }
+  }
+
+  async getFilesWithSelection(
+    scope: FileScope,
+  ): Promise<EffectiveFileWithSelection[]> {
+    const files = await this.getFiles(scope);
+
+    const filesByScope = new Map<string, EffectiveFile[]>();
+    for (const file of files) {
+      const actualScope = this.getActualFileScope(file, scope);
+      const scopeKey = JSON.stringify(actualScope);
+      if (!filesByScope.has(scopeKey)) {
+        filesByScope.set(scopeKey, []);
+      }
+      filesByScope.get(scopeKey)!.push(file);
+    }
+
+    const selectionsByScopeAndFile = new Map<string, boolean>();
+
+    for (const [scopeKey, scopeFiles] of filesByScope) {
+      const actualScope = JSON.parse(scopeKey) as FileScope;
+      const fileSelections =
+        await this.fileSelectionRepository.getFileSelections(actualScope);
+
+      for (const file of scopeFiles) {
+        const selected = fileSelections.get(file.file_name) ?? true;
+        const uniqueKey = `${scopeKey}:${file.file_name}`;
+        selectionsByScopeAndFile.set(uniqueKey, selected);
+      }
+    }
+
+    return files.map((file) => {
+      const actualScope = this.getActualFileScope(file, scope);
+      const scopeKey = JSON.stringify(actualScope);
+      const uniqueKey = `${scopeKey}:${file.file_name}`;
+
+      return {
+        ...file,
+        selected: selectionsByScopeAndFile.get(uniqueKey) ?? true,
+      };
+    });
+  }
+
+  async updateFileSelections(
+    scope: FileScope,
+    selections: UpdateFileSelectionDto[],
+  ): Promise<void> {
+    const existingFiles = await this.getFiles(scope);
+
+    // Create a map of file existence by fileName and sourceScope
+    const fileExistenceMap = new Map<string, Set<string>>();
+    for (const file of existingFiles) {
+      if (!fileExistenceMap.has(file.file_name)) {
+        fileExistenceMap.set(file.file_name, new Set());
+      }
+      fileExistenceMap.get(file.file_name)!.add(file.source_scope);
+    }
+
+    // Validate that each selection references an existing file in the correct scope
+    const invalidFiles: string[] = [];
+    for (const selection of selections) {
+      const availableScopes = fileExistenceMap.get(selection.fileName);
+      if (!availableScopes || !availableScopes.has(selection.sourceScope)) {
+        invalidFiles.push(
+          `${selection.fileName} (scope: ${selection.sourceScope})`,
+        );
+      }
+    }
+
+    if (invalidFiles.length > 0) {
+      throw new ResourceNotFoundException(
+        'Files',
+        invalidFiles.join(', '),
+        'These files do not exist in the specified scope',
+      );
+    }
+
+    const selectionsByScope = new Map<string, UpdateFileSelectionDto[]>();
+
+    for (const selection of selections) {
+      const targetFile = existingFiles.find(
+        (file) =>
+          file.file_name === selection.fileName &&
+          file.source_scope === selection.sourceScope,
+      );
+
+      if (!targetFile) {
+        throw new ResourceNotFoundException(
+          'File',
+          `${selection.fileName} (scope: ${selection.sourceScope})`,
+          'File not found in the specified scope',
+        );
+      }
+
+      const actualScope = this.getActualFileScope(targetFile, scope);
+
+      const scopeKey = JSON.stringify(actualScope);
+      if (!selectionsByScope.has(scopeKey)) {
+        selectionsByScope.set(scopeKey, []);
+      }
+      selectionsByScope.get(scopeKey)!.push(selection);
+    }
+
+    for (const [scopeKey, scopeSelections] of selectionsByScope) {
+      const actualScope = JSON.parse(scopeKey) as FileScope;
+      await this.fileSelectionRepository.updateFileSelections(
+        actualScope,
+        scopeSelections,
+      );
+    }
+
+    const existingFileNames = existingFiles.map((file) => file.file_name);
+    await this.fileSelectionRepository.deleteSelectionsForMissingFiles(
+      scope,
+      existingFileNames,
+    );
+  }
+
+  async getSelectedFileNames(scope: FileScope): Promise<string[]> {
+    const filesWithSelection = await this.getFilesWithSelection(scope);
+    return filesWithSelection
+      .filter((file) => file.selected)
+      .map((file) => file.file_name);
+  }
+
+  private validateFilesForUpload(files: CreateFileDto[]): void {
+    if (!files || files.length === 0) {
+      throw new ResourceNotFoundException(
+        'Files',
+        'upload batch',
+        'No files provided for upload',
+      );
+    }
+
+    files.forEach((file, index) => {
+      if (!file.file_name || file.file_name.trim() === '') {
+        throw new ResourceNotFoundException(
+          'File',
+          `at index ${index}`,
+          'File name is invalid or empty',
+        );
+      }
+
+      if (file.file_name.length > 255) {
+        throw new ResourceNotFoundException(
+          'File',
+          file.file_name,
+          `File name is too long (max 255 characters, got ${file.file_name.length})`,
+        );
+      }
+    });
   }
 }

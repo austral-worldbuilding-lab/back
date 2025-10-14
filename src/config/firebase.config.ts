@@ -25,6 +25,7 @@ export class FirebaseConfig {
           privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         }),
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
       });
     }
   }
@@ -39,5 +40,9 @@ export class FirebaseConfig {
 
   public getDB(): admin.firestore.Firestore {
     return this.firebaseApp.firestore();
+  }
+
+  public getRealtimeDB(): admin.database.Database {
+    return this.firebaseApp.database();
   }
 }

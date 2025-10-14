@@ -6,8 +6,13 @@ import {
   DataResponse,
   PaginatedResponse,
 } from '@common/types/responses';
+import { GenerateEncyclopediaDto } from '@modules/ai/dto/generate-encyclopedia.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import {
+  OrganizationRoleGuard,
+  RequireOrganizationRoles,
+} from '@modules/organization/guards/organization-role.guard';
 import {
   Controller,
   Get,
@@ -18,17 +23,20 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  ParseBoolPipe,
   UseGuards,
   Patch,
   Req,
   Put,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import {
   ApiCreateProject,
   ApiGetAllProjects,
   ApiGetProject,
+  ApiGetProjectConfiguration,
   ApiUpdateProject,
   ApiDeleteProject,
   ApiGetProjectTags,
@@ -37,12 +45,30 @@ import {
   ApiUpdateUserRole,
   ApiGetProjectUsers,
   ApiRemoveUserFromProject,
+  ApiGenerateProjectProvocations,
+  ApiGetCachedProvocations,
+  ApiCreateProvocation,
+  ApiGetEncyclopediaJobStatus,
+  ApiFindAllProvocations,
+  ApiCreateProjectFromProvocationId,
+  ApiGetProjectTimeline,
+  ApiGenerateProjectEncyclopedia,
+  ApiCreateProjectFromProvocation,
 } from './decorators/project-swagger.decorators';
+import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
+import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
+import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { EncyclopediaJobResponseDto } from './dto/encyclopedia-job-response.dto';
+import { EncyclopediaJobStatusDto } from './dto/encyclopedia-job-status.dto';
+import { GenerateProvocationsDto } from './dto/generate-provocations.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
+import { ProvocationDto } from './dto/provocation.dto';
 import { TagDto } from './dto/tag.dto';
+import { TimelineGraphDto } from './dto/timeline.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
@@ -51,6 +77,8 @@ import {
   RequireProjectRoles,
 } from './guards/project-role.guard';
 import { ProjectService } from './project.service';
+import { ProjectConfiguration } from './types/project-configuration.type';
+import { AiProvocationResponse } from './types/provocations.type';
 
 @ApiTags('Projects')
 @Controller('project')
@@ -60,6 +88,8 @@ export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Post()
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
   @ApiCreateProject()
   async create(
     @Body() createProjectDto: CreateProjectDto,
@@ -71,6 +101,43 @@ export class ProjectController {
     );
     return {
       message: 'Project created successfully',
+      data: project,
+    };
+  }
+
+  @Post('from-provocationId')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
+  @ApiCreateProjectFromProvocationId()
+  async createFromProvocation(
+    @Body() createProjectFromProvocationDto: CreateProjectFromProvocationDto,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.createFromProvocation(
+      createProjectFromProvocationDto,
+      req.user.id,
+    );
+    return {
+      message: 'Project created successfully from provocation',
+      data: project,
+    };
+  }
+
+  // Create a provocation and a project from a question
+  @Post('from-provocation')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin')
+  @ApiCreateProjectFromProvocation()
+  async createFromQuestion(
+    @Body() createProjectFromQuestionDto: CreateProjectFromQuestionDto,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.createFromQuestion(
+      createProjectFromQuestionDto,
+      req.user.id,
+    );
+    return {
+      message: 'Project created successfully from question',
       data: project,
     };
   }
@@ -88,9 +155,16 @@ export class ProjectController {
       new MaxValuePipe(100),
     )
     limit: number,
+    @Query('rootOnly', new DefaultValuePipe(false), ParseBoolPipe)
+    rootOnly: boolean,
     @Req() req: RequestWithUser,
   ): Promise<PaginatedResponse<ProjectDto>> {
-    return await this.projectService.findAllPaginated(page, limit, req.user.id);
+    return await this.projectService.findAllPaginated(
+      page,
+      limit,
+      req.user.id,
+      rootOnly,
+    );
   }
 
   @Get(':id')
@@ -102,6 +176,18 @@ export class ProjectController {
     const project = await this.projectService.findOne(id);
     return {
       data: project,
+    };
+  }
+
+  @Get(':id/configuration')
+  @UseGuards(ProjectRoleGuard)
+  @ApiGetProjectConfiguration()
+  async getConfiguration(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<ProjectConfiguration>> {
+    const project = await this.projectService.findOne(id);
+    return {
+      data: project.configuration,
     };
   }
 
@@ -136,6 +222,7 @@ export class ProjectController {
 
   @Post(':id/tag')
   @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   @ApiCreateProjectTag()
   async createProjectTag(
     @Param('id') projectId: string,
@@ -214,7 +301,7 @@ export class ProjectController {
   @ApiRemoveUserFromProject()
   async removeUserFromProject(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Param('userId', new UuidValidationPipe()) userId: string,
+    @Param('userId') userId: string,
     @Req() req: RequestWithUser,
   ): Promise<MessageResponse<ProjectUserDto>> {
     const removedUser = await this.projectService.removeUserFromProject(
@@ -225,6 +312,137 @@ export class ProjectController {
     return {
       message: 'Usuario eliminado del proyecto exitosamente',
       data: removedUser,
+    };
+  }
+
+  @Post(':id/generate-provocations')
+  @UseGuards(ProjectRoleGuard)
+  @ApiGenerateProjectProvocations()
+  async generateProvocations(
+    @Param('id', new UuidValidationPipe()) projectId: string,
+    @Body() generateProvocationsDto: GenerateProvocationsDto,
+    @Req() request: RequestWithUser,
+  ): Promise<DataResponse<AiProvocationResponse[]>> {
+    const userId = request.user.id;
+    const provocations = await this.projectService.generateProvocations(
+      userId,
+      projectId,
+      generateProvocationsDto.selectedFiles,
+    );
+    return {
+      data: provocations,
+    };
+  }
+
+  @Get(':id/cached-provocations')
+  @UseGuards(ProjectRoleGuard)
+  @ApiGetCachedProvocations()
+  async getCachedProvocations(
+    @Param('id', new UuidValidationPipe()) projectId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DataResponse<AiProvocationResponseDto[]>> {
+    const userId = request.user.id;
+    const cachedProvocations = await this.projectService.getCachedProvocations(
+      userId,
+      projectId,
+    );
+
+    return {
+      data: cachedProvocations,
+    };
+  }
+
+  @Get(':projectId/provocations')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiFindAllProvocations()
+  async findAllProvocations(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<ProvocationDto[]>> {
+    const provocations =
+      await this.projectService.findAllProvocations(projectId);
+
+    return {
+      data: provocations,
+    };
+  }
+
+  @Post(':projectId/provocation')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiCreateProvocation()
+  async createProvocation(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Body() createProvocationDto: CreateProvocationDto,
+  ): Promise<MessageResponse<ProvocationDto>> {
+    const createdProvocation = await this.projectService.createProvocation(
+      projectId,
+      createProvocationDto,
+    );
+
+    return {
+      message: 'Provocation created successfully',
+      data: createdProvocation,
+    };
+  }
+
+  @Get(':id/timeline')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiGetProjectTimeline()
+  async getTimeline(
+    @Param('id', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<TimelineGraphDto>> {
+    const timeline = await this.projectService.getTimeline(projectId);
+    return {
+      data: timeline,
+    };
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 3600000 } })
+  @Post(':projectId/encyclopedia')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiGenerateProjectEncyclopedia()
+  async generateEncyclopedia(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Body() generateEncyclopediaDto: GenerateEncyclopediaDto,
+  ): Promise<EncyclopediaJobResponseDto> {
+    const jobId = await this.projectService.queueEncyclopediaGeneration(
+      projectId,
+      generateEncyclopediaDto.selectedFiles,
+    );
+
+    return {
+      jobId,
+      message: 'Encyclopedia generation job has been queued',
+    };
+  }
+
+  @Get(':projectId/encyclopedia/job/:jobId')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiGetEncyclopediaJobStatus()
+  async getEncyclopediaJobStatus(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('jobId') jobId: string,
+  ): Promise<EncyclopediaJobStatusDto> {
+    // Verify user has access to the project
+    await this.projectService.findOne(projectId);
+
+    const status = await this.projectService.getEncyclopediaJobStatus(jobId);
+
+    return {
+      jobId: status.jobId,
+      status: status.status,
+      progress: status.progress,
+      encyclopedia: status.result?.encyclopedia,
+      storageUrl: status.result?.storageUrl,
+      error: status.error,
+      failedReason: status.failedReason,
+      createdAt: status.createdAt,
+      processedAt: status.processedAt,
+      finishedAt: status.finishedAt,
     };
   }
 }

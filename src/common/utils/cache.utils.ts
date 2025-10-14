@@ -1,10 +1,10 @@
 export class CacheUtils {
   static buildSimpleCacheKey(
-    type: 'questions' | 'postits',
+    type: 'questions' | 'postits' | 'provocations',
     userId: string,
-    mandalaId: string,
+    scopeId: string,
   ): string {
-    return `ai:${type}:${userId}:${mandalaId}`;
+    return `ai:${type}:${userId}:${scopeId}`;
   }
 
   static readonly CacheStatus = {

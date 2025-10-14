@@ -1,6 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import * as process from 'node:process';
 
 import { CommonModule } from '@common/common.module';
+import { HttpExceptionFilter } from '@common/filters/http-exception.filter';
+import { UserThrottlerGuard } from '@common/guards/user-throttler.guard';
+import { AppLogger } from '@common/services/logger.service';
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
@@ -14,17 +18,28 @@ import { PrismaModule } from '@modules/prisma/prisma.module';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectModule } from '@modules/project/project.module';
 import { RoleModule } from '@modules/role/role.module';
+import { SolutionModule } from '@modules/solution/solution.module';
 import { UserModule } from '@modules/user/user.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ClsModule } from 'nestjs-cls';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
   imports: [
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        setup: (cls) => {
+          cls.set('requestId', randomUUID());
+        },
+      },
+    }),
     CommonModule,
     PrismaModule,
     ProjectModule,
@@ -39,6 +54,7 @@ import { AppService } from './app.service';
     MailModule,
     OrganizationModule,
     HealthModule,
+    SolutionModule,
     CacheModule.register({
       ttl: parseInt(process.env.CACHE_TTL || '7200000'),
       max: parseInt(process.env.CACHE_MAX_ITEMS || '500'),
@@ -48,7 +64,7 @@ import { AppService } from './app.service';
       throttlers: [
         {
           ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000'),
-          limit: parseInt(process.env.RATE_LIMIT_LIMIT || '100'),
+          limit: parseInt(process.env.RATE_LIMIT_LIMIT || '250'),
         },
       ],
     }),
@@ -57,11 +73,16 @@ import { AppService } from './app.service';
   providers: [
     AppService,
     PrismaService,
+    AppLogger,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: UserThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
     },
   ],
-  exports: [PrismaService],
+  exports: [PrismaService, AppLogger],
 })
 export class AppModule {}

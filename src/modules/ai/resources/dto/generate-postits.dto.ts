@@ -1,29 +1,84 @@
-export const PostitsResponse = {
+export const createPostitsResponseSchema = (limits: {
+  minItems: number;
+  maxItems: number;
+}) => ({
   type: 'array',
   items: {
     type: 'object',
     properties: {
       content: { type: 'string' },
       dimension: { type: 'string' },
-      section: { type: 'string' },
+      scale: { type: 'string' },
       tags: {
         type: 'array',
         items: { type: 'string' },
       },
     },
+    required: ['content', 'dimension', 'scale'],
+    propertyOrdering: ['content', 'dimension', 'scale', 'tags'],
   },
-};
+  minItems: limits.minItems,
+  maxItems: limits.maxItems,
+});
 
-export const PostitsComparisonResponse = {
+export const createPostitsSummaryResponseSchema = (limits: {
+  minItems: number;
+  maxItems: number;
+}) => ({
+  type: 'object',
+  properties: {
+    comparisons: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          content: { type: 'string' },
+          dimension: { type: 'string' },
+          scale: { type: 'string' },
+          type: { type: 'string' },
+          fromSummary: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['content', 'dimension', 'scale', 'type', 'fromSummary'],
+        propertyOrdering: [
+          'content',
+          'dimension',
+          'scale',
+          'type',
+          'fromSummary',
+        ],
+      },
+      minItems: limits.minItems,
+      maxItems: limits.maxItems,
+    },
+    report: {
+      type: 'object',
+      properties: {
+        summary: { type: 'string', maxLength: 1200 },
+        coincidences: { type: 'array', items: { type: 'string' } },
+        tensions: { type: 'array', items: { type: 'string' } },
+        insights: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['summary', 'coincidences', 'tensions', 'insights'],
+    },
+  },
+  required: ['comparisons', 'report'],
+});
+
+export const createProvocationsResponseSchema = (limits: {
+  minItems: number;
+  maxItems: number;
+}) => ({
   type: 'array',
   items: {
     type: 'object',
     properties: {
-      content: { type: 'string' },
-      dimension: { type: 'string' },
-      section: { type: 'string' },
-      type: { type: 'string' },
-      fromSummary: { type: 'array', items: { type: 'string' } },
+      title: { type: 'string' },
+      description: { type: 'string' },
+      question: { type: 'string' },
     },
+    required: ['title', 'description', 'question'],
+    propertyOrdering: ['title', 'description', 'question'],
   },
-};
+  minItems: limits.minItems,
+  maxItems: limits.maxItems,
+});

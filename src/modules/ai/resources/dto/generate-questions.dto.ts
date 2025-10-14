@@ -1,4 +1,7 @@
-export const QuestionsResponse = {
+export const createQuestionsResponseSchema = (limits: {
+  minItems: number;
+  maxItems: number;
+}) => ({
   type: 'array',
   items: {
     type: 'object',
@@ -7,5 +10,9 @@ export const QuestionsResponse = {
       dimension: { type: 'string' },
       scale: { type: 'string' },
     },
+    required: ['question', 'dimension', 'scale'],
+    propertyOrdering: ['question', 'dimension', 'scale'],
   },
-};
+  minItems: limits.minItems,
+  maxItems: limits.maxItems,
+});

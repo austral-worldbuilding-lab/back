@@ -1,11 +1,21 @@
-import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import {
+  ResourceNotFoundException,
+  StateConflictException,
+} from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
+import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { ProjectRepository } from '@modules/project/project.repository';
 import { RoleService } from '@modules/role/role.service';
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 
 import { CreateOrganizationDto } from './dto/create-organization.dto';
+import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
+import { OrganizationUserDto } from './dto/organization-user.dto';
 import { OrganizationDto } from './dto/organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { OrganizationRepository } from './organization.repository';
@@ -16,6 +26,7 @@ export class OrganizationService {
     private organizationRepository: OrganizationRepository,
     private roleService: RoleService,
     private projectRepository: ProjectRepository,
+    private prisma: PrismaService,
   ) {}
 
   async create(
@@ -82,6 +93,7 @@ export class OrganizationService {
     id: string,
     page: number,
     limit: number,
+    userId: string,
   ): Promise<PaginatedResponse<ProjectDto>> {
     const org = await this.organizationRepository.findOne(id);
     if (!org) {
@@ -89,12 +101,31 @@ export class OrganizationService {
     }
 
     const skip = (page - 1) * limit;
-    const [projects, total] =
-      await this.projectRepository.findAllByOrganizationPaginated(
-        id,
-        skip,
-        limit,
-      );
+    const userOrgRole = await this.prisma.userOrganizationRole.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId: id },
+      },
+    });
+
+    let projects: ProjectDto[];
+    let total: number;
+
+    if (userOrgRole) {
+      [projects, total] =
+        await this.projectRepository.findAllByOrganizationPaginated(
+          id,
+          skip,
+          limit,
+        );
+    } else {
+      [projects, total] =
+        await this.projectRepository.findProjectsByUserAndOrganization(
+          userId,
+          id,
+          skip,
+          limit,
+        );
+    }
 
     return {
       data: projects,
@@ -105,5 +136,111 @@ export class OrganizationService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async getOrganizationUsers(
+    organizationId: string,
+  ): Promise<OrganizationUserDto[]> {
+    const organization =
+      await this.organizationRepository.findOne(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundException('Organization', organizationId);
+    }
+
+    return this.organizationRepository.getOrganizationUsers(organizationId);
+  }
+
+  async updateUserRole(
+    organizationId: string,
+    userId: string,
+    roleName: string,
+  ): Promise<OrganizationUserRoleResponseDto> {
+    const organization =
+      await this.organizationRepository.findOne(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundException('Organization', organizationId);
+    }
+
+    // Obtener el rol por nombre
+    const role = await this.roleService.findByName(roleName);
+    if (!role) {
+      throw new NotFoundException(`Role '${roleName}' not found`);
+    }
+
+    const currentUserRole = await this.organizationRepository.getUserRole(
+      organizationId,
+      userId,
+    );
+    if (!currentUserRole) {
+      throw new ResourceNotFoundException(
+        'OrganizationUser',
+        `${organizationId}:${userId}`,
+      );
+    }
+
+    const isCurrentlyOwner = currentUserRole?.name === 'owner';
+    const willBeOwner = role.name === 'owner';
+    const isDowngradeFromOwner = isCurrentlyOwner && !willBeOwner;
+
+    if (isDowngradeFromOwner) {
+      const ownersCount =
+        await this.organizationRepository.countOwners(organizationId);
+
+      if (ownersCount <= 1) {
+        throw new StateConflictException('owner', 'downgrade', {
+          reason: 'last_owner',
+        });
+      }
+    }
+
+    return this.organizationRepository.updateUserRole(
+      organizationId,
+      userId,
+      role.id,
+    );
+  }
+
+  async removeUserFromOrganization(
+    organizationId: string,
+    userId: string,
+    requestingUserId: string,
+  ): Promise<OrganizationUserDto> {
+    const organization =
+      await this.organizationRepository.findOne(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundException('Organization', organizationId);
+    }
+
+    if (userId === requestingUserId) {
+      throw new ForbiddenException(
+        'No puedes eliminarte a ti mismo de la organización',
+      );
+    }
+
+    const userRole = await this.organizationRepository.getUserRole(
+      organizationId,
+      userId,
+    );
+    if (!userRole) {
+      throw new ResourceNotFoundException(
+        'OrganizationUser',
+        `${organizationId}:${userId}`,
+      );
+    }
+
+    if (userRole.name === 'owner') {
+      const ownersCount =
+        await this.organizationRepository.countOwners(organizationId);
+      if (ownersCount <= 1) {
+        throw new StateConflictException('owner', 'remove', {
+          reason: 'last_owner',
+        });
+      }
+    }
+
+    return this.organizationRepository.removeUserFromOrganization(
+      organizationId,
+      userId,
+    );
   }
 }

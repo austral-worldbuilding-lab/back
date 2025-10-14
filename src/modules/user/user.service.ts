@@ -1,4 +1,5 @@
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { Injectable } from '@nestjs/common';
 
@@ -9,9 +10,15 @@ import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(
+    private userRepository: UserRepository,
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(UserService.name);
+  }
 
   async create(createUserDto: CreateUserDto): Promise<UserDto> {
+    this.logger.log('Creating user', createUserDto);
     return this.userRepository.create(createUserDto);
   }
 
@@ -55,6 +62,7 @@ export class UserService {
     if (!targetUser) {
       throw new ResourceNotFoundException('User', targetUserId);
     }
+    this.logger.log('Deactivating user', { targetUserId });
     return this.userRepository.deactivateUser(targetUserId);
   }
 }

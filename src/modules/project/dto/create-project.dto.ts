@@ -46,7 +46,7 @@ export class CreateProjectDto {
   @ApiProperty({
     description:
       'Escalas del proyecto. En caso de no tener escalas, se usarán las escalas por defecto.',
-    example: ['Persona', 'Comunidad', 'Institución'],
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
     required: false,
   })
   @IsArray()
@@ -63,4 +63,14 @@ export class CreateProjectDto {
   @IsUUID()
   @IsNotEmpty()
   organizationId!: string;
+
+  @ApiProperty({
+    description:
+      'ID del proyecto padre (solo para proyectos generados desde provocaciones)',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  parentProjectId?: string;
 }

@@ -1,14 +1,17 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { AppLogger } from '@common/services/logger.service';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Transporter } from 'nodemailer';
 
 @Injectable()
 export class MailService {
-  private readonly logger = new Logger(MailService.name);
   constructor(
     @Inject('MAIL_TRANSPORT') private readonly transport: Transporter,
     private readonly config: ConfigService,
-  ) {}
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(MailService.name);
+  }
 
   async sendInvitationEmail(params: {
     to: string;

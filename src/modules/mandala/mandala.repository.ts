@@ -127,6 +127,22 @@ export class MandalaRepository {
     return this.parseToMandalaDto(mandala as MandalaWithRelations);
   }
 
+  async findAll(projectId: string): Promise<MandalaDto[]> {
+    const mandalas = await this.prisma.mandala.findMany({
+      where: {
+        projectId,
+        isActive: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        children: { select: { id: true } },
+        parent: { select: { id: true } },
+      },
+    });
+
+    return mandalas.map((m) => this.parseToMandalaDto(m));
+  }
+
   async findAllPaginated(
     projectId: string,
     skip: number,
@@ -331,5 +347,34 @@ export class MandalaRepository {
         color: configuration.center.color,
       };
     });
+  }
+
+  async findMandalaWithProjectInfo(mandalaId: string): Promise<{
+    projectId: string;
+    organizationId: string;
+  } | null> {
+    const mandala = await this.prisma.mandala.findFirst({
+      where: {
+        id: mandalaId,
+        isActive: true,
+      },
+      select: {
+        projectId: true,
+        project: {
+          select: {
+            organizationId: true,
+          },
+        },
+      },
+    });
+
+    if (!mandala || !mandala.project?.organizationId) {
+      return null;
+    }
+
+    return {
+      projectId: mandala.projectId,
+      organizationId: mandala.project.organizationId,
+    };
   }
 }
