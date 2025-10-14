@@ -38,8 +38,6 @@ export class GeminiAdapter implements AiProvider {
       );
     }
     this.geminiModel = model;
-    this.logger.setContext(GeminiAdapter.name);
-    this.logger.log('Gemini Adapter initialized');
   }
 
   async generatePostits(
