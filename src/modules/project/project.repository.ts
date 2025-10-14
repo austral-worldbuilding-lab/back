@@ -133,17 +133,16 @@ export class ProjectRepository {
     return generatedProjectLink?.project || null;
   }
 
-  // TODO: when we have method to find initial project, replace `${parentProject.name}: ...` for `${initialProject.name}: ...`
   private buildProvocationProjectName(
-    generatedProject: Project | null,
+    rootProject: Project | null,
     provocationQuestion: string,
     provocationContent: { title?: string; description?: string } | null,
     providedName?: string,
   ): string {
     const provocationTitle = provocationContent?.title || provocationQuestion;
 
-    if (generatedProject) {
-      return `${generatedProject.name}: ${provocationTitle}`;
+    if (rootProject) {
+      return `${rootProject.name}: ${provocationTitle}`;
     } else {
       if (!providedName) {
         throw new BadRequestException(
@@ -337,8 +336,19 @@ export class ProjectRepository {
         tx,
       );
 
+      let rootProject: Project | null = null;
+      if (parentProject) {
+        const rootProjectId = parentProject.rootProjectId || parentProject.id;
+        rootProject = await tx.project.findFirst({
+          where: {
+            id: rootProjectId,
+            isActive: true,
+          },
+        });
+      }
+
       const projectName = this.buildProvocationProjectName(
-        parentProject,
+        rootProject,
         provocation.question,
         provocationContent,
         createProjectFromProvocationDto.name,
@@ -944,22 +954,26 @@ export class ProjectRepository {
     });
 
     for (const member of orgMembers) {
-      await this.prisma.userProjectRole.upsert({
+      // Check if user already has a role in this project
+      const existingRole = await this.prisma.userProjectRole.findUnique({
         where: {
           userId_projectId: {
             userId: member.userId,
             projectId: projectId,
           },
         },
-        update: {
-          roleId: member.roleId,
-        },
-        create: {
-          userId: member.userId,
-          projectId: projectId,
-          roleId: member.roleId,
-        },
       });
+
+      // Only add user if they don't already have a role (preserve existing roles)
+      if (!existingRole) {
+        await this.prisma.userProjectRole.create({
+          data: {
+            userId: member.userId,
+            projectId: projectId,
+            roleId: member.roleId,
+          },
+        });
+      }
     }
   }
 

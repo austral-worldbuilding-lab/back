@@ -10,7 +10,10 @@ import { getProjectValidationConfig } from '@config/project-validation.config';
 import { AiService } from '@modules/ai/ai.service';
 import { FileService } from '@modules/files/file.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
+import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
+import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
 import { RoleService } from '@modules/role/role.service';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
   Injectable,
   NotFoundException,
@@ -47,6 +50,9 @@ export class ProjectService {
     private fileService: FileService,
     private cacheService: CacheService,
     private readonly logger: AppLogger,
+    private readonly blobStorageService: AzureBlobStorageService,
+    @Inject(forwardRef(() => EncyclopediaQueueService))
+    private readonly encyclopediaQueueService: EncyclopediaQueueService,
   ) {
     this.logger.setContext(ProjectService.name);
   }
@@ -373,7 +379,7 @@ export class ProjectService {
     );
 
     const mandalasSummariesWithAi: string =
-      this.mandalaService.getAllMandalaSummariesWithAi(
+      this.mandalaService.getAllMandalaSummaries(
         projectId,
         mandalasDocument,
         projectMandalas,
@@ -459,5 +465,199 @@ export class ProjectService {
     const project =
       await this.projectRepository.findProjectWithParent(projectId);
     return project?.parentProjectId === null;
+  }
+
+  /**
+   * Queue encyclopedia generation job
+   * @param projectId - The project ID
+   * @param selectedFiles - Optional files to include in generation
+   * @returns Job ID for tracking
+   */
+  async queueEncyclopediaGeneration(
+    projectId: string,
+    selectedFiles?: string[],
+  ): Promise<string> {
+    this.logger.log(
+      `Queuing encyclopedia generation job for project ${projectId}`,
+    );
+
+    // Verify project exists
+    await this.findOne(projectId);
+
+    const jobId = await this.encyclopediaQueueService.addEncyclopediaJob(
+      projectId,
+      selectedFiles,
+    );
+
+    this.logger.log(
+      `Encyclopedia generation job queued for project ${projectId} with ID: ${jobId}`,
+    );
+
+    return jobId;
+  }
+
+  /**
+   * Get encyclopedia job status
+   * @param jobId - The job ID
+   * @returns Job status with result if completed
+   */
+  async getEncyclopediaJobStatus(
+    jobId: string,
+  ): Promise<EncyclopediaJobStatusResponse> {
+    return this.encyclopediaQueueService.getJobStatus(jobId);
+  }
+
+  /**
+   * DEPRECATED: Old synchronous encyclopedia generation
+   * This method is kept for reference but should not be used directly.
+   * Use queueEncyclopediaGeneration instead.
+   *
+   * @deprecated Use queueEncyclopediaGeneration for async job-based generation
+   */
+  async generateEncyclopedia(
+    projectId: string,
+    selectedFiles?: string[],
+  ): Promise<{ encyclopedia: string; storageUrl: string }> {
+    this.logger.log(
+      `[DEPRECATED] Starting synchronous encyclopedia generation for project ${projectId}`,
+    );
+
+    const project = await this.findOne(projectId);
+
+    const mandalasWithStatus =
+      await this.mandalaService.getMandalasWithSummaryStatus(projectId);
+
+    const withoutSummary = mandalasWithStatus.filter(
+      ({ hasSummary }) => !hasSummary,
+    );
+    const allMandalas = mandalasWithStatus.map(({ mandala }) => mandala);
+
+    this.logger.log(
+      `Found ${withoutSummary.length} mandalas without summaries out of ${allMandalas.length} total mandalas`,
+    );
+
+    // Generate missing summaries in parallel
+    if (withoutSummary.length > 0) {
+      this.logger.log(
+        `Generating summaries for ${withoutSummary.length} mandalas...`,
+      );
+
+      await Promise.all(
+        withoutSummary.map(({ mandala }) =>
+          this.mandalaService
+            .generateSummaryReport(mandala.id)
+            .catch((error) => {
+              const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
+              this.logger.error(
+                `Failed to generate summary for mandala ${mandala.id}: ${errorMessage}`,
+              );
+              // Continue with other summaries even if one fails
+              return null;
+            }),
+        ),
+      );
+
+      this.logger.log(
+        `Completed summary generation for mandalas without summaries`,
+      );
+    }
+
+    const allDimensions = [
+      ...new Set(
+        allMandalas.flatMap((m) =>
+          m.configuration.dimensions.map((d) => d.name),
+        ),
+      ),
+    ];
+
+    const allScales = [
+      ...new Set(allMandalas.flatMap((m) => m.configuration.scales)),
+    ];
+
+    // Join all summaries
+    const allSummaries =
+      await this.mandalaService.getAllMandalaSummariesByProjectId(projectId);
+
+    if (!allSummaries) {
+      this.logger.warn(`No summaries available for project ${projectId}`);
+    }
+
+    // Generate encyclopedia
+    this.logger.log(`Generating encyclopedia content for project ${projectId}`);
+    const encyclopediaResponse = await this.aiService.generateEncyclopedia(
+      projectId,
+      project.name,
+      project.description || '',
+      allDimensions,
+      allScales,
+      allSummaries,
+      selectedFiles,
+    );
+
+    //TODO what happens if we have multiple encyclopedias?
+    const fileName = `Enciclopedia del mundo - ${project.name}.md`;
+
+    const storageUrl = await this.saveEncyclopedia(
+      encyclopediaResponse.encyclopedia,
+      project.organizationId,
+      project.id,
+      fileName,
+    );
+
+    this.logger.log(
+      `Encyclopedia generation pipeline completed for project ${projectId}`,
+    );
+
+    return {
+      encyclopedia: encyclopediaResponse.encyclopedia,
+      storageUrl,
+    };
+  }
+
+  async saveEncyclopedia(
+    content: string,
+    organizationId: string,
+    projectId: string,
+    fileName: string,
+  ): Promise<string> {
+    this.logger.log('Saving encyclopedia to blob storage', {
+      organizationId,
+      projectId,
+      fileName,
+      contentLength: content.length,
+    });
+
+    const scope = {
+      orgId: organizationId,
+      projectId: projectId,
+    };
+
+    const buffer = Buffer.from(content, 'utf-8');
+
+    // Use the same approach as VideoProcessingService
+    await this.blobStorageService.uploadBuffer(
+      buffer,
+      fileName,
+      scope,
+      'text/markdown',
+    );
+
+    // Get the public URL
+    const publicUrl = this.blobStorageService.buildPublicUrl(
+      scope,
+      fileName,
+      'files',
+    );
+
+    this.logger.log('Successfully saved encyclopedia', {
+      organizationId,
+      projectId,
+      fileName,
+      publicUrl,
+      contentLength: content.length,
+    });
+
+    return publicUrl;
   }
 }

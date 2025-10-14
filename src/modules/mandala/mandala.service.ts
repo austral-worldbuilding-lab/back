@@ -1148,7 +1148,238 @@ export class MandalaService {
     return { summaryReport };
   }
 
-  getAllMandalaSummariesWithAi(
+  async hasSummary(mandalaId: string): Promise<boolean> {
+    const mandala = await this.findOne(mandalaId);
+    if (!mandala) {
+      throw new ResourceNotFoundException('Mandala', mandalaId);
+    }
+
+    try {
+      const mandalaDoc = await this.firebaseDataService.getDocument(
+        mandala.projectId,
+        mandalaId,
+      );
+
+      if (!mandalaDoc) {
+        return false;
+      }
+
+      const doc = mandalaDoc as FirestoreMandalaDocument;
+
+      return !!doc.summaryReport;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Failed to check summary existence for mandala ${mandalaId}: ${errorMessage}`,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Gets all mandalas with their summary status for a project
+   * @param projectId - The project ID
+   * @returns Array of objects with mandala and hasSummary flag
+   */
+  async getMandalasWithSummaryStatus(
+    projectId: string,
+  ): Promise<Array<{ mandala: MandalaDto; hasSummary: boolean }>> {
+    this.logger.log(
+      `Getting mandalas with summary status for project ${projectId}`,
+    );
+
+    try {
+      const allMandalas = await this.findAll(projectId);
+
+      const mandalaChecks = await Promise.all(
+        allMandalas.map(async (mandala) => {
+          try {
+            const hasSummary = await this.hasSummary(mandala.id);
+            return { mandala, hasSummary };
+          } catch (error: unknown) {
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+            this.logger.warn(
+              `Failed to check summary for mandala ${mandala.id}: ${errorMessage}`,
+            );
+            return { mandala, hasSummary: false };
+          }
+        }),
+      );
+
+      const withSummaryCount = mandalaChecks.filter(
+        ({ hasSummary }) => hasSummary,
+      ).length;
+
+      this.logger.log(
+        `Found ${withSummaryCount} mandalas with summaries and ${allMandalas.length - withSummaryCount} without summaries in project ${projectId}`,
+      );
+
+      return mandalaChecks;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Failed to get mandalas with summary status for project ${projectId}: ${errorMessage}`,
+      );
+      throw new InternalServerErrorException({
+        message: 'Failed to retrieve mandalas with summary status',
+        error: 'Project Summary Query Error',
+        details: { projectId, originalError: errorMessage },
+      });
+    }
+  }
+
+  /**
+   * Gets only mandalas that have summaries for a project
+   * @param projectId - The project ID
+   * @returns Array of mandalas with summaries
+   */
+  async getMandalasWithSummary(projectId: string): Promise<MandalaDto[]> {
+    const mandalaChecks = await this.getMandalasWithSummaryStatus(projectId);
+
+    return mandalaChecks
+      .filter(({ hasSummary }) => hasSummary)
+      .map(({ mandala }) => mandala);
+  }
+
+  async getMandalaSummary(mandalaId: string): Promise<string> {
+    const mandala = await this.findOne(mandalaId);
+    if (!mandala) {
+      throw new ResourceNotFoundException('Mandala', mandalaId);
+    }
+
+    try {
+      const mandalaDoc = await this.firebaseDataService.getDocument(
+        mandala.projectId,
+        mandalaId,
+      );
+
+      if (!mandalaDoc) {
+        throw new ResourceNotFoundException('MandalaDocument', mandalaId);
+      }
+
+      const doc = mandalaDoc as FirestoreMandalaDocument;
+
+      if (!doc.summaryReport) {
+        throw new ResourceNotFoundException('Summary', mandalaId);
+      }
+
+      return this.extractSummaryFromDocument(doc, mandala);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Failed to get summary for mandala ${mandalaId}: ${errorMessage}`,
+      );
+
+      if (error instanceof ResourceNotFoundException) {
+        throw error;
+      }
+
+      throw new ExternalServiceException(
+        'Firebase',
+        'Failed to retrieve mandala summary',
+        { mandalaId, originalError: errorMessage },
+      );
+    }
+  }
+
+  /**
+   * Extracts the summary from a mandala document based on mandala type
+   * @private
+   */
+  private extractSummaryFromDocument(
+    doc: FirestoreMandalaDocument,
+    mandala: MandalaDto,
+  ): string {
+    if (!doc.summaryReport) {
+      return '';
+    }
+
+    if (mandala.type === MandalaType.OVERLAP_SUMMARY) {
+      try {
+        const reportData = JSON.parse(doc.summaryReport) as {
+          summary?: string;
+        };
+        return reportData.summary || doc.summaryReport;
+      } catch {
+        return doc.summaryReport;
+      }
+    }
+
+    return doc.summaryReport;
+  }
+
+  /**
+   * Gets all mandala summaries for a project and joins them into a single string
+   * Functional version that works directly with projectId
+   * @param projectId - The project ID
+   * @returns String with all summaries joined by '\n\n'
+   */
+  async getAllMandalaSummariesByProjectId(projectId: string): Promise<string> {
+    this.logger.log(
+      `Getting all AI-generated summaries for project ${projectId}`,
+    );
+
+    try {
+      // Get only mandalas that have summaries
+      const mandalasWithSummary = await this.getMandalasWithSummary(projectId);
+
+      if (mandalasWithSummary.length === 0) {
+        this.logger.log(
+          `No mandalas with summaries found for project ${projectId}`,
+        );
+        return '';
+      }
+
+      // Fetch all documents in parallel
+      const mandalaDocs = await Promise.all(
+        mandalasWithSummary.map((mandala) =>
+          this.getFirestoreDocument(mandala.projectId, mandala.id),
+        ),
+      );
+
+      // Extract and join summaries functionally
+      const summaries = mandalaDocs
+        .map((doc, index) =>
+          this.extractSummaryFromDocument(doc, mandalasWithSummary[index]),
+        )
+        .filter((summary) => summary !== '');
+
+      const overlapSummaryCount = mandalasWithSummary.filter(
+        (m) => m.type === MandalaType.OVERLAP_SUMMARY,
+      ).length;
+
+      this.logger.log(
+        `Found ${summaries.length} summaries with AI content (including ${overlapSummaryCount} OVERLAP_SUMMARY reports)`,
+      );
+
+      return summaries.join('\n\n');
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Failed to get all summaries for project ${projectId}: ${errorMessage}`,
+      );
+      throw new InternalServerErrorException({
+        message: 'Failed to retrieve all mandala summaries',
+        error: 'Project Summary Retrieval Error',
+        details: { projectId, originalError: errorMessage },
+      });
+    }
+  }
+
+  /**
+   * Gets all mandala summaries given pre-fetched documents and mandalas
+   * Legacy method kept for backwards compatibility
+   * @param projectId - The project ID
+   * @param mandalaDocs - Pre-fetched Firestore documents
+   * @param mandalas - Pre-fetched mandala DTOs
+   * @returns String with all summaries joined by '\n\n'
+   */
+  getAllMandalaSummaries(
     projectId: string,
     mandalaDocs: FirestoreMandalaDocument[],
     mandalas: MandalaDto[],
@@ -1157,37 +1388,21 @@ export class MandalaService {
       `Getting all AI-generated summaries for project ${projectId}`,
     );
 
-    const summaries: string[] = [];
+    // Combine docs and mandalas into tuples and extract summaries
+    const summaries = mandalaDocs
+      .map((doc, index) => ({
+        doc,
+        mandala: mandalas[index],
+      }))
+      .map(({ doc, mandala }) => this.extractSummaryFromDocument(doc, mandala))
+      .filter((summary) => summary !== '');
 
-    for (let i = 0; i < mandalaDocs.length; i++) {
-      const doc = mandalaDocs[i];
-      const mandala = mandalas[i];
-
-      let summary = '';
-
-      if (mandala.type === MandalaType.OVERLAP_SUMMARY) {
-        // Para OVERLAP_SUMMARY, usar el report directamente (no generar nuevo resumen)
-        if (doc.summaryReport) {
-          try {
-            const reportData = JSON.parse(doc.summaryReport) as {
-              summary?: string;
-            };
-            summary = reportData.summary || doc.summaryReport;
-          } catch {
-            summary = doc.summaryReport;
-          }
-        }
-      } else {
-        summary = doc.summaryReport || '';
-      }
-
-      if (summary) {
-        summaries.push(summary);
-      }
-    }
+    const overlapSummaryCount = mandalas.filter(
+      (m) => m.type === MandalaType.OVERLAP_SUMMARY,
+    ).length;
 
     this.logger.log(
-      `Found ${summaries.length} summaries with AI content (including ${mandalas.filter((m) => m.type === MandalaType.OVERLAP_SUMMARY).length} OVERLAP_SUMMARY reports)`,
+      `Found ${summaries.length} summaries with AI content (including ${overlapSummaryCount} OVERLAP_SUMMARY reports)`,
     );
 
     return summaries.join('\n\n');

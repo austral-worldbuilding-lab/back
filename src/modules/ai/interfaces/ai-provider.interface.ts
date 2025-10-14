@@ -175,7 +175,7 @@ export interface AiProvider {
     centerCharacter: string,
     centerCharacterDescription: string,
     cleanMandalaDocument: string,
-  ): Promise<string>;
+  ): Promise<string>; //TODO return AiResponseWithUsage<string> to track usage
 
   /**
    * Generates a comprehensive encyclopedia of the project world using AI analysis

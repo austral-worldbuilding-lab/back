@@ -525,6 +525,8 @@ export class MandalaController {
   }
 
   @Post(':mandalaId/summary')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
   async generateSummaryReport(
     @Param('mandalaId') mandalaId: string,
   ): Promise<{ summaryReport: string }> {

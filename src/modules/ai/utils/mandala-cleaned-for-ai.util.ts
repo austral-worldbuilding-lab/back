@@ -9,6 +9,7 @@ import {
   PostitClean,
   DimensionClean,
   ScaleClean,
+  RelatedCharacter,
 } from '../types/mandala-cleaned-for-ai.interface';
 
 interface MandalaCenter {
@@ -41,6 +42,7 @@ export function createCleanMandalaForQuestions(
   document: FirestoreMandalaDocument,
 ): CleanMandalaForQuestions {
   const postits = document.postits || [];
+  const characters = document.characters || [];
   const mandala = document.mandala as MandalaData | undefined;
 
   const postitSummaries: PostitWithCount[] = postits.map((postit) => ({
@@ -48,6 +50,13 @@ export function createCleanMandalaForQuestions(
     dimension: postit.dimension,
     scale: postit.section,
     childrenCount: postit.childrens?.length || 0,
+  }));
+
+  const relatedCharacters: RelatedCharacter[] = characters.map((character) => ({
+    name: character.name,
+    description: character.description,
+    section: character.section,
+    dimension: character.dimension,
   }));
 
   const configuredDimensions: MandalaDimension[] =
@@ -84,6 +93,7 @@ export function createCleanMandalaForQuestions(
     dimensions,
     scales: sections,
     totalPostits: postitSummaries.length,
+    relatedCharacters,
   };
 }
 
@@ -95,12 +105,20 @@ export function createCleanMandalaForSummary(
   document: FirestoreMandalaDocument,
 ): CleanMandalaForSummary {
   const postits = document.postits || [];
+  const characters = document.characters || [];
   const mandala = document.mandala as MandalaData | undefined;
 
   const postitSummaries: PostitClean[] = postits.map((postit) => ({
     content: postit.content,
     dimension: postit.dimension,
     scale: postit.section,
+  }));
+
+  const relatedCharacters: RelatedCharacter[] = characters.map((character) => ({
+    name: character.name,
+    description: character.description,
+    section: character.section,
+    dimension: character.dimension,
   }));
 
   const configuredDimensions: MandalaDimension[] =
@@ -134,5 +152,6 @@ export function createCleanMandalaForSummary(
     },
     dimensions,
     scales: sections,
+    relatedCharacters,
   };
 }
