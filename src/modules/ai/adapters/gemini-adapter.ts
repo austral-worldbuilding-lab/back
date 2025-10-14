@@ -180,9 +180,6 @@ export class GeminiAdapter implements AiProvider {
     );
     const data = strategy.parseAndValidate(text);
     this.logger.log(`Comparison + report generation completed`);
-    this.logger.debug(
-      '[AI REPORT][comparativa] ' + JSON.stringify(data.report, null, 2),
-    );
     return { data, usage };
   }
 
