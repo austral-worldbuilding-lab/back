@@ -709,18 +709,18 @@ export class ProjectRepository {
         },
       });
 
-      const color = dto.color || generateRandomColor();
-
       if (existingSoftDeletedTag) {
         return tx.tag.update({
           where: { id: existingSoftDeletedTag.id },
           data: {
             isActive: true,
             deletedAt: null,
-            color,
+            ...(dto.color && { color: dto.color }),
           },
         });
       }
+
+      const color = dto.color || generateRandomColor();
 
       return tx.tag.create({
         data: {

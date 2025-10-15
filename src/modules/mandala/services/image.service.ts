@@ -132,8 +132,8 @@ export class ImageService {
       dimension: '',
       section: '',
       tags:
-        imageData.tags?.map((tag: Tag) => ({
-          name: tag.name,
+        imageData.tags?.map((tag: Partial<Tag>) => ({
+          name: tag.name!,
           color: tag.color || generateRandomColor(),
         })) || [],
     };
