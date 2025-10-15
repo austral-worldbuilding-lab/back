@@ -1,3 +1,4 @@
+import { CreateTagDto } from '@modules/project/dto/create-tag.dto';
 import { Tag } from '@modules/mandala/types/postits';
 
 export interface MandalaImage {
@@ -20,5 +21,5 @@ export interface CreateMandalaImageRequest {
 
 export interface ConfirmMandalaImageRequest {
   id: string;
-  tags?: Tag[];
+  tags?: CreateTagDto[];
 }
