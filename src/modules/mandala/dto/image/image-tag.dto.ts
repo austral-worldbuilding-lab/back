@@ -11,7 +11,8 @@ export class ImageTagDto {
   name!: string;
 
   @ApiProperty({
-    description: 'Color del tag en formato hexadecimal. Si no se proporciona, se generará automáticamente.',
+    description:
+      'Color del tag en formato hexadecimal. Si no se proporciona, se generará automáticamente.',
     example: '#3B82F6',
     required: false,
   })
@@ -20,4 +21,3 @@ export class ImageTagDto {
   @IsOptional()
   color?: string;
 }
-
