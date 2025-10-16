@@ -9,4 +9,12 @@ export class CreateOrganizationDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
+
+  @ApiProperty({
+    description: 'Icono de la organización',
+    example: 'icono-organizacion',
+  })
+  @IsString()
+  @IsNotEmpty()
+  icon!: string;
 }

@@ -73,4 +73,12 @@ export class CreateProjectDto {
   @IsUUID()
   @IsOptional()
   parentProjectId?: string;
+
+  @ApiProperty({
+    description: 'Icono del proyecto',
+    example: 'icono-proyecto',
+  })
+  @IsString()
+  @IsNotEmpty()
+  icon!: string;
 }

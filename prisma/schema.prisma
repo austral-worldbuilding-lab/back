@@ -24,6 +24,7 @@ model User {
 model Project {
   id            String            @id @default(uuid())
   name          String
+  icon          String    @default("folder")
   description   String?
   configuration Json // Contains dimensions[] and scales[]
   createdAt     DateTime          @default(now())
@@ -142,6 +143,7 @@ model Tag {
 model Organization {
   id        String    @id @default(uuid())
   name      String
+  icon      String    @default("building-2")
   createdAt DateTime  @default(now())
   isActive  Boolean   @default(true)
   deletedAt DateTime?
