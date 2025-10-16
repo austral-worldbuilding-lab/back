@@ -1,5 +1,6 @@
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import { generateRandomColor } from '@common/utils/color.utils';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, Project, ProjProvLinkRole, Tag } from '@prisma/client';
@@ -714,15 +715,17 @@ export class ProjectRepository {
           data: {
             isActive: true,
             deletedAt: null,
-            color: dto.color,
+            ...(dto.color && { color: dto.color }),
           },
         });
       }
 
+      const color = dto.color || generateRandomColor();
+
       return tx.tag.create({
         data: {
           name: dto.name,
-          color: dto.color,
+          color,
           projectId,
         },
       });

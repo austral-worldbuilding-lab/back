@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
+import { generateRandomColor } from '@common/utils/color.utils';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileScope } from '@modules/files/types/file-scope.type';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
@@ -131,9 +132,9 @@ export class ImageService {
       dimension: '',
       section: '',
       tags:
-        imageData.tags?.map((tag: Tag) => ({
-          name: tag.name,
-          color: tag.color,
+        imageData.tags?.map((tag: Partial<Tag>) => ({
+          name: tag.name!,
+          color: tag.color || generateRandomColor(),
         })) || [],
     };
 

@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
+import { generateRandomColor } from '@common/utils/color.utils';
 import { AiService } from '@modules/ai/ai.service';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileScope } from '@modules/files/types/file-scope.type';
@@ -463,7 +464,7 @@ export class PostitService {
       section: postit.section || '',
       tags: postit.tags.map((tag) => ({
         name: tag.name,
-        color: tag.color,
+        color: tag.color || generateRandomColor(),
       })),
       childrens: [], // Initialize empty children array
       coordinates: finalCoordinates,
@@ -525,7 +526,7 @@ export class PostitService {
       content: updateData.content,
       tags: updateData.tags.map((tag) => ({
         name: tag.name,
-        color: tag.color,
+        color: tag.color || generateRandomColor(),
       })),
     };
 
