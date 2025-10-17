@@ -480,8 +480,6 @@ export class ProjectService {
     this.logger.log(
       `Queuing encyclopedia generation job for project ${projectId}`,
     );
-
-    // Verify project exists
     await this.findOne(projectId);
 
     const jobId = await this.encyclopediaQueueService.addEncyclopediaJob(
@@ -497,14 +495,13 @@ export class ProjectService {
   }
 
   /**
-   * Get encyclopedia job status
-   * @param jobId - The job ID
-   * @returns Job status with result if completed
+   * Get encyclopedia job status by project ID
+   * Returns the active/waiting job for this project
    */
   async getEncyclopediaJobStatus(
-    jobId: string,
+    projectId: string,
   ): Promise<EncyclopediaJobStatusResponse> {
-    return this.encyclopediaQueueService.getJobStatus(jobId);
+    return this.encyclopediaQueueService.getJobStatusByProjectId(projectId);
   }
 
   /**

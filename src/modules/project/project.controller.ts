@@ -419,18 +419,17 @@ export class ProjectController {
     };
   }
 
-  @Get(':projectId/encyclopedia/job/:jobId')
+  @Get(':projectId/encyclopedia/status')
   @UseGuards(ProjectRoleGuard)
   @RequireProjectRoles('member', 'owner', 'admin')
   @ApiGetEncyclopediaJobStatus()
-  async getEncyclopediaJobStatus(
+  async getEncyclopediaStatus(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Param('jobId') jobId: string,
   ): Promise<EncyclopediaJobStatusDto> {
-    // Verify user has access to the project
     await this.projectService.findOne(projectId);
 
-    const status = await this.projectService.getEncyclopediaJobStatus(jobId);
+    const status =
+      await this.projectService.getEncyclopediaJobStatus(projectId);
 
     return {
       jobId: status.jobId,
