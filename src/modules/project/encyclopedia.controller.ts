@@ -1,15 +1,7 @@
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
-import { DataResponse } from '@common/types/responses';
 import { GenerateEncyclopediaDto } from '@modules/ai/dto/generate-encyclopedia.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
@@ -80,4 +72,3 @@ export class EncyclopediaController {
     };
   }
 }
-

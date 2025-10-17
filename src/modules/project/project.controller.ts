@@ -392,5 +392,4 @@ export class ProjectController {
       data: timeline,
     };
   }
-
 }
