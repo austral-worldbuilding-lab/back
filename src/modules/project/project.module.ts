@@ -10,6 +10,7 @@ import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageServic
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { EncyclopediaController } from './encyclopedia.controller';
 import { ProjectRoleGuard } from './guards/project-role.guard';
 import { ProjectController } from './project.controller';
 import { ProjectRepository } from './project.repository';
@@ -26,7 +27,7 @@ import { ProjectService } from './project.service';
     AiModule,
     FileModule,
   ],
-  controllers: [ProjectController],
+  controllers: [ProjectController, EncyclopediaController],
   providers: [
     ProjectService,
     ProjectRepository,

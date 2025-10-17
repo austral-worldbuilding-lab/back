@@ -2,14 +2,15 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class EncyclopediaJobStatusDto {
   @ApiProperty({
-    description: 'Unique identifier for the job',
+    description: 'Unique identifier for the job (null when status is none)',
     example: 'encyclopedia-123e4567-e89b-12d3-a456-426614174000-1697234567890',
+    required: false,
   })
-  jobId!: string;
+  jobId?: string;
 
   @ApiProperty({
     description: 'Current status of the job',
-    enum: ['waiting', 'active', 'completed', 'failed', 'delayed'],
+    enum: ['none', 'waiting', 'active', 'completed', 'failed', 'delayed'],
     example: 'active',
   })
   status!: string;

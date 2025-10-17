@@ -1005,7 +1005,7 @@ export const ApiGenerateProjectEncyclopedia = () =>
     }),
     ApiBadRequestResponse({
       description:
-        'Solicitud incorrecta - El proyecto no tiene mandalas suficientes o resúmenes',
+        'Solicitud incorrecta - Ya existe un job de enciclopedia en progreso para este proyecto',
     }),
     ApiNotFoundResponse({
       description: 'Proyecto no encontrado',
@@ -1026,20 +1026,15 @@ export const ApiGenerateProjectEncyclopedia = () =>
 export const ApiGetEncyclopediaJobStatus = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Obtener estado del job de enciclopedia',
+      summary: 'Obtener estado del job de enciclopedia del proyecto',
       description:
-        'Consulta el estado de un job de generación de enciclopedia. Retorna el estado actual y el resultado si está completado.',
+        'Consulta el estado del job activo de generación de enciclopedia para el proyecto. Retorna el estado actual y el resultado si está completado. Solo puede haber un job activo por proyecto.',
     }),
     ApiParam({
       name: 'projectId',
       description: 'ID del proyecto',
       type: String,
       format: 'uuid',
-    }),
-    ApiParam({
-      name: 'jobId',
-      description: 'ID del job de enciclopedia',
-      type: String,
     }),
     ApiResponse({
       status: 200,
@@ -1054,8 +1049,17 @@ export const ApiGetEncyclopediaJobStatus = () =>
           },
           status: {
             type: 'string',
-            enum: ['waiting', 'active', 'completed', 'failed', 'delayed'],
-            example: 'completed',
+            enum: [
+              'none',
+              'waiting',
+              'active',
+              'completed',
+              'failed',
+              'delayed',
+            ],
+            example: 'active',
+            description:
+              'none = no job active, waiting = queued, active = processing, completed = done, failed = error, delayed = retry pending',
           },
           progress: {
             type: 'number',
@@ -1094,7 +1098,8 @@ export const ApiGetEncyclopediaJobStatus = () =>
       },
     }),
     ApiNotFoundResponse({
-      description: 'Job o proyecto no encontrado',
+      description:
+        'Proyecto no encontrado o no hay job de enciclopedia activo para este proyecto',
     }),
     ApiForbiddenResponse({
       description: 'Prohibido - No tiene permisos para acceder a este proyecto',

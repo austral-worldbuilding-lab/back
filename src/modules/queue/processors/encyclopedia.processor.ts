@@ -104,11 +104,11 @@ export class EncyclopediaProcessor implements OnModuleInit {
 
         const summaryResults: { mandalaId: string; success: boolean }[] = [];
 
+        // Retry logic for mandala summary generation //TODO remove this when summaries were generated with redis
         for (const { mandala } of withoutSummary) {
           let summarySuccess = false;
           let lastError: Error | null = null;
 
-          // Retry logic for mandala summary generation
           for (let attempt = 1; attempt <= 3; attempt++) {
             try {
               this.logger.log(
@@ -129,7 +129,7 @@ export class EncyclopediaProcessor implements OnModuleInit {
               );
 
               // Wait before retry (exponential backoff: 2s, 4s, 8s)
-              //TODO handle each AI request with its own job
+
               if (attempt < 3) {
                 const delayMs = 2000 * Math.pow(2, attempt - 1);
                 this.logger.log(`Waiting ${delayMs}ms before retry...`);
@@ -147,15 +147,8 @@ export class EncyclopediaProcessor implements OnModuleInit {
           }
 
           currentProgress += progressPerSummary;
-          await job.updateProgress(Math.min(currentProgress, 70));
-
-          // Add delay between AI requests to avoid rate limiting
-          const currentIndex = withoutSummary.findIndex(
-            (item) => item.mandala.id === mandala.id,
-          );
-          if (currentIndex < withoutSummary.length - 1) {
-            await this.delay(2000); // 2 second delay between summaries
-          }
+          const progress = Math.min(currentProgress, 70);
+          await job.updateProgress(progress);
         }
 
         const successfulSummaries = summaryResults.filter(
