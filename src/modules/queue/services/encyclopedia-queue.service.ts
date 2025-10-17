@@ -105,7 +105,7 @@ export class EncyclopediaQueueService {
 
   /**
    * Get current encyclopedia job status for a project
-   * Returns the active/waiting job, or throws 404 if none exists
+   * Returns the active/waiting job status, or NONE if no job is active
    */
   async getJobStatusByProjectId(
     projectId: string,
@@ -113,9 +113,10 @@ export class EncyclopediaQueueService {
     const activeJob = await this.findActiveJobForProject(projectId);
 
     if (!activeJob) {
-      throw new NotFoundException(
-        `No active encyclopedia job found for project ${projectId}`,
-      );
+      // No job active - this is a normal state, not an error
+      return {
+        status: EncyclopediaJobStatus.NONE,
+      };
     }
 
     return this.getJobStatus(activeJob.id);

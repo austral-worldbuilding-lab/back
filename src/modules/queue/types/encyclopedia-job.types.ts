@@ -9,6 +9,7 @@ export interface EncyclopediaJobResult {
 }
 
 export enum EncyclopediaJobStatus {
+  NONE = 'none', // No job active for this project
   WAITING = 'waiting',
   ACTIVE = 'active',
   COMPLETED = 'completed',
@@ -17,7 +18,7 @@ export enum EncyclopediaJobStatus {
 }
 
 export interface EncyclopediaJobStatusResponse {
-  jobId: string;
+  jobId?: string; // Optional - won't exist when status is NONE
   status: EncyclopediaJobStatus;
   progress?: number;
   result?: EncyclopediaJobResult;

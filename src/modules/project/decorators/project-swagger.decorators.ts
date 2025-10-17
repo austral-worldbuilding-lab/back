@@ -1049,8 +1049,17 @@ export const ApiGetEncyclopediaJobStatus = () =>
           },
           status: {
             type: 'string',
-            enum: ['waiting', 'active', 'completed', 'failed', 'delayed'],
-            example: 'completed',
+            enum: [
+              'none',
+              'waiting',
+              'active',
+              'completed',
+              'failed',
+              'delayed',
+            ],
+            example: 'active',
+            description:
+              'none = no job active, waiting = queued, active = processing, completed = done, failed = error, delayed = retry pending',
           },
           progress: {
             type: 'number',
