@@ -14,7 +14,5 @@ export class CreateOrganizationDto {
     description: 'Icono de la organización',
     example: 'icono-organizacion',
   })
-  @IsString()
-  @IsNotEmpty()
   icon!: string;
 }
