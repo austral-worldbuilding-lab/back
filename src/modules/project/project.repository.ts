@@ -72,6 +72,7 @@ export class ProjectRepository {
     return {
       id: project.id,
       name: project.name,
+      icon: project.icon,
       description: project.description ?? undefined,
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
@@ -280,6 +281,7 @@ export class ProjectRepository {
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
+          icon: createProjectDto.icon,
           description: createProjectDto.description,
           configuration: this.parseToJson({
             dimensions: createProjectDto.dimensions!,
@@ -391,6 +393,7 @@ export class ProjectRepository {
         data: {
           name: projectName,
           description: projectDescription,
+          icon: createProjectFromProvocationDto.icon,
           configuration: this.parseToJson({
             dimensions,
             scales,
@@ -476,6 +479,7 @@ export class ProjectRepository {
         data: {
           name: projectName,
           description: projectDescription,
+          icon: createProjectFromQuestionDto.icon,
           configuration: this.parseToJson({
             dimensions: finalDimensions,
             scales: finalScales,

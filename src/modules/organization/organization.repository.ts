@@ -18,6 +18,7 @@ export class OrganizationRepository {
       id: org.id,
       name: org.name,
       createdAt: org.createdAt,
+      icon: org.icon,
     };
   }
 
@@ -30,6 +31,7 @@ export class OrganizationRepository {
       const org = await tx.organization.create({
         data: {
           name: dto.name,
+          icon: dto.icon,
         },
       });
 

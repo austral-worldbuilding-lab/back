@@ -17,4 +17,10 @@ export class OrganizationDto {
     required: false,
   })
   accessType?: 'full' | 'limited';
+
+  @ApiProperty({
+    description: 'Icono de la organización',
+    example: 'icono-organizacion',
+  })
+  icon!: string;
 }
