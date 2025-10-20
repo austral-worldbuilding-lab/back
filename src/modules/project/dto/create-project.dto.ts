@@ -78,5 +78,7 @@ export class CreateProjectDto {
     description: 'Icono del proyecto',
     example: 'icono-proyecto',
   })
+  @IsString()
+  @IsNotEmpty()
   icon!: string;
 }

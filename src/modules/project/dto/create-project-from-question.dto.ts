@@ -79,5 +79,7 @@ export class CreateProjectFromQuestionDto {
     description: 'Icono del proyecto',
     example: 'icono-proyecto',
   })
+  @IsString()
+  @IsNotEmpty()
   icon!: string;
 }
