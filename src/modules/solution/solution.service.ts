@@ -20,7 +20,7 @@ export class SolutionService {
     projectId: string,
     createSolutionDto: CreateSolutionDto,
   ): Promise<SolutionDto> {
-    await this.projectService.findOne(projectId);
+    const project = await this.projectService.findOne(projectId);
 
     const isRootProject = await this.projectService.isRoot(projectId);
     if (!isRootProject) {
@@ -28,6 +28,11 @@ export class SolutionService {
         'Solutions can only be created for root projects (projects without a parent)',
       );
     }
+
+    await this.projectService.checkMinimalConditionsForSolutions(
+      project,
+      projectId,
+    );
 
     return this.solutionRepository.create(projectId, createSolutionDto);
   }
