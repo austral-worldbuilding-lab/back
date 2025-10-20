@@ -31,6 +31,10 @@ import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
+import {
+  SolutionValidationResponseDto,
+  ValidationItemDto,
+} from './dto/solution-validation-response.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
@@ -139,6 +143,143 @@ export class ProjectService {
     this.logger.log(
       `Solution validation passed for project ${projectId}: ${mandalas.length} mandalas, ${totalPostitsCount} postits, ${projectFilesCount} files`,
     );
+  }
+
+  async getSolutionValidationStatus(
+    projectId: string,
+  ): Promise<SolutionValidationResponseDto> {
+    this.logger.log(
+      `Checking solution validation status for project ${projectId}`,
+    );
+
+    const project = await this.findOne(projectId);
+    const config = getProjectValidationConfig();
+
+    const descriptionValid =
+      !!project.description && project.description.trim().length > 0;
+    const descriptionValidation: ValidationItemDto = {
+      isValid: descriptionValid,
+      message: descriptionValid
+        ? 'Project has a valid description'
+        : 'Project description is required to create solutions. Please add a description to the project first.',
+    };
+
+    const dimensionsValid = project.configuration.dimensions.length > 0;
+    const dimensionsValidation: ValidationItemDto = {
+      isValid: dimensionsValid,
+      message: dimensionsValid
+        ? `Project has ${project.configuration.dimensions.length} dimension(s) configured`
+        : 'Project dimensions are required to create solutions. Please add dimensions to the project first.',
+      currentValue: project.configuration.dimensions.length,
+      requiredValue: 1,
+    };
+
+    const scalesValid = project.configuration.scales.length > 0;
+    const scalesValidation: ValidationItemDto = {
+      isValid: scalesValid,
+      message: scalesValid
+        ? `Project has ${project.configuration.scales.length} scale(s) configured`
+        : 'Project scales are required to create solutions. Please add scales to the project first.',
+      currentValue: project.configuration.scales.length,
+      requiredValue: 1,
+    };
+
+    const mandalas = await this.mandalaService.findAll(projectId);
+    const mandalasValid = mandalas.length >= config.minMandalasForSolutions;
+    const mandalasValidation: ValidationItemDto = {
+      isValid: mandalasValid,
+      message: mandalasValid
+        ? `Project has ${mandalas.length} mandala(s), meeting the minimum requirement`
+        : `Project must have at least ${config.minMandalasForSolutions} mandalas to create solutions. Currently has ${mandalas.length}. Please add more mandalas to the project first.`,
+      currentValue: mandalas.length,
+      requiredValue: config.minMandalasForSolutions,
+    };
+
+    const totalPostitsCount =
+      await this.mandalaService.countPostitsAcrossMandalas(mandalas);
+    const postitsValid = totalPostitsCount >= config.minPostitsForSolutions;
+    const postitsValidation: ValidationItemDto = {
+      isValid: postitsValid,
+      message: postitsValid
+        ? `Project has ${totalPostitsCount} postit(s) across all mandalas, meeting the minimum requirement`
+        : `Project must have at least ${config.minPostitsForSolutions} postits across all mandalas to create solutions. Currently has ${totalPostitsCount}. Please add more postits to your mandalas first.`,
+      currentValue: totalPostitsCount,
+      requiredValue: config.minPostitsForSolutions,
+    };
+
+    const projectFilesCount =
+      await this.fileService.countProjectFiles(projectId);
+    const filesValid = projectFilesCount >= config.minFilesForSolutions;
+    const filesValidation: ValidationItemDto = {
+      isValid: filesValid,
+      message: filesValid
+        ? `Project has ${projectFilesCount} file(s), meeting the minimum requirement`
+        : `Project must have at least ${config.minFilesForSolutions} files to create solutions. Currently has ${projectFilesCount}. Please add more files to the project first.`,
+      currentValue: projectFilesCount,
+      requiredValue: config.minFilesForSolutions,
+    };
+
+    const isValid =
+      descriptionValid &&
+      dimensionsValid &&
+      scalesValid &&
+      mandalasValid &&
+      postitsValid &&
+      filesValid;
+
+    let reason: string | undefined;
+    let missingRequirements: string[] | undefined;
+
+    if (!isValid) {
+      const missing: string[] = [];
+
+      if (!descriptionValid) {
+        missing.push('Project description is missing');
+      }
+      if (!dimensionsValid) {
+        missing.push('Project dimensions are not configured');
+      }
+      if (!scalesValid) {
+        missing.push('Project scales are not configured');
+      }
+      if (!mandalasValid) {
+        const needed = config.minMandalasForSolutions - mandalas.length;
+        missing.push(
+          `Project needs ${needed} more mandala${needed > 1 ? 's' : ''} (currently ${mandalas.length}, required ${config.minMandalasForSolutions})`,
+        );
+      }
+      if (!postitsValid) {
+        const needed = config.minPostitsForSolutions - totalPostitsCount;
+        missing.push(
+          `Project needs ${needed} more postit${needed > 1 ? 's' : ''} (currently ${totalPostitsCount}, required ${config.minPostitsForSolutions})`,
+        );
+      }
+      if (!filesValid) {
+        const needed = config.minFilesForSolutions - projectFilesCount;
+        missing.push(
+          `Project needs ${needed} more file${needed > 1 ? 's' : ''} (currently ${projectFilesCount}, required ${config.minFilesForSolutions})`,
+        );
+      }
+
+      missingRequirements = missing;
+      reason = `Cannot generate solutions: ${missing.join(', ')}`;
+    }
+
+    this.logger.log(
+      `Solution validation status for project ${projectId}: ${isValid ? 'VALID' : 'INVALID'} - ${mandalas.length} mandalas, ${totalPostitsCount} postits, ${projectFilesCount} files`,
+    );
+
+    return {
+      isValid,
+      reason,
+      missingRequirements,
+      description: descriptionValidation,
+      dimensions: dimensionsValidation,
+      scales: scalesValidation,
+      mandalas: mandalasValidation,
+      postits: postitsValidation,
+      files: filesValidation,
+    };
   }
 
   async create(

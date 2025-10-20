@@ -50,6 +50,7 @@ import {
   ApiCreateProjectFromProvocationId,
   ApiGetProjectTimeline,
   ApiCreateProjectFromProvocation,
+  ApiGetSolutionValidationStatus,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
@@ -61,6 +62,7 @@ import { GenerateProvocationsDto } from './dto/generate-provocations.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
+import { SolutionValidationResponseDto } from './dto/solution-validation-response.dto';
 import { TagDto } from './dto/tag.dto';
 import { TimelineGraphDto } from './dto/timeline.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -390,6 +392,20 @@ export class ProjectController {
     const timeline = await this.projectService.getTimeline(projectId);
     return {
       data: timeline,
+    };
+  }
+
+  @Get(':projectId/solutions/validation')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('member', 'owner', 'admin')
+  @ApiGetSolutionValidationStatus()
+  async getSolutionValidationStatus(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+  ): Promise<DataResponse<SolutionValidationResponseDto>> {
+    const validationStatus =
+      await this.projectService.getSolutionValidationStatus(projectId);
+    return {
+      data: validationStatus,
     };
   }
 }
