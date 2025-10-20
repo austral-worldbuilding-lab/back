@@ -1,0 +1,54 @@
+OBJETIVO:
+  Generar soluciones concretas y accionables para el mundo basadas en la enciclopedia del proyecto. El propósito es proponer respuestas viables que aborden los desafíos identificados, ofreciendo caminos de acción claros y sostenibles que surgen del conocimiento consolidado del mundo.
+
+CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}.
+
+ENCICLOPEDIA DEL MUNDO:
+  • Contenido consolidado de la enciclopedia:
+  ${encyclopedia}
+
+CONFIGURACIÓN DE LA GENERACIÓN:
+  • Cantidad mínima de soluciones: ${minSolutions}
+  • Cantidad máxima de soluciones: ${maxSolutions}
+
+REGLAS PARA LAS SOLUCIONES:
+  • El campo `title` debe ser un título descriptivo y conciso de la solución propuesta.
+  • El campo `description` debe explicar en detalle la solución, cómo funciona, qué implica y cómo aborda los desafíos del mundo.
+  • El campo `problem` debe identificar claramente el problema o desafío específico que esta solución busca resolver, basándose en la información de la enciclopedia.
+  • El campo `impactLevel` debe indicar el nivel de impacto esperado de la solución: 'LOW', 'MEDIUM', o 'HIGH'.
+  • El campo `impactDescription` debe explicar brevemente el tipo de impacto que tendría esta solución en el mundo y por qué se le asignó ese nivel de impacto.
+  • Las soluciones deben ser específicas y accionables, no abstractas o filosóficas como las provocaciones.
+  • Deben surgir directamente del análisis de la enciclopedia y las dinámicas del mundo documentadas en ella.
+  • Cada solución debe ser viable dentro del contexto del mundo y considerar sus particularidades, recursos y limitaciones.
+
+EJEMPLO DE USO:
+  Mundo: Festejos UA
+  Descripción del mundo: El mundo Festejos UA se desarrolla en el campus de la Universidad Austral y se centra en las celebraciones de los estudiantes, especialmente las graduaciones. El problema principal radica en las prácticas de festejo actuales, que generan desorden, quejas del personal, una huella ecológica negativa, desperdicio de alimentos y una percepción de mal prestigio para la universidad.
+  Enciclopedia: [Contenido detallado sobre las dinámicas del campus, tensiones identificadas, actores involucrados, etc.]
+
+  [
+    {
+      "title": "Festejódromo: Espacio Dedicado para Celebraciones",
+      "description": "Creación de un espacio específico dentro del campus universitario diseñado exclusivamente para celebraciones de graduación. Este 'Festejódromo' contaría con infraestructura que facilita la limpieza inmediata, estaciones para donación de alimentos sobrantes, y mensajería inspiradora para graduados. Incluiría sistemas de gestión de residuos in-situ, áreas techadas para eventos climáticamente adversos, y coordinación con servicios de catering sostenibles.",
+      "problem": "Las celebraciones de graduación actuales generan desorden en espacios no preparados, producen una gran huella ecológica, desperdician alimentos, y generan quejas tanto del personal universitario como de la comunidad vecina.",
+      "impactLevel": "HIGH",
+      "impactDescription": "Esta solución tiene un impacto alto porque centraliza y regula las celebraciones, reduciendo significativamente la huella ecológica, mejorando el prestigio de la universidad, y satisfaciendo el deseo de los estudiantes de celebrar en el campus con mejor gestión de recursos y relaciones comunitarias."
+    },
+    {
+      "title": "Programa de Festejos Sostenibles y Solidarios",
+      "description": "Implementación de un programa que conecta graduados con organizaciones benéficas locales para la donación de alimentos post-festejo, junto con talleres previos sobre celebraciones sostenibles. El programa incluiría un sistema de reconocimiento para grupos que adopten prácticas eco-amigables, y partnerships con proveedores locales que ofrezcan opciones sustentables.",
+      "problem": "El desperdicio de alimentos post-graduación es significativo, y las prácticas de festejo actuales no consideran el impacto ambiental ni oportunidades de contribución social.",
+      "impactLevel": "MEDIUM",
+      "impactDescription": "Impacto medio porque transforma una práctica negativa en una oportunidad de impacto positivo social y ambiental, aunque requiere cambios voluntarios de comportamiento y coordinación con actores externos, lo que puede limitar su alcance inicial."
+    },
+    {
+      "title": "Sistema de Reservas y Coordinación de Espacios",
+      "description": "Plataforma digital que permite a los graduados reservar espacios específicos del campus para celebraciones, con información clara sobre reglas, servicios disponibles, y responsabilidades. Incluiría coordinación automática con servicios de limpieza, seguridad, y un sistema de depósito reembolsable por cumplimiento de normas.",
+      "problem": "Falta de organización previa de las celebraciones resulta en uso inadecuado de espacios, conflictos con otras actividades del campus, y dificultades para el personal en la gestión post-evento.",
+      "impactLevel": "MEDIUM",
+      "impactDescription": "Impacto medio porque mejora significativamente la organización y reduce conflictos, pero no aborda directamente todos los aspectos del problema como la huella ecológica o el involucramiento comunitario."
+    }
+  ]
+
