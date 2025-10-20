@@ -124,8 +124,9 @@ The solutions generation uses BullMQ's native job pipeline features:
 
 ```typescript
 // Job Dependency Chain
-SolutionsJob → EncyclopediaJob → AI Generation → Cache Storage
+SolutionsJob => EncyclopediaJob => AIGeneration => CacheStorage
 ```
+
 
 **Key Features**:
 - **waitUntilFinished**: Native BullMQ dependency resolution
@@ -177,14 +178,12 @@ src/modules/solution/
 │   └── solutions-job-status.dto.ts
 └── types/
     └── solutions.type.ts
-
 src/modules/ai/
 ├── strategies/solutions.strategy.ts    # AI strategy implementation
 ├── resources/prompts/
 │   └── prompt_generar_soluciones.txt   # Prompt template
 └── services/
     └── ai-prompt-builder.service.ts    # Prompt building logic
-
 src/modules/queue/
 ├── services/solutions-queue.service.ts # Queue management
 ├── processors/solutions.processor.ts   # Job processing
@@ -255,4 +254,3 @@ this.logger.log(`Generated ${solutions.length} solutions for project: ${projectI
 ### Rate Limiting
 - Throttled to 10 requests per hour per user
 - Prevents abuse of AI generation resources
-

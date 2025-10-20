@@ -67,51 +67,78 @@ export class ProjectService {
     return !scales || scales.length === 0 ? DEFAULT_SCALES : scales;
   }
 
-  private async checkMinimalConditionsForProvocations(
+  async checkMinimalConditionsForSolutions(
     project: ProjectDto,
     projectId: string,
   ): Promise<void> {
     const config = getProjectValidationConfig();
 
+    this.logger.log(
+      `Validating minimal conditions for solutions in project ${projectId}`,
+    );
+
     if (!project.description || project.description.trim().length === 0) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} lacks description`,
+      );
       throw new BadRequestException(
-        'Project description is required to generate provocations. Please add a description to the project first.',
+        'Project description is required to create solutions. Please add a description to the project first.',
       );
     }
 
     if (project.configuration.dimensions.length === 0) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} lacks dimensions`,
+      );
       throw new BadRequestException(
-        'Project dimensions are required to generate provocations. Please add dimensions to the project first.',
+        'Project dimensions are required to create solutions. Please add dimensions to the project first.',
       );
     }
 
     if (project.configuration.scales.length === 0) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} lacks scales`,
+      );
       throw new BadRequestException(
-        'Project scales are required to generate provocations. Please add scales to the project first.',
+        'Project scales are required to create solutions. Please add scales to the project first.',
       );
     }
 
     const mandalas = await this.mandalaService.findAll(projectId);
-    if (mandalas.length < config.minMandalasForProvocations) {
+    if (mandalas.length < config.minMandalasForSolutions) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} has ${mandalas.length} mandalas, minimum required: ${config.minMandalasForSolutions}`,
+      );
       throw new BadRequestException(
-        `Project must have at least ${config.minMandalasForProvocations} mandalas to generate provocations. Please add more mandalas to the project first.`,
+        `Project must have at least ${config.minMandalasForSolutions} mandalas to create solutions. Please add more mandalas to the project first.`,
       );
     }
+
     const totalPostitsCount =
       await this.mandalaService.countPostitsAcrossMandalas(mandalas);
-    if (totalPostitsCount < config.minPostitsForProvocations) {
+    if (totalPostitsCount < config.minPostitsForSolutions) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} has ${totalPostitsCount} postits, minimum required: ${config.minPostitsForSolutions}`,
+      );
       throw new BadRequestException(
-        `Project must have at least ${config.minPostitsForProvocations} postits across all mandalas to generate provocations. Please add more postits to your mandalas first.`,
+        `Project must have at least ${config.minPostitsForSolutions} postits across all mandalas to create solutions. Please add more postits to your mandalas first.`,
       );
     }
 
     const projectFilesCount =
       await this.fileService.countProjectFiles(projectId);
-    if (projectFilesCount < config.minFilesForProvocations) {
+    if (projectFilesCount < config.minFilesForSolutions) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} has ${projectFilesCount} files, minimum required: ${config.minFilesForSolutions}`,
+      );
       throw new BadRequestException(
-        `Project must have at least ${config.minFilesForProvocations} files to generate provocations. Please add more files to the project first.`,
+        `Project must have at least ${config.minFilesForSolutions} files to create solutions. Please add more files to the project first.`,
       );
     }
+
+    this.logger.log(
+      `Solution validation passed for project ${projectId}: ${mandalas.length} mandalas, ${totalPostitsCount} postits, ${projectFilesCount} files`,
+    );
   }
 
   async create(
@@ -121,7 +148,7 @@ export class ProjectService {
     const dimensions = this.getDimensions(createProjectDto.dimensions);
     const scales = this.getScales(createProjectDto.scales);
 
-    // Handle role at service level
+    // Handle role at the service level
     const ownerRole = await this.roleService.findOrCreate('owner');
 
     const project: ProjectDto = await this.projectRepository.create(
@@ -369,8 +396,6 @@ export class ProjectService {
     this.logger.log(`generateProvocations called for project ${projectId}`);
     const project = await this.findOne(projectId);
 
-    await this.checkMinimalConditionsForProvocations(project, projectId);
-
     const projectMandalas = await this.mandalaService.findAll(projectId);
     const mandalasDocument = await Promise.all(
       projectMandalas.map((m) =>
@@ -436,9 +461,7 @@ export class ProjectService {
     projectId: string,
     createProvocationDto: CreateProvocationDto,
   ): Promise<ProvocationDto> {
-    const project = await this.findOne(projectId);
-
-    await this.checkMinimalConditionsForProvocations(project, projectId);
+    await this.findOne(projectId);
 
     return this.projectRepository.createProvocation(
       projectId,

@@ -8,6 +8,7 @@ import {
   NotFoundException,
   Inject,
   forwardRef,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { CreateSolutionDto } from './dto/create-solution.dto';
@@ -33,14 +34,19 @@ export class SolutionService {
     projectId: string,
     createSolutionDto: CreateSolutionDto,
   ): Promise<SolutionDto> {
-    await this.projectService.findOne(projectId);
-    //TODO: use this when solutions with ai consider the entire timeline of the project
-    /*     const isRootProject = await this.projectService.isRoot(projectId);
+    const project = await this.projectService.findOne(projectId);
+
+    const isRootProject = await this.projectService.isRoot(projectId);
     if (!isRootProject) {
       throw new BadRequestException(
         'Solutions can only be created for root projects (projects without a parent)',
       );
-    } */
+    }
+
+    await this.projectService.checkMinimalConditionsForSolutions(
+      project,
+      projectId,
+    );
 
     return this.solutionRepository.create(projectId, createSolutionDto);
   }
