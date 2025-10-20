@@ -4,10 +4,11 @@ import { ConfigModule } from '@nestjs/config';
 
 import queueConfig from './queue.config';
 import { EncyclopediaQueueService } from './services/encyclopedia-queue.service';
+import { SolutionsQueueService } from './services/solutions-queue.service';
 
 @Module({
   imports: [ConfigModule.forFeature(queueConfig), CommonModule],
-  providers: [EncyclopediaQueueService],
-  exports: [EncyclopediaQueueService],
+  providers: [EncyclopediaQueueService, SolutionsQueueService],
+  exports: [EncyclopediaQueueService, SolutionsQueueService],
 })
 export class QueueModule {}

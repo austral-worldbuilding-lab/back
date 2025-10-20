@@ -6,5 +6,10 @@ export default registerAs('queue', () => ({
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     password: process.env.REDIS_PASSWORD,
     maxRetriesPerRequest: null, // Required for BullMQ
+    ...(process.env.REDIS_TLS === 'true' && {
+      tls: {
+        rejectUnauthorized: false,
+      },
+    }),
   },
 }));

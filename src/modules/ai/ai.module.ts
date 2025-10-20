@@ -26,6 +26,7 @@ import { PostitsSummaryStrategy } from './strategies/postits-summary.strategy';
 import { PostitsStrategy } from './strategies/postits.strategy';
 import { ProvocationsStrategy } from './strategies/provocations.strategy';
 import { QuestionsStrategy } from './strategies/questions.strategy';
+import { SolutionsStrategy } from './strategies/solutions.strategy';
 
 @Module({
   providers: [
@@ -44,6 +45,7 @@ import { QuestionsStrategy } from './strategies/questions.strategy';
     ProvocationsStrategy,
     EncyclopediaStrategy,
     MandalaSummaryStrategy,
+    SolutionsStrategy,
     // Registry and Engine
     AiStrategyRegistryService,
     GeminiGenerationEngineService,

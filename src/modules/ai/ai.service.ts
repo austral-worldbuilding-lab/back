@@ -7,6 +7,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
+import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 import { Injectable, Inject } from '@nestjs/common';
 import { AiService as AiServiceEnum, AiModel } from '@prisma/client';
 
@@ -384,6 +385,46 @@ export class AiService {
 
     this.logger.log(
       `Encyclopedia generation completed for project: ${projectId}`,
+    );
+
+    return response.data;
+  }
+
+  async generateSolutions(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    encyclopedia: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<AiSolutionResponse[]> {
+    this.logger.log(`Starting solutions generation for project: ${projectId}`);
+
+    const response = await this.aiProvider.generateSolutions(
+      projectId,
+      projectName,
+      projectDescription,
+      encyclopedia,
+    );
+
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_SOLUTIONS,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
+    this.logger.log(
+      `Generated ${response.data.length} solutions for project: ${projectId}`,
     );
 
     return response.data;

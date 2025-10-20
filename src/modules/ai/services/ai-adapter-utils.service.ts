@@ -27,6 +27,8 @@ export class AiAdapterUtilsService {
   private readonly maxQuestions: number;
   private readonly minProvocations: number;
   private readonly maxProvocations: number;
+  private readonly minSolutions: number;
+  private readonly maxSolutions: number;
   constructor(
     private configService: ConfigService,
     private fileLoader: FileLoaderService,
@@ -44,6 +46,8 @@ export class AiAdapterUtilsService {
     this.maxQuestions = config.maxQuestionsPerRequest;
     this.minProvocations = config.minProvocationsPerRequest;
     this.maxProvocations = config.maxProvocationsPerRequest;
+    this.minSolutions = config.minSolutionsPerRequest;
+    this.maxSolutions = config.maxSolutionsPerRequest;
   }
 
   getMaxResults(): number {
@@ -60,6 +64,14 @@ export class AiAdapterUtilsService {
 
   getMaxProvocations(): number {
     return this.maxProvocations;
+  }
+
+  getMinSolutions(): number {
+    return this.minSolutions;
+  }
+
+  getMaxSolutions(): number {
+    return this.maxSolutions;
   }
 
   getMinPostits(): number {

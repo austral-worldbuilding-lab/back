@@ -11,6 +11,8 @@ export interface AiValidationConfig {
   maxQuestionsPerRequest: number;
   minProvocationsPerRequest: number;
   maxProvocationsPerRequest: number;
+  minSolutionsPerRequest: number;
+  maxSolutionsPerRequest: number;
 }
 
 /**
@@ -86,5 +88,11 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
   ),
   maxProvocationsPerRequest: parseInt(
     process.env.AI_MAX_PROVOCATIONS_PER_REQUEST || '5',
+  ),
+  minSolutionsPerRequest: parseInt(
+    process.env.AI_MIN_SOLUTIONS_PER_REQUEST || '3',
+  ),
+  maxSolutionsPerRequest: parseInt(
+    process.env.AI_MAX_SOLUTIONS_PER_REQUEST || '6',
   ),
 });
