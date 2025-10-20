@@ -86,7 +86,7 @@ export class ProjectService {
         `Solution validation failed: Project ${projectId} lacks description`,
       );
       throw new BadRequestException(
-        'Project description is required to create solutions. Please add a description to the project first.',
+        'Falta agregar una descripción al proyecto para crear soluciones',
       );
     }
 
@@ -95,7 +95,7 @@ export class ProjectService {
         `Solution validation failed: Project ${projectId} lacks dimensions`,
       );
       throw new BadRequestException(
-        'Project dimensions are required to create solutions. Please add dimensions to the project first.',
+        'Falta configurar las dimensiones del proyecto para crear soluciones',
       );
     }
 
@@ -104,7 +104,7 @@ export class ProjectService {
         `Solution validation failed: Project ${projectId} lacks scales`,
       );
       throw new BadRequestException(
-        'Project scales are required to create solutions. Please add scales to the project first.',
+        'Falta configurar las escalas del proyecto para crear soluciones',
       );
     }
 
@@ -114,7 +114,7 @@ export class ProjectService {
         `Solution validation failed: Project ${projectId} has ${mandalas.length} mandalas, minimum required: ${config.minMandalasForSolutions}`,
       );
       throw new BadRequestException(
-        `Project must have at least ${config.minMandalasForSolutions} mandalas to create solutions. Please add more mandalas to the project first.`,
+        `Faltan ${config.minMandalasForSolutions - mandalas.length} mandala(s) para crear soluciones`,
       );
     }
 
@@ -125,7 +125,7 @@ export class ProjectService {
         `Solution validation failed: Project ${projectId} has ${totalPostitsCount} postits, minimum required: ${config.minPostitsForSolutions}`,
       );
       throw new BadRequestException(
-        `Project must have at least ${config.minPostitsForSolutions} postits across all mandalas to create solutions. Please add more postits to your mandalas first.`,
+        `Faltan ${config.minPostitsForSolutions - totalPostitsCount} postit(s) para crear soluciones`,
       );
     }
 
@@ -136,7 +136,7 @@ export class ProjectService {
         `Solution validation failed: Project ${projectId} has ${projectFilesCount} files, minimum required: ${config.minFilesForSolutions}`,
       );
       throw new BadRequestException(
-        `Project must have at least ${config.minFilesForSolutions} files to create solutions. Please add more files to the project first.`,
+        `Faltan ${config.minFilesForSolutions - projectFilesCount} archivo(s) para crear soluciones`,
       );
     }
 
@@ -160,16 +160,16 @@ export class ProjectService {
     const descriptionValidation: ValidationItemDto = {
       isValid: descriptionValid,
       message: descriptionValid
-        ? 'Project has a valid description'
-        : 'Project description is required to create solutions. Please add a description to the project first.',
+        ? 'El proyecto tiene una descripción'
+        : 'Falta agregar una descripción al proyecto',
     };
 
     const dimensionsValid = project.configuration.dimensions.length > 0;
     const dimensionsValidation: ValidationItemDto = {
       isValid: dimensionsValid,
       message: dimensionsValid
-        ? `Project has ${project.configuration.dimensions.length} dimension(s) configured`
-        : 'Project dimensions are required to create solutions. Please add dimensions to the project first.',
+        ? `El proyecto tiene ${project.configuration.dimensions.length} dimensión(es) configurada(s)`
+        : 'Falta configurar las dimensiones del proyecto',
       currentValue: project.configuration.dimensions.length,
       requiredValue: 1,
     };
@@ -178,8 +178,8 @@ export class ProjectService {
     const scalesValidation: ValidationItemDto = {
       isValid: scalesValid,
       message: scalesValid
-        ? `Project has ${project.configuration.scales.length} scale(s) configured`
-        : 'Project scales are required to create solutions. Please add scales to the project first.',
+        ? `El proyecto tiene ${project.configuration.scales.length} escala(s) configurada(s)`
+        : 'Falta configurar las escalas del proyecto',
       currentValue: project.configuration.scales.length,
       requiredValue: 1,
     };
@@ -189,8 +189,8 @@ export class ProjectService {
     const mandalasValidation: ValidationItemDto = {
       isValid: mandalasValid,
       message: mandalasValid
-        ? `Project has ${mandalas.length} mandala(s), meeting the minimum requirement`
-        : `Project must have at least ${config.minMandalasForSolutions} mandalas to create solutions. Currently has ${mandalas.length}. Please add more mandalas to the project first.`,
+        ? `El proyecto tiene ${mandalas.length} mandala(s)`
+        : `Faltan ${config.minMandalasForSolutions - mandalas.length} mandala(s)`,
       currentValue: mandalas.length,
       requiredValue: config.minMandalasForSolutions,
     };
@@ -201,8 +201,8 @@ export class ProjectService {
     const postitsValidation: ValidationItemDto = {
       isValid: postitsValid,
       message: postitsValid
-        ? `Project has ${totalPostitsCount} postit(s) across all mandalas, meeting the minimum requirement`
-        : `Project must have at least ${config.minPostitsForSolutions} postits across all mandalas to create solutions. Currently has ${totalPostitsCount}. Please add more postits to your mandalas first.`,
+        ? `El proyecto tiene ${totalPostitsCount} postit(s)`
+        : `Faltan ${config.minPostitsForSolutions - totalPostitsCount} postit(s)`,
       currentValue: totalPostitsCount,
       requiredValue: config.minPostitsForSolutions,
     };
@@ -213,8 +213,8 @@ export class ProjectService {
     const filesValidation: ValidationItemDto = {
       isValid: filesValid,
       message: filesValid
-        ? `Project has ${projectFilesCount} file(s), meeting the minimum requirement`
-        : `Project must have at least ${config.minFilesForSolutions} files to create solutions. Currently has ${projectFilesCount}. Please add more files to the project first.`,
+        ? `El proyecto tiene ${projectFilesCount} archivo(s)`
+        : `Faltan ${config.minFilesForSolutions - projectFilesCount} archivo(s)`,
       currentValue: projectFilesCount,
       requiredValue: config.minFilesForSolutions,
     };
@@ -234,35 +234,29 @@ export class ProjectService {
       const missing: string[] = [];
 
       if (!descriptionValid) {
-        missing.push('Project description is missing');
+        missing.push('Falta agregar una descripción al proyecto');
       }
       if (!dimensionsValid) {
-        missing.push('Project dimensions are not configured');
+        missing.push('Falta configurar las dimensiones del proyecto');
       }
       if (!scalesValid) {
-        missing.push('Project scales are not configured');
+        missing.push('Falta configurar las escalas del proyecto');
       }
       if (!mandalasValid) {
         const needed = config.minMandalasForSolutions - mandalas.length;
-        missing.push(
-          `Project needs ${needed} more mandala${needed > 1 ? 's' : ''} (currently ${mandalas.length}, required ${config.minMandalasForSolutions})`,
-        );
+        missing.push(`Faltan ${needed} mandala${needed > 1 ? 's' : ''}`);
       }
       if (!postitsValid) {
         const needed = config.minPostitsForSolutions - totalPostitsCount;
-        missing.push(
-          `Project needs ${needed} more postit${needed > 1 ? 's' : ''} (currently ${totalPostitsCount}, required ${config.minPostitsForSolutions})`,
-        );
+        missing.push(`Faltan ${needed} postit${needed > 1 ? 's' : ''}`);
       }
       if (!filesValid) {
         const needed = config.minFilesForSolutions - projectFilesCount;
-        missing.push(
-          `Project needs ${needed} more file${needed > 1 ? 's' : ''} (currently ${projectFilesCount}, required ${config.minFilesForSolutions})`,
-        );
+        missing.push(`Faltan ${needed} archivo${needed > 1 ? 's' : ''}`);
       }
 
       missingRequirements = missing;
-      reason = `Cannot generate solutions: ${missing.join(', ')}`;
+      reason = `No se pueden generar soluciones: ${missing.join(', ')}`;
     }
 
     this.logger.log(
