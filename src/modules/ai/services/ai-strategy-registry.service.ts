@@ -7,6 +7,7 @@ import { PostitsSummaryStrategy } from '../strategies/postits-summary.strategy';
 import { PostitsStrategy } from '../strategies/postits.strategy';
 import { ProvocationsStrategy } from '../strategies/provocations.strategy';
 import { QuestionsStrategy } from '../strategies/questions.strategy';
+import { SolutionsStrategy } from '../strategies/solutions.strategy';
 
 @Injectable()
 export class AiStrategyRegistryService {
@@ -18,6 +19,7 @@ export class AiStrategyRegistryService {
     private readonly provocations: ProvocationsStrategy,
     private readonly encyclopedia: EncyclopediaStrategy,
     private readonly mandalaSummary: MandalaSummaryStrategy,
+    private readonly solutions: SolutionsStrategy,
   ) {}
 
   getPostits() {
@@ -40,5 +42,8 @@ export class AiStrategyRegistryService {
   }
   getMandalaSummary() {
     return this.mandalaSummary;
+  }
+  getSolutions() {
+    return this.solutions;
   }
 }

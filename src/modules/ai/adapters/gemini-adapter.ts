@@ -6,6 +6,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
+import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -18,6 +19,7 @@ import { PostitsSummaryInput } from '../strategies/postits-summary.strategy';
 import { PostitsInput } from '../strategies/postits.strategy';
 import { ProvocationsInput } from '../strategies/provocations.strategy';
 import { QuestionsInput } from '../strategies/questions.strategy';
+import { SolutionsInput } from '../strategies/solutions.strategy';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
 
@@ -281,6 +283,32 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log(
       `Encyclopedia generation completed for project: ${projectId}`,
     );
+    return { data, usage };
+  }
+
+  async generateSolutions(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    encyclopedia: string,
+  ): Promise<AiResponseWithUsage<AiSolutionResponse[]>> {
+    this.logger.log(`Starting solutions generation for project: ${projectId}`);
+    const strategy = this.strategies.getSolutions();
+    const input: SolutionsInput = {
+      projectName,
+      projectDescription,
+      encyclopedia,
+    };
+    const prompt = await strategy.buildPrompt(input);
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.run(
+      this.geminiModel,
+      prompt,
+      schema,
+      { projectId },
+    );
+    const data = strategy.parseAndValidate(text);
+    this.logger.log(`Solutions generation completed for project: ${projectId}`);
     return { data, usage };
   }
 }
