@@ -74,7 +74,7 @@ import { AppService } from './app.service';
     AppService,
     PrismaService,
     AppLogger,
-    ...(process.env.THROTTLER_ENABLED?.toLowerCase() !== 'false'
+    ...((process.env.THROTTLER_ENABLED?.toLowerCase() ?? 'true') === 'true'
       ? [
           {
             provide: APP_GUARD,
