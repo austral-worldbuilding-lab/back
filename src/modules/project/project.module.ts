@@ -35,6 +35,6 @@ import { ProjectService } from './project.service';
     AzureBlobStorageService,
     EncyclopediaProcessor,
   ],
-  exports: [ProjectService],
+  exports: [ProjectService, ProjectRoleGuard],
 })
 export class ProjectModule {}

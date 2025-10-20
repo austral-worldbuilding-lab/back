@@ -5,6 +5,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
+import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
@@ -204,4 +205,25 @@ export interface AiProvider {
     mandalasSummariesWithAi: string,
     selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiEncyclopediaResponse>>;
+
+  /**
+   * Generates solutions for a project based on its encyclopedia
+   *
+   * This method takes the project information and its encyclopedia to generate
+   * concrete, actionable solutions that address challenges identified in the
+   * world. Solutions include title, description, problem statement, impact level,
+   * and impact description.
+   *
+   * @param projectId - Unique identifier of the project
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param encyclopedia - Encyclopedia content of the project
+   * @returns Promise resolving to an array of solution responses
+   */
+  generateSolutions(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    encyclopedia: string,
+  ): Promise<AiResponseWithUsage<AiSolutionResponse[]>>;
 }

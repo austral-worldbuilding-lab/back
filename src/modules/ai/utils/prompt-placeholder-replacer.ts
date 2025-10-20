@@ -8,12 +8,15 @@ export interface PromptReplacementConfig {
   tags?: string[];
   mandalaDocument?: string;
   mandalasSummariesWithAi?: string;
+  encyclopedia?: string;
   maxResults?: number;
   minResults?: number;
   maxPostits?: number;
   minPostits?: number;
   maxQuestions?: number;
   minQuestions?: number;
+  maxSolutions?: number;
+  minSolutions?: number;
   projectName?: string;
   projectDescription?: string;
 }
@@ -220,6 +223,30 @@ const replaceMinQuestions: PlaceholderReplacer = (prompt, config) => {
   return prompt.replace(/\$\{minQuestions}/g, config.minQuestions.toString());
 };
 
+const replaceMaxSolutions: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{maxSolutions}/.test(prompt)) {
+    throw new Error('Missing placeholder ${maxSolutions} in prompt');
+  }
+  if (config.maxSolutions === undefined) {
+    throw new Error(
+      'maxSolutions config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{maxSolutions}/g, config.maxSolutions.toString());
+};
+
+const replaceMinSolutions: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{minSolutions}/.test(prompt)) {
+    throw new Error('Missing placeholder ${minSolutions} in prompt');
+  }
+  if (config.minSolutions === undefined) {
+    throw new Error(
+      'minSolutions config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{minSolutions}/g, config.minSolutions.toString());
+};
+
 const replaceCenterContext: PlaceholderReplacer = (prompt, config) => {
   if (!/\$\{centerContext}/.test(prompt)) {
     throw new Error('Missing placeholder ${centerContext} in prompt');
@@ -253,6 +280,18 @@ const replaceCenterContextDescription: PlaceholderReplacer = (
     /\$\{centerContextDescription}/g,
     config.centerContextDescription,
   );
+};
+
+const replaceEncyclopedia: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{encyclopedia}/.test(prompt)) {
+    throw new Error('Missing placeholder ${encyclopedia} in prompt');
+  }
+  if (config.encyclopedia === undefined) {
+    throw new Error(
+      'encyclopedia config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{encyclopedia}/g, config.encyclopedia);
 };
 
 const composeReplacers = (
@@ -334,6 +373,14 @@ const encyclopediaReplacer = composeReplacers(
   replaceProjectName,
   replaceProjectDescription,
   replaceMandalasSummariesWithAi,
+);
+
+const solutionReplacer = composeReplacers(
+  replaceProjectName,
+  replaceProjectDescription,
+  replaceEncyclopedia,
+  replaceMaxSolutions,
+  replaceMinSolutions,
 );
 
 function replaceWithReplacer(
@@ -476,5 +523,23 @@ export function replaceContextPostitPlaceholders(
     config,
     contextPostitReplacer,
     'context postit',
+  );
+}
+
+/**
+ * Replace placeholders for solution generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceSolutionPlaceholders(
+  promptTemplate: string,
+  config: PromptReplacementConfig = {},
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    solutionReplacer,
+    'solution',
   );
 }
