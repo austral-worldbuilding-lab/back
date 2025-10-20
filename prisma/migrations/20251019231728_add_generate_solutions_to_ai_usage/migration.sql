@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "AiService" ADD VALUE 'GENERATE_SOLUTIONS';
+
+-- AlterTable
+ALTER TABLE "Tag" ALTER COLUMN "color" DROP DEFAULT;

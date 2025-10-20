@@ -10,6 +10,7 @@ import {
   replaceMandalaSummaryPlaceholders,
   replaceEncyclopediaPlaceholders,
   replaceContextPostitPlaceholders,
+  replaceSolutionPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -285,5 +286,33 @@ export class AiPromptBuilderService {
       mandalasSummariesWithAi: mandalasSummariesWithAi,
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
+  }
+
+  /**
+   * Builds complete prompt for solution generation
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param encyclopedia - Encyclopedia content of the project
+   * @returns Complete prompt ready for AI processing
+   */
+  async buildSolutionPrompt(
+    projectName: string,
+    projectDescription: string,
+    encyclopedia: string,
+  ): Promise<string> {
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_soluciones.txt',
+    );
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const promptTask = replaceSolutionPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
+      encyclopedia: encyclopedia,
+      maxSolutions: this.utilsService.getMaxSolutions(),
+      minSolutions: this.utilsService.getMinSolutions(),
+    });
+    return this.buildPromptWithCiclo3Instructions(promptTask);
   }
 }
