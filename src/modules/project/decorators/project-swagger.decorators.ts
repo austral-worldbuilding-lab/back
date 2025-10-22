@@ -1108,3 +1108,41 @@ export const ApiGetEncyclopediaJobStatus = () =>
       description: 'No autorizado - Token de acceso requerido',
     }),
   );
+
+export const ApiUploadProjectContext = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Subir contenido de texto como archivo de contexto' }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del proyecto',
+      type: String,
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Archivo de contexto subido exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL pública del archivo subido',
+                example: 'https://storage.blob.core.windows.net/container/org-id/project-id/files/context.txt',
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+    }),
+    ApiForbiddenResponse({
+      description: 'Prohibido - No tiene permisos para subir contextos en este proyecto',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );

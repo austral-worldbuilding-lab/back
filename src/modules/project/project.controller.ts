@@ -8,6 +8,7 @@ import {
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import {
   OrganizationRoleGuard,
   RequireOrganizationRoles,
@@ -50,6 +51,7 @@ import {
   ApiCreateProjectFromProvocationId,
   ApiGetProjectTimeline,
   ApiCreateProjectFromProvocation,
+  ApiUploadProjectContext,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
@@ -390,6 +392,23 @@ export class ProjectController {
     const timeline = await this.projectService.getTimeline(projectId);
     return {
       data: timeline,
+    };
+  }
+
+  @Post(':id/context')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiUploadProjectContext()
+  async uploadContext(
+    @Param('id', new UuidValidationPipe()) projectId: string,
+    @Body() uploadContextDto: UploadContextDto,
+  ): Promise<DataResponse<{ url: string }>> {
+    const url = await this.projectService.uploadContext(
+      projectId,
+      uploadContextDto,
+    );
+    return {
+      data: { url },
     };
   }
 }

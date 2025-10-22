@@ -7,6 +7,7 @@ import { EncyclopediaProcessor } from '@modules/queue/processors/encyclopedia.pr
 import { QueueModule } from '@modules/queue/queue.module';
 import { RoleModule } from '@modules/role/role.module';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
@@ -33,6 +34,7 @@ import { ProjectService } from './project.service';
     ProjectRepository,
     ProjectRoleGuard,
     AzureBlobStorageService,
+    TextStorageService,
     EncyclopediaProcessor,
   ],
   exports: [ProjectService],

@@ -36,6 +36,7 @@ import {
   ApiGetOrganizationUsers,
   ApiUpdateOrganizationUserRole,
   ApiRemoveUserFromOrganization,
+  ApiUploadOrganizationContext,
 } from './decorators/organization-swagger.decorators';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
@@ -48,6 +49,7 @@ import {
   RequireOrganizationRoles,
 } from './guards/organization-role.guard';
 import { OrganizationService } from './organization.service';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 
 @ApiTags('Organizations')
 @Controller('organization')
@@ -208,6 +210,23 @@ export class OrganizationController {
     return {
       message: 'Usuario eliminado de la organización exitosamente',
       data: removedUser,
+    };
+  }
+
+  @Post(':id/context')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @ApiUploadOrganizationContext()
+  async uploadContext(
+    @Param('id', new UuidValidationPipe()) organizationId: string,
+    @Body() uploadContextDto: UploadContextDto,
+  ): Promise<DataResponse<{ url: string }>> {
+    const url = await this.organizationService.uploadContext(
+      organizationId,
+      uploadContextDto,
+    );
+    return {
+      data: { url },
     };
   }
 }

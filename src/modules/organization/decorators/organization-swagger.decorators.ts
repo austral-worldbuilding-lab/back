@@ -215,3 +215,44 @@ export const ApiRemoveUserFromOrganization = () =>
       description: 'Conflicto - No se puede eliminar al último propietario',
     }),
   );
+
+export const ApiUploadOrganizationContext = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Subir contenido de texto como archivo de contexto' }),
+    ApiParam({
+      name: 'id',
+      description: 'ID de la organización',
+      type: String,
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Archivo de contexto subido exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL pública del archivo subido',
+                example: 'https://storage.blob.core.windows.net/container/org-id/files/context.txt',
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Organización no encontrada',
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tiene permisos para subir contextos en esta organización',
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );

@@ -1,4 +1,5 @@
 import { AuthModule } from '@modules/auth/auth.module';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { ProjectRepository } from '@modules/project/project.repository';
 import { RoleModule } from '@modules/role/role.module';
@@ -17,6 +18,7 @@ import { OrganizationService } from './organization.service';
     OrganizationRepository,
     OrganizationRoleGuard,
     ProjectRepository,
+    TextStorageService,
   ],
   exports: [OrganizationService],
 })

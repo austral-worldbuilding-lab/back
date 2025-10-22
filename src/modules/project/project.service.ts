@@ -8,12 +8,14 @@ import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { getProjectValidationConfig } from '@config/project-validation.config';
 import { AiService } from '@modules/ai/ai.service';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { FileService } from '@modules/files/file.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
 import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
 import { RoleService } from '@modules/role/role.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import {
   Injectable,
   NotFoundException,
@@ -51,6 +53,7 @@ export class ProjectService {
     private cacheService: CacheService,
     private readonly logger: AppLogger,
     private readonly blobStorageService: AzureBlobStorageService,
+    private readonly textStorageService: TextStorageService,
     @Inject(forwardRef(() => EncyclopediaQueueService))
     private readonly encyclopediaQueueService: EncyclopediaQueueService,
   ) {
@@ -656,5 +659,23 @@ export class ProjectService {
     });
 
     return publicUrl;
+  }
+
+  async uploadContext(
+    projectId: string,
+    uploadContext: UploadContextDto,
+  ): Promise<string> {
+    const project = await this.findOne(projectId);
+
+    const scope = {
+      orgId: project.organizationId,
+      projectId,
+    };
+
+    return this.textStorageService.uploadText(
+      uploadContext.content,
+      uploadContext.filename,
+      scope,
+    );
   }
 }
