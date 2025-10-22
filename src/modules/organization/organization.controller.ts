@@ -8,6 +8,7 @@ import {
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import {
   Controller,
@@ -49,7 +50,6 @@ import {
   RequireOrganizationRoles,
 } from './guards/organization-role.guard';
 import { OrganizationService } from './organization.service';
-import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 
 @ApiTags('Organizations')
 @Controller('organization')
