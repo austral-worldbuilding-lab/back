@@ -218,7 +218,9 @@ export const ApiRemoveUserFromOrganization = () =>
 
 export const ApiUploadOrganizationContext = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Subir contenido de texto como archivo de contexto' }),
+    ApiOperation({
+      summary: 'Subir contenido de texto como archivo de contexto',
+    }),
     ApiParam({
       name: 'id',
       description: 'ID de la organización',
@@ -236,7 +238,8 @@ export const ApiUploadOrganizationContext = () =>
               url: {
                 type: 'string',
                 description: 'URL pública del archivo subido',
-                example: 'https://storage.blob.core.windows.net/container/org-id/files/context.txt',
+                example:
+                  'https://storage.blob.core.windows.net/container/org-id/files/context.txt',
               },
             },
           },
@@ -249,7 +252,8 @@ export const ApiUploadOrganizationContext = () =>
     }),
     ApiResponse({
       status: 403,
-      description: 'Prohibido - No tiene permisos para subir contextos en esta organización',
+      description:
+        'Prohibido - No tiene permisos para subir contextos en esta organización',
     }),
     ApiResponse({
       status: 401,

@@ -1111,7 +1111,9 @@ export const ApiGetEncyclopediaJobStatus = () =>
 
 export const ApiUploadProjectContext = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Subir contenido de texto como archivo de contexto' }),
+    ApiOperation({
+      summary: 'Subir contenido de texto como archivo de contexto',
+    }),
     ApiParam({
       name: 'id',
       description: 'ID del proyecto',
@@ -1129,7 +1131,8 @@ export const ApiUploadProjectContext = () =>
               url: {
                 type: 'string',
                 description: 'URL pública del archivo subido',
-                example: 'https://storage.blob.core.windows.net/container/org-id/project-id/files/context.txt',
+                example:
+                  'https://storage.blob.core.windows.net/container/org-id/project-id/files/context.txt',
               },
             },
           },
@@ -1140,7 +1143,8 @@ export const ApiUploadProjectContext = () =>
       description: 'Proyecto no encontrado',
     }),
     ApiForbiddenResponse({
-      description: 'Prohibido - No tiene permisos para subir contextos en este proyecto',
+      description:
+        'Prohibido - No tiene permisos para subir contextos en este proyecto',
     }),
     ApiUnauthorizedResponse({
       description: 'No autorizado - Token de acceso requerido',

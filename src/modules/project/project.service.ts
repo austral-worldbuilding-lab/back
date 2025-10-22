@@ -10,12 +10,12 @@ import { getProjectValidationConfig } from '@config/project-validation.config';
 import { AiService } from '@modules/ai/ai.service';
 import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { FileService } from '@modules/files/file.service';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
 import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
 import { RoleService } from '@modules/role/role.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
-import { TextStorageService } from '@modules/files/services/text-storage.service';
 import {
   Injectable,
   NotFoundException,

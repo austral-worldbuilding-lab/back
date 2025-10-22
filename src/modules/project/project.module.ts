@@ -1,13 +1,13 @@
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { MandalaModule } from '@modules/mandala/mandala.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { EncyclopediaProcessor } from '@modules/queue/processors/encyclopedia.processor';
 import { QueueModule } from '@modules/queue/queue.module';
 import { RoleModule } from '@modules/role/role.module';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
-import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
