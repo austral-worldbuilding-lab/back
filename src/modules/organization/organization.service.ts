@@ -251,6 +251,12 @@ export class OrganizationService {
     organizationId: string,
     uploadContext: UploadContextDto,
   ): Promise<string> {
+    const organization =
+      await this.organizationRepository.findOne(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundException('Organization', organizationId);
+    }
+
     const scope = {
       orgId: organizationId,
     };
