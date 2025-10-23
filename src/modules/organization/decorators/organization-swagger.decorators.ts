@@ -1,6 +1,7 @@
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 
 import { OrganizationUserRoleResponseDto } from '../dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from '../dto/organization-user.dto';
@@ -216,15 +217,18 @@ export const ApiRemoveUserFromOrganization = () =>
     }),
   );
 
-export const ApiUploadOrganizationContext = () =>
+export const ApiUploadOrganizationTextFile = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Subir contenido de texto como archivo de contexto',
+      summary: 'Crear archivo de texto desde contenido',
     }),
     ApiParam({
       name: 'id',
       description: 'ID de la organización',
       type: String,
+    }),
+    ApiBody({
+      type: UploadContextDto,
     }),
     ApiResponse({
       status: 201,

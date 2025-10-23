@@ -9,6 +9,7 @@ import { OrganizationRoleGuard } from './guards/organization-role.guard';
 import { OrganizationController } from './organization.controller';
 import { OrganizationRepository } from './organization.repository';
 import { OrganizationService } from './organization.service';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 
 @Module({
   imports: [PrismaModule, AuthModule, RoleModule],
@@ -18,6 +19,7 @@ import { OrganizationService } from './organization.service';
     OrganizationRepository,
     OrganizationRoleGuard,
     ProjectRepository,
+    AzureBlobStorageService,
     TextStorageService,
   ],
   exports: [OrganizationService],

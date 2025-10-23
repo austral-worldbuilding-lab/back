@@ -247,7 +247,7 @@ export class OrganizationService {
     );
   }
 
-  async uploadContext(
+  async uploadTextFile(
     organizationId: string,
     uploadContext: UploadContextDto,
   ): Promise<string> {

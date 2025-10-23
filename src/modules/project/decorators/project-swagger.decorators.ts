@@ -11,6 +11,7 @@ import {
   ApiBody,
   ApiExtraModels,
 } from '@nestjs/swagger';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 
 import { AiProvocationResponseDto } from '../dto/ai-provocation-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
@@ -1109,15 +1110,18 @@ export const ApiGetEncyclopediaJobStatus = () =>
     }),
   );
 
-export const ApiUploadProjectContext = () =>
+export const ApiUploadProjectTextFile = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Subir contenido de texto como archivo de contexto',
+      summary: 'Crear archivo de texto desde contenido',
     }),
     ApiParam({
       name: 'id',
       description: 'ID del proyecto',
       type: String,
+    }),
+    ApiBody({
+      type: UploadContextDto,
     }),
     ApiResponse({
       status: 201,

@@ -37,7 +37,7 @@ import {
   ApiGetOrganizationUsers,
   ApiUpdateOrganizationUserRole,
   ApiRemoveUserFromOrganization,
-  ApiUploadOrganizationContext,
+  ApiUploadOrganizationTextFile,
 } from './decorators/organization-swagger.decorators';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
@@ -213,15 +213,15 @@ export class OrganizationController {
     };
   }
 
-  @Post(':id/context')
+  @Post(':id/text-files')
   @UseGuards(OrganizationRoleGuard)
   @RequireOrganizationRoles('owner', 'admin', 'member')
-  @ApiUploadOrganizationContext()
-  async uploadContext(
+  @ApiUploadOrganizationTextFile()
+  async uploadTextFile(
     @Param('id', new UuidValidationPipe()) organizationId: string,
     @Body() uploadContextDto: UploadContextDto,
   ): Promise<DataResponse<{ url: string }>> {
-    const url = await this.organizationService.uploadContext(
+    const url = await this.organizationService.uploadTextFile(
       organizationId,
       uploadContextDto,
     );

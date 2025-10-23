@@ -661,7 +661,7 @@ export class ProjectService {
     return publicUrl;
   }
 
-  async uploadContext(
+  async uploadTextFile(
     projectId: string,
     uploadContext: UploadContextDto,
   ): Promise<string> {

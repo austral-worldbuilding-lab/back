@@ -51,7 +51,7 @@ import {
   ApiCreateProjectFromProvocationId,
   ApiGetProjectTimeline,
   ApiCreateProjectFromProvocation,
-  ApiUploadProjectContext,
+  ApiUploadProjectTextFile,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
@@ -395,15 +395,15 @@ export class ProjectController {
     };
   }
 
-  @Post(':id/context')
+  @Post(':id/text-files')
   @UseGuards(ProjectRoleGuard)
   @RequireProjectRoles('owner', 'admin', 'member')
-  @ApiUploadProjectContext()
-  async uploadContext(
+  @ApiUploadProjectTextFile()
+  async uploadTextFile(
     @Param('id', new UuidValidationPipe()) projectId: string,
     @Body() uploadContextDto: UploadContextDto,
   ): Promise<DataResponse<{ url: string }>> {
-    const url = await this.projectService.uploadContext(
+    const url = await this.projectService.uploadTextFile(
       projectId,
       uploadContextDto,
     );
