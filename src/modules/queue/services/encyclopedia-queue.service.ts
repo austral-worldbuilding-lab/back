@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Queue } from 'bullmq';
+import { Queue, QueueEvents } from 'bullmq';
 
 import {
   EncyclopediaJobData,
@@ -181,5 +181,15 @@ export class EncyclopediaQueueService {
   async closeQueue(): Promise<void> {
     await this.queue.close();
     this.logger.log('Encyclopedia queue closed');
+  }
+
+  async getJobById(jobId: string) {
+    return this.queue.getJob(jobId);
+  }
+
+  getQueueEvents() {
+    return new QueueEvents(this.queue.name, {
+      connection: this.queue.opts.connection,
+    });
   }
 }

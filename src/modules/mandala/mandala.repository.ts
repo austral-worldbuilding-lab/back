@@ -40,7 +40,7 @@ export class MandalaRepository {
   private parseConfigurationToJson(
     config: CreateMandalaConfiguration,
   ): Prisma.InputJsonValue {
-    const configuration: any = {
+    const configuration = {
       center: {
         name: config.center.name,
         description: config.center.description,
@@ -54,7 +54,7 @@ export class MandalaRepository {
       scales: config.scales,
     };
 
-    return configuration as Prisma.InputJsonValue;
+    return configuration as unknown as Prisma.InputJsonValue;
   }
 
   private parseToMandalaDto(mandala: MandalaWithRelations): MandalaDto {
@@ -192,11 +192,39 @@ export class MandalaRepository {
     id: string,
     updateMandalaDto: UpdateMandalaDto,
   ): Promise<MandalaDto> {
+    const updateData: {
+      name: string;
+      configuration?: Prisma.InputJsonValue;
+    } = {
+      name: updateMandalaDto.name,
+    };
+
+    if (updateMandalaDto.description !== undefined) {
+      const currentMandala = await this.prisma.mandala.findUnique({
+        where: { id },
+      });
+
+      if (!currentMandala) {
+        throw new Error('Mandala not found');
+      }
+
+      const currentConfig = this.parseToMandalaConfiguration(
+        currentMandala.configuration,
+      );
+      const updatedConfig = {
+        ...currentConfig,
+        center: {
+          ...currentConfig.center,
+          description: updateMandalaDto.description,
+        },
+      };
+
+      updateData.configuration = this.parseConfigurationToJson(updatedConfig);
+    }
+
     const mandala = await this.prisma.mandala.update({
       where: { id },
-      data: {
-        name: updateMandalaDto.name,
-      },
+      data: updateData,
       include: {
         children: { select: { id: true } },
         parent: { select: { id: true } },

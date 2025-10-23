@@ -74,10 +74,14 @@ import { AppService } from './app.service';
     AppService,
     PrismaService,
     AppLogger,
-    {
-      provide: APP_GUARD,
-      useClass: UserThrottlerGuard,
-    },
+    ...((process.env.THROTTLER_ENABLED?.toLowerCase() ?? 'true') === 'true'
+      ? [
+          {
+            provide: APP_GUARD,
+            useClass: UserThrottlerGuard,
+          },
+        ]
+      : []),
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,

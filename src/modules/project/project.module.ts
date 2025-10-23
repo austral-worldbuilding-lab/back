@@ -37,6 +37,6 @@ import { ProjectService } from './project.service';
     TextStorageService,
     EncyclopediaProcessor,
   ],
-  exports: [ProjectService],
+  exports: [ProjectService, ProjectRoleGuard],
 })
 export class ProjectModule {}
