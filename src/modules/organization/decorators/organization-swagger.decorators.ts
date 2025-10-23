@@ -1,3 +1,4 @@
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { applyDecorators } from '@nestjs/common';
 import {
@@ -7,7 +8,6 @@ import {
   ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
-import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 
 import { OrganizationUserRoleResponseDto } from '../dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from '../dto/organization-user.dto';

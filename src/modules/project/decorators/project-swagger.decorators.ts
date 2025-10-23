@@ -1,3 +1,4 @@
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiOperation,
@@ -11,7 +12,6 @@ import {
   ApiBody,
   ApiExtraModels,
 } from '@nestjs/swagger';
-import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 
 import { AiProvocationResponseDto } from '../dto/ai-provocation-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
