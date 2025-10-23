@@ -16,6 +16,7 @@ import { AiProvocationResponseDto } from '../dto/ai-provocation-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { ProvocationDto } from '../dto/provocation.dto';
+import { SolutionValidationResponseDto } from '../dto/solution-validation-response.dto';
 import { TagDto } from '../dto/tag.dto';
 import { TimelineGraphDto } from '../dto/timeline.dto';
 import { ProjectConfiguration } from '../types/project-configuration.type';
@@ -1106,5 +1107,64 @@ export const ApiGetEncyclopediaJobStatus = () =>
     }),
     ApiUnauthorizedResponse({
       description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiGetSolutionValidationStatus = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Consultar validaciones de soluciones para un proyecto',
+      description:
+        'Obtiene el estado de todas las validaciones necesarias para crear soluciones en un proyecto. ' +
+        'Retorna información detallada sobre cada condición (descripción, dimensiones, escalas, mandalas, postits, archivos) ' +
+        'incluyendo si se cumple y qué valores actuales tiene el proyecto vs los requeridos.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto a validar',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiResponse({
+      status: 200,
+      description:
+        'Estado de validaciones obtenido exitosamente. Incluye el estado de cada validación individual.',
+      type: SolutionValidationResponseDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example:
+              'Project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description: 'Prohibido - No tiene permisos para acceder a este proyecto',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Forbidden resource' },
+          error: { type: 'string', example: 'Forbidden' },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Unauthorized' },
+          statusCode: { type: 'number', example: 401 },
+        },
+      },
     }),
   );
