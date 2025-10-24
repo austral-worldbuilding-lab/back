@@ -224,7 +224,9 @@ export class OrganizationInvitationRepository {
       select: { level: true },
     });
 
-    if (!orgRole) return;
+    if (!orgRole) {
+      throw new Error(`Role with id ${roleId} not found`);
+    }
 
     for (const project of projects) {
       // Check if user already has a role in this project
