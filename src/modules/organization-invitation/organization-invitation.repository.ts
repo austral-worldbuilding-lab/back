@@ -275,10 +275,7 @@ export class OrganizationInvitationRepository {
     }
   }
 
-  private shouldElevateRole(
-    currentLevel: number,
-    newLevel: number,
-  ): boolean {
+  private shouldElevateRole(currentLevel: number, newLevel: number): boolean {
     // Lower number = higher privilege
     // Return true if new role has higher privilege (lower number)
     return newLevel < currentLevel;

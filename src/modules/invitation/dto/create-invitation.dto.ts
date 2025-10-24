@@ -29,8 +29,14 @@ export class CreateInvitationDto {
     example: 'worldbuilder',
     examples: {
       dueño: { value: 'dueño', description: 'Propietario del proyecto' },
-      facilitador: { value: 'facilitador', description: 'Administrador del proyecto' },
-      worldbuilder: { value: 'worldbuilder', description: 'Miembro del proyecto' },
+      facilitador: {
+        value: 'facilitador',
+        description: 'Administrador del proyecto',
+      },
+      worldbuilder: {
+        value: 'worldbuilder',
+        description: 'Miembro del proyecto',
+      },
       lector: { value: 'lector', description: 'Solo lectura' },
     },
     required: false,
