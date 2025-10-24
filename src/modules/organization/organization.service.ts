@@ -3,6 +3,8 @@ import {
   StateConflictException,
 } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { ProjectRepository } from '@modules/project/project.repository';
@@ -27,6 +29,7 @@ export class OrganizationService {
     private roleService: RoleService,
     private projectRepository: ProjectRepository,
     private prisma: PrismaService,
+    private readonly textStorageService: TextStorageService,
   ) {}
 
   async create(
@@ -241,6 +244,27 @@ export class OrganizationService {
     return this.organizationRepository.removeUserFromOrganization(
       organizationId,
       userId,
+    );
+  }
+
+  async uploadTextFile(
+    organizationId: string,
+    uploadContext: UploadContextDto,
+  ): Promise<string> {
+    const organization =
+      await this.organizationRepository.findOne(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundException('Organization', organizationId);
+    }
+
+    const scope = {
+      orgId: organizationId,
+    };
+
+    return this.textStorageService.uploadText(
+      uploadContext.content,
+      uploadContext.filename,
+      scope,
     );
   }
 }

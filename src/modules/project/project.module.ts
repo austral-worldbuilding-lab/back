@@ -1,6 +1,7 @@
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { FileModule } from '@modules/files/file.module';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { MandalaModule } from '@modules/mandala/mandala.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { EncyclopediaProcessor } from '@modules/queue/processors/encyclopedia.processor';
@@ -33,6 +34,7 @@ import { ProjectService } from './project.service';
     ProjectRepository,
     ProjectRoleGuard,
     AzureBlobStorageService,
+    TextStorageService,
     EncyclopediaProcessor,
   ],
   exports: [ProjectService, ProjectRoleGuard],

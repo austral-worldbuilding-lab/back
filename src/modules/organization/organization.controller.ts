@@ -8,6 +8,7 @@ import {
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import {
   Controller,
@@ -36,6 +37,7 @@ import {
   ApiGetOrganizationUsers,
   ApiUpdateOrganizationUserRole,
   ApiRemoveUserFromOrganization,
+  ApiUploadOrganizationTextFile,
 } from './decorators/organization-swagger.decorators';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
@@ -208,6 +210,23 @@ export class OrganizationController {
     return {
       message: 'Usuario eliminado de la organización exitosamente',
       data: removedUser,
+    };
+  }
+
+  @Post(':id/text-files')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @ApiUploadOrganizationTextFile()
+  async uploadTextFile(
+    @Param('id', new UuidValidationPipe()) organizationId: string,
+    @Body() uploadContextDto: UploadContextDto,
+  ): Promise<DataResponse<{ url: string }>> {
+    const url = await this.organizationService.uploadTextFile(
+      organizationId,
+      uploadContextDto,
+    );
+    return {
+      data: { url },
     };
   }
 }

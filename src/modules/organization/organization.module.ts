@@ -1,7 +1,9 @@
 import { AuthModule } from '@modules/auth/auth.module';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { ProjectRepository } from '@modules/project/project.repository';
 import { RoleModule } from '@modules/role/role.module';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { Module } from '@nestjs/common';
 
 import { OrganizationRoleGuard } from './guards/organization-role.guard';
@@ -17,6 +19,8 @@ import { OrganizationService } from './organization.service';
     OrganizationRepository,
     OrganizationRoleGuard,
     ProjectRepository,
+    AzureBlobStorageService,
+    TextStorageService,
   ],
   exports: [OrganizationService],
 })
