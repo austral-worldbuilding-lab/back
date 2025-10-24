@@ -26,12 +26,12 @@ export class CreateInvitationDto {
 
   @ApiProperty({
     description: 'Rol que tendrá el usuario invitado en el proyecto',
-    example: 'member',
+    example: 'worldbuilder',
     examples: {
-      owner: { value: 'owner', description: 'Propietario del proyecto' },
-      admin: { value: 'admin', description: 'Administrador del proyecto' },
-      member: { value: 'member', description: 'Miembro del proyecto' },
-      viewer: { value: 'viewer', description: 'Solo lectura' },
+      dueño: { value: 'dueño', description: 'Propietario del proyecto' },
+      facilitador: { value: 'facilitador', description: 'Administrador del proyecto' },
+      worldbuilder: { value: 'worldbuilder', description: 'Miembro del proyecto' },
+      lector: { value: 'lector', description: 'Solo lectura' },
     },
     required: false,
   })

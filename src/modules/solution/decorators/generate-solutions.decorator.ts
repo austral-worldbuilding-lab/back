@@ -10,7 +10,7 @@ export function GenerateSolutionsDecorator() {
   return applyDecorators(
     Throttle({ default: { limit: 10, ttl: 3600000 } }),
     UseGuards(ProjectRoleGuard),
-    RequireProjectRoles('member', 'owner', 'admin'),
+    RequireProjectRoles('worldbuilder', 'dueño', 'facilitador'),
     ApiOperation({
       summary: 'Generate AI solutions for a project',
       description:

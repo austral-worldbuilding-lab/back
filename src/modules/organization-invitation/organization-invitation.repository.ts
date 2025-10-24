@@ -218,6 +218,14 @@ export class OrganizationInvitationRepository {
       select: { id: true },
     });
 
+    // Get the organization role level
+    const orgRole = await this.prisma.role.findUnique({
+      where: { id: roleId },
+      select: { level: true },
+    });
+
+    if (!orgRole) return;
+
     for (const project of projects) {
       // Check if user already has a role in this project
       const existingRole = await this.prisma.userProjectRole.findUnique({
@@ -227,10 +235,15 @@ export class OrganizationInvitationRepository {
             projectId: project.id,
           },
         },
+        include: {
+          role: {
+            select: { level: true },
+          },
+        },
       });
 
-      // Only add user if they don't already have a role (preserve existing roles)
       if (!existingRole) {
+        // User doesn't have a role in this project, add them with org role
         await this.prisma.userProjectRole.create({
           data: {
             userId,
@@ -238,7 +251,36 @@ export class OrganizationInvitationRepository {
             roleId,
           },
         });
+      } else {
+        // User has a role, check if org role is higher and update if needed
+        const shouldElevate = this.shouldElevateRole(
+          existingRole.role.level,
+          orgRole.level,
+        );
+
+        if (shouldElevate) {
+          await this.prisma.userProjectRole.update({
+            where: {
+              userId_projectId: {
+                userId,
+                projectId: project.id,
+              },
+            },
+            data: {
+              roleId,
+            },
+          });
+        }
       }
     }
+  }
+
+  private shouldElevateRole(
+    currentLevel: number,
+    newLevel: number,
+  ): boolean {
+    // Lower number = higher privilege
+    // Return true if new role has higher privilege (lower number)
+    return newLevel < currentLevel;
   }
 }

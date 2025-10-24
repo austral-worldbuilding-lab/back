@@ -1,32 +1,31 @@
 import { PrismaClient } from '@prisma/client';
+
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  // Create roles if they don't exist
+  // Level: lower number = higher privilege
+  const roles = [
+    { name: 'dueño', level: 1 },
+    { name: 'facilitador', level: 2 },
+    { name: 'worldbuilder', level: 3 },
+    { name: 'lector', level: 4 },
+  ];
 
-  const roles = ['owner', 'admin', 'member', 'viewer'];
-  console.log('📝 Seeding roles:', roles);
-
-  for (const name of roles) {
+  for (const role of roles) {
     await prisma.role.upsert({
-      where: { name },
-      update: {},
-      create: { name },
+      where: { name: role.name },
+      update: { level: role.level },
+      create: { name: role.name, level: role.level },
     });
   }
-  console.log('✅ Roles seeded successfully');
-
-  console.log('✅ Seeding completed successfully');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e);
+    console.error(e);
     process.exit(1);
   })
-  .finally(() => {
-    prisma.$disconnect().catch((e) => {
-      console.error('❌ Error disconnecting Prisma:', e);
-      process.exit(1);
-    });
+  .finally(async () => {
+    await prisma.$disconnect();
   });
