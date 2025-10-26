@@ -50,7 +50,6 @@ export class MandalaImagesStrategy
 
   parseAndValidate(
     responseText: string | undefined,
-    input?: MandalaImagesInput,
   ): AiMandalaImageResponse[] {
     if (!responseText) {
       throw new Error('No response text received from Gemini API');
