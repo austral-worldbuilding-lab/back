@@ -267,4 +267,8 @@ export class OrganizationService {
       scope,
     );
   }
+
+  async findOrganizationIdByProjectId(projectId: string) {
+    return this.organizationRepository.findOrganizationIdByProjectId(projectId);
+  }
 }

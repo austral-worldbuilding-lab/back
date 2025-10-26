@@ -20,6 +20,9 @@ import {
   FirestoreCharacter,
   FirestoreMandalaDocument,
 } from '../firebase/types/firestore-character.type';
+import { NotificationService } from '../notification/notification.service';
+import { Notification } from '../notification/types/notification';
+import { OrganizationService } from '../organization/organization.service';
 
 import {
   OVERLAP_ERROR_MESSAGES,
@@ -62,6 +65,8 @@ export class MandalaService {
     private aiService: AiService,
     private cacheService: CacheService,
     private readonly logger: AppLogger,
+    private notificationService: NotificationService,
+    private organizationService: OrganizationService,
   ) {
     this.logger.setContext(MandalaService.name);
   }
@@ -354,7 +359,8 @@ export class MandalaService {
 
   async generate(
     createMandalaDto: CreateMandalaDto,
-  ): Promise<MandalaWithPostitsAndLinkedCentersDto> {
+    userId: string,
+  ): Promise<MandalaDto> {
     if (!createMandalaDto.projectId) {
       throw new BadRequestException(
         'Project ID is required to generate mandala',
@@ -366,6 +372,22 @@ export class MandalaService {
       MandalaType.CHARACTER,
     );
 
+    const notification: Notification = {
+      title: 'Generación en Proceso',
+      content: `La mandala ${createMandalaDto.name} está siendo generada con IA`,
+      createdAt: new Date(),
+    };
+
+    void this.notificationService.sendNotification(userId, notification);
+    void this.generatePipeline(mandala, createMandalaDto, userId);
+    return mandala;
+  }
+
+  private async generatePipeline(
+    mandala: MandalaDto,
+    createMandalaDto: CreateMandalaDto,
+    userId: string,
+  ) {
     try {
       const postits = await this.postitService.generatePostits(
         mandala,
@@ -409,6 +431,20 @@ export class MandalaService {
         mandala.id,
       );
 
+      const organization =
+        await this.organizationService.findOrganizationIdByProjectId(
+          createMandalaDto.projectId,
+        );
+
+      const notification: Notification = {
+        title: 'Mandala Generada',
+        content: `La mandala ${createMandalaDto.name} ha sido generada correctamente`,
+        createdAt: new Date(),
+        url: `/app/organization/${organization}/projects/${createMandalaDto.projectId}/mandala/${mandala.id}`,
+      };
+
+      void this.notificationService.sendNotification(userId, notification);
+
       return firestoreData;
     } catch (error) {
       await this.remove(mandala.id);
@@ -418,7 +454,8 @@ export class MandalaService {
 
   async generateContext(
     createContextDto: CreateContextMandalaDto,
-  ): Promise<MandalaWithPostitsAndLinkedCentersDto> {
+    userId: string,
+  ): Promise<MandalaDto> {
     if (!createContextDto.projectId) {
       throw new BadRequestException(
         'Project ID is required to generate context mandala',
@@ -430,54 +467,15 @@ export class MandalaService {
       MandalaType.CONTEXT,
     );
 
-    try {
-      const postits = await this.postitService.generatePostits(
-        mandala,
-        mandala.configuration.dimensions.map((d) => d.name),
-        mandala.configuration.scales,
-        createContextDto.selectedFiles,
-      );
-      this.logger.debug('context postits', postits);
-      const postitsWithCoordinates: PostitWithCoordinates[] =
-        this.postitService.transformToPostitsWithCoordinates(
-          mandala.id,
-          postits,
-          mandala.configuration.dimensions.map((d) => d.name),
-          mandala.configuration.scales,
-        );
+    const notification: Notification = {
+      title: 'Generación en Proceso',
+      content: `La mandala ${createContextDto.name} está siendo generada con IA`,
+      createdAt: new Date(),
+    };
 
-      const childrenCenter = (
-        await this.mandalaRepository.findChildrenMandalasCenters(mandala.id)
-      ).map((center) => ({
-        name: center.name,
-        description: center.description,
-        color: center.color,
-        position: DEFAULT_CHARACTER_POSITION,
-        section: DEFAULT_CHARACTER_SECTION,
-        dimension: DEFAULT_CHARACTER_DIMENSION,
-      }));
-
-      const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
-        mandala: mandala,
-        postits: postitsWithCoordinates,
-        childrenCenter,
-      };
-
-      await this.firebaseDataService.createDocument(
-        mandala.projectId,
-        {
-          mandala: firestoreData.mandala,
-          postits: firestoreData.postits,
-          characters: childrenCenter,
-        },
-        mandala.id,
-      );
-
-      return firestoreData;
-    } catch (error) {
-      await this.remove(mandala.id);
-      throw error;
-    }
+    void this.notificationService.sendNotification(userId, notification);
+    void this.generatePipeline(mandala, createContextDto, userId);
+    return mandala;
   }
 
   async getFilters(mandalaId: string): Promise<FilterSectionDto[]> {

@@ -320,4 +320,17 @@ export class OrganizationRepository {
       where: { organizationId, role: { name: 'owner' } },
     });
   }
+
+  async findOrganizationIdByProjectId(projectId: string) {
+    const organization = await this.prisma.organization.findFirst({
+      where: {
+        projects: {
+          some: {
+            id: projectId,
+          },
+        },
+      },
+    });
+    return organization?.id;
+  }
 }
