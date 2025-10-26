@@ -265,7 +265,7 @@ export class ImageService {
   }
 
   /**
-   * Saves AI-generated images to blob storage and adds them to the mandala document
+   * Saves AI-generated images to blob storage
    * @param projectId - The project ID
    * @param mandalaId - The mandala ID
    * @param aiImages - Array of AI-generated images with base64 data

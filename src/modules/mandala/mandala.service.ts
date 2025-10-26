@@ -817,7 +817,7 @@ export class MandalaService {
       effectiveScales,
     );
 
-    // Save images to blob storage instead of cache
+    // Save images to blob storage inside mandala/cached folder
     const savedImages = await this.imageService.saveAiGeneratedImages(
       mandala.projectId,
       mandalaId,
