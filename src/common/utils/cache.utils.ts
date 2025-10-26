@@ -1,6 +1,6 @@
 export class CacheUtils {
   static buildSimpleCacheKey(
-    type: 'questions' | 'postits' | 'provocations' | 'solutions' | 'images',
+    type: 'questions' | 'postits' | 'provocations' | 'solutions',
     userId: string,
     scopeId: string,
   ): string {
