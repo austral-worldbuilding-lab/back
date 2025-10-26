@@ -25,6 +25,7 @@ import {
   OVERLAP_ERROR_MESSAGES,
   OVERLAP_ERROR_TYPES,
 } from './constants/overlap-error-messages';
+import { AiMandalaImageResponseDto } from './dto/ai-mandala-image-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaCenterDto,
@@ -792,6 +793,90 @@ export class MandalaService {
       mandalaId,
     );
     return this.cacheService.getFromCache<PostitWithCoordinates>(cacheKey);
+  }
+
+  async generateMandalaImages(
+    userId: string,
+    mandalaId: string,
+    dimensions?: string[],
+    scales?: string[],
+  ): Promise<AiMandalaImageResponseDto[]> {
+    this.logger.log(`generateMandalaImages called for mandala ${mandalaId}`);
+
+    const mandala = await this.findOne(mandalaId);
+    const { effectiveDimensions, effectiveScales } =
+      getEffectiveDimensionsAndScales(mandala, dimensions, scales);
+
+    const images = await this.generateMandalaImagesFromAI(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+    );
+
+    await this.saveImagesToCache(userId, mandalaId, images);
+
+    return images;
+  }
+
+  private async generateMandalaImagesFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+  ): Promise<AiMandalaImageResponseDto[]> {
+    const centerName = mandala.configuration.center.name;
+    const centerDescription = mandala.configuration.center.description || 'N/A';
+    const mandalaDocument = await this.firebaseDataService.getDocument(
+      mandala.projectId,
+      mandala.id,
+    );
+
+    // Get project information
+    const project = await this.projectService.findOne(mandala.projectId);
+
+    const mandalaDocumentString = JSON.stringify(mandalaDocument);
+
+    return this.aiService.generateMandalaImages(
+      mandala.projectId,
+      mandala.id,
+      project.name,
+      project.description || '',
+      effectiveDimensions,
+      effectiveScales,
+      centerName,
+      centerDescription,
+      mandalaDocumentString,
+    );
+  }
+
+  private async saveImagesToCache(
+    userId: string,
+    mandalaId: string,
+    images: AiMandalaImageResponseDto[],
+  ): Promise<void> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'images',
+      userId,
+      mandalaId,
+    );
+
+    for (const image of images) {
+      await this.cacheService.addToLimitedCache(cacheKey, image, 20);
+    }
+    this.logger.log(
+      `Saved images to cache for user ${userId}, mandala ${mandalaId}`,
+    );
+  }
+
+  async getCachedMandalaImages(
+    userId: string,
+    mandalaId: string,
+  ): Promise<AiMandalaImageResponseDto[]> {
+    const cacheKey = this.cacheService.buildCacheKey(
+      'images',
+      userId,
+      mandalaId,
+    );
+    return this.cacheService.getFromCache<AiMandalaImageResponseDto>(cacheKey);
   }
 
   private async generatePostitsFromAI(

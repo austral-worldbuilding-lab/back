@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { ContextPostitsStrategy } from '../strategies/context-postits.strategy';
 import { EncyclopediaStrategy } from '../strategies/encyclopedia.strategy';
+import { MandalaImagesStrategy } from '../strategies/mandala-images.strategy';
 import { MandalaSummaryStrategy } from '../strategies/mandala-summary.strategy';
 import { PostitsSummaryStrategy } from '../strategies/postits-summary.strategy';
 import { PostitsStrategy } from '../strategies/postits.strategy';
@@ -20,6 +21,7 @@ export class AiStrategyRegistryService {
     private readonly encyclopedia: EncyclopediaStrategy,
     private readonly mandalaSummary: MandalaSummaryStrategy,
     private readonly solutions: SolutionsStrategy,
+    private readonly mandalaImages: MandalaImagesStrategy,
   ) {}
 
   getPostits() {
@@ -45,5 +47,8 @@ export class AiStrategyRegistryService {
   }
   getSolutions() {
     return this.solutions;
+  }
+  getMandalaImages() {
+    return this.mandalaImages;
   }
 }

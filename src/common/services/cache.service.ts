@@ -14,7 +14,7 @@ export class CacheService {
   }
 
   buildCacheKey(
-    type: 'questions' | 'postits' | 'provocations' | 'solutions',
+    type: 'questions' | 'postits' | 'provocations' | 'solutions' | 'images',
     userId: string,
     scopeId: string,
   ): string {

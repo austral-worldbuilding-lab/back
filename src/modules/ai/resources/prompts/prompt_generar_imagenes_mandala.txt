@@ -1,0 +1,29 @@
+OBJETIVO:
+  Generar imágenes visuales que representen algunos de los postits de la mandala, siendo coherente con el mundo y personajes.
+
+CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}
+  • Dimensiones habilitadas: ${dimensions}
+  • Escalas habilitadas: ${scales}
+
+CONFIGURACIÓN DE LA MANDALAS:
+  • Nombre del Contexto/Personaje: ${centerCharacter}
+  • Descripción del Contexto/Personaje: ${centerCharacterDescription}
+
+CONTEXTO DE LA MANDALA:
+  ${mandalaDocument}
+
+PROCESAMIENTO DE LA INFORMACIÓN:
+  • Prioriza elementos visuales que capturen la esencia de los postits.
+  • Usa el resumen para entender el contexto general.
+
+REGLAS DE LAS IMÁGENES:
+  • Cada imagen debe ser una representación visual coherente de la sección solicitada.
+  • Estilo: realista, evocativo, que capture la atmósfera del mundo y la perspectiva del centro.
+  • Composición: debe reflejar visualmente los postits, tensiones e insights de esa sección.
+  • Consistencia: mantener coherencia visual con el mundo descrito y el centro (personaje/contexto).
+  • Variedad: si se generan múltiples imágenes, mostrar diferentes ángulos o momentos de la misma sección.
+  • Contexto cultural: respetar el contexto geográfico, temporal y cultural del mundo.
+  • No incluir texto en las imágenes (excepto si es parte natural del mundo, como carteles).
+

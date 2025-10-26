@@ -46,12 +46,15 @@ import {
   ApiOverlapSummary,
   ApiGetCachedQuestions,
   ApiGetCachedPostits,
+  ApiGenerateMandalaImages,
+  ApiGetCachedMandalaImages,
   ApiCreateImagePresignedUrl,
   ApiConfirmImageUpload,
   ApiDeleteImage,
   ApiCreateContextMandala,
   ApiGenerateContextMandala,
 } from './decorators/mandala-swagger.decorators';
+import { AiMandalaImageResponseDto } from './dto/ai-mandala-image-response.dto';
 import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
@@ -60,6 +63,7 @@ import {
   CreateContextMandalaDto,
 } from './dto/create-mandala.dto';
 import { FilterSectionDto } from './dto/filter-option.dto';
+import { GenerateMandalaImagesDto } from './dto/generate-mandala-images.dto';
 import { GeneratePostitsDto } from './dto/generate-postits.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { ConfirmImageUploadDto } from './dto/image/confirm-image-upload.dto';
@@ -428,6 +432,46 @@ export class MandalaController {
 
     return {
       data: cachedPostits,
+    };
+  }
+
+  @Post(':id/generate-images')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiGenerateMandalaImages()
+  async generateMandalaImages(
+    @Param('id', new UuidValidationPipe()) mandalaId: string,
+    @Body() generateImagesDto: GenerateMandalaImagesDto,
+    @Req() request: RequestWithUser,
+  ): Promise<DataResponse<AiMandalaImageResponseDto[]>> {
+    const userId = request.user.id;
+    const images = await this.mandalaService.generateMandalaImages(
+      userId,
+      mandalaId,
+      generateImagesDto.dimensions,
+      generateImagesDto.scales,
+    );
+
+    return {
+      data: images,
+    };
+  }
+
+  @Get(':id/cached-images')
+  @UseGuards(MandalaRoleGuard)
+  @ApiGetCachedMandalaImages()
+  async getCachedMandalaImages(
+    @Param('id', new UuidValidationPipe()) mandalaId: string,
+    @Req() request: RequestWithUser,
+  ): Promise<DataResponse<AiMandalaImageResponseDto[]>> {
+    const userId = request.user.id;
+    const cachedImages = await this.mandalaService.getCachedMandalaImages(
+      userId,
+      mandalaId,
+    );
+
+    return {
+      data: cachedImages,
     };
   }
 

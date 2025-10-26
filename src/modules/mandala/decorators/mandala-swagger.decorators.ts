@@ -1,9 +1,17 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 
+import { AiMandalaImageResponseDto } from '../dto/ai-mandala-image-response.dto';
 import { AiQuestionResponseDto } from '../dto/ai-question-response.dto';
 import { CharacterListItemDto } from '../dto/character-list-item.dto';
 import { FilterSectionDto } from '../dto/filter-option.dto';
+import { GenerateMandalaImagesDto } from '../dto/generate-mandala-images.dto';
 import { ImageResponseDto } from '../dto/image/image-response.dto';
 import { PresignedUrlResponseDto } from '../dto/image/presigned-url-response.dto';
 import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-postits-and-linked-centers.dto';
@@ -514,6 +522,64 @@ export const ApiGetCachedPostits = () =>
       status: 200,
       description: 'Post-its obtenidos exitosamente del cache',
       type: [PostitWithCoordinatesDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiGenerateMandalaImages = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar imágenes para un mandala',
+      description:
+        'Genera imágenes visuales para una sección específica del mandala utilizando IA',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala',
+      type: String,
+    }),
+    ApiBody({
+      type: GenerateMandalaImagesDto,
+      description: 'Datos para la generación de imágenes',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Imágenes generadas exitosamente',
+      type: [AiMandalaImageResponseDto],
+    }),
+    ApiResponse({
+      status: 403,
+      description: 'Prohibido - No tienes acceso a este mandala',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Mandala no encontrado',
+    }),
+  );
+
+export const ApiGetCachedMandalaImages = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener imágenes del cache',
+      description:
+        'Obtiene todas las imágenes generadas previamente para un mandala desde el cache',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del mandala',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Imágenes obtenidas exitosamente del cache',
+      type: [AiMandalaImageResponseDto],
     }),
     ApiResponse({
       status: 403,
