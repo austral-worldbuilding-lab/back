@@ -48,9 +48,7 @@ export class MandalaImagesStrategy
     return null;
   }
 
-  parseAndValidate(
-    responseText: string | undefined,
-  ): AiMandalaImageResponse[] {
+  parseAndValidate(responseText: string | undefined): AiMandalaImageResponse[] {
     if (!responseText) {
       throw new Error('No response text received from Gemini API');
     }
