@@ -5,7 +5,14 @@ export class GenerateMandalaImagesDto {
   @ApiProperty({
     description:
       'Array of dimensions to generate questions for. If not provided, uses all mandala dimensions.',
-    example: ['ECOLOGIA', 'GOBIERNO', 'ECONOMIA'],
+    example: [
+      'ECOLOGÍA',
+      'GOBIERNO',
+      'ECONOMÍA',
+      'INFRAESTRUCTURA',
+      'CULTURA',
+      'RECURSOS',
+    ],
     required: false,
   })
   @IsOptional()
@@ -16,7 +23,7 @@ export class GenerateMandalaImagesDto {
   @ApiProperty({
     description:
       'Array of scales to generate questions for. If not provided, uses all mandala scales.',
-    example: ['CIUDAD', 'PROVINCIA', 'PAIS'],
+    example: ['MI ESQUINA', 'CIUDAD / BARRIO', 'PROVINCIA', 'PAÍS'],
     required: false,
   })
   @IsOptional()

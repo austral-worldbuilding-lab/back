@@ -47,7 +47,6 @@ import {
   ApiGetCachedQuestions,
   ApiGetCachedPostits,
   ApiGenerateMandalaImages,
-  ApiGetCachedMandalaImages,
   ApiCreateImagePresignedUrl,
   ApiConfirmImageUpload,
   ApiDeleteImage,
@@ -459,19 +458,14 @@ export class MandalaController {
 
   @Get(':id/cached-images')
   @UseGuards(MandalaRoleGuard)
-  @ApiGetCachedMandalaImages()
-  async getCachedMandalaImages(
+  @RequireProjectRoles('owner', 'admin', 'member', 'viewer')
+  async getCachedImages(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
-    @Req() request: RequestWithUser,
-  ): Promise<DataResponse<AiMandalaImageResponseDto[]>> {
-    const userId = request.user.id;
-    const cachedImages = await this.mandalaService.getCachedMandalaImages(
-      userId,
-      mandalaId,
-    );
+  ): Promise<DataResponse<Array<{ id: string; url: string }>>> {
+    const images = await this.imageService.getCachedImages(mandalaId);
 
     return {
-      data: cachedImages,
+      data: images,
     };
   }
 

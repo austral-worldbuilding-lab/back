@@ -564,33 +564,6 @@ export const ApiGenerateMandalaImages = () =>
     }),
   );
 
-export const ApiGetCachedMandalaImages = () =>
-  applyDecorators(
-    ApiOperation({
-      summary: 'Obtener imágenes del cache',
-      description:
-        'Obtiene todas las imágenes generadas previamente para un mandala desde el cache',
-    }),
-    ApiParam({
-      name: 'id',
-      description: 'ID del mandala',
-      type: String,
-    }),
-    ApiResponse({
-      status: 200,
-      description: 'Imágenes obtenidas exitosamente del cache',
-      type: [AiMandalaImageResponseDto],
-    }),
-    ApiResponse({
-      status: 403,
-      description: 'Prohibido - No tienes acceso a este mandala',
-    }),
-    ApiResponse({
-      status: 404,
-      description: 'Mandala no encontrado',
-    }),
-  );
-
 export const ApiOverlapSummary = () =>
   applyDecorators(
     ApiOperation({

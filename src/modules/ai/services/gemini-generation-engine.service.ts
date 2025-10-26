@@ -288,9 +288,7 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
       const contents = [
         {
           role: 'user',
-          parts: [
-            { text: prompt, inlineData: { mimeType: 'image/png', data: '' } },
-          ],
+          parts: [{ text: prompt }],
         },
       ];
 

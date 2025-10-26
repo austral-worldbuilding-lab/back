@@ -39,6 +39,7 @@ import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postit
 import { hasCharacters, MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
+import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
@@ -58,6 +59,7 @@ export class MandalaService {
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
     private postitService: PostitService,
+    private imageService: ImageService,
     @Inject(forwardRef(() => ProjectService))
     private projectService: ProjectService,
     private aiService: AiService,
@@ -801,28 +803,40 @@ export class MandalaService {
     dimensions?: string[],
     scales?: string[],
   ): Promise<AiMandalaImageResponseDto[]> {
-    this.logger.log(`generateMandalaImages called for mandala ${mandalaId}`);
+    this.logger.log(
+      `generateMandalaImages called for mandala ${mandalaId} by user ${userId}`,
+    );
 
     const mandala = await this.findOne(mandalaId);
     const { effectiveDimensions, effectiveScales } =
       getEffectiveDimensionsAndScales(mandala, dimensions, scales);
 
-    const images = await this.generateMandalaImagesFromAI(
+    const aiImages = await this.generateMandalaImagesFromAI(
       mandala,
       effectiveDimensions,
       effectiveScales,
     );
 
-    await this.saveImagesToCache(userId, mandalaId, images);
+    // Save images to blob storage instead of cache
+    const savedImages = await this.imageService.saveAiGeneratedImages(
+      mandala.projectId,
+      mandalaId,
+      aiImages,
+    );
 
-    return images;
+    this.logger.log(
+      `Saved ${savedImages.length} AI-generated images to blob storage for mandala ${mandalaId}`,
+    );
+
+    // Return as DTOs with url
+    return savedImages as AiMandalaImageResponseDto[];
   }
 
   private async generateMandalaImagesFromAI(
     mandala: MandalaDto,
     effectiveDimensions: string[],
     effectiveScales: string[],
-  ): Promise<AiMandalaImageResponseDto[]> {
+  ): Promise<Array<{ id: string; imageData: string }>> {
     const centerName = mandala.configuration.center.name;
     const centerDescription = mandala.configuration.center.description || 'N/A';
     const mandalaDocument = await this.firebaseDataService.getDocument(
@@ -846,37 +860,6 @@ export class MandalaService {
       centerDescription,
       mandalaDocumentString,
     );
-  }
-
-  private async saveImagesToCache(
-    userId: string,
-    mandalaId: string,
-    images: AiMandalaImageResponseDto[],
-  ): Promise<void> {
-    const cacheKey = this.cacheService.buildCacheKey(
-      'images',
-      userId,
-      mandalaId,
-    );
-
-    for (const image of images) {
-      await this.cacheService.addToLimitedCache(cacheKey, image, 20);
-    }
-    this.logger.log(
-      `Saved images to cache for user ${userId}, mandala ${mandalaId}`,
-    );
-  }
-
-  async getCachedMandalaImages(
-    userId: string,
-    mandalaId: string,
-  ): Promise<AiMandalaImageResponseDto[]> {
-    const cacheKey = this.cacheService.buildCacheKey(
-      'images',
-      userId,
-      mandalaId,
-    );
-    return this.cacheService.getFromCache<AiMandalaImageResponseDto>(cacheKey);
   }
 
   private async generatePostitsFromAI(
