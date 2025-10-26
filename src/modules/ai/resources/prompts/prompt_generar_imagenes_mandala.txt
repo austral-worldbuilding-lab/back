@@ -15,15 +15,15 @@ CONTEXTO DE LA MANDALA:
   ${mandalaDocument}
 
 PROCESAMIENTO DE LA INFORMACIÓN:
-  • Prioriza elementos visuales que capturen la esencia de los postits.
+  • Prioriza elementos visuales que capturen la esencia de los postits en las dimensiones y escalas habilitadas.
   • Usa el resumen para entender el contexto general.
 
 REGLAS DE LAS IMÁGENES:
-  • Cada imagen debe ser una representación visual coherente de la sección solicitada.
+  • Cada imagen debe ser una representación visual coherente de la dimensión y escala solicitada.
   • Estilo: realista, evocativo, que capture la atmósfera del mundo y la perspectiva del centro.
-  • Composición: debe reflejar visualmente los postits, tensiones e insights de esa sección.
+  • Composición: debe reflejar visualmente los postits, tensiones e insights de esa dimensión y escala.
   • Consistencia: mantener coherencia visual con el mundo descrito y el centro (personaje/contexto).
-  • Variedad: si se generan múltiples imágenes, mostrar diferentes ángulos o momentos de la misma sección.
+  • Variedad: si se generan múltiples imágenes, mostrar diferentes ángulos o momentos de la misma dimensión y escala.
   • Contexto cultural: respetar el contexto geográfico, temporal y cultural del mundo.
   • No incluir texto en las imágenes (excepto si es parte natural del mundo, como carteles).
 
