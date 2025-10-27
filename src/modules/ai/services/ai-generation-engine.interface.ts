@@ -9,6 +9,7 @@ export interface AiGenerationEngine {
     prompt: string,
     responseSchema: unknown,
     context: AiGenerationEngineContext,
+    temperature?: number,
   ): Promise<{ text: string | undefined; usage: AiUsageInfo }>;
 
   runImageGeneration(
