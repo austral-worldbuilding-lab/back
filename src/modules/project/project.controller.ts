@@ -53,8 +53,10 @@ import {
   ApiCreateProjectFromProvocation,
   ApiUploadProjectTextFile,
   ApiGetSolutionValidationStatus,
+  ApiCreateChildProject,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
+import { CreateChildProjectDto } from './dto/create-child-project.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -136,6 +138,26 @@ export class ProjectController {
     );
     return {
       message: 'Project created successfully from question',
+      data: project,
+    };
+  }
+
+  @Post(':parentId/child')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('owner', 'admin', 'member')
+  @ApiCreateChildProject()
+  async createChildProject(
+    @Param('parentId', new UuidValidationPipe()) parentId: string,
+    @Body() createChildProjectDto: CreateChildProjectDto,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.createChildProject(
+      parentId,
+      createChildProjectDto,
+      req.user.id,
+    );
+    return {
+      message: 'Child project created successfully',
       data: project,
     };
   }

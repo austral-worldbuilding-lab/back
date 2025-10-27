@@ -25,6 +25,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 
+import { CreateChildProjectDto } from './dto/create-child-project.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -366,6 +367,40 @@ export class ProjectService {
     );
 
     return project;
+  }
+
+  async createChildProject(
+    parentProjectId: string,
+    createChildProjectDto: CreateChildProjectDto,
+    userId: string,
+  ): Promise<ProjectDto> {
+    // Get owner role for the creating user
+    const ownerRole = await this.roleService.findOrCreate('owner');
+
+    // Verify parent project exists
+    const parentProject = await this.findOne(parentProjectId);
+    if (!parentProject) {
+      throw new ResourceNotFoundException('Parent project', parentProjectId);
+    }
+
+    // Create the child project (inherits configuration from parent)
+    const childProject: ProjectDto =
+      await this.projectRepository.createChildProject(
+        parentProjectId,
+        createChildProjectDto,
+        userId,
+        ownerRole.id,
+      );
+
+    // Copy all members from parent project, ensuring creator is owner
+    await this.projectRepository.copyProjectMembersFromParent(
+      childProject.id,
+      parentProject.id,
+      userId,
+      ownerRole.id,
+    );
+
+    return childProject;
   }
 
   async findAllPaginated(

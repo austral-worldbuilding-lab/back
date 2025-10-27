@@ -1214,3 +1214,80 @@ export const ApiGetSolutionValidationStatus = () =>
       },
     }),
   );
+
+export const ApiCreateChildProject = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear un proyecto hijo sin provocación',
+      description:
+        'Crea un nuevo proyecto hijo directamente desde un proyecto padre sin requerir una provocación. ' +
+        'El proyecto hijo hereda automáticamente la organización, dimensiones y escalas del padre. ' +
+        'También se copian todos los miembros del proyecto padre, asegurando que el creador sea owner del nuevo proyecto.',
+    }),
+    ApiParam({
+      name: 'parentId',
+      description: 'ID del proyecto padre',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiBody({
+      description: 'Datos para crear el proyecto hijo',
+      examples: {
+        'proyecto-hijo-completo': {
+          summary: 'Proyecto hijo con descripción',
+          description:
+            'Crear un proyecto hijo con nombre y descripción personalizados',
+          value: {
+            name: 'Subproyecto: Análisis de usuarios',
+            description:
+              'Este subproyecto se enfoca en analizar las necesidades específicas de los usuarios del comedor',
+            icon: 'folder',
+          },
+        },
+        'proyecto-hijo-minimo': {
+          summary: 'Proyecto hijo mínimo',
+          description: 'Crear un proyecto hijo solo con nombre',
+          value: {
+            name: 'Subproyecto: Fase 2',
+            icon: 'folder',
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 201,
+      description:
+        'Proyecto hijo creado exitosamente. Hereda configuración del padre y copia sus miembros.',
+      type: ProjectDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto padre no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example:
+              'Parent project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description:
+        'Prohibido - No tiene permisos suficientes en el proyecto padre (requiere rol de member, admin u owner)',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Forbidden resource' },
+          error: { type: 'string', example: 'Forbidden' },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
