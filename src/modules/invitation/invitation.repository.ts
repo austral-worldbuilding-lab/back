@@ -228,7 +228,7 @@ export class InvitationRepository {
 
   async findByInviteToken(inviteToken: string): Promise<Invitation | null> {
     // Solo para usar cuando es una invitación multiusuario (sin email)
-    // ya que no cambiamos el estado para que no se "roben" la invitación
+    // porque no cambiamos el estado para que no se "roben" la invitación
     return this.prisma.invitation.findFirst({
       where: {
         inviteToken,
