@@ -695,12 +695,30 @@ export class ProjectRepository {
   }
 
   async getProjectTags(projectId: string): Promise<TagDto[]> {
-    return this.prisma.tag.findMany({
+    const tags = await this.prisma.tag.findMany({
       where: {
         projectId,
         isActive: true,
       },
     });
+
+    return tags.map((tag) => this.parseToTagDto(tag));
+  }
+
+  /**
+   * Check if a project was created from a provocation (has ORIGIN role)
+   * @param projectId - The project ID to check
+   * @returns true if project has a provocation with ORIGIN role, false otherwise
+   */
+  async hasOriginProvocation(projectId: string): Promise<boolean> {
+    const link = await this.prisma.projProvLink.findFirst({
+      where: {
+        projectId,
+        role: ProjProvLinkRole.ORIGIN,
+      },
+    });
+
+    return !!link;
   }
 
   async createTag(projectId: string, dto: CreateTagDto): Promise<TagDto> {

@@ -18,6 +18,7 @@ export interface PostitsInput {
   centerCharacter: string;
   centerCharacterDescription: string;
   tags: string[];
+  isFutureProject: boolean;
 }
 
 @Injectable()
@@ -40,6 +41,7 @@ export class PostitsStrategy
       input.centerCharacter,
       input.centerCharacterDescription,
       input.tags,
+      input.isFutureProject,
     );
   }
 

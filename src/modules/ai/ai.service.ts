@@ -48,6 +48,7 @@ export class AiService {
     mandalaId?: string,
     userId?: string,
     organizationId?: string,
+    isFutureProject?: boolean,
   ): Promise<AiPostitResponse[]> {
     this.logger.log(`Starting postit generation for project: ${projectId}`);
 
@@ -62,6 +63,7 @@ export class AiService {
       centerCharacterDescription,
       selectedFiles,
       mandalaId,
+      isFutureProject,
     );
 
     // Trackear consumo de IA
@@ -97,6 +99,7 @@ export class AiService {
     tags: string[],
     selectedFiles?: string[],
     mandalaId?: string,
+    isFutureProject?: boolean,
     userId?: string,
     organizationId?: string,
   ): Promise<AiPostitResponse[]> {
@@ -115,6 +118,7 @@ export class AiService {
       centerContextDescription,
       selectedFiles,
       mandalaId,
+      isFutureProject,
     );
 
     // Trackear consumo de IA

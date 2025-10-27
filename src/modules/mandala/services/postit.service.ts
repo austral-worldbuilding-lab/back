@@ -132,9 +132,14 @@ export class PostitService {
     // Get project information
     const project = await this.projectService.findOne(mandala.projectId);
 
+    // Check if project is future/hypothetical (has ORIGIN provocation)
+    const isFutureProject = await this.projectService.hasOriginProvocation(
+      mandala.projectId,
+    );
+
     let aiResponse: AiPostitResponse[];
 
-    // Use different AI service method based on mandala type
+    // Use different AI service method based on mandala type AND project type
     if (mandala.type === MandalaType.CONTEXT) {
       aiResponse = await this.aiService.generateContextPostits(
         mandala.projectId,
@@ -147,6 +152,7 @@ export class PostitService {
         tagNames,
         selectedFiles,
         mandala.id,
+        isFutureProject,
       );
     } else {
       aiResponse = await this.aiService.generatePostits(
@@ -160,6 +166,9 @@ export class PostitService {
         tagNames,
         selectedFiles,
         mandala.id,
+        undefined,
+        project.organizationId,
+        isFutureProject,
       );
     }
 

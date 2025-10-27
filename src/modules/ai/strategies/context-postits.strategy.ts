@@ -18,6 +18,7 @@ export interface ContextPostitsInput {
   centerContext: string;
   centerContextDescription: string;
   tags: string[];
+  isFutureProject: boolean;
 }
 
 @Injectable()
@@ -40,6 +41,7 @@ export class ContextPostitsStrategy
       input.centerContext,
       input.centerContextDescription,
       input.tags,
+      input.isFutureProject,
     );
   }
 
