@@ -1,5 +1,14 @@
+import { DimensionDto } from '@common/dto/dimension.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
 export class CreateChildProjectDto {
   @ApiProperty({
@@ -29,4 +38,64 @@ export class CreateChildProjectDto {
   @IsString()
   @IsOptional()
   icon?: string;
+
+  // ===== CAMPOS IGNORADOS (se heredan del padre) =====
+
+  @ApiProperty({
+    description:
+      '⚠️ IGNORADO: El organizationId se hereda automáticamente del proyecto padre',
+    example: 'org-123',
+    required: false,
+    deprecated: true,
+  })
+  @IsUUID()
+  @IsOptional()
+  organizationId?: string;
+
+  @ApiProperty({
+    description:
+      '⚠️ IGNORADO: Las dimensiones se heredan automáticamente del proyecto padre',
+    type: [DimensionDto],
+    required: false,
+    deprecated: true,
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DimensionDto)
+  @IsOptional()
+  dimensions?: DimensionDto[];
+
+  @ApiProperty({
+    description:
+      '⚠️ IGNORADO: Las escalas se heredan automáticamente del proyecto padre',
+    type: [String],
+    required: false,
+    deprecated: true,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  scales?: string[];
+
+  @ApiProperty({
+    description:
+      '⚠️ IGNORADO: El userId se obtiene automáticamente del token de autenticación',
+    example: 'user-123',
+    required: false,
+    deprecated: true,
+  })
+  @IsString()
+  @IsOptional()
+  userId?: string;
+
+  @ApiProperty({
+    description:
+      '⚠️ IGNORADO: El parentProjectId se obtiene del parámetro de ruta',
+    example: 'parent-123',
+    required: false,
+    deprecated: true,
+  })
+  @IsUUID()
+  @IsOptional()
+  parentProjectId?: string;
 }
