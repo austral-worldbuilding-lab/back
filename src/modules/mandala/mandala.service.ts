@@ -28,6 +28,7 @@ import {
   OVERLAP_ERROR_MESSAGES,
   OVERLAP_ERROR_TYPES,
 } from './constants/overlap-error-messages';
+import { AiMandalaImageResponseDto } from './dto/ai-mandala-image-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaCenterDto,
@@ -41,6 +42,7 @@ import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postit
 import { hasCharacters, MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
+import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
@@ -60,6 +62,7 @@ export class MandalaService {
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
     private postitService: PostitService,
+    private imageService: ImageService,
     @Inject(forwardRef(() => ProjectService))
     private projectService: ProjectService,
     private aiService: AiService,
@@ -796,6 +799,71 @@ export class MandalaService {
       mandalaId,
     );
     return this.cacheService.getFromCache<PostitWithCoordinates>(cacheKey);
+  }
+
+  async generateMandalaImages(
+    userId: string,
+    mandalaId: string,
+    dimensions?: string[],
+    scales?: string[],
+  ): Promise<AiMandalaImageResponseDto[]> {
+    this.logger.log(
+      `generateMandalaImages called for mandala ${mandalaId} by user ${userId}`,
+    );
+
+    const mandala = await this.findOne(mandalaId);
+    const { effectiveDimensions, effectiveScales } =
+      getEffectiveDimensionsAndScales(mandala, dimensions, scales);
+
+    const aiImages = await this.generateMandalaImagesFromAI(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+    );
+
+    // Save images to blob storage inside mandala/cached folder
+    const savedImages = await this.imageService.saveAiGeneratedImages(
+      mandala.projectId,
+      mandalaId,
+      aiImages,
+    );
+
+    this.logger.log(
+      `Saved ${savedImages.length} AI-generated images to blob storage for mandala ${mandalaId}`,
+    );
+
+    // Return as DTOs with url
+    return savedImages as AiMandalaImageResponseDto[];
+  }
+
+  private async generateMandalaImagesFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+  ): Promise<Array<{ id: string; imageData: string }>> {
+    const centerName = mandala.configuration.center.name;
+    const centerDescription = mandala.configuration.center.description || 'N/A';
+    const mandalaDocument = await this.firebaseDataService.getDocument(
+      mandala.projectId,
+      mandala.id,
+    );
+
+    // Get project information
+    const project = await this.projectService.findOne(mandala.projectId);
+
+    const mandalaDocumentString = JSON.stringify(mandalaDocument);
+
+    return this.aiService.generateMandalaImages(
+      mandala.projectId,
+      mandala.id,
+      project.name,
+      project.description || '',
+      effectiveDimensions,
+      effectiveScales,
+      centerName,
+      centerDescription,
+      mandalaDocumentString,
+    );
   }
 
   private async generatePostitsFromAI(

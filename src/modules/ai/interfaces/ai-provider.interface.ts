@@ -10,6 +10,8 @@ import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
 
+import { AiMandalaImageResponse } from '@/modules/mandala/types/mandala-images.type';
+
 export interface AiProvider {
   /**
    * Generates postits for a project
@@ -226,4 +228,34 @@ export interface AiProvider {
     projectDescription: string,
     encyclopedia: string,
   ): Promise<AiResponseWithUsage<AiSolutionResponse[]>>;
+
+  /**
+   * Generates images for a mandala based on its content and context
+   *
+   * This method takes the mandala information and generates visual representations
+   * for specific sections (dimension-scale intersections) of the mandala.
+   * Uses only mandala summary and JSON context - no external files.
+   *
+   * @param projectId - Unique identifier of the project
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param mandalaId - Unique identifier of the mandala
+   * @param dimensions - Array of dimension names
+   * @param scales - Array of scale names
+   * @param centerCharacter - Name of the center (character or context)
+   * @param centerCharacterDescription - Description of the center
+   * @param mandalaDocument - Full mandala JSON context
+   * @returns Promise resolving to an array of image responses with base64 data
+   */
+  generateMandalaImages(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    mandalaDocument: string,
+  ): Promise<AiResponseWithUsage<AiMandalaImageResponse[]>>;
 }
