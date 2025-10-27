@@ -8,6 +8,18 @@ import { Invitation } from './entities/invitation.entity';
 
 const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
+type PrismaTransaction = Omit<
+  PrismaService,
+  | '$connect'
+  | '$disconnect'
+  | '$on'
+  | '$transaction'
+  | '$use'
+  | '$extends'
+  | 'onModuleInit'
+  | 'onModuleDestroy'
+>;
+
 @Injectable()
 export class InvitationRepository {
   constructor(private prisma: PrismaService) {}
@@ -175,7 +187,7 @@ export class InvitationRepository {
   }
 
   private async getProjectAncestors(
-    tx: any,
+    tx: PrismaTransaction,
     projectId: string,
   ): Promise<{ id: string; parentProjectId: string | null }[]> {
     const ancestors: { id: string; parentProjectId: string | null }[] = [];
