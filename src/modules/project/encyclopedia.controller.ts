@@ -27,7 +27,7 @@ export class EncyclopediaController {
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @Post()
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiGenerateProjectEncyclopedia()
   async generateEncyclopedia(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -48,7 +48,7 @@ export class EncyclopediaController {
 
   @Get('status')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiGetEncyclopediaJobStatus()
   async getEncyclopediaStatus(
     @Param('projectId', new UuidValidationPipe()) projectId: string,

@@ -57,6 +57,7 @@ model Project {
 model Role {
   id                      String                   @id @default(uuid())
   name                    String                   @unique
+  level                   Int                      @unique // Lower number = higher privilege
   userRoles               UserProjectRole[]
   organizationRoles       UserOrganizationRole[]
   invitations             Invitation[]
@@ -196,6 +197,7 @@ enum AiService {
   GENERATE_PROVOCATIONS
   GENERATE_ENCYCLOPEDIA
   GENERATE_SOLUTIONS
+  GENERATE_MANDALA_IMAGES
 }
 
 enum AiModel {

@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 
+import { AppLogger } from '@common/services/logger.service';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus, Project, User } from '@prisma/client';
@@ -8,9 +9,26 @@ import { Invitation } from './entities/invitation.entity';
 
 const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
+type PrismaTransaction = Omit<
+  PrismaService,
+  | '$connect'
+  | '$disconnect'
+  | '$on'
+  | '$transaction'
+  | '$use'
+  | '$extends'
+  | 'onModuleInit'
+  | 'onModuleDestroy'
+>;
+
 @Injectable()
 export class InvitationRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(InvitationRepository.name);
+  }
 
   async findProjectById(id: string): Promise<Project | null> {
     return this.prisma.project.findFirst({
@@ -123,13 +141,13 @@ export class InvitationRepository {
     roleId: string,
   ): Promise<Invitation> {
     return this.prisma.$transaction(async (tx) => {
-      // Update invitation status
+      // 1. Actualizar estado de invitación
       const invitation = await tx.invitation.update({
         where: { id: invitationId },
         data: { status: InvitationStatus.ACCEPTED },
       });
 
-      // Add user to project
+      // 2. Agregar al proyecto invitado
       await tx.userProjectRole.create({
         data: {
           userId,
@@ -138,8 +156,84 @@ export class InvitationRepository {
         },
       });
 
+      // 3. Obtener la cadena de proyectos padres
+      const parentProjects = await this.getProjectAncestors(
+        tx,
+        invitation.projectId,
+      );
+
+      // 4. Agregar al usuario a todos los proyectos padres
+      // Usar el rol "member" para los padres, o podrías usar el mismo roleId
+      const defaultRole = await tx.role.findFirst({
+        where: { name: 'worldbuilder' },
+      });
+
+      if (!defaultRole) {
+        this.logger.error(
+          `Default role 'worldbuilder' not found in database. Cannot add user to parent projects.`,
+          {
+            invitationId,
+            userId,
+            projectId: invitation.projectId,
+          },
+        );
+        throw new Error(
+          `Default role 'worldbuilder' not found. Please ensure the role exists in the database.`,
+        );
+      }
+
+      for (const parentProject of parentProjects) {
+        // Verificar si ya es miembro
+        const existingRole = await tx.userProjectRole.findFirst({
+          where: {
+            userId,
+            projectId: parentProject.id,
+          },
+        });
+
+        if (!existingRole) {
+          await tx.userProjectRole.create({
+            data: {
+              userId,
+              projectId: parentProject.id,
+              roleId: defaultRole.id,
+            },
+          });
+        }
+      }
+
       return invitation;
     });
+  }
+
+  private async getProjectAncestors(
+    tx: PrismaTransaction,
+    projectId: string,
+  ): Promise<{ id: string; parentProjectId: string | null }[]> {
+    const ancestors: { id: string; parentProjectId: string | null }[] = [];
+    let currentProjectId: string | null = projectId;
+
+    while (currentProjectId) {
+      const project: { id: string; parentProjectId: string | null } | null =
+        await tx.project.findUnique({
+          where: { id: currentProjectId },
+          select: {
+            id: true,
+            parentProjectId: true,
+          },
+        });
+
+      if (!project || !project.parentProjectId) break;
+
+      ancestors.push({
+        id: project.parentProjectId,
+        parentProjectId: project.parentProjectId,
+      });
+
+      currentProjectId = project.parentProjectId;
+    }
+
+    return ancestors;
   }
 
   async createWithToken(
@@ -165,8 +259,8 @@ export class InvitationRepository {
   }
 
   async findByInviteToken(inviteToken: string): Promise<Invitation | null> {
-    // Solo para usar cuando es una invitación multi-usuario (sin email)
-    // ya que no cambiamos el estado para que no se "roben" la invitación
+    // Solo para usar cuando es una invitación multiusuario (sin email)
+    // porque no cambiamos el estado para que no se "roben" la invitación
     return this.prisma.invitation.findFirst({
       where: {
         inviteToken,
@@ -187,19 +281,5 @@ export class InvitationRepository {
     });
 
     return !!membership;
-  }
-
-  async addUserToProject(
-    userId: string,
-    projectId: string,
-    roleId: string,
-  ): Promise<void> {
-    await this.prisma.userProjectRole.create({
-      data: {
-        userId,
-        projectId,
-        roleId,
-      },
-    });
   }
 }

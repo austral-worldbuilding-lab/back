@@ -44,22 +44,41 @@ export abstract class BaseOrganizationRoleGuard implements CanActivate {
       },
     });
 
-    if (!userRole) {
-      throw new ForbiddenException('No tienes acceso a esta organización');
-    }
-
     const requiredRoles = this.reflector.get<string[]>(
       REQUIRED_ORGANIZATION_ROLES_KEY,
       context.getHandler(),
     );
 
-    if (!requiredRoles || requiredRoles.length === 0) {
+    if (userRole) {
+      if (!requiredRoles || requiredRoles.length === 0) {
+        return true;
+      }
+
+      if (!requiredRoles.includes(userRole.role.name)) {
+        throw new ForbiddenException(
+          'No tienes los permisos necesarios para realizar esta acción',
+        );
+      }
+
       return true;
     }
 
-    if (!requiredRoles.includes(userRole.role.name)) {
+    const hasProjectAccess = await this.prisma.userProjectRole.findFirst({
+      where: {
+        userId: userId,
+        project: {
+          organizationId: organizationId,
+        },
+      },
+    });
+
+    if (!hasProjectAccess) {
+      throw new ForbiddenException('No tienes acceso a esta organización');
+    }
+
+    if (requiredRoles && requiredRoles.length > 0) {
       throw new ForbiddenException(
-        'No tienes los permisos necesarios para realizar esta acción',
+        'No tienes los permisos necesarios para realizar esta acción en la organización',
       );
     }
 

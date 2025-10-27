@@ -534,31 +534,64 @@ export class ProjectRepository {
       },
     };
 
-    if (rootOnly) {
-      whereClause.rootProjectId = {
-        not: null,
-      };
+    // Sin rootOnly: Obtener N proyectos (roots y hijos)
+    if (!rootOnly) {
+      const [projects, total] = await this.prisma.$transaction([
+        this.prisma.project.findMany({
+          where: whereClause,
+          skip,
+          take,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.project.count({
+          where: whereClause,
+        }),
+      ]);
+
+      // Devolver proyectos paginados y total
+      return [
+        projects.map((project) => this.parseToProjectDto(project)),
+        total,
+      ];
     }
 
-    const [projects, total] = await this.prisma.$transaction([
-      this.prisma.project.findMany({
-        where: whereClause,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.project.count({
-        where: whereClause,
-      }),
-    ]);
+    // Con rootOnly: Obtener N proyectos root + todos sus hijos
+    const allUserProjects = await this.prisma.project.findMany({
+      where: {
+        ...whereClause,
+        rootProjectId: { not: null },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, rootProjectId: true },
+    });
 
-    const filteredProjects = rootOnly
-      ? projects.filter((project) => project.rootProjectId === project.id)
-      : projects;
+    // Filtrar solo los proyectos que son root (rootProjectId === id)
+    const rootProjects = allUserProjects.filter(
+      (p) => p.rootProjectId === p.id,
+    );
 
+    // Paginar proyectos root
+    const paginatedRootIds = rootProjects
+      .slice(skip, skip + take)
+      .map((p) => p.id);
+
+    if (paginatedRootIds.length === 0) {
+      return [[], rootProjects.length];
+    }
+
+    // Obtener todos los proyectos relacionados con los root paginados
+    const allRelatedProjects = await this.prisma.project.findMany({
+      where: {
+        isActive: true,
+        rootProjectId: { in: paginatedRootIds },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Devolver N proyectos root + todos sus hijos, y total de proyectos root
     return [
-      filteredProjects.map((project) => this.parseToProjectDto(project)),
-      total,
+      allRelatedProjects.map((project) => this.parseToProjectDto(project)),
+      rootProjects.length,
     ];
   }
 
@@ -947,7 +980,7 @@ export class ProjectRepository {
 
   async countOwners(projectId: string): Promise<number> {
     return this.prisma.userProjectRole.count({
-      where: { projectId, role: { name: 'owner' } },
+      where: { projectId, role: { name: 'dueño' } },
     });
   }
 

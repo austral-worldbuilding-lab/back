@@ -383,6 +383,16 @@ const solutionReplacer = composeReplacers(
   replaceMinSolutions,
 );
 
+const mandalaImagesReplacer = composeReplacers(
+  replaceProjectName,
+  replaceProjectDescription,
+  replaceDimensions,
+  replaceScales,
+  replaceCenterCharacter,
+  replaceCenterCharacterDescription,
+  replaceMandalaDocument,
+);
+
 function replaceWithReplacer(
   promptTemplate: string,
   config: PromptReplacementConfig,
@@ -541,5 +551,23 @@ export function replaceSolutionPlaceholders(
     config,
     solutionReplacer,
     'solution',
+  );
+}
+
+/**
+ * Replace placeholders for mandala images generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceMandalaImagesPlaceholders(
+  promptTemplate: string,
+  config: PromptReplacementConfig = {},
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    mandalaImagesReplacer,
+    'mandala images',
   );
 }

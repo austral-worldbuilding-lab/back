@@ -18,6 +18,7 @@ import { AiProvider } from '../interfaces/ai-provider.interface';
 import { AiGenerationEngine } from '../services/ai-generation-engine.interface';
 import { AiStrategyRegistryService } from '../services/ai-strategy-registry.service';
 import { ContextPostitsInput } from '../strategies/context-postits.strategy';
+import { MandalaImagesInput } from '../strategies/mandala-images.strategy';
 import { MandalaSummaryInput } from '../strategies/mandala-summary.strategy';
 import { PostitsSummaryInput } from '../strategies/postits-summary.strategy';
 import { PostitsInput } from '../strategies/postits.strategy';
@@ -27,9 +28,12 @@ import { SolutionsInput } from '../strategies/solutions.strategy';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
 
+import { AiMandalaImageResponse } from '@/modules/mandala/types/mandala-images.type';
+
 @Injectable()
 export class GeminiAdapter implements AiProvider {
-  private readonly geminiModel: string;
+  private readonly geminiTextModel: string;
+  private readonly geminiImageModel: string;
   private readonly temperatureConfig: AiTemperatureConfig;
 
   constructor(
@@ -38,13 +42,20 @@ export class GeminiAdapter implements AiProvider {
     private readonly strategies: AiStrategyRegistryService,
     private readonly logger: AppLogger,
   ) {
-    const model = this.configService.get<string>('GEMINI_MODEL');
-    if (!model) {
+    const text_model = this.configService.get<string>('GEMINI_MODEL');
+    const image_model = this.configService.get<string>('GEMINI_IMAGE_MODEL');
+    if (!text_model) {
       throw new Error(
         'GEMINI_MODEL is not configured in environment variables',
       );
     }
-    this.geminiModel = model;
+    this.geminiTextModel = text_model;
+    if (!image_model) {
+      throw new Error(
+        'GEMINI_IMAGE_MODEL is not configured in environment variables',
+      );
+    }
+    this.geminiImageModel = image_model;
 
     // Load temperature configuration with validation
     this.temperatureConfig = getAiTemperatureConfig();
@@ -84,12 +95,11 @@ export class GeminiAdapter implements AiProvider {
     };
     const prompt = await strategy.buildPrompt(input);
     const schema = strategy.getResponseSchema();
-    const { text, usage } = await this.engine.run(
-      this.geminiModel,
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
       prompt,
       schema,
       { projectId, selectedFiles, mandalaId },
-      this.temperatureConfig.postits,
     );
     const data = strategy.parseAndValidate(text);
     this.logger.log(`Postit generation completed for project: ${projectId}`, {
@@ -122,8 +132,8 @@ export class GeminiAdapter implements AiProvider {
     };
     const prompt = await strategy.buildPrompt(input);
     const schema = strategy.getResponseSchema();
-    const { text, usage } = await this.engine.run(
-      this.geminiModel,
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
       prompt,
       schema,
       { projectId, selectedFiles, mandalaId },
@@ -166,8 +176,8 @@ export class GeminiAdapter implements AiProvider {
     };
     const prompt = await strategy.buildPrompt(input);
     const schema = strategy.getResponseSchema();
-    const { text, usage } = await this.engine.run(
-      this.geminiModel,
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
       prompt,
       schema,
       { projectId, selectedFiles, mandalaId },
@@ -205,8 +215,8 @@ export class GeminiAdapter implements AiProvider {
     };
     const prompt = await strategy.buildPrompt(input);
     const schema = strategy.getResponseSchema();
-    const { text, usage } = await this.engine.run(
-      this.geminiModel,
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
       prompt,
       schema,
       { projectId },
@@ -240,8 +250,8 @@ export class GeminiAdapter implements AiProvider {
     };
     const prompt = await strategy.buildPrompt(input);
     const schema = strategy.getResponseSchema();
-    const { text, usage } = await this.engine.run(
-      this.geminiModel,
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
       prompt,
       schema,
       { projectId },
@@ -276,11 +286,13 @@ export class GeminiAdapter implements AiProvider {
     return (async () => {
       const prompt = await strategy.buildPrompt(input);
       const schema = strategy.getResponseSchema();
-      const { text } = await this.engine.run(
-        this.geminiModel,
+      const { text } = await this.engine.runTextGeneration(
+        this.geminiTextModel,
         prompt,
         schema,
-        { projectId },
+        {
+          projectId,
+        },
         this.temperatureConfig.mandalaSummary,
       );
       const data = strategy.parseAndValidate(text);
@@ -313,8 +325,8 @@ export class GeminiAdapter implements AiProvider {
       mandalasSummariesWithAi,
     });
     const schema = strategy.getResponseSchema();
-    const { text, usage } = await this.engine.run(
-      this.geminiModel,
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
       prompt,
       schema,
       { projectId, selectedFiles },
@@ -344,8 +356,8 @@ export class GeminiAdapter implements AiProvider {
     };
     const prompt = await strategy.buildPrompt(input);
     const schema = strategy.getResponseSchema();
-    const { text, usage } = await this.engine.run(
-      this.geminiModel,
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
       prompt,
       schema,
       { projectId },
@@ -353,6 +365,44 @@ export class GeminiAdapter implements AiProvider {
     );
     const data = strategy.parseAndValidate(text);
     this.logger.log(`Solutions generation completed for project: ${projectId}`);
+    return { data, usage };
+  }
+
+  async generateMandalaImages(
+    projectId: string,
+    mandalaId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    mandalaDocument: string,
+  ): Promise<AiResponseWithUsage<AiMandalaImageResponse[]>> {
+    this.logger.log(
+      `Starting mandala images generation for mandala: ${mandalaId}`,
+    );
+    const strategy = this.strategies.getMandalaImages();
+    const input: MandalaImagesInput = {
+      projectName,
+      projectDescription,
+      dimensions,
+      scales,
+      centerCharacter,
+      centerCharacterDescription,
+      mandalaDocument,
+    };
+    const prompt = await strategy.buildPrompt(input);
+    //const schema = strategy.getResponseSchema();
+
+    const { data, usage } = await this.engine.runImageGeneration(
+      this.geminiImageModel,
+      prompt,
+      { projectId, mandalaId },
+    );
+    this.logger.log(
+      `Mandala images generation completed for mandala: ${mandalaId}`,
+    );
     return { data, usage };
   }
 }

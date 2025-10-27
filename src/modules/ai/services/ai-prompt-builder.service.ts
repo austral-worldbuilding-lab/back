@@ -11,6 +11,7 @@ import {
   replaceEncyclopediaPlaceholders,
   replaceContextPostitPlaceholders,
   replaceSolutionPlaceholders,
+  replaceMandalaImagesPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -314,5 +315,43 @@ export class AiPromptBuilderService {
       minSolutions: this.utilsService.getMinSolutions(),
     });
     return this.buildPromptWithCiclo3Instructions(promptTask);
+  }
+
+  /**
+   * Builds complete prompt for mandala images generation
+   * @param projectName - Project name (displayed as world name)
+   * @param projectDescription - Project description (displayed as world description)
+   * @param centerCharacter - The center character
+   * @param centerCharacterDescription - The center character description
+   * @param dimensions - Array of dimensions
+   * @param scales - Array of scales
+   * @param mandalaDocument - Full mandala JSON context
+   * @returns Complete prompt ready for AI processing
+   */
+  async buildMandalaImagesPrompt(
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    mandalaDocument: string,
+  ): Promise<string> {
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_imagenes_mandala.txt',
+    );
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const promptTask = replaceMandalaImagesPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
+      centerCharacter: centerCharacter,
+      centerCharacterDescription: centerCharacterDescription,
+      dimensions: dimensions,
+      scales: scales,
+      mandalaDocument: mandalaDocument,
+    });
+    return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 }

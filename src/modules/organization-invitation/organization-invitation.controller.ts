@@ -44,7 +44,7 @@ import {
 import { OrganizationInvitationRoleGuard } from './guards/organization-invitation-role.guard';
 import { OrganizationInvitationService } from './organization-invitation.service';
 
-import { RequireOrganizationOwner } from '@/common/guards/organization-owner.guard';
+import { RequireOrganizationRoles } from '@/common/guards/base-organization-role.guard';
 
 @ApiTags('Organization Invitations')
 @Controller('organization-invitation')
@@ -57,7 +57,7 @@ export class OrganizationInvitationController {
 
   @Post()
   @UseGuards(OrganizationInvitationRoleGuard)
-  @RequireOrganizationOwner()
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiCreateOrgInvitation()
   async create(
     @Body() dto: CreateOrganizationInvitationDto,
@@ -168,7 +168,7 @@ export class OrganizationInvitationController {
 
   @Post('create-link')
   @UseGuards(OrganizationInvitationRoleGuard)
-  @RequireOrganizationOwner()
+  @RequireOrganizationRoles('dueño', 'facilitador')
   async createInviteLink(
     @Body()
     createLinkDto: {

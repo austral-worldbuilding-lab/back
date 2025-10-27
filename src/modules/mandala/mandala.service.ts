@@ -20,11 +20,15 @@ import {
   FirestoreCharacter,
   FirestoreMandalaDocument,
 } from '../firebase/types/firestore-character.type';
+import { NotificationService } from '../notification/notification.service';
+import { Notification } from '../notification/types/notification';
+import { OrganizationService } from '../organization/organization.service';
 
 import {
   OVERLAP_ERROR_MESSAGES,
   OVERLAP_ERROR_TYPES,
 } from './constants/overlap-error-messages';
+import { AiMandalaImageResponseDto } from './dto/ai-mandala-image-response.dto';
 import { CharacterListItemDto } from './dto/character-list-item.dto';
 import {
   CreateMandalaCenterDto,
@@ -38,6 +42,7 @@ import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postit
 import { hasCharacters, MandalaDto } from './dto/mandala.dto';
 import { UpdateMandalaDto } from './dto/update-mandala.dto';
 import { MandalaRepository } from './mandala.repository';
+import { ImageService } from './services/image.service';
 import { PostitService } from './services/postit.service';
 import { MandalaType } from './types/mandala-type.enum';
 import { getEffectiveDimensionsAndScales } from './utils/mandala-config.util';
@@ -57,11 +62,14 @@ export class MandalaService {
     private mandalaRepository: MandalaRepository,
     private firebaseDataService: FirebaseDataService,
     private postitService: PostitService,
+    private imageService: ImageService,
     @Inject(forwardRef(() => ProjectService))
     private projectService: ProjectService,
     private aiService: AiService,
     private cacheService: CacheService,
     private readonly logger: AppLogger,
+    private notificationService: NotificationService,
+    private organizationService: OrganizationService,
   ) {
     this.logger.setContext(MandalaService.name);
   }
@@ -354,7 +362,8 @@ export class MandalaService {
 
   async generate(
     createMandalaDto: CreateMandalaDto,
-  ): Promise<MandalaWithPostitsAndLinkedCentersDto> {
+    userId: string,
+  ): Promise<MandalaDto> {
     if (!createMandalaDto.projectId) {
       throw new BadRequestException(
         'Project ID is required to generate mandala',
@@ -366,6 +375,22 @@ export class MandalaService {
       MandalaType.CHARACTER,
     );
 
+    const notification: Notification = {
+      title: 'Generación en Proceso',
+      content: `La mandala ${createMandalaDto.name} está siendo generada con IA`,
+      createdAt: new Date(),
+    };
+
+    void this.notificationService.sendNotification(userId, notification);
+    void this.generatePipeline(mandala, createMandalaDto, userId);
+    return mandala;
+  }
+
+  private async generatePipeline(
+    mandala: MandalaDto,
+    createMandalaDto: CreateMandalaDto,
+    userId: string,
+  ) {
     try {
       const postits = await this.postitService.generatePostits(
         mandala,
@@ -409,16 +434,37 @@ export class MandalaService {
         mandala.id,
       );
 
+      const organization =
+        await this.organizationService.findOrganizationIdByProjectId(
+          createMandalaDto.projectId,
+        );
+
+      const notification: Notification = {
+        title: 'Mandala Generada',
+        content: `La mandala ${createMandalaDto.name} ha sido generada correctamente`,
+        createdAt: new Date(),
+        url: `/app/organization/${organization}/projects/${createMandalaDto.projectId}/mandala/${mandala.id}`,
+      };
+
+      void this.notificationService.sendNotification(userId, notification);
+
       return firestoreData;
     } catch (error) {
       await this.remove(mandala.id);
+      const notification: Notification = {
+        title: 'Error en la Generación',
+        content: `Ha ocurrido un error durante la generación de la mandala ${createMandalaDto.name}. Por favor, vuelva a intentarlo.`,
+        createdAt: new Date(),
+      };
+      void this.notificationService.sendNotification(userId, notification);
       throw error;
     }
   }
 
   async generateContext(
     createContextDto: CreateContextMandalaDto,
-  ): Promise<MandalaWithPostitsAndLinkedCentersDto> {
+    userId: string,
+  ): Promise<MandalaDto> {
     if (!createContextDto.projectId) {
       throw new BadRequestException(
         'Project ID is required to generate context mandala',
@@ -430,54 +476,15 @@ export class MandalaService {
       MandalaType.CONTEXT,
     );
 
-    try {
-      const postits = await this.postitService.generatePostits(
-        mandala,
-        mandala.configuration.dimensions.map((d) => d.name),
-        mandala.configuration.scales,
-        createContextDto.selectedFiles,
-      );
-      this.logger.debug('context postits', postits);
-      const postitsWithCoordinates: PostitWithCoordinates[] =
-        this.postitService.transformToPostitsWithCoordinates(
-          mandala.id,
-          postits,
-          mandala.configuration.dimensions.map((d) => d.name),
-          mandala.configuration.scales,
-        );
+    const notification: Notification = {
+      title: 'Generación en Proceso',
+      content: `La mandala ${createContextDto.name} está siendo generada con IA`,
+      createdAt: new Date(),
+    };
 
-      const childrenCenter = (
-        await this.mandalaRepository.findChildrenMandalasCenters(mandala.id)
-      ).map((center) => ({
-        name: center.name,
-        description: center.description,
-        color: center.color,
-        position: DEFAULT_CHARACTER_POSITION,
-        section: DEFAULT_CHARACTER_SECTION,
-        dimension: DEFAULT_CHARACTER_DIMENSION,
-      }));
-
-      const firestoreData: MandalaWithPostitsAndLinkedCentersDto = {
-        mandala: mandala,
-        postits: postitsWithCoordinates,
-        childrenCenter,
-      };
-
-      await this.firebaseDataService.createDocument(
-        mandala.projectId,
-        {
-          mandala: firestoreData.mandala,
-          postits: firestoreData.postits,
-          characters: childrenCenter,
-        },
-        mandala.id,
-      );
-
-      return firestoreData;
-    } catch (error) {
-      await this.remove(mandala.id);
-      throw error;
-    }
+    void this.notificationService.sendNotification(userId, notification);
+    void this.generatePipeline(mandala, createContextDto, userId);
+    return mandala;
   }
 
   async getFilters(mandalaId: string): Promise<FilterSectionDto[]> {
@@ -792,6 +799,71 @@ export class MandalaService {
       mandalaId,
     );
     return this.cacheService.getFromCache<PostitWithCoordinates>(cacheKey);
+  }
+
+  async generateMandalaImages(
+    userId: string,
+    mandalaId: string,
+    dimensions?: string[],
+    scales?: string[],
+  ): Promise<AiMandalaImageResponseDto[]> {
+    this.logger.log(
+      `generateMandalaImages called for mandala ${mandalaId} by user ${userId}`,
+    );
+
+    const mandala = await this.findOne(mandalaId);
+    const { effectiveDimensions, effectiveScales } =
+      getEffectiveDimensionsAndScales(mandala, dimensions, scales);
+
+    const aiImages = await this.generateMandalaImagesFromAI(
+      mandala,
+      effectiveDimensions,
+      effectiveScales,
+    );
+
+    // Save images to blob storage inside mandala/cached folder
+    const savedImages = await this.imageService.saveAiGeneratedImages(
+      mandala.projectId,
+      mandalaId,
+      aiImages,
+    );
+
+    this.logger.log(
+      `Saved ${savedImages.length} AI-generated images to blob storage for mandala ${mandalaId}`,
+    );
+
+    // Return as DTOs with url
+    return savedImages as AiMandalaImageResponseDto[];
+  }
+
+  private async generateMandalaImagesFromAI(
+    mandala: MandalaDto,
+    effectiveDimensions: string[],
+    effectiveScales: string[],
+  ): Promise<Array<{ id: string; imageData: string }>> {
+    const centerName = mandala.configuration.center.name;
+    const centerDescription = mandala.configuration.center.description || 'N/A';
+    const mandalaDocument = await this.firebaseDataService.getDocument(
+      mandala.projectId,
+      mandala.id,
+    );
+
+    // Get project information
+    const project = await this.projectService.findOne(mandala.projectId);
+
+    const mandalaDocumentString = JSON.stringify(mandalaDocument);
+
+    return this.aiService.generateMandalaImages(
+      mandala.projectId,
+      mandala.id,
+      project.name,
+      project.description || '',
+      effectiveDimensions,
+      effectiveScales,
+      centerName,
+      centerDescription,
+      mandalaDocumentString,
+    );
   }
 
   private async generatePostitsFromAI(
