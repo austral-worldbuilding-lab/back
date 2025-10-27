@@ -6,7 +6,7 @@ import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 export function GetCachedSolutionsDecorator() {
   return applyDecorators(
     UseGuards(ProjectRoleGuard),
-    RequireProjectRoles('member', 'owner', 'admin'),
+    RequireProjectRoles('worldbuilder', 'dueño', 'facilitador'),
     ApiOperation({
       summary: 'Get cached AI solutions for a project',
       description:

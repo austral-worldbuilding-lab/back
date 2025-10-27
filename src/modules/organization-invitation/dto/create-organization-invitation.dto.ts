@@ -27,7 +27,7 @@ export class CreateOrganizationInvitationDto {
   @ApiProperty({
     description:
       'Rol que tendrá el usuario invitado en la organización (opcional)',
-    example: 'member',
+    example: 'worldbuilder',
     required: false,
   })
   @IsOptional()

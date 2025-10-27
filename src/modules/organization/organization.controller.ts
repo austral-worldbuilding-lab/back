@@ -107,7 +107,7 @@ export class OrganizationController {
 
   @Patch(':id')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner')
+  @RequireOrganizationRoles('dueño')
   @ApiUpdateOrganization()
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -122,7 +122,7 @@ export class OrganizationController {
 
   @Delete(':id')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner')
+  @RequireOrganizationRoles('dueño')
   @ApiDeleteOrganization()
   async remove(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -160,7 +160,7 @@ export class OrganizationController {
 
   @Get(':organizationId/users')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @RequireOrganizationRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGetOrganizationUsers()
   async getOrganizationUsers(
     @Param('organizationId', new UuidValidationPipe()) organizationId: string,
@@ -174,7 +174,7 @@ export class OrganizationController {
 
   @Put(':organizationId/users/:userId/role')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiUpdateOrganizationUserRole()
   async updateUserRole(
     @Param('organizationId', new UuidValidationPipe()) organizationId: string,
@@ -194,7 +194,7 @@ export class OrganizationController {
 
   @Delete(':organizationId/users/:userId')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiRemoveUserFromOrganization()
   async removeUserFromOrganization(
     @Param('organizationId', new UuidValidationPipe()) organizationId: string,
@@ -215,7 +215,7 @@ export class OrganizationController {
 
   @Post(':id/text-files')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @RequireOrganizationRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiUploadOrganizationTextFile()
   async uploadTextFile(
     @Param('id', new UuidValidationPipe()) organizationId: string,
