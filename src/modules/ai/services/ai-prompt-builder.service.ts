@@ -74,8 +74,6 @@ export class AiPromptBuilderService {
       promptFileName,
     );
 
-    console.log('PROMT USADO: ', promptFilePath);
-
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
     const promptTask = replacePostitPlaceholders(promptTemplate, {
