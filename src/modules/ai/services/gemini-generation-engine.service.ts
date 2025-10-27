@@ -198,9 +198,8 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
   ): Promise<{ text: string | undefined; usage: AiUsageInfo }> {
     const startTime = Date.now();
 
-    // Use provided temperature or undefined (let Gemini use its default)
-    const effectiveTemperature =
-      temperature !== undefined ? temperature : undefined;
+    // Use provided temperature (if is undefined, Gemini will use its default)
+    const effectiveTemperature = temperature;
 
     this.logger.log('Sending request to Gemini API', {
       model,

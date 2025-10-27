@@ -1,5 +1,8 @@
 import { AppLogger } from '@common/services/logger.service';
-import { getAiTemperatureConfig, AiTemperatureConfig } from '@config/ai-temperature.config';
+import {
+  getAiTemperatureConfig,
+  AiTemperatureConfig,
+} from '@config/ai-temperature.config';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
   AiPostitComparisonResponse,
@@ -188,9 +191,12 @@ export class GeminiAdapter implements AiProvider {
       report: AiMandalaReport;
     }>
   > {
-    this.logger.log(`Starting postits summary generation for project: ${projectId}`, {
-      temperature: this.temperatureConfig.postitsSummary,
-    });
+    this.logger.log(
+      `Starting postits summary generation for project: ${projectId}`,
+      {
+        temperature: this.temperatureConfig.postitsSummary,
+      },
+    );
     const strategy = this.strategies.getPostitsSummary();
     const input: PostitsSummaryInput = {
       projectName,
