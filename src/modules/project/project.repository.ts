@@ -579,6 +579,7 @@ export class ProjectRepository {
     // Obtener todos los proyectos relacionados con los root paginados
     const allRelatedProjects = await this.prisma.project.findMany({
       where: {
+        ...whereClause,
         isActive: true,
         rootProjectId: { in: paginatedRootIds },
       },
