@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 
+import { AppLogger } from '@common/services/logger.service';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { InvitationStatus, Project, User } from '@prisma/client';
@@ -22,7 +23,12 @@ type PrismaTransaction = Omit<
 
 @Injectable()
 export class InvitationRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setContext(InvitationRepository.name);
+  }
 
   async findProjectById(id: string): Promise<Project | null> {
     return this.prisma.project.findFirst({
@@ -162,6 +168,20 @@ export class InvitationRepository {
         where: { name: 'worldbuilder' },
       });
 
+      if (!defaultRole) {
+        this.logger.error(
+          `Default role 'worldbuilder' not found in database. Cannot add user to parent projects.`,
+          {
+            invitationId,
+            userId,
+            projectId: invitation.projectId,
+          },
+        );
+        throw new Error(
+          `Default role 'worldbuilder' not found. Please ensure the role exists in the database.`,
+        );
+      }
+
       for (const parentProject of parentProjects) {
         // Verificar si ya es miembro
         const existingRole = await tx.userProjectRole.findFirst({
@@ -176,7 +196,7 @@ export class InvitationRepository {
             data: {
               userId,
               projectId: parentProject.id,
-              roleId: defaultRole?.id || roleId,
+              roleId: defaultRole.id,
             },
           });
         }
@@ -207,7 +227,7 @@ export class InvitationRepository {
 
       ancestors.push({
         id: project.parentProjectId,
-        parentProjectId: null, // No necesitamos el dato
+        parentProjectId: project.parentProjectId,
       });
 
       currentProjectId = project.parentProjectId;
