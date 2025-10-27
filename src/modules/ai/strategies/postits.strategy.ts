@@ -11,6 +11,7 @@ import { AiRequestValidationService } from '../services/ai-request-validation.se
 import { AiGenerationStrategy } from './ai-generation-strategy.interface';
 
 export interface PostitsInput {
+  projectId: string;
   projectName: string;
   projectDescription: string;
   dimensions: string[];
@@ -33,6 +34,7 @@ export class PostitsStrategy
 
   async buildPrompt(input: PostitsInput): Promise<string> {
     return this.promptBuilder.buildPostitPrompt(
+      input.projectId,
       input.projectName,
       input.projectDescription,
       input.dimensions,

@@ -1250,6 +1250,64 @@ export class ProjectRepository {
       }));
   }
 
+  /**
+   * Builds a human-readable string representing the chain of provocations
+   * that led to the creation of a project.
+   * @param projectId - The project ID to trace provocations from
+   * @returns A string like "¿Qué pasaría si...? -> ¿Qué pasaría si en 2040...?"
+   *          or "N/A" if no provocations exist in the chain
+   */
+  async getProvocationTimelineString(projectId: string): Promise<string> {
+    // Get the provocation that originated this project
+    const originLink = await this.prisma.projProvLink.findFirst({
+      where: {
+        projectId: projectId,
+        role: ProjProvLinkRole.ORIGIN,
+      },
+      include: {
+        provocation: {
+          select: {
+            id: true,
+            question: true,
+            parentProvocationId: true,
+          },
+        },
+      },
+    });
+
+    if (!originLink?.provocation) {
+      return 'N/A';
+    }
+
+    const provocationQuestions: string[] = [];
+    let currentProvocationId: string | null;
+
+    provocationQuestions.unshift(originLink.provocation.question);
+    currentProvocationId = originLink.provocation.parentProvocationId;
+
+    while (currentProvocationId) {
+      const parentProvocation = await this.prisma.provocation.findUnique({
+        where: {
+          id: currentProvocationId,
+          isActive: true,
+        },
+        select: {
+          question: true,
+          parentProvocationId: true,
+        },
+      });
+
+      if (!parentProvocation) {
+        break;
+      }
+
+      provocationQuestions.unshift(parentProvocation.question);
+      currentProvocationId = parentProvocation.parentProvocationId;
+    }
+
+    return provocationQuestions.join(' -> ');
+  }
+
   async getTimelineGraph(
     organizationId: string,
     highlightProjectId?: string,

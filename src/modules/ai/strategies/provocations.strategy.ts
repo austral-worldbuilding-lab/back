@@ -9,6 +9,7 @@ import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import { AiGenerationStrategy } from './ai-generation-strategy.interface';
 
 export interface ProvocationsInput {
+  projectId: string;
   projectName: string;
   projectDescription: string;
   mandalasAiSummary: string;
@@ -27,6 +28,7 @@ export class ProvocationsStrategy
 
   async buildPrompt(input: ProvocationsInput): Promise<string> {
     return this.promptBuilder.buildProvocationPrompt(
+      input.projectId,
       input.projectName,
       input.projectDescription,
       input.mandalasAiSummary,
