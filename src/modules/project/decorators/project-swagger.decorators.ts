@@ -1234,9 +1234,9 @@ export const ApiCreateChildProject = () =>
       description: 'Datos para crear el proyecto hijo',
       examples: {
         'proyecto-hijo-completo': {
-          summary: 'Proyecto hijo con descripción',
+          summary: 'Proyecto hijo con descripción e icono',
           description:
-            'Crear un proyecto hijo con nombre y descripción personalizados',
+            'Crear un proyecto hijo con nombre, descripción e icono personalizados',
           value: {
             name: 'Subproyecto: Análisis de usuarios',
             description:
@@ -1245,11 +1245,11 @@ export const ApiCreateChildProject = () =>
           },
         },
         'proyecto-hijo-minimo': {
-          summary: 'Proyecto hijo mínimo',
-          description: 'Crear un proyecto hijo solo con nombre',
+          summary: 'Proyecto hijo mínimo (solo nombre)',
+          description:
+            'Crear un proyecto hijo solo con nombre (usa icono y descripción por defecto)',
           value: {
             name: 'Subproyecto: Fase 2',
-            icon: 'folder',
           },
         },
       },
@@ -1277,7 +1277,7 @@ export const ApiCreateChildProject = () =>
     }),
     ApiForbiddenResponse({
       description:
-        'Prohibido - No tiene permisos suficientes en el proyecto padre (requiere rol de member, admin u owner)',
+        'Prohibido - No tiene permisos suficientes en el proyecto padre (requiere rol de dueño, facilitador o worldbuilder)',
       schema: {
         type: 'object',
         properties: {

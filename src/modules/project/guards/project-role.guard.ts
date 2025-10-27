@@ -20,8 +20,12 @@ export class ProjectRoleGuard extends BaseProjectRoleGuard {
   ): Promise<string | undefined> {
     const projectId =
       (request.body as { projectId?: string })?.projectId ||
-      (request.params as { projectId?: string; id?: string })?.projectId ||
-      (request.params as { projectId?: string; id?: string })?.id ||
+      (request.params as { projectId?: string; id?: string; parentId?: string })
+        ?.projectId ||
+      (request.params as { projectId?: string; id?: string; parentId?: string })
+        ?.id ||
+      (request.params as { projectId?: string; id?: string; parentId?: string })
+        ?.parentId ||
       (request.query as { projectId?: string })?.projectId;
 
     return Promise.resolve(projectId);

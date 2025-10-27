@@ -527,7 +527,6 @@ export class ProjectRepository {
     roleId: string,
   ): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Verify parent project exists and is active
       const parentProject = await tx.project.findFirst({
         where: {
           id: parentProjectId,
@@ -539,20 +538,17 @@ export class ProjectRepository {
         throw new ResourceNotFoundException('Parent project', parentProjectId);
       }
 
-      // 2. Parse parent configuration to inherit dimensions and scales
       const parentConfig = this.parseToProjectConfiguration(
         parentProject.configuration,
       );
 
-      // 3. Determine rootProjectId: if parent has rootProjectId use it, otherwise use parent's id
       const rootProjectId = parentProject.rootProjectId || parentProject.id;
 
-      // 4. Create the child project
       const childProject = await tx.project.create({
         data: {
           name: createChildProjectDto.name,
           description: createChildProjectDto.description || null,
-          icon: createChildProjectDto.icon,
+          icon: createChildProjectDto.icon || 'folder',
           configuration: this.parseToJson({
             dimensions: parentConfig.dimensions,
             scales: parentConfig.scales,
@@ -563,7 +559,6 @@ export class ProjectRepository {
         },
       });
 
-      // 5. Create the user role relationship (creator as owner initially)
       await tx.userProjectRole.create({
         data: {
           userId,

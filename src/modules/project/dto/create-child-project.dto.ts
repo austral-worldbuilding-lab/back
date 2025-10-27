@@ -24,8 +24,9 @@ export class CreateChildProjectDto {
     description: 'Icono del proyecto hijo',
     example: 'folder',
     default: 'folder',
+    required: false,
   })
   @IsString()
-  @IsNotEmpty()
-  icon!: string;
+  @IsOptional()
+  icon?: string;
 }

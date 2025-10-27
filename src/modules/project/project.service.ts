@@ -374,16 +374,8 @@ export class ProjectService {
     createChildProjectDto: CreateChildProjectDto,
     userId: string,
   ): Promise<ProjectDto> {
-    // Get owner role for the creating user
-    const ownerRole = await this.roleService.findOrCreate('owner');
+    const ownerRole = await this.roleService.findOrCreate('dueño');
 
-    // Verify parent project exists
-    const parentProject = await this.findOne(parentProjectId);
-    if (!parentProject) {
-      throw new ResourceNotFoundException('Parent project', parentProjectId);
-    }
-
-    // Create the child project (inherits configuration from parent)
     const childProject: ProjectDto =
       await this.projectRepository.createChildProject(
         parentProjectId,
@@ -395,7 +387,7 @@ export class ProjectService {
     // Copy all members from parent project, ensuring creator is owner
     await this.projectRepository.copyProjectMembersFromParent(
       childProject.id,
-      parentProject.id,
+      parentProjectId,
       userId,
       ownerRole.id,
     );

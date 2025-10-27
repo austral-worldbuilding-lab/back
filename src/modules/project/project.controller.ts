@@ -144,7 +144,7 @@ export class ProjectController {
 
   @Post(':parentId/child')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiCreateChildProject()
   async createChildProject(
     @Param('parentId', new UuidValidationPipe()) parentId: string,
