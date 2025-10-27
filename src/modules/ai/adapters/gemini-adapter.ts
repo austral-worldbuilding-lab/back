@@ -67,6 +67,7 @@ export class GeminiAdapter implements AiProvider {
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
     const strategy = this.strategies.getPostits();
     const input: PostitsInput = {
+      projectId,
       projectName,
       projectDescription,
       dimensions,
@@ -102,6 +103,7 @@ export class GeminiAdapter implements AiProvider {
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
     const strategy = this.strategies.getContextPostits();
     const input: ContextPostitsInput = {
+      projectId,
       projectName,
       projectDescription,
       dimensions,
@@ -141,6 +143,7 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log(`Starting question generation for project: ${projectId}`);
     const strategy = this.strategies.getQuestions();
     const input: QuestionsInput = {
+      projectId,
       projectName,
       projectDescription,
       dimensions,
@@ -211,6 +214,7 @@ export class GeminiAdapter implements AiProvider {
     );
     const strategy = this.strategies.getProvocations();
     const input: ProvocationsInput = {
+      projectId,
       projectName,
       projectDescription,
       mandalasAiSummary,
@@ -282,6 +286,7 @@ export class GeminiAdapter implements AiProvider {
     );
     const strategy = this.strategies.getEncyclopedia();
     const prompt = await strategy.buildPrompt({
+      projectId,
       projectName,
       projectDescription,
       dimensions,
@@ -311,6 +316,7 @@ export class GeminiAdapter implements AiProvider {
     this.logger.log(`Starting solutions generation for project: ${projectId}`);
     const strategy = this.strategies.getSolutions();
     const input: SolutionsInput = {
+      projectId,
       projectName,
       projectDescription,
       encyclopedia,
@@ -344,6 +350,7 @@ export class GeminiAdapter implements AiProvider {
     );
     const strategy = this.strategies.getMandalaImages();
     const input: MandalaImagesInput = {
+      projectId,
       projectName,
       projectDescription,
       dimensions,

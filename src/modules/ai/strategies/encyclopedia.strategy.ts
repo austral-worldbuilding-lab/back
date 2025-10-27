@@ -8,6 +8,7 @@ import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiGenerationStrategy } from './ai-generation-strategy.interface';
 
 export interface EncyclopediaInput {
+  projectId: string;
   projectName: string;
   projectDescription: string;
   dimensions: string[];
@@ -26,6 +27,7 @@ export class EncyclopediaStrategy
 
   async buildPrompt(input: EncyclopediaInput): Promise<string> {
     return this.promptBuilder.buildEncyclopediaPrompt(
+      input.projectId,
       input.projectName,
       input.projectDescription,
       input.dimensions,

@@ -1,6 +1,8 @@
 import * as path from 'path';
 
+import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
+import { ProjProvLinkRole } from '@prisma/client';
 
 import {
   replacePostitPlaceholders,
@@ -18,7 +20,67 @@ import { AiAdapterUtilsService } from './ai-adapter-utils.service';
 
 @Injectable()
 export class AiPromptBuilderService {
-  constructor(private readonly utilsService: AiAdapterUtilsService) {}
+  constructor(
+    private readonly utilsService: AiAdapterUtilsService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  /**
+   * Gets the provocation timeline string for a project
+   * @param projectId - The project ID
+   * @returns A string like "¿Qué pasaría si...? -> ¿Qué pasaría si en 2040...?" or "N/A"
+   */
+  private async getProvocationTimelineString(
+    projectId: string,
+  ): Promise<string> {
+    const originLink = await this.prisma.projProvLink.findFirst({
+      where: {
+        projectId: projectId,
+        role: ProjProvLinkRole.ORIGIN,
+      },
+      include: {
+        provocation: {
+          select: {
+            id: true,
+            question: true,
+            parentProvocationId: true,
+          },
+        },
+      },
+    });
+
+    if (!originLink?.provocation) {
+      return 'N/A';
+    }
+
+    const provocationQuestions: string[] = [];
+    let currentProvocationId: string | null;
+
+    provocationQuestions.unshift(originLink.provocation.question);
+    currentProvocationId = originLink.provocation.parentProvocationId;
+
+    while (currentProvocationId) {
+      const parentProvocation = await this.prisma.provocation.findUnique({
+        where: {
+          id: currentProvocationId,
+          isActive: true,
+        },
+        select: {
+          question: true,
+          parentProvocationId: true,
+        },
+      });
+
+      if (!parentProvocation) {
+        break;
+      }
+
+      provocationQuestions.unshift(parentProvocation.question);
+      currentProvocationId = parentProvocation.parentProvocationId;
+    }
+
+    return provocationQuestions.join(' -> ');
+  }
 
   /**
    * Builds a complete prompt by combining Ciclo 1 instructions with task-specific prompt
@@ -44,6 +106,7 @@ export class AiPromptBuilderService {
 
   /**
    * Builds complete prompt for postit generation
+   * @param projectId - Project ID for provocation timeline
    * @param projectName - Project name (displayed as world name)
    * @param projectDescription - Project description (displayed as world description)
    * @param dimensions - Array of dimensions
@@ -54,6 +117,7 @@ export class AiPromptBuilderService {
    * @returns Complete prompt ready for AI processing
    */
   async buildPostitPrompt(
+    projectId: string,
     projectName: string,
     projectDescription: string,
     dimensions: string[],
@@ -68,6 +132,8 @@ export class AiPromptBuilderService {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
+    const provocationTimeline =
+      await this.getProvocationTimelineString(projectId);
     const promptTask = replacePostitPlaceholders(promptTemplate, {
       projectName: projectName,
       projectDescription: projectDescription,
@@ -78,12 +144,14 @@ export class AiPromptBuilderService {
       tags: tags,
       maxPostits: this.utilsService.getMaxPostits(),
       minPostits: this.utilsService.getMinPostits(),
+      provocationTimeline: provocationTimeline,
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 
   /**
    * Builds complete prompt for context postit generation
+   * @param projectId - Project ID for provocation timeline
    * @param projectName - Project name (displayed as world name)
    * @param projectDescription - Project description (displayed as world description)
    * @param dimensions - Array of dimensions
@@ -94,6 +162,7 @@ export class AiPromptBuilderService {
    * @returns Complete prompt ready for AI processing
    */
   async buildContextPostitPrompt(
+    projectId: string,
     projectName: string,
     projectDescription: string,
     dimensions: string[],
@@ -108,6 +177,8 @@ export class AiPromptBuilderService {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
+    const provocationTimeline =
+      await this.getProvocationTimelineString(projectId);
     const promptTask = replaceContextPostitPlaceholders(promptTemplate, {
       projectName: projectName,
       projectDescription: projectDescription,
@@ -118,12 +189,14 @@ export class AiPromptBuilderService {
       tags: tags,
       maxPostits: this.utilsService.getMaxPostits(),
       minPostits: this.utilsService.getMinPostits(),
+      provocationTimeline: provocationTimeline,
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 
   /**
    * Builds complete prompt for question generation
+   * @param projectId - Project ID for provocation timeline
    * @param projectName - Project name (displayed as world name)
    * @param projectDescription - Project description (displayed as world description)
    * @param dimensions - Array of dimensions
@@ -135,6 +208,7 @@ export class AiPromptBuilderService {
    * @returns Complete prompt ready for AI processing
    */
   async buildQuestionPrompt(
+    projectId: string,
     projectName: string,
     projectDescription: string,
     dimensions: string[],
@@ -150,6 +224,8 @@ export class AiPromptBuilderService {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
+    const provocationTimeline =
+      await this.getProvocationTimelineString(projectId);
     const promptTask = replaceQuestionPlaceholders(promptTemplate, {
       projectName: projectName,
       projectDescription: projectDescription,
@@ -161,6 +237,7 @@ export class AiPromptBuilderService {
       mandalaDocument: mandalaAiSummary,
       maxQuestions: this.utilsService.getMaxQuestions(),
       minQuestions: this.utilsService.getMinQuestions(),
+      provocationTimeline: provocationTimeline,
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
@@ -195,6 +272,7 @@ export class AiPromptBuilderService {
 
   /**
    * Builds complete prompt for provocation generation
+   * @param projectId - Project ID for provocation timeline
    * @param projectName
    * @param projectDescription
    * @param mandalasAiSummary - Document containing the mandalas to be compared
@@ -202,6 +280,7 @@ export class AiPromptBuilderService {
    * @returns Complete prompt ready for AI processing
    */
   async buildProvocationPrompt(
+    projectId: string,
     projectName: string,
     projectDescription: string,
     mandalasAiSummary: string,
@@ -213,6 +292,8 @@ export class AiPromptBuilderService {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
+    const provocationTimeline =
+      await this.getProvocationTimelineString(projectId);
     const promptTask = replaceProvocationPlaceholders(promptTemplate, {
       projectName: projectName,
       projectDescription: projectDescription,
@@ -220,6 +301,7 @@ export class AiPromptBuilderService {
       mandalasSummariesWithAi: mandalasSummariesWithAi,
       maxResults: this.utilsService.getMaxProvocations(),
       minResults: this.utilsService.getMinProvocations(),
+      provocationTimeline: provocationTimeline,
     });
     return this.buildPromptWithCiclo3Instructions(promptTask);
   }
@@ -259,6 +341,7 @@ export class AiPromptBuilderService {
 
   /**
    * Builds complete prompt for encyclopedia generation
+   * @param projectId - Project ID for provocation timeline
    * @param projectName - Name of the project
    * @param projectDescription - Description of the project
    * @param dimensions - Array of dimensions present in the project
@@ -267,6 +350,7 @@ export class AiPromptBuilderService {
    * @returns Complete prompt ready for AI processing
    */
   async buildEncyclopediaPrompt(
+    projectId: string,
     projectName: string,
     projectDescription: string,
     dimensions: string[],
@@ -279,24 +363,29 @@ export class AiPromptBuilderService {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
+    const provocationTimeline =
+      await this.getProvocationTimelineString(projectId);
     const promptTask = replaceEncyclopediaPlaceholders(promptTemplate, {
       projectName: projectName,
       projectDescription: projectDescription,
       dimensions: dimensions,
       scales: scales,
       mandalasSummariesWithAi: mandalasSummariesWithAi,
+      provocationTimeline: provocationTimeline,
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 
   /**
    * Builds complete prompt for solution generation
+   * @param projectId - Project ID for provocation timeline
    * @param projectName - Name of the project
    * @param projectDescription - Description of the project
    * @param encyclopedia - Encyclopedia content of the project
    * @returns Complete prompt ready for AI processing
    */
   async buildSolutionPrompt(
+    projectId: string,
     projectName: string,
     projectDescription: string,
     encyclopedia: string,
@@ -307,18 +396,22 @@ export class AiPromptBuilderService {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
+    const provocationTimeline =
+      await this.getProvocationTimelineString(projectId);
     const promptTask = replaceSolutionPlaceholders(promptTemplate, {
       projectName: projectName,
       projectDescription: projectDescription,
       encyclopedia: encyclopedia,
       maxSolutions: this.utilsService.getMaxSolutions(),
       minSolutions: this.utilsService.getMinSolutions(),
+      provocationTimeline: provocationTimeline,
     });
     return this.buildPromptWithCiclo3Instructions(promptTask);
   }
 
   /**
    * Builds complete prompt for mandala images generation
+   * @param projectId - Project ID for provocation timeline
    * @param projectName - Project name (displayed as world name)
    * @param projectDescription - Project description (displayed as world description)
    * @param centerCharacter - The center character
@@ -329,6 +422,7 @@ export class AiPromptBuilderService {
    * @returns Complete prompt ready for AI processing
    */
   async buildMandalaImagesPrompt(
+    projectId: string,
     projectName: string,
     projectDescription: string,
     dimensions: string[],
@@ -343,6 +437,8 @@ export class AiPromptBuilderService {
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
+    const provocationTimeline =
+      await this.getProvocationTimelineString(projectId);
     const promptTask = replaceMandalaImagesPlaceholders(promptTemplate, {
       projectName: projectName,
       projectDescription: projectDescription,
@@ -351,6 +447,7 @@ export class AiPromptBuilderService {
       dimensions: dimensions,
       scales: scales,
       mandalaDocument: mandalaDocument,
+      provocationTimeline: provocationTimeline,
     });
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }

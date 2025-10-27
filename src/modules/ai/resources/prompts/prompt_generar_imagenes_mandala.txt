@@ -6,6 +6,8 @@ CONFIGURACIÓN DEL MUNDO:
   • Descripción del Mundo: ${projectDescription}
   • Dimensiones habilitadas: ${dimensions}
   • Escalas habilitadas: ${scales}
+CONTEXTO DE PROVOCACIONES:
+  • Para llegar a este mundo, se analizaron las provocaciones: ${provocations-timeline}
 
 CONFIGURACIÓN DE LA MANDALAS:
   • Nombre del Contexto/Personaje: ${centerCharacter}
