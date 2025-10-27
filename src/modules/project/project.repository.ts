@@ -534,31 +534,64 @@ export class ProjectRepository {
       },
     };
 
-    if (rootOnly) {
-      whereClause.rootProjectId = {
-        not: null,
-      };
+    // Sin rootOnly: Obtener N proyectos (roots y hijos)
+    if (!rootOnly) {
+      const [projects, total] = await this.prisma.$transaction([
+        this.prisma.project.findMany({
+          where: whereClause,
+          skip,
+          take,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.project.count({
+          where: whereClause,
+        }),
+      ]);
+
+      // Devolver proyectos paginados y total
+      return [
+        projects.map((project) => this.parseToProjectDto(project)),
+        total,
+      ];
     }
 
-    const [projects, total] = await this.prisma.$transaction([
-      this.prisma.project.findMany({
-        where: whereClause,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.project.count({
-        where: whereClause,
-      }),
-    ]);
+    // Con rootOnly: Obtener N proyectos root + todos sus hijos
+    const allUserProjects = await this.prisma.project.findMany({
+      where: {
+        ...whereClause,
+        rootProjectId: { not: null },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, rootProjectId: true },
+    });
 
-    const filteredProjects = rootOnly
-      ? projects.filter((project) => project.rootProjectId === project.id)
-      : projects;
+    // Filtrar solo los proyectos que son root (rootProjectId === id)
+    const rootProjects = allUserProjects.filter(
+      (p) => p.rootProjectId === p.id,
+    );
 
+    // Paginar proyectos root
+    const paginatedRootIds = rootProjects
+      .slice(skip, skip + take)
+      .map((p) => p.id);
+
+    if (paginatedRootIds.length === 0) {
+      return [[], rootProjects.length];
+    }
+
+    // Obtener todos los proyectos relacionados con los root paginados
+    const allRelatedProjects = await this.prisma.project.findMany({
+      where: {
+        isActive: true,
+        rootProjectId: { in: paginatedRootIds },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Devolver N proyectos root + todos sus hijos, y total de proyectos root
     return [
-      filteredProjects.map((project) => this.parseToProjectDto(project)),
-      total,
+      allRelatedProjects.map((project) => this.parseToProjectDto(project)),
+      rootProjects.length,
     ];
   }
 
@@ -1233,6 +1266,64 @@ export class ProjectRepository {
         type: 'PROJECT_PARENT' as const,
         createdAt: p.createdAt.toISOString(),
       }));
+  }
+
+  /**
+   * Builds a human-readable string representing the chain of provocations
+   * that led to the creation of a project.
+   * @param projectId - The project ID to trace provocations from
+   * @returns A string like "¿Qué pasaría si...? -> ¿Qué pasaría si en 2040...?"
+   *          or "N/A" if no provocations exist in the chain
+   */
+  async getProvocationTimelineString(projectId: string): Promise<string> {
+    // Get the provocation that originated this project
+    const originLink = await this.prisma.projProvLink.findFirst({
+      where: {
+        projectId: projectId,
+        role: ProjProvLinkRole.ORIGIN,
+      },
+      include: {
+        provocation: {
+          select: {
+            id: true,
+            question: true,
+            parentProvocationId: true,
+          },
+        },
+      },
+    });
+
+    if (!originLink?.provocation) {
+      return 'N/A';
+    }
+
+    const provocationQuestions: string[] = [];
+    let currentProvocationId: string | null;
+
+    provocationQuestions.unshift(originLink.provocation.question);
+    currentProvocationId = originLink.provocation.parentProvocationId;
+
+    while (currentProvocationId) {
+      const parentProvocation = await this.prisma.provocation.findUnique({
+        where: {
+          id: currentProvocationId,
+          isActive: true,
+        },
+        select: {
+          question: true,
+          parentProvocationId: true,
+        },
+      });
+
+      if (!parentProvocation) {
+        break;
+      }
+
+      provocationQuestions.unshift(parentProvocation.question);
+      currentProvocationId = parentProvocation.parentProvocationId;
+    }
+
+    return provocationQuestions.join(' -> ');
   }
 
   async getTimelineGraph(

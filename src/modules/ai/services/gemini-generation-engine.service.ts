@@ -1,6 +1,7 @@
 import { ExternalServiceException } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
 import { GoogleGenAI } from '@google/genai';
+import { GenerateImagesConfig } from '@google/genai/dist/genai';
 import { FileScope } from '@modules/files/types/file-scope.type';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +17,8 @@ import {
   CachedFileInfo,
   GeminiFileCacheService,
 } from './gemini-file-cache.service';
+
+import { AiMandalaImageResponse } from '@/modules/mandala/types/mandala-images.type';
 
 interface GeminiUploadedFile {
   uri: string;
@@ -48,11 +51,12 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
     this.logger.setContext(GeminiGenerationEngineService.name);
   }
 
-  async run(
+  async runTextGeneration(
     model: string,
     prompt: string,
     responseSchema: unknown,
     context: AiGenerationEngineContext,
+    temperature?: number,
   ): Promise<{ text: string | undefined; usage: AiUsageInfo }> {
     const filesResult = await this.utilsService.loadAndValidateFiles(
       context.projectId,
@@ -71,7 +75,15 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
       prompt,
       geminiFiles,
       responseSchema,
+      temperature,
     );
+  }
+
+  async runImageGeneration(
+    model: string,
+    prompt: string,
+  ): Promise<{ data: AiMandalaImageResponse[]; usage: AiUsageInfo }> {
+    return await this.generateImageContent(model, prompt);
   }
 
   private async uploadFilesToGemini(
@@ -192,21 +204,37 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
     prompt: string,
     geminiFiles: GeminiUploadedFile[],
     responseSchema: unknown,
+    temperature?: number,
   ): Promise<{ text: string | undefined; usage: AiUsageInfo }> {
     const startTime = Date.now();
+
+    // Use provided temperature (if is undefined, Gemini will use its default)
+    const effectiveTemperature = temperature;
 
     this.logger.log('Sending request to Gemini API', {
       model,
       fileCount: geminiFiles.length,
       hasPromptTask: !!prompt,
+      temperature:
+        effectiveTemperature !== undefined ? effectiveTemperature : 'default',
     });
 
     try {
-      const config = {
+      const config: {
+        responseMimeType: string;
+        responseSchema: unknown;
+        systemInstruction: string;
+        temperature?: number;
+      } = {
         responseMimeType: 'application/json',
         responseSchema: responseSchema,
         systemInstruction: prompt,
-      } as const;
+      };
+
+      // Only add temperature if explicitly provided
+      if (effectiveTemperature !== undefined) {
+        config.temperature = effectiveTemperature;
+      }
 
       const contents = geminiFiles.map((file: GeminiUploadedFile) => ({
         role: 'user',
@@ -236,6 +264,8 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
         totalTokens: usage.totalTokens,
         promptTokens: usage.promptTokens,
         completionTokens: usage.completionTokens,
+        temperature:
+          effectiveTemperature !== undefined ? effectiveTemperature : 'default',
       });
 
       this.logger.debug('Response details', {
@@ -250,6 +280,78 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
         model,
         duration,
         fileCount: geminiFiles.length,
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+        temperature: effectiveTemperature,
+      });
+      throw this.mapGeminiError(error);
+    }
+  }
+
+  /**
+   * No file loading to avoid confusing the model - uses only text prompt with mandala context
+   * @param model - Image generation model (e.g., 'gemini-2.5-flash-image')
+   * @param prompt - Text prompt for image generation (includes mandala summary and JSON)
+   * @param context - Generation context (projectId and mandalaId only, no files)
+   * @returns Promise with generated images and usage info
+   */
+  private async generateImageContent(
+    model: string,
+    prompt: string,
+  ): Promise<{ data: AiMandalaImageResponse[]; usage: AiUsageInfo }> {
+    const startTime = Date.now();
+
+    try {
+      const config = {
+        aspectRatio: '1:1',
+        numberOfImages: 1,
+      } as GenerateImagesConfig;
+
+      const contents = [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ];
+
+      const response = await this.ai.models.generateContent({
+        model,
+        contents,
+        config,
+      });
+
+      const duration = Date.now() - startTime;
+      const usage = this.parseUsageMetadata(response.usageMetadata || {});
+
+      // Extract images from response parts
+      const images: AiMandalaImageResponse[] = [];
+      let imageIndex = 0;
+
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.text) {
+          console.log(part.text);
+        } else if (part.inlineData) {
+          const imageData = part.inlineData.data;
+          const buffer = Buffer.from(imageData || '', 'base64');
+          images.push({
+            id: `image-${imageIndex++}-${Date.now()}`,
+            imageData: buffer.toString('base64'),
+          });
+        }
+      }
+
+      this.logger.log('Gemini Image API request completed successfully', {
+        model,
+        duration,
+        totalTokens: usage.totalTokens,
+        imagesGenerated: images.length,
+      });
+
+      return { data: images, usage };
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error('Gemini Image API request failed', error, {
+        model,
+        duration,
         errorType: error instanceof Error ? error.constructor.name : 'Unknown',
       });
       throw this.mapGeminiError(error);

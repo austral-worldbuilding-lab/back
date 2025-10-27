@@ -13,6 +13,7 @@ import { AiService as AiServiceEnum, AiModel } from '@prisma/client';
 
 import { FirestoreMandalaDocument } from '../firebase/types/firestore-character.type';
 import { MandalaDto } from '../mandala/dto/mandala.dto';
+import { AiMandalaImageResponse } from '../mandala/types/mandala-images.type';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
@@ -431,6 +432,57 @@ export class AiService {
       `Generated ${response.data.length} solutions for project: ${projectId}`,
     );
 
+    return response.data;
+  }
+
+  async generateMandalaImages(
+    projectId: string,
+    mandalaId: string,
+    projectName: string,
+    projectDescription: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    mandalaDocument: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<AiMandalaImageResponse[]> {
+    this.logger.log(
+      `Starting mandala images generation for project: ${projectId}`,
+    );
+
+    const response = await this.aiProvider.generateMandalaImages(
+      projectId,
+      mandalaId,
+      projectName,
+      projectDescription,
+      dimensions,
+      scales,
+      centerCharacter,
+      centerCharacterDescription,
+      mandalaDocument,
+    );
+
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_MANDALA_IMAGES,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
+    this.logger.log(
+      `Generated ${response.data.length} images for mandala: ${mandalaId}`,
+    );
     return response.data;
   }
 }

@@ -9,6 +9,7 @@ import { AiPromptBuilderService } from '../services/ai-prompt-builder.service';
 import { AiGenerationStrategy } from './ai-generation-strategy.interface';
 
 export interface SolutionsInput {
+  projectId: string;
   projectName: string;
   projectDescription: string;
   encyclopedia: string;
@@ -26,6 +27,7 @@ export class SolutionsStrategy
 
   async buildPrompt(input: SolutionsInput): Promise<string> {
     return this.promptBuilder.buildSolutionPrompt(
+      input.projectId,
       input.projectName,
       input.projectDescription,
       input.encyclopedia,

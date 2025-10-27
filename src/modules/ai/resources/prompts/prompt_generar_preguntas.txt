@@ -13,6 +13,8 @@ CONFIGURACIÓN DEL MUNDO:
   • Dimensiones habilitadas: ${dimensions}
   • Escalas habilitadas: ${scales}
   • Etiquetas disponibles: ${tags}
+CONTEXTO DE PROVOCACIONES:
+  • Para llegar a este mundo, se analizaron las provocaciones: ${provocations-timeline}
 CONFIGURACIÓN DE LA GENERACIÓN:
   • Cantidad mínima de preguntas: ${minQuestions}
   • Cantidad máxima de preguntas: ${maxQuestions}

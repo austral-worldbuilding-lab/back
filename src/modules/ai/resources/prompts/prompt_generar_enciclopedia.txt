@@ -6,6 +6,8 @@ INFORMACIÓN DEL PROYECTO:
   • Descripción del proyecto: ${projectDescription}
   • Dimensiones del mundo: ${dimensions}  
   • Escalas del mundo: ${scales}
+CONTEXTO DE PROVOCACIONES:
+  • Para llegar a este mundo, se analizaron las provocaciones: ${provocations-timeline}
 
 RESÚMENES DE MANDALAS DISPONIBLES:
   Los siguientes resúmenes contienen la información consolidada de cada mandala del proyecto:
