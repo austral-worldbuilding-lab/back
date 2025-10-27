@@ -68,7 +68,7 @@ export class ValidationException extends NestBadRequestException {
 /**
  * Exception indicating lack of permissions to perform a specific action on a resource.
  * Useful for access control and authorization policies.
- * Example: a user tries to delete a resource without admin role.
+ * Example: a user tries to delete a resource without dueño role.
  */
 export class AuthorizationException extends NestUnauthorizedException {
   constructor(
