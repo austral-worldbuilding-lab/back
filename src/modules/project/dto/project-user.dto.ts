@@ -21,7 +21,7 @@ export class ProjectUserDto {
 
   @ApiProperty({
     description: 'Rol del usuario en el proyecto',
-    example: 'admin',
+    example: 'facilitador',
   })
   role!: string;
 
