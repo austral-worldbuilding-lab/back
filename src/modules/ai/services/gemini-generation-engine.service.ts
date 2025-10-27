@@ -53,6 +53,7 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
     prompt: string,
     responseSchema: unknown,
     context: AiGenerationEngineContext,
+    temperature?: number,
   ): Promise<{ text: string | undefined; usage: AiUsageInfo }> {
     const filesResult = await this.utilsService.loadAndValidateFiles(
       context.projectId,
@@ -71,6 +72,7 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
       prompt,
       geminiFiles,
       responseSchema,
+      temperature,
     );
   }
 
@@ -192,21 +194,38 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
     prompt: string,
     geminiFiles: GeminiUploadedFile[],
     responseSchema: unknown,
+    temperature?: number,
   ): Promise<{ text: string | undefined; usage: AiUsageInfo }> {
     const startTime = Date.now();
+
+    // Use provided temperature or undefined (let Gemini use its default)
+    const effectiveTemperature =
+      temperature !== undefined ? temperature : undefined;
 
     this.logger.log('Sending request to Gemini API', {
       model,
       fileCount: geminiFiles.length,
       hasPromptTask: !!prompt,
+      temperature:
+        effectiveTemperature !== undefined ? effectiveTemperature : 'default',
     });
 
     try {
-      const config = {
+      const config: {
+        responseMimeType: string;
+        responseSchema: unknown;
+        systemInstruction: string;
+        temperature?: number;
+      } = {
         responseMimeType: 'application/json',
         responseSchema: responseSchema,
         systemInstruction: prompt,
-      } as const;
+      };
+
+      // Only add temperature if explicitly provided
+      if (effectiveTemperature !== undefined) {
+        config.temperature = effectiveTemperature;
+      }
 
       const contents = geminiFiles.map((file: GeminiUploadedFile) => ({
         role: 'user',
@@ -236,6 +255,8 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
         totalTokens: usage.totalTokens,
         promptTokens: usage.promptTokens,
         completionTokens: usage.completionTokens,
+        temperature:
+          effectiveTemperature !== undefined ? effectiveTemperature : 'default',
       });
 
       this.logger.debug('Response details', {
@@ -251,6 +272,7 @@ export class GeminiGenerationEngineService implements AiGenerationEngine {
         duration,
         fileCount: geminiFiles.length,
         errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+        temperature: effectiveTemperature,
       });
       throw this.mapGeminiError(error);
     }
