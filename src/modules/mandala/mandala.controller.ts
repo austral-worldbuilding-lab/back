@@ -69,7 +69,6 @@ import {
   toImageResponseDto,
 } from './dto/image/image-response.dto';
 import { PresignedUrlResponseDto } from './dto/image/presigned-url-response.dto';
-import { MandalaWithPostitsAndLinkedCentersDto } from './dto/mandala-with-postits-and-linked-centers.dto';
 import { MandalaDto } from './dto/mandala.dto';
 import { CreatePostitDto } from './dto/postit/create-postit.dto';
 import { UpdatePostitDto } from './dto/postit/update-postit.dto';
@@ -210,13 +209,16 @@ export class MandalaController {
   @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGenerateMandala()
   async generate(
+    @Req() request: RequestWithUser,
     @Body() createMandalaDto: CreateMandalaDto,
-  ): Promise<MessageResponse<MandalaWithPostitsAndLinkedCentersDto>> {
-    const mandalaWithPostits =
-      await this.mandalaService.generate(createMandalaDto);
+  ): Promise<MessageResponse<MandalaDto>> {
+    const mandala = await this.mandalaService.generate(
+      createMandalaDto,
+      request.user.id,
+    );
     return {
       message: 'Mandala generated successfully with IA',
-      data: mandalaWithPostits,
+      data: mandala,
     };
   }
 
@@ -242,10 +244,13 @@ export class MandalaController {
   @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGenerateContextMandala()
   async generateContext(
+    @Req() request: RequestWithUser,
     @Body() createContextDto: CreateContextMandalaDto,
-  ): Promise<MessageResponse<MandalaWithPostitsAndLinkedCentersDto>> {
-    const mandalaWithPostits =
-      await this.mandalaService.generateContext(createContextDto);
+  ): Promise<MessageResponse<MandalaDto>> {
+    const mandalaWithPostits = await this.mandalaService.generateContext(
+      createContextDto,
+      request.user.id,
+    );
     return {
       message: 'Context mandala generated successfully with AI',
       data: mandalaWithPostits,
