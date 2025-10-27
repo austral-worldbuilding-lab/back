@@ -556,15 +556,20 @@ export class ProjectRepository {
     }
 
     // Con rootOnly: Obtener N proyectos root + todos sus hijos
-    // Obtener solo proyectos root directamente desde la base de datos
-    const rootProjects = await this.prisma.project.findMany({
+    const allUserProjects = await this.prisma.project.findMany({
       where: {
         ...whereClause,
-        rootProjectId: { equals: Prisma.field('id') }, // See note below
+        rootProjectId: { not: null },
       },
       orderBy: { createdAt: 'desc' },
       select: { id: true, rootProjectId: true },
     });
+
+    // Filtrar solo los proyectos que son root (rootProjectId === id)
+    const rootProjects = allUserProjects.filter(
+      (p) => p.rootProjectId === p.id,
+    );
+
     // Paginar proyectos root
     const paginatedRootIds = rootProjects
       .slice(skip, skip + take)
@@ -577,7 +582,6 @@ export class ProjectRepository {
     // Obtener todos los proyectos relacionados con los root paginados
     const allRelatedProjects = await this.prisma.project.findMany({
       where: {
-        ...whereClause,
         isActive: true,
         rootProjectId: { in: paginatedRootIds },
       },
