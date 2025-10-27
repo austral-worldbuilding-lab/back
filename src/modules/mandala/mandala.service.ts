@@ -448,6 +448,12 @@ export class MandalaService {
       return firestoreData;
     } catch (error) {
       await this.remove(mandala.id);
+      const notification: Notification = {
+        title: 'Error en la Generación',
+        content: `Ha ocurrido un error durante la generación de la mandala ${createMandalaDto.name}. Por favor, vuelva a intentarlo.`,
+        createdAt: new Date(),
+      };
+      void this.notificationService.sendNotification(userId, notification);
       throw error;
     }
   }
