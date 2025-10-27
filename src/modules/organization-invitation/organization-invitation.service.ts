@@ -67,7 +67,7 @@ export class OrganizationInvitationService {
       if (!role) throw new ResourceNotFoundException('Role', dto.role);
       roleId = role.id;
     } else {
-      const defaultRole = await this.roleService.findOrCreate('member');
+      const defaultRole = await this.roleService.findOrCreate('worldbuilder');
       roleId = defaultRole.id;
     }
 
@@ -166,7 +166,7 @@ export class OrganizationInvitationService {
     if (invitationFromDb.roleId) {
       roleId = invitationFromDb.roleId;
     } else {
-      const memberRole = await this.roleService.findOrCreate('member');
+      const memberRole = await this.roleService.findOrCreate('worldbuilder');
       roleId = memberRole.id;
     }
 
@@ -363,7 +363,7 @@ export class OrganizationInvitationService {
     if (invitation.roleId) {
       roleId = invitation.roleId;
     } else {
-      const memberRole = await this.roleService.findOrCreate('member');
+      const memberRole = await this.roleService.findOrCreate('worldbuilder');
       roleId = memberRole.id;
     }
 

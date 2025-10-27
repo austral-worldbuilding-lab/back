@@ -97,7 +97,7 @@ export class MandalaController {
 
   @Post()
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiCreateMandala()
   async create(
     @Body() createMandalaDto: CreateMandalaDto,
@@ -178,7 +178,7 @@ export class MandalaController {
 
   @Patch(':id')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiUpdateMandala()
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -193,7 +193,7 @@ export class MandalaController {
 
   @Delete(':id')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner')
+  @RequireProjectRoles('dueño')
   @ApiDeleteMandala()
   async remove(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -207,7 +207,7 @@ export class MandalaController {
 
   @Post('generate')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGenerateMandala()
   async generate(
     @Body() createMandalaDto: CreateMandalaDto,
@@ -222,7 +222,7 @@ export class MandalaController {
 
   @Post('context')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiCreateContextMandala()
   async createContext(
     @Body() createContextDto: CreateContextMandalaDto,
@@ -239,7 +239,7 @@ export class MandalaController {
 
   @Post('context/generate')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGenerateContextMandala()
   async generateContext(
     @Body() createContextDto: CreateContextMandalaDto,
@@ -254,7 +254,7 @@ export class MandalaController {
 
   @Post(':mandalaId/postits')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiCreatePostit()
   async createPostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -277,7 +277,7 @@ export class MandalaController {
 
   @Patch(':mandalaId/postits/:postitId')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiUpdatePostit()
   async updatePostit(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -301,7 +301,7 @@ export class MandalaController {
 
   @Delete(':mandalaId/postits/:postitId')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiDeletePostit()
   @HttpCode(204)
   async deletePostit(
@@ -319,7 +319,7 @@ export class MandalaController {
 
   @Post(':id/link/:childId')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiLinkMandala()
   async linkMandala(
     @Param('id', new UuidValidationPipe()) parentId: string,
@@ -337,7 +337,7 @@ export class MandalaController {
 
   @Delete(':id/unlink/:childId')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiUnlinkMandala()
   async unlinkMandala(
     @Param('id', new UuidValidationPipe()) parentId: string,
@@ -351,7 +351,7 @@ export class MandalaController {
 
   @Post(':id/generate-questions')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGenerateQuestions()
   async generateQuestions(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
@@ -374,7 +374,7 @@ export class MandalaController {
 
   @Post(':id/generate-postits')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGeneratePostits()
   async generatePostits(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
@@ -433,7 +433,7 @@ export class MandalaController {
 
   @Post('overlap')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiOverlapMandalas()
   async overlapMandalas(
     @Body() overlapDto: CreateOverlappedMandalaDto,
@@ -447,7 +447,7 @@ export class MandalaController {
 
   @Post('overlap/summary')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiOverlapSummary()
   async createOverlapSummary(
     @Body() overlapDto: CreateOverlappedMandalaDto,
@@ -462,7 +462,7 @@ export class MandalaController {
 
   @Post(':mandalaId/images/presigned-url')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiCreateImagePresignedUrl()
   async createImagePresignedUrl(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -484,7 +484,7 @@ export class MandalaController {
 
   @Post(':mandalaId/images/confirm')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiConfirmImageUpload()
   async confirmImageUpload(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -509,7 +509,7 @@ export class MandalaController {
 
   @Delete(':mandalaId/images/:imageId')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiDeleteImage()
   async deleteImage(
     @Param('mandalaId', new UuidValidationPipe()) mandalaId: string,
@@ -526,7 +526,7 @@ export class MandalaController {
 
   @Post(':mandalaId/summary')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   async generateSummaryReport(
     @Param('mandalaId') mandalaId: string,
   ): Promise<{ summaryReport: string }> {

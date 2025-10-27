@@ -73,8 +73,8 @@ export class InvitationService {
       }
       roleId = role.id;
     } else {
-      // Default role is 'member'
-      const defaultRole = await this.roleService.findOrCreate('member');
+      // Default role is 'worldbuilder'
+      const defaultRole = await this.roleService.findOrCreate('worldbuilder');
       roleId = defaultRole.id;
     }
 
@@ -174,7 +174,7 @@ export class InvitationService {
     if (invitationFromDb.roleId) {
       roleId = invitationFromDb.roleId;
     } else {
-      const memberRole = await this.roleService.findOrCreate('member');
+      const memberRole = await this.roleService.findOrCreate('worldbuilder');
       roleId = memberRole.id;
     }
 
@@ -289,7 +289,7 @@ export class InvitationService {
     if (invitation.roleId) {
       roleId = invitation.roleId;
     } else {
-      const memberRole = await this.roleService.findOrCreate('member');
+      const memberRole = await this.roleService.findOrCreate('worldbuilder');
       roleId = memberRole.id;
     }
 

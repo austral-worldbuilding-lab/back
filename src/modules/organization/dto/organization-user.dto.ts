@@ -21,7 +21,7 @@ export class OrganizationUserDto {
 
   @ApiProperty({
     description: 'Rol del usuario en la organización',
-    example: 'admin',
+    example: 'facilitador',
   })
   role!: string;
 

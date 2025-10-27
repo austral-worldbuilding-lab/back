@@ -36,7 +36,7 @@ export class OrganizationService {
     dto: CreateOrganizationDto,
     userId: string,
   ): Promise<OrganizationDto> {
-    const ownerRole = await this.roleService.findOrCreate('owner');
+    const ownerRole = await this.roleService.findOrCreate('dueño');
 
     return this.organizationRepository.create(dto, userId, ownerRole.id);
   }
@@ -181,8 +181,8 @@ export class OrganizationService {
       );
     }
 
-    const isCurrentlyOwner = currentUserRole?.name === 'owner';
-    const willBeOwner = role.name === 'owner';
+    const isCurrentlyOwner = currentUserRole?.name === 'dueño';
+    const willBeOwner = role.name === 'dueño';
     const isDowngradeFromOwner = isCurrentlyOwner && !willBeOwner;
 
     if (isDowngradeFromOwner) {
@@ -190,7 +190,7 @@ export class OrganizationService {
         await this.organizationRepository.countOwners(organizationId);
 
       if (ownersCount <= 1) {
-        throw new StateConflictException('owner', 'downgrade', {
+        throw new StateConflictException('dueño', 'downgrade', {
           reason: 'last_owner',
         });
       }
@@ -231,11 +231,11 @@ export class OrganizationService {
       );
     }
 
-    if (userRole.name === 'owner') {
+    if (userRole.name === 'dueño') {
       const ownersCount =
         await this.organizationRepository.countOwners(organizationId);
       if (ownersCount <= 1) {
-        throw new StateConflictException('owner', 'remove', {
+        throw new StateConflictException('dueño', 'remove', {
           reason: 'last_owner',
         });
       }
