@@ -1,4 +1,4 @@
-import { RequireOwner } from '@common/guards/owner.guard';
+import { RequireProjectRoles } from '@common/guards/base-project-role.guard';
 import { EnumValidationPipe } from '@common/pipes/enum-validation.pipe';
 import { MaxValuePipe } from '@common/pipes/max-value.pipe';
 import { MinValuePipe } from '@common/pipes/min-value.pipe';
@@ -53,7 +53,7 @@ export class InvitationController {
 
   @Post()
   @UseGuards(InvitationRoleGuard)
-  @RequireOwner()
+  @RequireProjectRoles('dueño', 'facilitador')
   @ApiBearerAuth()
   @ApiCreateInvitation()
   async create(
@@ -170,7 +170,7 @@ export class InvitationController {
 
   @Post('create-link')
   @UseGuards(InvitationRoleGuard)
-  @RequireOwner()
+  @RequireProjectRoles('dueño', 'facilitador')
   @ApiBearerAuth()
   async createInviteLink(
     @Body()

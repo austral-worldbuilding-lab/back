@@ -87,7 +87,7 @@ export class ProjectController {
 
   @Post()
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiCreateProject()
   async create(
     @Body() createProjectDto: CreateProjectDto,
@@ -105,7 +105,7 @@ export class ProjectController {
 
   @Post('from-provocationId')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiCreateProjectFromProvocationId()
   async createFromProvocation(
     @Body() createProjectFromProvocationDto: CreateProjectFromProvocationDto,
@@ -124,7 +124,7 @@ export class ProjectController {
   // Create a provocation and a project from a question
   @Post('from-provocation')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiCreateProjectFromProvocation()
   async createFromQuestion(
     @Body() createProjectFromQuestionDto: CreateProjectFromQuestionDto,
@@ -191,7 +191,7 @@ export class ProjectController {
 
   @Patch(':id')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner')
+  @RequireProjectRoles('dueño')
   @ApiUpdateProject()
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -206,7 +206,7 @@ export class ProjectController {
 
   @Delete(':id')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner')
+  @RequireProjectRoles('dueño')
   @ApiDeleteProject()
   async remove(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -220,7 +220,7 @@ export class ProjectController {
 
   @Post(':id/tag')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiCreateProjectTag()
   async createProjectTag(
     @Param('id') projectId: string,
@@ -247,7 +247,7 @@ export class ProjectController {
 
   @Delete(':projectId/tags/:tagId')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner')
+  @RequireProjectRoles('dueño')
   @ApiDeleteProjectTag()
   async deleteTag(
     @Param('projectId') projectId: string,
@@ -263,7 +263,7 @@ export class ProjectController {
 
   @Put(':projectId/users/:userId/role')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin')
+  @RequireProjectRoles('dueño', 'facilitador')
   @ApiUpdateUserRole()
   async updateUserRole(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -295,7 +295,7 @@ export class ProjectController {
 
   @Delete(':projectId/users/:userId')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin')
+  @RequireProjectRoles('dueño', 'facilitador')
   @ApiRemoveUserFromProject()
   async removeUserFromProject(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -352,7 +352,7 @@ export class ProjectController {
 
   @Get(':projectId/provocations')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiFindAllProvocations()
   async findAllProvocations(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -367,7 +367,7 @@ export class ProjectController {
 
   @Post(':projectId/provocation')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiCreateProvocation()
   async createProvocation(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -386,7 +386,7 @@ export class ProjectController {
 
   @Get(':id/timeline')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiGetProjectTimeline()
   async getTimeline(
     @Param('id', new UuidValidationPipe()) projectId: string,
@@ -399,7 +399,7 @@ export class ProjectController {
 
   @Post(':id/text-files')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiUploadProjectTextFile()
   async uploadTextFile(
     @Param('id', new UuidValidationPipe()) projectId: string,
@@ -416,7 +416,7 @@ export class ProjectController {
 
   @Get(':projectId/solutions/validation')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiGetSolutionValidationStatus()
   async getSolutionValidationStatus(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
