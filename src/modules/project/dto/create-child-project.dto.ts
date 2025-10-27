@@ -29,4 +29,3 @@ export class CreateChildProjectDto {
   @IsNotEmpty()
   icon!: string;
 }
-
