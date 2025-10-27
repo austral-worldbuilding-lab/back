@@ -58,7 +58,7 @@ export class FileController {
 
   @Post('organization/:orgId')
   @UseGuards(OrganizationFileRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @RequireOrganizationRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiUploadOrganizationFiles()
   async uploadOrganizationFiles(
     @Param('orgId', new UuidValidationPipe()) orgId: string,
@@ -82,7 +82,7 @@ export class FileController {
 
   @Delete('organization/:orgId/:fileName')
   @UseGuards(OrganizationFileRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @RequireOrganizationRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiDeleteOrganizationFile()
   async deleteOrganizationFile(
     @Param('orgId', new UuidValidationPipe()) orgId: string,
@@ -187,7 +187,7 @@ export class FileController {
 
   @Patch('organization/:orgId/selection')
   @UseGuards(OrganizationFileRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @RequireOrganizationRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiUpdateOrganizationFileSelection()
   async updateOrganizationFileSelection(
     @Param('orgId', new UuidValidationPipe()) orgId: string,
