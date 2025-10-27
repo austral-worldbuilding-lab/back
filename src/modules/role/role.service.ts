@@ -18,9 +18,9 @@ export class RoleService {
     });
   }
 
-  async create(name: string): Promise<Role> {
+  async create(name: string, level: number): Promise<Role> {
     return this.prisma.role.create({
-      data: { name },
+      data: { name, level },
     });
   }
 
@@ -29,6 +29,23 @@ export class RoleService {
     if (role) {
       return role;
     }
-    return this.create(name);
+
+    // Map role names to their levels
+    // This should only be used for seeding/initialization
+    const roleLevels: Record<string, number> = {
+      dueño: 1,
+      facilitador: 2,
+      worldbuilder: 3,
+      lector: 4,
+    };
+
+    const level = roleLevels[name];
+    if (!level) {
+      throw new Error(
+        `Cannot create role '${name}': level not defined. Please use the seed script to create roles.`,
+      );
+    }
+
+    return this.create(name, level);
   }
 }

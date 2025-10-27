@@ -1004,7 +1004,7 @@ export class ProjectRepository {
 
   async countOwners(projectId: string): Promise<number> {
     return this.prisma.userProjectRole.count({
-      where: { projectId, role: { name: 'owner' } },
+      where: { projectId, role: { name: 'dueño' } },
     });
   }
 

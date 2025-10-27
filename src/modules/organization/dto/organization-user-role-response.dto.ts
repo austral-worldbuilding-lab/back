@@ -15,7 +15,7 @@ export class OrganizationUserRoleResponseDto {
 
   @ApiProperty({
     description: 'Nuevo rol asignado al usuario',
-    example: 'admin',
+    example: 'facilitador',
   })
   role!: string;
 

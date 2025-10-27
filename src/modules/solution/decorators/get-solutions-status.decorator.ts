@@ -8,7 +8,7 @@ import { SolutionsJobStatusDto } from '../dto/solutions-job-status.dto';
 export function GetSolutionsStatusDecorator() {
   return applyDecorators(
     UseGuards(ProjectRoleGuard),
-    RequireProjectRoles('member', 'owner', 'admin'),
+    RequireProjectRoles('worldbuilder', 'dueño', 'facilitador'),
     ApiOperation({
       summary: 'Get AI solutions generation job status',
       description:

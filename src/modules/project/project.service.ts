@@ -288,7 +288,7 @@ export class ProjectService {
     const scales = this.getScales(createProjectDto.scales);
 
     // Handle role at the service level
-    const ownerRole = await this.roleService.findOrCreate('owner');
+    const ownerRole = await this.roleService.findOrCreate('dueño');
 
     const project: ProjectDto = await this.projectRepository.create(
       { ...createProjectDto, dimensions, scales } as CreateProjectDto,
@@ -308,7 +308,7 @@ export class ProjectService {
     createProjectFromProvocationDto: CreateProjectFromProvocationDto,
     userId: string,
   ): Promise<ProjectDto> {
-    const ownerRole = await this.roleService.findOrCreate('owner');
+    const ownerRole = await this.roleService.findOrCreate('dueño');
 
     const parentProject =
       await this.projectRepository.findGeneratedProjectByProvocation(
@@ -353,7 +353,7 @@ export class ProjectService {
     createProjectFromQuestionDto: CreateProjectFromQuestionDto,
     userId: string,
   ): Promise<ProjectDto> {
-    const ownerRole = await this.roleService.findOrCreate('owner');
+    const ownerRole = await this.roleService.findOrCreate('dueño');
 
     const project: ProjectDto = await this.projectRepository.createFromQuestion(
       createProjectFromQuestionDto,
@@ -516,15 +516,15 @@ export class ProjectService {
       );
     }
 
-    const isCurrentlyOwner = currentUserRole?.name === 'owner';
-    const willBeOwner = role.name === 'owner';
+    const isCurrentlyOwner = currentUserRole?.name === 'dueño';
+    const willBeOwner = role.name === 'dueño';
     const isDowngradeFromOwner = isCurrentlyOwner && !willBeOwner;
 
     if (isDowngradeFromOwner) {
       const ownersCount = await this.projectRepository.countOwners(projectId);
 
       if (ownersCount <= 1) {
-        throw new StateConflictException('owner', 'downgrade', {
+        throw new StateConflictException('dueño', 'downgrade', {
           reason: 'last_owner',
         });
       }
