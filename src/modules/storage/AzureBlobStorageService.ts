@@ -231,6 +231,31 @@ export class AzureBlobStorageService implements StorageService {
     this.logger.debug(`Successfully uploaded ${fileName} to ${blobName}`);
   }
 
+  /**
+   * Uploads a buffer directly to blob storage in the images folder
+   * @param imageBuffer - The image buffer to upload
+   * @param fileName - The file name (can include subfolders like 'cached/id.png')
+   * @param fileScope - The file scope (org, project, mandala)
+   */
+  async uploadImageBuffer(
+    imageBuffer: Buffer,
+    fileName: string,
+    fileScope: FileScope,
+  ): Promise<void> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(fileScope, 'images');
+    const blobName = `${prefix}${fileName}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.upload(imageBuffer, imageBuffer.length, {
+      blobHTTPHeaders: {
+        blobContentType: 'image/png',
+      },
+    });
+    this.logger.debug(`Successfully uploaded ${fileName} to ${blobName}`);
+  }
+
   async generateDownloadUrl(
     fullPath: string,
     expirationHours: number = 24,

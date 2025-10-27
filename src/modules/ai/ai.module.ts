@@ -21,6 +21,7 @@ import { GeminiFileCacheService } from './services/gemini-file-cache.service';
 import { GeminiGenerationEngineService } from './services/gemini-generation-engine.service';
 import { ContextPostitsStrategy } from './strategies/context-postits.strategy';
 import { EncyclopediaStrategy } from './strategies/encyclopedia.strategy';
+import { MandalaImagesStrategy } from './strategies/mandala-images.strategy';
 import { MandalaSummaryStrategy } from './strategies/mandala-summary.strategy';
 import { PostitsSummaryStrategy } from './strategies/postits-summary.strategy';
 import { PostitsStrategy } from './strategies/postits.strategy';
@@ -46,6 +47,7 @@ import { SolutionsStrategy } from './strategies/solutions.strategy';
     EncyclopediaStrategy,
     MandalaSummaryStrategy,
     SolutionsStrategy,
+    MandalaImagesStrategy,
     // Registry and Engine
     AiStrategyRegistryService,
     GeminiGenerationEngineService,
