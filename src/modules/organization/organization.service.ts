@@ -335,6 +335,9 @@ export class OrganizationService {
       'images',
     );
 
-    return this.organizationRepository.updateImageUrl(organizationId, publicUrl);
+    return this.organizationRepository.updateImageUrl(
+      organizationId,
+      publicUrl,
+    );
   }
 }

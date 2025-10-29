@@ -333,10 +333,7 @@ export class OrganizationRepository {
     return organization?.id;
   }
 
-  async updateImageUrl(
-    id: string,
-    imageUrl: string,
-  ): Promise<OrganizationDto> {
+  async updateImageUrl(id: string, imageUrl: string): Promise<OrganizationDto> {
     const org = await this.prisma.organization.update({
       where: { id },
       data: { imageUrl },

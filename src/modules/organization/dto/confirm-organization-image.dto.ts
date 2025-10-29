@@ -10,4 +10,3 @@ export class ConfirmOrganizationImageDto {
   @IsNotEmpty()
   imageId!: string;
 }
-
