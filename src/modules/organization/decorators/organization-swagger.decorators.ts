@@ -13,6 +13,7 @@ import { ConfirmOrganizationImageDto } from '../dto/confirm-organization-image.d
 import { OrganizationUserRoleResponseDto } from '../dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from '../dto/organization-user.dto';
 import { OrganizationDto } from '../dto/organization.dto';
+import { OrganizationWithPresignedUrlDto } from '../dto/organization-with-presigned-url.dto';
 
 export const ApiCreateOrganization = () =>
   applyDecorators(
@@ -20,7 +21,7 @@ export const ApiCreateOrganization = () =>
     ApiResponse({
       status: 201,
       description: 'La organización ha sido creada exitosamente',
-      type: OrganizationDto,
+      type: OrganizationWithPresignedUrlDto,
     }),
     ApiResponse({
       status: 403,
@@ -109,7 +110,7 @@ export const ApiUpdateOrganization = () =>
     ApiResponse({
       status: 200,
       description: 'La organización ha sido actualizada exitosamente',
-      type: OrganizationDto,
+      type: OrganizationWithPresignedUrlDto,
     }),
     ApiResponse({ status: 404, description: 'Organización no encontrada' }),
     ApiResponse({

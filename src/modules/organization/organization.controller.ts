@@ -45,6 +45,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from './dto/organization-user.dto';
 import { OrganizationDto } from './dto/organization.dto';
+import { OrganizationWithPresignedUrlDto } from './dto/organization-with-presigned-url.dto';
 import { UpdateOrganizationUserRoleDto } from './dto/update-organization-user-role.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import {
@@ -65,7 +66,7 @@ export class OrganizationController {
   async create(
     @Body() dto: CreateOrganizationDto,
     @Req() req: RequestWithUser,
-  ): Promise<MessageResponse<OrganizationDto>> {
+  ): Promise<MessageResponse<OrganizationWithPresignedUrlDto>> {
     const org = await this.organizationService.create(dto, req.user.id);
     return {
       message: 'Organization created successfully',
@@ -114,7 +115,7 @@ export class OrganizationController {
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
     @Body() dto: UpdateOrganizationDto,
-  ): Promise<MessageResponse<OrganizationDto>> {
+  ): Promise<MessageResponse<OrganizationWithPresignedUrlDto>> {
     const org = await this.organizationService.update(id, dto);
     return {
       message: 'Organization updated successfully',

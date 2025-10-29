@@ -23,6 +23,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from './dto/organization-user.dto';
 import { OrganizationDto } from './dto/organization.dto';
+import { OrganizationWithPresignedUrlDto } from './dto/organization-with-presigned-url.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { OrganizationRepository } from './organization.repository';
 
@@ -40,7 +41,7 @@ export class OrganizationService {
   async create(
     dto: CreateOrganizationDto,
     userId: string,
-  ): Promise<OrganizationDto> {
+  ): Promise<OrganizationWithPresignedUrlDto> {
     const ownerRole = await this.roleService.findOrCreate('dueño');
 
     const org = await this.organizationRepository.create(
@@ -51,11 +52,11 @@ export class OrganizationService {
 
     // Generate presigned URL for image upload
     const imageId = randomUUID();
-    const fileName = `${imageId}.jpg`;
-    const presignedUrl = await this.generatePresignedUrl(org.id, fileName);
+    const presignedUrl = await this.generatePresignedUrl(org.id, imageId);
 
     return {
       ...org,
+      imageId,
       presignedUrl,
     };
   }
@@ -94,7 +95,7 @@ export class OrganizationService {
   async update(
     id: string,
     dto: UpdateOrganizationDto,
-  ): Promise<OrganizationDto> {
+  ): Promise<OrganizationWithPresignedUrlDto> {
     const org = await this.organizationRepository.findOne(id);
     if (!org) {
       throw new ResourceNotFoundException('Organization', id);
@@ -104,11 +105,11 @@ export class OrganizationService {
 
     // Generate presigned URL for image upload
     const imageId = randomUUID();
-    const fileName = `${imageId}.jpg`;
-    const presignedUrl = await this.generatePresignedUrl(id, fileName);
+    const presignedUrl = await this.generatePresignedUrl(id, imageId);
 
     return {
       ...updatedOrg,
+      imageId,
       presignedUrl,
     };
   }
