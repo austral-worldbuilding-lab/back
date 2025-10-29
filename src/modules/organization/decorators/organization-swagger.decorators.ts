@@ -12,8 +12,8 @@ import {
 import { ConfirmOrganizationImageDto } from '../dto/confirm-organization-image.dto';
 import { OrganizationUserRoleResponseDto } from '../dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from '../dto/organization-user.dto';
-import { OrganizationDto } from '../dto/organization.dto';
 import { OrganizationWithPresignedUrlDto } from '../dto/organization-with-presigned-url.dto';
+import { OrganizationDto } from '../dto/organization.dto';
 
 export const ApiCreateOrganization = () =>
   applyDecorators(
