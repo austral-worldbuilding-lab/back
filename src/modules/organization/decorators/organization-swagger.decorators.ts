@@ -9,6 +9,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 
+import { ConfirmOrganizationImageDto } from '../dto/confirm-organization-image.dto';
 import { OrganizationUserRoleResponseDto } from '../dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from '../dto/organization-user.dto';
 import { OrganizationDto } from '../dto/organization.dto';
@@ -264,6 +265,41 @@ export const ApiUploadOrganizationTextFile = () =>
       status: 403,
       description:
         'Prohibido - No tiene permisos para subir contextos en esta organización',
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiConfirmOrganizationImageUpload = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Confirmar la subida de imagen de organización',
+      description:
+        'Después de subir una imagen usando la URL presignada, este endpoint confirma la subida y guarda la referencia en la base de datos',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID de la organización',
+      type: String,
+    }),
+    ApiBody({
+      type: ConfirmOrganizationImageDto,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Imagen de organización confirmada exitosamente',
+      type: OrganizationDto,
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Organización no encontrada',
+    }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - Solo el propietario puede confirmar la imagen de la organización',
     }),
     ApiResponse({
       status: 401,

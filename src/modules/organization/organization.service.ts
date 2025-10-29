@@ -1,14 +1,18 @@
+import { randomUUID } from 'crypto';
+
 import {
   ResourceNotFoundException,
   StateConflictException,
 } from '@common/exceptions/custom-exceptions';
 import { PaginatedResponse } from '@common/types/responses';
+import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { ProjectRepository } from '@modules/project/project.repository';
 import { RoleService } from '@modules/role/role.service';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
   Injectable,
   NotFoundException,
@@ -30,6 +34,7 @@ export class OrganizationService {
     private projectRepository: ProjectRepository,
     private prisma: PrismaService,
     private readonly textStorageService: TextStorageService,
+    private readonly storageService: AzureBlobStorageService,
   ) {}
 
   async create(
@@ -38,7 +43,21 @@ export class OrganizationService {
   ): Promise<OrganizationDto> {
     const ownerRole = await this.roleService.findOrCreate('dueño');
 
-    return this.organizationRepository.create(dto, userId, ownerRole.id);
+    const org = await this.organizationRepository.create(
+      dto,
+      userId,
+      ownerRole.id,
+    );
+
+    // Generate presigned URL for image upload
+    const imageId = randomUUID();
+    const fileName = `${imageId}.jpg`;
+    const presignedUrl = await this.generatePresignedUrl(org.id, fileName);
+
+    return {
+      ...org,
+      presignedUrl,
+    };
   }
 
   async findAllPaginated(
@@ -80,7 +99,18 @@ export class OrganizationService {
     if (!org) {
       throw new ResourceNotFoundException('Organization', id);
     }
-    return this.organizationRepository.update(id, dto);
+
+    const updatedOrg = await this.organizationRepository.update(id, dto);
+
+    // Generate presigned URL for image upload
+    const imageId = randomUUID();
+    const fileName = `${imageId}.jpg`;
+    const presignedUrl = await this.generatePresignedUrl(id, fileName);
+
+    return {
+      ...updatedOrg,
+      presignedUrl,
+    };
   }
 
   async remove(id: string): Promise<OrganizationDto> {
@@ -270,5 +300,41 @@ export class OrganizationService {
 
   async findOrganizationIdByProjectId(projectId: string) {
     return this.organizationRepository.findOrganizationIdByProjectId(projectId);
+  }
+
+  private async generatePresignedUrl(
+    organizationId: string,
+    fileName: string,
+  ): Promise<string> {
+    const fileMetadata: CreateFileDto = {
+      file_name: fileName,
+      file_type: 'image/*',
+    };
+
+    const presignedUrls = await this.storageService.uploadFiles(
+      [fileMetadata],
+      { orgId: organizationId },
+      'images',
+    );
+
+    return presignedUrls[0]?.url || '';
+  }
+
+  async confirmImageUpload(
+    organizationId: string,
+    imageId: string,
+  ): Promise<OrganizationDto> {
+    const org = await this.organizationRepository.findOne(organizationId);
+    if (!org) {
+      throw new ResourceNotFoundException('Organization', organizationId);
+    }
+
+    const publicUrl = this.storageService.buildPublicUrl(
+      { orgId: organizationId },
+      imageId,
+      'images',
+    );
+
+    return this.organizationRepository.updateImageUrl(organizationId, publicUrl);
   }
 }

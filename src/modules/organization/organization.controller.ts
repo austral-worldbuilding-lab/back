@@ -38,7 +38,9 @@ import {
   ApiUpdateOrganizationUserRole,
   ApiRemoveUserFromOrganization,
   ApiUploadOrganizationTextFile,
+  ApiConfirmOrganizationImageUpload,
 } from './decorators/organization-swagger.decorators';
+import { ConfirmOrganizationImageDto } from './dto/confirm-organization-image.dto';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from './dto/organization-user.dto';
@@ -227,6 +229,24 @@ export class OrganizationController {
     );
     return {
       data: { url },
+    };
+  }
+
+  @Post(':id/image/confirm')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('dueño')
+  @ApiConfirmOrganizationImageUpload()
+  async confirmImageUpload(
+    @Param('id', new UuidValidationPipe()) organizationId: string,
+    @Body() dto: ConfirmOrganizationImageDto,
+  ): Promise<MessageResponse<OrganizationDto>> {
+    const org = await this.organizationService.confirmImageUpload(
+      organizationId,
+      dto.imageId,
+    );
+    return {
+      message: 'Organization image confirmed successfully',
+      data: org,
     };
   }
 }

@@ -19,8 +19,19 @@ export class OrganizationDto {
   accessType?: 'full' | 'limited';
 
   @ApiProperty({
-    description: 'Icono de la organización',
-    example: 'icono-organizacion',
+    description: 'Imagen de la organización',
+    example:
+      'https://account.blob.core.windows.net/container/org/123/images/uuid.jpg',
+    required: false,
   })
-  icon!: string;
+  imageUrl?: string;
+
+  @ApiProperty({
+    description:
+      'URL presignada temporal para subir imagen (solo en create/update)',
+    example:
+      'https://account.blob.core.windows.net/container/org/123/images/uuid.jpg?sig=...',
+    required: false,
+  })
+  presignedUrl?: string;
 }
