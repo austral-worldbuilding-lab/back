@@ -16,4 +16,3 @@ export class OrganizationWithPresignedUrlDto extends OrganizationDto {
   })
   presignedUrl!: string;
 }
-
