@@ -25,6 +25,7 @@ export interface AiProvider {
    * @param centerCharacterDescription
    * @param selectedFiles - Optional array of file names to filter context
    * @param mandalaId - The ID of the mandala to generate postits for
+   * @param isFutureProject - Optional flag to indicate if the project is a future project
    * @returns An array of AiPostitResponse objects (with string tags)
    */
   generatePostits(
@@ -38,6 +39,7 @@ export interface AiProvider {
     centerCharacterDescription: string,
     selectedFiles?: string[],
     mandalaId?: string,
+    isFutureProject?: boolean,
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>>;
 
   /**
@@ -52,6 +54,7 @@ export interface AiProvider {
    * @param centerContextDescription - The center context description
    * @param selectedFiles - Optional array of file names to filter context
    * @param mandalaId - The ID of the mandala to generate postits for
+   * @param isFutureProject - Optional flag to indicate if the project is a future project
    * @returns An array of AiPostitResponse objects (with string tags)
    */
   generateContextPostits(
@@ -65,6 +68,7 @@ export interface AiProvider {
     centerContextDescription: string,
     selectedFiles?: string[],
     mandalaId?: string,
+    isFutureProject?: boolean,
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>>;
 
   /**

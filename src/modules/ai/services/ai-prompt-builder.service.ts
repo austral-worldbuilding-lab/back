@@ -114,6 +114,7 @@ export class AiPromptBuilderService {
    * @param centerCharacter - The center character
    * @param centerCharacterDescription - The center character description
    * @param tags - Array of tags
+   * @param isFutureProject - Flag to indicate if the project is a future/hypothetical project
    * @returns Complete prompt ready for AI processing
    */
   async buildPostitPrompt(
@@ -125,11 +126,19 @@ export class AiPromptBuilderService {
     centerCharacter: string,
     centerCharacterDescription: string,
     tags: string[],
+    isFutureProject: boolean = false,
   ): Promise<string> {
+    // Choose prompt template based on project type
+    const promptFileName = isFutureProject
+      ? 'prompt_generar_postits_futuro.txt'
+      : 'prompt_generar_postits.txt';
+
     const promptFilePath = path.resolve(
       __dirname,
-      '../resources/prompts/prompt_generar_postits.txt',
+      '../resources/prompts',
+      promptFileName,
     );
+
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
     const provocationTimeline =
@@ -146,6 +155,12 @@ export class AiPromptBuilderService {
       minPostits: this.utilsService.getMinPostits(),
       provocationTimeline: provocationTimeline,
     });
+
+    // Use enhanced instructions for future projects
+    if (isFutureProject) {
+      return this.buildPromptWithCiclo1FutureInstructions(promptTask);
+    }
+
     return this.buildPromptWithCiclo1Instructions(promptTask);
   }
 
@@ -159,6 +174,7 @@ export class AiPromptBuilderService {
    * @param centerContext - The center context name
    * @param centerContextDescription - The center context description
    * @param tags - Array of tags
+   * @param isFutureProject - Flag to indicate if the project is a future/hypothetical project
    * @returns Complete prompt ready for AI processing
    */
   async buildContextPostitPrompt(
@@ -170,10 +186,17 @@ export class AiPromptBuilderService {
     centerContext: string,
     centerContextDescription: string,
     tags: string[],
+    isFutureProject: boolean = false,
   ): Promise<string> {
+    // Choose prompt template based on project type
+    const promptFileName = isFutureProject
+      ? 'prompt_generar_postits_contexto_futuro.txt'
+      : 'prompt_generar_postits_contexto.txt';
+
     const promptFilePath = path.resolve(
       __dirname,
-      '../resources/prompts/prompt_generar_postits_contexto.txt',
+      '../resources/prompts',
+      promptFileName,
     );
     const promptTemplate =
       await this.utilsService.readPromptTemplate(promptFilePath);
@@ -191,7 +214,31 @@ export class AiPromptBuilderService {
       minPostits: this.utilsService.getMinPostits(),
       provocationTimeline: provocationTimeline,
     });
+
+    // Use enhanced instructions for future projects
+    if (isFutureProject) {
+      return this.buildPromptWithCiclo1FutureInstructions(promptTask);
+    }
+
     return this.buildPromptWithCiclo1Instructions(promptTask);
+  }
+
+  /**
+   * Builds a complete prompt by combining Ciclo 1 FUTURE instructions with task-specific prompt
+   * This version includes instructions for future/hypothetical projects with creative freedom
+   * @param taskPrompt - The task-specific prompt content
+   * @returns The final prompt with ciclo 1 future instructions prepended
+   */
+  async buildPromptWithCiclo1FutureInstructions(
+    taskPrompt: string,
+  ): Promise<string> {
+    const futureInstruction = await this.utilsService.readPromptTemplate(
+      path.resolve(
+        __dirname,
+        '../resources/prompts/instrucciones_ciclo_1_con_futuro.txt',
+      ),
+    );
+    return `${futureInstruction}\n\n${taskPrompt}`;
   }
 
   /**

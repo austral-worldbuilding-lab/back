@@ -456,6 +456,16 @@ export class ProjectService {
     return this.projectRepository.getProjectTags(id);
   }
 
+  /**
+   * Check if a project was created from a provocation (has ORIGIN role)
+   * This is used to determine if a project is "future/hypothetical" vs "current/base"
+   * @param projectId - The project ID to check
+   * @returns true if project has a provocation with ORIGIN role, false otherwise
+   */
+  async hasOriginProvocation(projectId: string): Promise<boolean> {
+    return this.projectRepository.hasOriginProvocation(projectId);
+  }
+
   async createTag(projectId: string, dto: CreateTagDto) {
     const project = await this.projectRepository.findOne(projectId);
     if (!project) {

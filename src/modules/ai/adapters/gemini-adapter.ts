@@ -82,6 +82,7 @@ export class GeminiAdapter implements AiProvider {
     centerCharacterDescription: string,
     selectedFiles?: string[],
     mandalaId?: string,
+    isFutureProject?: boolean,
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
     const strategy = this.strategies.getPostits();
     const input: PostitsInput = {
@@ -93,6 +94,7 @@ export class GeminiAdapter implements AiProvider {
       centerCharacter,
       centerCharacterDescription,
       tags,
+      isFutureProject: isFutureProject || false,
     };
     const prompt = await strategy.buildPrompt(input);
     const schema = strategy.getResponseSchema();
@@ -104,7 +106,7 @@ export class GeminiAdapter implements AiProvider {
     );
     const data = strategy.parseAndValidate(text);
     this.logger.log(`Postit generation completed for project: ${projectId}`, {
-      temperature: this.temperatureConfig.postits,
+      isFutureProject: isFutureProject || false,
     });
     return { data, usage };
   }
@@ -120,6 +122,7 @@ export class GeminiAdapter implements AiProvider {
     centerContextDescription: string,
     selectedFiles?: string[],
     mandalaId?: string,
+    isFutureProject?: boolean,
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>> {
     const strategy = this.strategies.getContextPostits();
     const input: ContextPostitsInput = {
@@ -131,6 +134,7 @@ export class GeminiAdapter implements AiProvider {
       centerContext,
       centerContextDescription,
       tags,
+      isFutureProject: isFutureProject || false,
     };
     const prompt = await strategy.buildPrompt(input);
     const schema = strategy.getResponseSchema();
@@ -144,7 +148,9 @@ export class GeminiAdapter implements AiProvider {
     const data = strategy.parseAndValidate(text);
     this.logger.log(
       `Context postit generation completed for project: ${projectId}`,
-      { temperature: this.temperatureConfig.contextPostits },
+      {
+        isFutureProject: isFutureProject || false,
+      },
     );
     return { data, usage };
   }
