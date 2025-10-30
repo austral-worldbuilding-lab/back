@@ -1,6 +1,13 @@
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 
 import { OrganizationUserRoleResponseDto } from '../dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from '../dto/organization-user.dto';
@@ -213,5 +220,53 @@ export const ApiRemoveUserFromOrganization = () =>
     ApiResponse({
       status: 409,
       description: 'Conflicto - No se puede eliminar al último propietario',
+    }),
+  );
+
+export const ApiUploadOrganizationTextFile = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear archivo de texto desde contenido',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID de la organización',
+      type: String,
+    }),
+    ApiBody({
+      type: UploadContextDto,
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Archivo de contexto subido exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL pública del archivo subido',
+                example:
+                  'https://storage.blob.core.windows.net/container/org-id/files/context.txt',
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Organización no encontrada',
+    }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - No tiene permisos para subir contextos en esta organización',
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'No autorizado - Token de acceso requerido',
     }),
   );

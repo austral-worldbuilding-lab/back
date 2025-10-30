@@ -24,6 +24,7 @@ model User {
 model Project {
   id            String            @id @default(uuid())
   name          String
+  icon          String    @default("folder")
   description   String?
   configuration Json // Contains dimensions[] and scales[]
   createdAt     DateTime          @default(now())
@@ -56,6 +57,7 @@ model Project {
 model Role {
   id                      String                   @id @default(uuid())
   name                    String                   @unique
+  level                   Int                      @unique // Lower number = higher privilege
   userRoles               UserProjectRole[]
   organizationRoles       UserOrganizationRole[]
   invitations             Invitation[]
@@ -130,7 +132,7 @@ enum MandalaType {
 model Tag {
   id        String    @id @default(uuid())
   name      String
-  color     String    @default(dbgenerated("'#' || lpad(to_hex((random() * 16777215)::int), 6, '0')"))
+  color     String
   project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
   isActive  Boolean   @default(true)
@@ -142,6 +144,7 @@ model Tag {
 model Organization {
   id        String    @id @default(uuid())
   name      String
+  icon      String    @default("building-2")
   createdAt DateTime  @default(now())
   isActive  Boolean   @default(true)
   deletedAt DateTime?
@@ -193,6 +196,8 @@ enum AiService {
   GENERATE_SUMMARY
   GENERATE_PROVOCATIONS
   GENERATE_ENCYCLOPEDIA
+  GENERATE_SOLUTIONS
+  GENERATE_MANDALA_IMAGES
 }
 
 enum AiModel {

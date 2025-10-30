@@ -1,3 +1,4 @@
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiOperation,
@@ -16,6 +17,7 @@ import { AiProvocationResponseDto } from '../dto/ai-provocation-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { ProvocationDto } from '../dto/provocation.dto';
+import { SolutionValidationResponseDto } from '../dto/solution-validation-response.dto';
 import { TagDto } from '../dto/tag.dto';
 import { TimelineGraphDto } from '../dto/timeline.dto';
 import { ProjectConfiguration } from '../types/project-configuration.type';
@@ -1005,7 +1007,7 @@ export const ApiGenerateProjectEncyclopedia = () =>
     }),
     ApiBadRequestResponse({
       description:
-        'Solicitud incorrecta - El proyecto no tiene mandalas suficientes o resúmenes',
+        'Solicitud incorrecta - Ya existe un job de enciclopedia en progreso para este proyecto',
     }),
     ApiNotFoundResponse({
       description: 'Proyecto no encontrado',
@@ -1026,20 +1028,15 @@ export const ApiGenerateProjectEncyclopedia = () =>
 export const ApiGetEncyclopediaJobStatus = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Obtener estado del job de enciclopedia',
+      summary: 'Obtener estado del job de enciclopedia del proyecto',
       description:
-        'Consulta el estado de un job de generación de enciclopedia. Retorna el estado actual y el resultado si está completado.',
+        'Consulta el estado del job activo de generación de enciclopedia para el proyecto. Retorna el estado actual y el resultado si está completado. Solo puede haber un job activo por proyecto.',
     }),
     ApiParam({
       name: 'projectId',
       description: 'ID del proyecto',
       type: String,
       format: 'uuid',
-    }),
-    ApiParam({
-      name: 'jobId',
-      description: 'ID del job de enciclopedia',
-      type: String,
     }),
     ApiResponse({
       status: 200,
@@ -1054,8 +1051,17 @@ export const ApiGetEncyclopediaJobStatus = () =>
           },
           status: {
             type: 'string',
-            enum: ['waiting', 'active', 'completed', 'failed', 'delayed'],
-            example: 'completed',
+            enum: [
+              'none',
+              'waiting',
+              'active',
+              'completed',
+              'failed',
+              'delayed',
+            ],
+            example: 'active',
+            description:
+              'none = no job active, waiting = queued, active = processing, completed = done, failed = error, delayed = retry pending',
           },
           progress: {
             type: 'number',
@@ -1094,10 +1100,192 @@ export const ApiGetEncyclopediaJobStatus = () =>
       },
     }),
     ApiNotFoundResponse({
-      description: 'Job o proyecto no encontrado',
+      description:
+        'Proyecto no encontrado o no hay job de enciclopedia activo para este proyecto',
     }),
     ApiForbiddenResponse({
       description: 'Prohibido - No tiene permisos para acceder a este proyecto',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiUploadProjectTextFile = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear archivo de texto desde contenido',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID del proyecto',
+      type: String,
+    }),
+    ApiBody({
+      type: UploadContextDto,
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Archivo de contexto subido exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL pública del archivo subido',
+                example:
+                  'https://storage.blob.core.windows.net/container/org-id/project-id/files/context.txt',
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+    }),
+    ApiForbiddenResponse({
+      description:
+        'Prohibido - No tiene permisos para subir contextos en este proyecto',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiGetSolutionValidationStatus = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Consultar validaciones de soluciones para un proyecto',
+      description:
+        'Obtiene el estado de todas las validaciones necesarias para crear soluciones en un proyecto. ' +
+        'Retorna información detallada sobre cada condición (descripción, dimensiones, escalas, mandalas, postits, archivos) ' +
+        'incluyendo si se cumple y qué valores actuales tiene el proyecto vs los requeridos.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto a validar',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiResponse({
+      status: 200,
+      description:
+        'Estado de validaciones obtenido exitosamente. Incluye el estado de cada validación individual.',
+      type: SolutionValidationResponseDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example:
+              'Project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description: 'Prohibido - No tiene permisos para acceder a este proyecto',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Forbidden resource' },
+          error: { type: 'string', example: 'Forbidden' },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Unauthorized' },
+          statusCode: { type: 'number', example: 401 },
+        },
+      },
+    }),
+  );
+
+export const ApiCreateChildProject = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear un proyecto hijo sin provocación',
+      description:
+        'Crea un nuevo proyecto hijo directamente desde un proyecto padre sin requerir una provocación. ' +
+        'El proyecto hijo hereda automáticamente la organización, dimensiones y escalas del padre. ' +
+        'También se copian todos los miembros del proyecto padre, asegurando que el creador sea owner del nuevo proyecto.',
+    }),
+    ApiParam({
+      name: 'parentId',
+      description: 'ID del proyecto padre',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiBody({
+      description: 'Datos para crear el proyecto hijo',
+      examples: {
+        'proyecto-hijo-completo': {
+          summary: 'Proyecto hijo con descripción e icono',
+          description:
+            'Crear un proyecto hijo con nombre, descripción e icono personalizados',
+          value: {
+            name: 'Subproyecto: Análisis de usuarios',
+            description:
+              'Este subproyecto se enfoca en analizar las necesidades específicas de los usuarios del comedor',
+            icon: 'folder',
+          },
+        },
+        'proyecto-hijo-minimo': {
+          summary: 'Proyecto hijo mínimo (solo nombre)',
+          description:
+            'Crear un proyecto hijo solo con nombre (usa icono y descripción por defecto)',
+          value: {
+            name: 'Subproyecto: Fase 2',
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 201,
+      description:
+        'Proyecto hijo creado exitosamente. Hereda configuración del padre y copia sus miembros.',
+      type: ProjectDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto padre no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example:
+              'Parent project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description:
+        'Prohibido - No tiene permisos suficientes en el proyecto padre (requiere rol de dueño, facilitador o worldbuilder)',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Forbidden resource' },
+          error: { type: 'string', example: 'Forbidden' },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
     }),
     ApiUnauthorizedResponse({
       description: 'No autorizado - Token de acceso requerido',

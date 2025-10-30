@@ -1,9 +1,11 @@
 import { DimensionDto } from '@common/dto/dimension.dto';
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
+import { generateRandomColor } from '@common/utils/color.utils';
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, Project, ProjProvLinkRole, Tag } from '@prisma/client';
 
+import { CreateChildProjectDto } from './dto/create-child-project.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -71,6 +73,7 @@ export class ProjectRepository {
     return {
       id: project.id,
       name: project.name,
+      icon: project.icon,
       description: project.description ?? undefined,
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
@@ -279,6 +282,7 @@ export class ProjectRepository {
       const project = await tx.project.create({
         data: {
           name: createProjectDto.name,
+          icon: createProjectDto.icon,
           description: createProjectDto.description,
           configuration: this.parseToJson({
             dimensions: createProjectDto.dimensions!,
@@ -390,6 +394,7 @@ export class ProjectRepository {
         data: {
           name: projectName,
           description: projectDescription,
+          icon: createProjectFromProvocationDto.icon,
           configuration: this.parseToJson({
             dimensions,
             scales,
@@ -475,6 +480,7 @@ export class ProjectRepository {
         data: {
           name: projectName,
           description: projectDescription,
+          icon: createProjectFromQuestionDto.icon,
           configuration: this.parseToJson({
             dimensions: finalDimensions,
             scales: finalScales,
@@ -514,6 +520,57 @@ export class ProjectRepository {
     });
   }
 
+  async createChildProject(
+    parentProjectId: string,
+    createChildProjectDto: CreateChildProjectDto,
+    userId: string,
+    roleId: string,
+  ): Promise<ProjectDto> {
+    return this.prisma.$transaction(async (tx) => {
+      const parentProject = await tx.project.findFirst({
+        where: {
+          id: parentProjectId,
+          isActive: true,
+        },
+      });
+
+      if (!parentProject) {
+        throw new ResourceNotFoundException('Parent project', parentProjectId);
+      }
+
+      const parentConfig = this.parseToProjectConfiguration(
+        parentProject.configuration,
+      );
+
+      const rootProjectId = parentProject.rootProjectId || parentProject.id;
+
+      const childProject = await tx.project.create({
+        data: {
+          name: createChildProjectDto.name,
+          description: createChildProjectDto.description || null,
+          icon: createChildProjectDto.icon || 'folder',
+          configuration: this.parseToJson({
+            dimensions: parentConfig.dimensions,
+            scales: parentConfig.scales,
+          }),
+          organizationId: parentProject.organizationId,
+          parentProjectId: parentProject.id,
+          rootProjectId: rootProjectId,
+        },
+      });
+
+      await tx.userProjectRole.create({
+        data: {
+          userId,
+          projectId: childProject.id,
+          roleId: roleId,
+        },
+      });
+
+      return this.parseToProjectDto(childProject);
+    });
+  }
+
   async findAllPaginated(
     skip: number,
     take: number,
@@ -529,31 +586,64 @@ export class ProjectRepository {
       },
     };
 
-    if (rootOnly) {
-      whereClause.rootProjectId = {
-        not: null,
-      };
+    // Sin rootOnly: Obtener N proyectos (roots y hijos)
+    if (!rootOnly) {
+      const [projects, total] = await this.prisma.$transaction([
+        this.prisma.project.findMany({
+          where: whereClause,
+          skip,
+          take,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.project.count({
+          where: whereClause,
+        }),
+      ]);
+
+      // Devolver proyectos paginados y total
+      return [
+        projects.map((project) => this.parseToProjectDto(project)),
+        total,
+      ];
     }
 
-    const [projects, total] = await this.prisma.$transaction([
-      this.prisma.project.findMany({
-        where: whereClause,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.project.count({
-        where: whereClause,
-      }),
-    ]);
+    // Con rootOnly: Obtener N proyectos root + todos sus hijos
+    const allUserProjects = await this.prisma.project.findMany({
+      where: {
+        ...whereClause,
+        rootProjectId: { not: null },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, rootProjectId: true },
+    });
 
-    const filteredProjects = rootOnly
-      ? projects.filter((project) => project.rootProjectId === project.id)
-      : projects;
+    // Filtrar solo los proyectos que son root (rootProjectId === id)
+    const rootProjects = allUserProjects.filter(
+      (p) => p.rootProjectId === p.id,
+    );
 
+    // Paginar proyectos root
+    const paginatedRootIds = rootProjects
+      .slice(skip, skip + take)
+      .map((p) => p.id);
+
+    if (paginatedRootIds.length === 0) {
+      return [[], rootProjects.length];
+    }
+
+    // Obtener todos los proyectos relacionados con los root paginados
+    const allRelatedProjects = await this.prisma.project.findMany({
+      where: {
+        isActive: true,
+        rootProjectId: { in: paginatedRootIds },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Devolver N proyectos root + todos sus hijos, y total de proyectos root
     return [
-      filteredProjects.map((project) => this.parseToProjectDto(project)),
-      total,
+      allRelatedProjects.map((project) => this.parseToProjectDto(project)),
+      rootProjects.length,
     ];
   }
 
@@ -690,12 +780,30 @@ export class ProjectRepository {
   }
 
   async getProjectTags(projectId: string): Promise<TagDto[]> {
-    return this.prisma.tag.findMany({
+    const tags = await this.prisma.tag.findMany({
       where: {
         projectId,
         isActive: true,
       },
     });
+
+    return tags.map((tag) => this.parseToTagDto(tag));
+  }
+
+  /**
+   * Check if a project was created from a provocation (has ORIGIN role)
+   * @param projectId - The project ID to check
+   * @returns true if project has a provocation with ORIGIN role, false otherwise
+   */
+  async hasOriginProvocation(projectId: string): Promise<boolean> {
+    const link = await this.prisma.projProvLink.findFirst({
+      where: {
+        projectId,
+        role: ProjProvLinkRole.ORIGIN,
+      },
+    });
+
+    return !!link;
   }
 
   async createTag(projectId: string, dto: CreateTagDto): Promise<TagDto> {
@@ -714,15 +822,17 @@ export class ProjectRepository {
           data: {
             isActive: true,
             deletedAt: null,
-            color: dto.color,
+            ...(dto.color && { color: dto.color }),
           },
         });
       }
 
+      const color = dto.color || generateRandomColor();
+
       return tx.tag.create({
         data: {
           name: dto.name,
-          color: dto.color,
+          color,
           projectId,
         },
       });
@@ -940,7 +1050,7 @@ export class ProjectRepository {
 
   async countOwners(projectId: string): Promise<number> {
     return this.prisma.userProjectRole.count({
-      where: { projectId, role: { name: 'owner' } },
+      where: { projectId, role: { name: 'dueño' } },
     });
   }
 
@@ -1208,6 +1318,64 @@ export class ProjectRepository {
         type: 'PROJECT_PARENT' as const,
         createdAt: p.createdAt.toISOString(),
       }));
+  }
+
+  /**
+   * Builds a human-readable string representing the chain of provocations
+   * that led to the creation of a project.
+   * @param projectId - The project ID to trace provocations from
+   * @returns A string like "¿Qué pasaría si...? -> ¿Qué pasaría si en 2040...?"
+   *          or "N/A" if no provocations exist in the chain
+   */
+  async getProvocationTimelineString(projectId: string): Promise<string> {
+    // Get the provocation that originated this project
+    const originLink = await this.prisma.projProvLink.findFirst({
+      where: {
+        projectId: projectId,
+        role: ProjProvLinkRole.ORIGIN,
+      },
+      include: {
+        provocation: {
+          select: {
+            id: true,
+            question: true,
+            parentProvocationId: true,
+          },
+        },
+      },
+    });
+
+    if (!originLink?.provocation) {
+      return 'N/A';
+    }
+
+    const provocationQuestions: string[] = [];
+    let currentProvocationId: string | null;
+
+    provocationQuestions.unshift(originLink.provocation.question);
+    currentProvocationId = originLink.provocation.parentProvocationId;
+
+    while (currentProvocationId) {
+      const parentProvocation = await this.prisma.provocation.findUnique({
+        where: {
+          id: currentProvocationId,
+          isActive: true,
+        },
+        select: {
+          question: true,
+          parentProvocationId: true,
+        },
+      });
+
+      if (!parentProvocation) {
+        break;
+      }
+
+      provocationQuestions.unshift(parentProvocation.question);
+      currentProvocationId = parentProvocation.parentProvocationId;
+    }
+
+    return provocationQuestions.join(' -> ');
   }
 
   async getTimelineGraph(

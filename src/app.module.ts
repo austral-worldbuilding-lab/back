@@ -12,6 +12,7 @@ import { HealthModule } from '@modules/health/health.module';
 import { InvitationModule } from '@modules/invitation/invitation.module';
 import { MailModule } from '@modules/mail/mail.module';
 import { MandalaModule } from '@modules/mandala/mandala.module';
+import { NotificationModule } from '@modules/notification/notification.module';
 import { OrganizationModule } from '@modules/organization/organization.module';
 import { OrganizationInvitationModule } from '@modules/organization-invitation/organization-invitation.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
@@ -68,16 +69,21 @@ import { AppService } from './app.service';
         },
       ],
     }),
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     PrismaService,
     AppLogger,
-    {
-      provide: APP_GUARD,
-      useClass: UserThrottlerGuard,
-    },
+    ...((process.env.THROTTLER_ENABLED?.toLowerCase() ?? 'true') === 'true'
+      ? [
+          {
+            provide: APP_GUARD,
+            useClass: UserThrottlerGuard,
+          },
+        ]
+      : []),
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,

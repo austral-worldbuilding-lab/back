@@ -4,6 +4,8 @@ OBJETIVO:
 CONFIGURACIÓN DEL MUNDO:
   • Nombre del Mundo: ${projectName}
   • Descripción del Mundo: ${projectDescription}.
+CONTEXTO DE PROVOCACIONES:
+  • Para llegar a este mundo, se analizaron las provocaciones: ${provocations-timeline}
 CONFIGURACIÓN DE LOS PERSONAJES:
   • Contenido de los personajes del mundo:
   ${mandalaDocument}

@@ -5,9 +5,12 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
+import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
+
+import { AiMandalaImageResponse } from '@/modules/mandala/types/mandala-images.type';
 
 export interface AiProvider {
   /**
@@ -22,6 +25,7 @@ export interface AiProvider {
    * @param centerCharacterDescription
    * @param selectedFiles - Optional array of file names to filter context
    * @param mandalaId - The ID of the mandala to generate postits for
+   * @param isFutureProject - Optional flag to indicate if the project is a future project
    * @returns An array of AiPostitResponse objects (with string tags)
    */
   generatePostits(
@@ -35,6 +39,7 @@ export interface AiProvider {
     centerCharacterDescription: string,
     selectedFiles?: string[],
     mandalaId?: string,
+    isFutureProject?: boolean,
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>>;
 
   /**
@@ -49,6 +54,7 @@ export interface AiProvider {
    * @param centerContextDescription - The center context description
    * @param selectedFiles - Optional array of file names to filter context
    * @param mandalaId - The ID of the mandala to generate postits for
+   * @param isFutureProject - Optional flag to indicate if the project is a future project
    * @returns An array of AiPostitResponse objects (with string tags)
    */
   generateContextPostits(
@@ -62,6 +68,7 @@ export interface AiProvider {
     centerContextDescription: string,
     selectedFiles?: string[],
     mandalaId?: string,
+    isFutureProject?: boolean,
   ): Promise<AiResponseWithUsage<AiPostitResponse[]>>;
 
   /**
@@ -204,4 +211,55 @@ export interface AiProvider {
     mandalasSummariesWithAi: string,
     selectedFiles?: string[],
   ): Promise<AiResponseWithUsage<AiEncyclopediaResponse>>;
+
+  /**
+   * Generates solutions for a project based on its encyclopedia
+   *
+   * This method takes the project information and its encyclopedia to generate
+   * concrete, actionable solutions that address challenges identified in the
+   * world. Solutions include title, description, problem statement, impact level,
+   * and impact description.
+   *
+   * @param projectId - Unique identifier of the project
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param encyclopedia - Encyclopedia content of the project
+   * @returns Promise resolving to an array of solution responses
+   */
+  generateSolutions(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    encyclopedia: string,
+  ): Promise<AiResponseWithUsage<AiSolutionResponse[]>>;
+
+  /**
+   * Generates images for a mandala based on its content and context
+   *
+   * This method takes the mandala information and generates visual representations
+   * for specific sections (dimension-scale intersections) of the mandala.
+   * Uses only mandala summary and JSON context - no external files.
+   *
+   * @param projectId - Unique identifier of the project
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param mandalaId - Unique identifier of the mandala
+   * @param dimensions - Array of dimension names
+   * @param scales - Array of scale names
+   * @param centerCharacter - Name of the center (character or context)
+   * @param centerCharacterDescription - Description of the center
+   * @param mandalaDocument - Full mandala JSON context
+   * @returns Promise resolving to an array of image responses with base64 data
+   */
+  generateMandalaImages(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    mandalaId: string,
+    dimensions: string[],
+    scales: string[],
+    centerCharacter: string,
+    centerCharacterDescription: string,
+    mandalaDocument: string,
+  ): Promise<AiResponseWithUsage<AiMandalaImageResponse[]>>;
 }

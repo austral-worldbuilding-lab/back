@@ -82,3 +82,36 @@ export const createProvocationsResponseSchema = (limits: {
   minItems: limits.minItems,
   maxItems: limits.maxItems,
 });
+
+export const createSolutionsResponseSchema = (limits: {
+  minItems: number;
+  maxItems: number;
+}) => ({
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      description: { type: 'string' },
+      problem: { type: 'string' },
+      impactLevel: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+      impactDescription: { type: 'string' },
+    },
+    required: [
+      'title',
+      'description',
+      'problem',
+      'impactLevel',
+      'impactDescription',
+    ],
+    propertyOrdering: [
+      'title',
+      'description',
+      'problem',
+      'impactLevel',
+      'impactDescription',
+    ],
+  },
+  minItems: limits.minItems,
+  maxItems: limits.maxItems,
+});

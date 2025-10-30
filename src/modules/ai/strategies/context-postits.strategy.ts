@@ -11,6 +11,7 @@ import { AiRequestValidationService } from '../services/ai-request-validation.se
 import { AiGenerationStrategy } from './ai-generation-strategy.interface';
 
 export interface ContextPostitsInput {
+  projectId: string;
   projectName: string;
   projectDescription: string;
   dimensions: string[];
@@ -18,6 +19,7 @@ export interface ContextPostitsInput {
   centerContext: string;
   centerContextDescription: string;
   tags: string[];
+  isFutureProject: boolean;
 }
 
 @Injectable()
@@ -33,6 +35,7 @@ export class ContextPostitsStrategy
 
   async buildPrompt(input: ContextPostitsInput): Promise<string> {
     return this.promptBuilder.buildContextPostitPrompt(
+      input.projectId,
       input.projectName,
       input.projectDescription,
       input.dimensions,
@@ -40,6 +43,7 @@ export class ContextPostitsStrategy
       input.centerContext,
       input.centerContextDescription,
       input.tags,
+      input.isFutureProject,
     );
   }
 

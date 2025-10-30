@@ -1,7 +1,11 @@
 import { AppLogger } from '@common/services/logger.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Queue } from 'bullmq';
+import { Queue, QueueEvents } from 'bullmq';
 
 import {
   EncyclopediaJobData,
@@ -55,6 +59,17 @@ export class EncyclopediaQueueService {
     projectId: string,
     selectedFiles?: string[],
   ): Promise<string> {
+    const existingJob = await this.findActiveJobForProject(projectId);
+
+    if (existingJob) {
+      this.logger.log(
+        `Found existing encyclopedia job for project ${projectId}: ${existingJob.id} (${existingJob.state})`,
+      );
+      throw new BadRequestException(
+        `An encyclopedia generation is already in progress for this project. Job ID: ${existingJob.id}`,
+      );
+    }
+
     const job = await this.queue.add(
       'generate-encyclopedia',
       { projectId, selectedFiles },
@@ -70,7 +85,46 @@ export class EncyclopediaQueueService {
     return job.id!;
   }
 
-  async getJobStatus(jobId: string): Promise<EncyclopediaJobStatusResponse> {
+  private async findActiveJobForProject(projectId: string) {
+    const activeJobs = await this.queue.getActive();
+    for (const job of activeJobs) {
+      if (job.data.projectId === projectId) {
+        return { id: job.id!, state: 'active' };
+      }
+    }
+
+    const waitingJobs = await this.queue.getWaiting();
+    for (const job of waitingJobs) {
+      if (job.data.projectId === projectId) {
+        return { id: job.id!, state: 'waiting' };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Get current encyclopedia job status for a project
+   * Returns the active/waiting job status, or NONE if no job is active
+   */
+  async getJobStatusByProjectId(
+    projectId: string,
+  ): Promise<EncyclopediaJobStatusResponse> {
+    const activeJob = await this.findActiveJobForProject(projectId);
+
+    if (!activeJob) {
+      // No job active - this is a normal state, not an error
+      return {
+        status: EncyclopediaJobStatus.NONE,
+      };
+    }
+
+    return this.getJobStatus(activeJob.id);
+  }
+
+  private async getJobStatus(
+    jobId: string,
+  ): Promise<EncyclopediaJobStatusResponse> {
     const job = await this.queue.getJob(jobId);
 
     if (!job) {
@@ -127,5 +181,15 @@ export class EncyclopediaQueueService {
   async closeQueue(): Promise<void> {
     await this.queue.close();
     this.logger.log('Encyclopedia queue closed');
+  }
+
+  async getJobById(jobId: string) {
+    return this.queue.getJob(jobId);
+  }
+
+  getQueueEvents() {
+    return new QueueEvents(this.queue.name, {
+      connection: this.queue.opts.connection,
+    });
   }
 }

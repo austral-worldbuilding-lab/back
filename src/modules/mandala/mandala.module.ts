@@ -6,6 +6,9 @@ import { ProjectModule } from '@modules/project/project.module';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { forwardRef, Module } from '@nestjs/common';
 
+import { NotificationModule } from '../notification/notification.module';
+import { OrganizationModule } from '../organization/organization.module';
+
 import { MandalaRoleGuard } from './guards/mandala-role.guard';
 import { MandalaController } from './mandala.controller';
 import { MandalaRepository } from './mandala.repository';
@@ -20,6 +23,8 @@ import { PostitService } from './services/postit.service';
     FirebaseModule,
     AiModule,
     forwardRef(() => ProjectModule),
+    NotificationModule,
+    OrganizationModule,
   ],
   controllers: [MandalaController],
   providers: [

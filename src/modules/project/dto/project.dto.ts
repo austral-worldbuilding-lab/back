@@ -66,4 +66,12 @@ export class ProjectDto {
   @IsUUID()
   @IsOptional()
   rootProjectId?: string;
+
+  @ApiProperty({
+    description: 'Icono del proyecto',
+    example: 'icono-proyecto',
+  })
+  @IsString()
+  @IsNotEmpty()
+  icon!: string;
 }

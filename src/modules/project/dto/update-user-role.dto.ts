@@ -4,13 +4,13 @@ import { IsIn, IsNotEmpty, IsString } from 'class-validator';
 export class UpdateUserRoleDto {
   @ApiProperty({
     description: 'Nuevo rol del usuario en el proyecto',
-    example: 'admin',
-    enum: ['owner', 'admin', 'member', 'viewer'],
+    example: 'facilitador',
+    enum: ['dueño', 'facilitador', 'worldbuilder', 'lector'],
   })
   @IsNotEmpty({ message: 'El rol es requerido' })
   @IsString({ message: 'El rol debe ser una cadena de texto' })
-  @IsIn(['owner', 'admin', 'member', 'viewer'], {
-    message: 'El rol debe ser uno de: owner, admin, member, viewer',
+  @IsIn(['dueño', 'facilitador', 'worldbuilder', 'lector'], {
+    message: 'El rol debe ser uno de: dueño, facilitador, worldbuilder, lector',
   })
   role!: string;
 }

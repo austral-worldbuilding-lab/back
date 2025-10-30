@@ -20,5 +20,5 @@ export interface CreateMandalaImageRequest {
 
 export interface ConfirmMandalaImageRequest {
   id: string;
-  tags?: Tag[];
+  tags?: Partial<Tag>[];
 }

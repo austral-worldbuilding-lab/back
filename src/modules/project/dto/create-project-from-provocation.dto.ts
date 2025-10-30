@@ -64,4 +64,12 @@ export class CreateProjectFromProvocationDto {
   @IsOptional()
   @ArrayMinSize(1)
   scales?: string[];
+
+  @ApiProperty({
+    description: 'Icono del proyecto',
+    example: 'icono-proyecto',
+  })
+  @IsString()
+  @IsNotEmpty()
+  icon!: string;
 }

@@ -6,9 +6,9 @@ import {
   DataResponse,
   PaginatedResponse,
 } from '@common/types/responses';
-import { GenerateEncyclopediaDto } from '@modules/ai/dto/generate-encyclopedia.dto';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import {
   OrganizationRoleGuard,
   RequireOrganizationRoles,
@@ -30,7 +30,6 @@ import {
   Put,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 
 import {
   ApiCreateProject,
@@ -48,25 +47,26 @@ import {
   ApiGenerateProjectProvocations,
   ApiGetCachedProvocations,
   ApiCreateProvocation,
-  ApiGetEncyclopediaJobStatus,
   ApiFindAllProvocations,
   ApiCreateProjectFromProvocationId,
   ApiGetProjectTimeline,
-  ApiGenerateProjectEncyclopedia,
   ApiCreateProjectFromProvocation,
+  ApiUploadProjectTextFile,
+  ApiGetSolutionValidationStatus,
+  ApiCreateChildProject,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
+import { CreateChildProjectDto } from './dto/create-child-project.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
-import { EncyclopediaJobResponseDto } from './dto/encyclopedia-job-response.dto';
-import { EncyclopediaJobStatusDto } from './dto/encyclopedia-job-status.dto';
 import { GenerateProvocationsDto } from './dto/generate-provocations.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
+import { SolutionValidationResponseDto } from './dto/solution-validation-response.dto';
 import { TagDto } from './dto/tag.dto';
 import { TimelineGraphDto } from './dto/timeline.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -89,7 +89,7 @@ export class ProjectController {
 
   @Post()
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiCreateProject()
   async create(
     @Body() createProjectDto: CreateProjectDto,
@@ -107,7 +107,7 @@ export class ProjectController {
 
   @Post('from-provocationId')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiCreateProjectFromProvocationId()
   async createFromProvocation(
     @Body() createProjectFromProvocationDto: CreateProjectFromProvocationDto,
@@ -126,7 +126,7 @@ export class ProjectController {
   // Create a provocation and a project from a question
   @Post('from-provocation')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiCreateProjectFromProvocation()
   async createFromQuestion(
     @Body() createProjectFromQuestionDto: CreateProjectFromQuestionDto,
@@ -138,6 +138,26 @@ export class ProjectController {
     );
     return {
       message: 'Project created successfully from question',
+      data: project,
+    };
+  }
+
+  @Post(':parentId/child')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
+  @ApiCreateChildProject()
+  async createChildProject(
+    @Param('parentId', new UuidValidationPipe()) parentId: string,
+    @Body() createChildProjectDto: CreateChildProjectDto,
+    @Req() req: RequestWithUser,
+  ): Promise<MessageResponse<ProjectDto>> {
+    const project = await this.projectService.createChildProject(
+      parentId,
+      createChildProjectDto,
+      req.user.id,
+    );
+    return {
+      message: 'Child project created successfully',
       data: project,
     };
   }
@@ -193,7 +213,7 @@ export class ProjectController {
 
   @Patch(':id')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner')
+  @RequireProjectRoles('dueño')
   @ApiUpdateProject()
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -208,7 +228,7 @@ export class ProjectController {
 
   @Delete(':id')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner')
+  @RequireProjectRoles('dueño')
   @ApiDeleteProject()
   async remove(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -222,7 +242,7 @@ export class ProjectController {
 
   @Post(':id/tag')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiCreateProjectTag()
   async createProjectTag(
     @Param('id') projectId: string,
@@ -249,7 +269,7 @@ export class ProjectController {
 
   @Delete(':projectId/tags/:tagId')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner')
+  @RequireProjectRoles('dueño')
   @ApiDeleteProjectTag()
   async deleteTag(
     @Param('projectId') projectId: string,
@@ -265,7 +285,7 @@ export class ProjectController {
 
   @Put(':projectId/users/:userId/role')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin')
+  @RequireProjectRoles('dueño', 'facilitador')
   @ApiUpdateUserRole()
   async updateUserRole(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -297,7 +317,7 @@ export class ProjectController {
 
   @Delete(':projectId/users/:userId')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('owner', 'admin')
+  @RequireProjectRoles('dueño', 'facilitador')
   @ApiRemoveUserFromProject()
   async removeUserFromProject(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -354,7 +374,7 @@ export class ProjectController {
 
   @Get(':projectId/provocations')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiFindAllProvocations()
   async findAllProvocations(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -369,7 +389,7 @@ export class ProjectController {
 
   @Post(':projectId/provocation')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiCreateProvocation()
   async createProvocation(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
@@ -388,7 +408,7 @@ export class ProjectController {
 
   @Get(':id/timeline')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
   @ApiGetProjectTimeline()
   async getTimeline(
     @Param('id', new UuidValidationPipe()) projectId: string,
@@ -399,50 +419,34 @@ export class ProjectController {
     };
   }
 
-  @Throttle({ default: { limit: 10, ttl: 3600000 } })
-  @Post(':projectId/encyclopedia')
+  @Post(':id/text-files')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
-  @ApiGenerateProjectEncyclopedia()
-  async generateEncyclopedia(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Body() generateEncyclopediaDto: GenerateEncyclopediaDto,
-  ): Promise<EncyclopediaJobResponseDto> {
-    const jobId = await this.projectService.queueEncyclopediaGeneration(
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
+  @ApiUploadProjectTextFile()
+  async uploadTextFile(
+    @Param('id', new UuidValidationPipe()) projectId: string,
+    @Body() uploadContextDto: UploadContextDto,
+  ): Promise<DataResponse<{ url: string }>> {
+    const url = await this.projectService.uploadTextFile(
       projectId,
-      generateEncyclopediaDto.selectedFiles,
+      uploadContextDto,
     );
-
     return {
-      jobId,
-      message: 'Encyclopedia generation job has been queued',
+      data: { url },
     };
   }
 
-  @Get(':projectId/encyclopedia/job/:jobId')
+  @Get(':projectId/solutions/validation')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('member', 'owner', 'admin')
-  @ApiGetEncyclopediaJobStatus()
-  async getEncyclopediaJobStatus(
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
+  @ApiGetSolutionValidationStatus()
+  async getSolutionValidationStatus(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Param('jobId') jobId: string,
-  ): Promise<EncyclopediaJobStatusDto> {
-    // Verify user has access to the project
-    await this.projectService.findOne(projectId);
-
-    const status = await this.projectService.getEncyclopediaJobStatus(jobId);
-
+  ): Promise<DataResponse<SolutionValidationResponseDto>> {
+    const validationStatus =
+      await this.projectService.getSolutionValidationStatus(projectId);
     return {
-      jobId: status.jobId,
-      status: status.status,
-      progress: status.progress,
-      encyclopedia: status.result?.encyclopedia,
-      storageUrl: status.result?.storageUrl,
-      error: status.error,
-      failedReason: status.failedReason,
-      createdAt: status.createdAt,
-      processedAt: status.processedAt,
-      finishedAt: status.finishedAt,
+      data: validationStatus,
     };
   }
 }

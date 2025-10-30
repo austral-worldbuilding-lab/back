@@ -8,6 +8,7 @@ import {
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { ProjectDto } from '@modules/project/dto/project.dto';
 import {
   Controller,
@@ -36,6 +37,7 @@ import {
   ApiGetOrganizationUsers,
   ApiUpdateOrganizationUserRole,
   ApiRemoveUserFromOrganization,
+  ApiUploadOrganizationTextFile,
 } from './decorators/organization-swagger.decorators';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
@@ -105,7 +107,7 @@ export class OrganizationController {
 
   @Patch(':id')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner')
+  @RequireOrganizationRoles('dueño')
   @ApiUpdateOrganization()
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -120,7 +122,7 @@ export class OrganizationController {
 
   @Delete(':id')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner')
+  @RequireOrganizationRoles('dueño')
   @ApiDeleteOrganization()
   async remove(
     @Param('id', new UuidValidationPipe()) id: string,
@@ -158,7 +160,7 @@ export class OrganizationController {
 
   @Get(':organizationId/users')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin', 'member')
+  @RequireOrganizationRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGetOrganizationUsers()
   async getOrganizationUsers(
     @Param('organizationId', new UuidValidationPipe()) organizationId: string,
@@ -172,7 +174,7 @@ export class OrganizationController {
 
   @Put(':organizationId/users/:userId/role')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiUpdateOrganizationUserRole()
   async updateUserRole(
     @Param('organizationId', new UuidValidationPipe()) organizationId: string,
@@ -192,7 +194,7 @@ export class OrganizationController {
 
   @Delete(':organizationId/users/:userId')
   @UseGuards(OrganizationRoleGuard)
-  @RequireOrganizationRoles('owner', 'admin')
+  @RequireOrganizationRoles('dueño', 'facilitador')
   @ApiRemoveUserFromOrganization()
   async removeUserFromOrganization(
     @Param('organizationId', new UuidValidationPipe()) organizationId: string,
@@ -208,6 +210,23 @@ export class OrganizationController {
     return {
       message: 'Usuario eliminado de la organización exitosamente',
       data: removedUser,
+    };
+  }
+
+  @Post(':id/text-files')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('dueño', 'facilitador', 'worldbuilder')
+  @ApiUploadOrganizationTextFile()
+  async uploadTextFile(
+    @Param('id', new UuidValidationPipe()) organizationId: string,
+    @Body() uploadContextDto: UploadContextDto,
+  ): Promise<DataResponse<{ url: string }>> {
+    const url = await this.organizationService.uploadTextFile(
+      organizationId,
+      uploadContextDto,
+    );
+    return {
+      data: { url },
     };
   }
 }

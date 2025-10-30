@@ -8,7 +8,9 @@ import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { getProjectValidationConfig } from '@config/project-validation.config';
 import { AiService } from '@modules/ai/ai.service';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { FileService } from '@modules/files/file.service';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
 import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
@@ -23,6 +25,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 
+import { CreateChildProjectDto } from './dto/create-child-project.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -31,6 +34,10 @@ import { CreateTagDto } from './dto/create-tag.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
+import {
+  SolutionValidationResponseDto,
+  ValidationItemDto,
+} from './dto/solution-validation-response.dto';
 import { TagDto } from './dto/tag.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UserRoleResponseDto } from './dto/user-role-response.dto';
@@ -51,6 +58,7 @@ export class ProjectService {
     private cacheService: CacheService,
     private readonly logger: AppLogger,
     private readonly blobStorageService: AzureBlobStorageService,
+    private readonly textStorageService: TextStorageService,
     @Inject(forwardRef(() => EncyclopediaQueueService))
     private readonly encyclopediaQueueService: EncyclopediaQueueService,
   ) {
@@ -67,51 +75,209 @@ export class ProjectService {
     return !scales || scales.length === 0 ? DEFAULT_SCALES : scales;
   }
 
-  private async checkMinimalConditionsForProvocations(
+  async checkMinimalConditionsForSolutions(
     project: ProjectDto,
     projectId: string,
   ): Promise<void> {
     const config = getProjectValidationConfig();
 
+    this.logger.log(
+      `Validating minimal conditions for solutions in project ${projectId}`,
+    );
+
     if (!project.description || project.description.trim().length === 0) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} lacks description`,
+      );
       throw new BadRequestException(
-        'Project description is required to generate provocations. Please add a description to the project first.',
+        'Falta agregar una descripción al proyecto para crear soluciones',
       );
     }
 
     if (project.configuration.dimensions.length === 0) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} lacks dimensions`,
+      );
       throw new BadRequestException(
-        'Project dimensions are required to generate provocations. Please add dimensions to the project first.',
+        'Falta configurar las dimensiones del proyecto para crear soluciones',
       );
     }
 
     if (project.configuration.scales.length === 0) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} lacks scales`,
+      );
       throw new BadRequestException(
-        'Project scales are required to generate provocations. Please add scales to the project first.',
+        'Falta configurar las escalas del proyecto para crear soluciones',
       );
     }
 
     const mandalas = await this.mandalaService.findAll(projectId);
-    if (mandalas.length < config.minMandalasForProvocations) {
+    if (mandalas.length < config.minMandalasForSolutions) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} has ${mandalas.length} mandalas, minimum required: ${config.minMandalasForSolutions}`,
+      );
       throw new BadRequestException(
-        `Project must have at least ${config.minMandalasForProvocations} mandalas to generate provocations. Please add more mandalas to the project first.`,
+        `Faltan ${config.minMandalasForSolutions - mandalas.length} mandala(s) para crear soluciones`,
       );
     }
+
     const totalPostitsCount =
       await this.mandalaService.countPostitsAcrossMandalas(mandalas);
-    if (totalPostitsCount < config.minPostitsForProvocations) {
+    if (totalPostitsCount < config.minPostitsForSolutions) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} has ${totalPostitsCount} postits, minimum required: ${config.minPostitsForSolutions}`,
+      );
       throw new BadRequestException(
-        `Project must have at least ${config.minPostitsForProvocations} postits across all mandalas to generate provocations. Please add more postits to your mandalas first.`,
+        `Faltan ${config.minPostitsForSolutions - totalPostitsCount} postit(s) para crear soluciones`,
       );
     }
 
     const projectFilesCount =
       await this.fileService.countProjectFiles(projectId);
-    if (projectFilesCount < config.minFilesForProvocations) {
+    if (projectFilesCount < config.minFilesForSolutions) {
+      this.logger.warn(
+        `Solution validation failed: Project ${projectId} has ${projectFilesCount} files, minimum required: ${config.minFilesForSolutions}`,
+      );
       throw new BadRequestException(
-        `Project must have at least ${config.minFilesForProvocations} files to generate provocations. Please add more files to the project first.`,
+        `Faltan ${config.minFilesForSolutions - projectFilesCount} archivo(s) para crear soluciones`,
       );
     }
+
+    this.logger.log(
+      `Solution validation passed for project ${projectId}: ${mandalas.length} mandalas, ${totalPostitsCount} postits, ${projectFilesCount} files`,
+    );
+  }
+
+  async getSolutionValidationStatus(
+    projectId: string,
+  ): Promise<SolutionValidationResponseDto> {
+    this.logger.log(
+      `Checking solution validation status for project ${projectId}`,
+    );
+
+    const project = await this.findOne(projectId);
+    const config = getProjectValidationConfig();
+
+    const descriptionValid =
+      !!project.description && project.description.trim().length > 0;
+    const descriptionValidation: ValidationItemDto = {
+      isValid: descriptionValid,
+      message: descriptionValid
+        ? 'El proyecto tiene una descripción'
+        : 'Falta agregar una descripción al proyecto',
+    };
+
+    const dimensionsValid = project.configuration.dimensions.length > 0;
+    const dimensionsValidation: ValidationItemDto = {
+      isValid: dimensionsValid,
+      message: dimensionsValid
+        ? `El proyecto tiene ${project.configuration.dimensions.length} dimensión(es) configurada(s)`
+        : 'Falta configurar las dimensiones del proyecto',
+      currentValue: project.configuration.dimensions.length,
+      requiredValue: 1,
+    };
+
+    const scalesValid = project.configuration.scales.length > 0;
+    const scalesValidation: ValidationItemDto = {
+      isValid: scalesValid,
+      message: scalesValid
+        ? `El proyecto tiene ${project.configuration.scales.length} escala(s) configurada(s)`
+        : 'Falta configurar las escalas del proyecto',
+      currentValue: project.configuration.scales.length,
+      requiredValue: 1,
+    };
+
+    const mandalas = await this.mandalaService.findAll(projectId);
+    const mandalasValid = mandalas.length >= config.minMandalasForSolutions;
+    const mandalasValidation: ValidationItemDto = {
+      isValid: mandalasValid,
+      message: mandalasValid
+        ? `El proyecto tiene ${mandalas.length} mandala(s)`
+        : `Faltan ${config.minMandalasForSolutions - mandalas.length} mandala(s)`,
+      currentValue: mandalas.length,
+      requiredValue: config.minMandalasForSolutions,
+    };
+
+    const totalPostitsCount =
+      await this.mandalaService.countPostitsAcrossMandalas(mandalas);
+    const postitsValid = totalPostitsCount >= config.minPostitsForSolutions;
+    const postitsValidation: ValidationItemDto = {
+      isValid: postitsValid,
+      message: postitsValid
+        ? `El proyecto tiene ${totalPostitsCount} postit(s)`
+        : `Faltan ${config.minPostitsForSolutions - totalPostitsCount} postit(s)`,
+      currentValue: totalPostitsCount,
+      requiredValue: config.minPostitsForSolutions,
+    };
+
+    const projectFilesCount =
+      await this.fileService.countProjectFiles(projectId);
+    const filesValid = projectFilesCount >= config.minFilesForSolutions;
+    const filesValidation: ValidationItemDto = {
+      isValid: filesValid,
+      message: filesValid
+        ? `El proyecto tiene ${projectFilesCount} archivo(s)`
+        : `Faltan ${config.minFilesForSolutions - projectFilesCount} archivo(s)`,
+      currentValue: projectFilesCount,
+      requiredValue: config.minFilesForSolutions,
+    };
+
+    const isValid =
+      descriptionValid &&
+      dimensionsValid &&
+      scalesValid &&
+      mandalasValid &&
+      postitsValid &&
+      filesValid;
+
+    let reason: string | undefined;
+    let missingRequirements: string[] | undefined;
+
+    if (!isValid) {
+      const missing: string[] = [];
+
+      if (!descriptionValid) {
+        missing.push('Falta agregar una descripción al proyecto');
+      }
+      if (!dimensionsValid) {
+        missing.push('Falta configurar las dimensiones del proyecto');
+      }
+      if (!scalesValid) {
+        missing.push('Falta configurar las escalas del proyecto');
+      }
+      if (!mandalasValid) {
+        const needed = config.minMandalasForSolutions - mandalas.length;
+        missing.push(`Faltan ${needed} mandala${needed > 1 ? 's' : ''}`);
+      }
+      if (!postitsValid) {
+        const needed = config.minPostitsForSolutions - totalPostitsCount;
+        missing.push(`Faltan ${needed} postit${needed > 1 ? 's' : ''}`);
+      }
+      if (!filesValid) {
+        const needed = config.minFilesForSolutions - projectFilesCount;
+        missing.push(`Faltan ${needed} archivo${needed > 1 ? 's' : ''}`);
+      }
+
+      missingRequirements = missing;
+      reason = `No se pueden generar soluciones: ${missing.join(', ')}`;
+    }
+
+    this.logger.log(
+      `Solution validation status for project ${projectId}: ${isValid ? 'VALID' : 'INVALID'} - ${mandalas.length} mandalas, ${totalPostitsCount} postits, ${projectFilesCount} files`,
+    );
+
+    return {
+      isValid,
+      reason,
+      missingRequirements,
+      description: descriptionValidation,
+      dimensions: dimensionsValidation,
+      scales: scalesValidation,
+      mandalas: mandalasValidation,
+      postits: postitsValidation,
+      files: filesValidation,
+    };
   }
 
   async create(
@@ -121,8 +287,8 @@ export class ProjectService {
     const dimensions = this.getDimensions(createProjectDto.dimensions);
     const scales = this.getScales(createProjectDto.scales);
 
-    // Handle role at service level
-    const ownerRole = await this.roleService.findOrCreate('owner');
+    // Handle role at the service level
+    const ownerRole = await this.roleService.findOrCreate('dueño');
 
     const project: ProjectDto = await this.projectRepository.create(
       { ...createProjectDto, dimensions, scales } as CreateProjectDto,
@@ -142,7 +308,7 @@ export class ProjectService {
     createProjectFromProvocationDto: CreateProjectFromProvocationDto,
     userId: string,
   ): Promise<ProjectDto> {
-    const ownerRole = await this.roleService.findOrCreate('owner');
+    const ownerRole = await this.roleService.findOrCreate('dueño');
 
     const parentProject =
       await this.projectRepository.findGeneratedProjectByProvocation(
@@ -187,7 +353,7 @@ export class ProjectService {
     createProjectFromQuestionDto: CreateProjectFromQuestionDto,
     userId: string,
   ): Promise<ProjectDto> {
-    const ownerRole = await this.roleService.findOrCreate('owner');
+    const ownerRole = await this.roleService.findOrCreate('dueño');
 
     const project: ProjectDto = await this.projectRepository.createFromQuestion(
       createProjectFromQuestionDto,
@@ -201,6 +367,32 @@ export class ProjectService {
     );
 
     return project;
+  }
+
+  async createChildProject(
+    parentProjectId: string,
+    createChildProjectDto: CreateChildProjectDto,
+    userId: string,
+  ): Promise<ProjectDto> {
+    const ownerRole = await this.roleService.findOrCreate('dueño');
+
+    const childProject: ProjectDto =
+      await this.projectRepository.createChildProject(
+        parentProjectId,
+        createChildProjectDto,
+        userId,
+        ownerRole.id,
+      );
+
+    // Copy all members from parent project, ensuring creator is owner
+    await this.projectRepository.copyProjectMembersFromParent(
+      childProject.id,
+      parentProjectId,
+      userId,
+      ownerRole.id,
+    );
+
+    return childProject;
   }
 
   async findAllPaginated(
@@ -264,6 +456,16 @@ export class ProjectService {
     return this.projectRepository.getProjectTags(id);
   }
 
+  /**
+   * Check if a project was created from a provocation (has ORIGIN role)
+   * This is used to determine if a project is "future/hypothetical" vs "current/base"
+   * @param projectId - The project ID to check
+   * @returns true if project has a provocation with ORIGIN role, false otherwise
+   */
+  async hasOriginProvocation(projectId: string): Promise<boolean> {
+    return this.projectRepository.hasOriginProvocation(projectId);
+  }
+
   async createTag(projectId: string, dto: CreateTagDto) {
     const project = await this.projectRepository.findOne(projectId);
     if (!project) {
@@ -316,15 +518,15 @@ export class ProjectService {
       );
     }
 
-    const isCurrentlyOwner = currentUserRole?.name === 'owner';
-    const willBeOwner = role.name === 'owner';
+    const isCurrentlyOwner = currentUserRole?.name === 'dueño';
+    const willBeOwner = role.name === 'dueño';
     const isDowngradeFromOwner = isCurrentlyOwner && !willBeOwner;
 
     if (isDowngradeFromOwner) {
       const ownersCount = await this.projectRepository.countOwners(projectId);
 
       if (ownersCount <= 1) {
-        throw new StateConflictException('owner', 'downgrade', {
+        throw new StateConflictException('dueño', 'downgrade', {
           reason: 'last_owner',
         });
       }
@@ -368,8 +570,6 @@ export class ProjectService {
   ): Promise<AiProvocationResponse[]> {
     this.logger.log(`generateProvocations called for project ${projectId}`);
     const project = await this.findOne(projectId);
-
-    await this.checkMinimalConditionsForProvocations(project, projectId);
 
     const projectMandalas = await this.mandalaService.findAll(projectId);
     const mandalasDocument = await Promise.all(
@@ -436,9 +636,7 @@ export class ProjectService {
     projectId: string,
     createProvocationDto: CreateProvocationDto,
   ): Promise<ProvocationDto> {
-    const project = await this.findOne(projectId);
-
-    await this.checkMinimalConditionsForProvocations(project, projectId);
+    await this.findOne(projectId);
 
     return this.projectRepository.createProvocation(
       projectId,
@@ -480,8 +678,6 @@ export class ProjectService {
     this.logger.log(
       `Queuing encyclopedia generation job for project ${projectId}`,
     );
-
-    // Verify project exists
     await this.findOne(projectId);
 
     const jobId = await this.encyclopediaQueueService.addEncyclopediaJob(
@@ -497,14 +693,13 @@ export class ProjectService {
   }
 
   /**
-   * Get encyclopedia job status
-   * @param jobId - The job ID
-   * @returns Job status with result if completed
+   * Get encyclopedia job status by project ID
+   * Returns the active/waiting job for this project
    */
   async getEncyclopediaJobStatus(
-    jobId: string,
+    projectId: string,
   ): Promise<EncyclopediaJobStatusResponse> {
-    return this.encyclopediaQueueService.getJobStatus(jobId);
+    return this.encyclopediaQueueService.getJobStatusByProjectId(projectId);
   }
 
   /**
@@ -659,5 +854,23 @@ export class ProjectService {
     });
 
     return publicUrl;
+  }
+
+  async uploadTextFile(
+    projectId: string,
+    uploadContext: UploadContextDto,
+  ): Promise<string> {
+    const project = await this.findOne(projectId);
+
+    const scope = {
+      orgId: project.organizationId,
+      projectId,
+    };
+
+    return this.textStorageService.uploadText(
+      uploadContext.content,
+      uploadContext.filename,
+      scope,
+    );
   }
 }

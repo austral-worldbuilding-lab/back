@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
+import { generateRandomColor } from '@common/utils/color.utils';
 import { AiService } from '@modules/ai/ai.service';
 import { CreateFileDto } from '@modules/files/dto/create-file.dto';
 import { FileScope } from '@modules/files/types/file-scope.type';
@@ -131,9 +132,14 @@ export class PostitService {
     // Get project information
     const project = await this.projectService.findOne(mandala.projectId);
 
+    // Check if project is future/hypothetical (has ORIGIN provocation)
+    const isFutureProject = await this.projectService.hasOriginProvocation(
+      mandala.projectId,
+    );
+
     let aiResponse: AiPostitResponse[];
 
-    // Use different AI service method based on mandala type
+    // Use different AI service method based on mandala type AND project type
     if (mandala.type === MandalaType.CONTEXT) {
       aiResponse = await this.aiService.generateContextPostits(
         mandala.projectId,
@@ -146,6 +152,7 @@ export class PostitService {
         tagNames,
         selectedFiles,
         mandala.id,
+        isFutureProject,
       );
     } else {
       aiResponse = await this.aiService.generatePostits(
@@ -159,6 +166,9 @@ export class PostitService {
         tagNames,
         selectedFiles,
         mandala.id,
+        undefined,
+        project.organizationId,
+        isFutureProject,
       );
     }
 
@@ -463,7 +473,7 @@ export class PostitService {
       section: postit.section || '',
       tags: postit.tags.map((tag) => ({
         name: tag.name,
-        color: tag.color,
+        color: tag.color || generateRandomColor(),
       })),
       childrens: [], // Initialize empty children array
       coordinates: finalCoordinates,
@@ -525,7 +535,7 @@ export class PostitService {
       content: updateData.content,
       tags: updateData.tags.map((tag) => ({
         name: tag.name,
-        color: tag.color,
+        color: tag.color || generateRandomColor(),
       })),
     };
 
