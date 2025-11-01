@@ -74,6 +74,7 @@ export class ProjectRepository {
       id: project.id,
       name: project.name,
       icon: project.icon,
+      iconColor: project.iconColor ?? undefined,
       description: project.description ?? undefined,
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
@@ -283,6 +284,7 @@ export class ProjectRepository {
         data: {
           name: createProjectDto.name,
           icon: createProjectDto.icon,
+          iconColor: createProjectDto.iconColor,
           description: createProjectDto.description,
           configuration: this.parseToJson({
             dimensions: createProjectDto.dimensions!,
@@ -395,6 +397,7 @@ export class ProjectRepository {
           name: projectName,
           description: projectDescription,
           icon: createProjectFromProvocationDto.icon,
+          iconColor: createProjectFromProvocationDto.iconColor,
           configuration: this.parseToJson({
             dimensions,
             scales,
@@ -481,6 +484,7 @@ export class ProjectRepository {
           name: projectName,
           description: projectDescription,
           icon: createProjectFromQuestionDto.icon,
+          iconColor: createProjectFromQuestionDto.iconColor,
           configuration: this.parseToJson({
             dimensions: finalDimensions,
             scales: finalScales,
@@ -549,6 +553,7 @@ export class ProjectRepository {
           name: createChildProjectDto.name,
           description: createChildProjectDto.description || null,
           icon: createChildProjectDto.icon || 'folder',
+          iconColor: createChildProjectDto.iconColor || null,
           configuration: this.parseToJson({
             dimensions: parentConfig.dimensions,
             scales: parentConfig.scales,
@@ -733,6 +738,8 @@ export class ProjectRepository {
       name?: string;
       description?: string;
       organizationId?: string;
+      icon?: string;
+      iconColor?: string;
       configuration?: Prisma.InputJsonValue;
     } = {};
 
@@ -746,6 +753,14 @@ export class ProjectRepository {
 
     if (updateProjectDto.organizationId !== undefined) {
       updateData.organizationId = updateProjectDto.organizationId;
+    }
+
+    if (updateProjectDto.icon !== undefined) {
+      updateData.icon = updateProjectDto.icon;
+    }
+
+    if (updateProjectDto.iconColor !== undefined) {
+      updateData.iconColor = updateProjectDto.iconColor;
     }
 
     if (

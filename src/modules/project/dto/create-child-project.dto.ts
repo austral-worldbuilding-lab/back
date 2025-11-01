@@ -39,6 +39,15 @@ export class CreateChildProjectDto {
   @IsOptional()
   icon?: string;
 
+  @ApiProperty({
+    description: 'Color del icono del proyecto hijo',
+    example: '#FF5733',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  iconColor?: string;
+
   // heredan del padre
   @ApiProperty({
     description:
