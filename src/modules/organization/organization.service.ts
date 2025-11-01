@@ -318,7 +318,11 @@ export class OrganizationService {
       'images',
     );
 
-    return presignedUrls[0]?.url || '';
+    if (!presignedUrls[0]?.url) {
+      throw new ResourceNotFoundException('PresignedUrl', fileName);
+    }
+    
+    return presignedUrls[0].url;
   }
 
   async confirmImageUpload(
@@ -328,6 +332,16 @@ export class OrganizationService {
     const org = await this.organizationRepository.findOne(organizationId);
     if (!org) {
       throw new ResourceNotFoundException('Organization', organizationId);
+    }
+
+    const blobExists = await this.storageService.blobExists(
+      { orgId: organizationId },
+      imageId,
+      'images',
+    );
+
+    if (!blobExists) {
+      throw new ResourceNotFoundException('Image', imageId);
     }
 
     const publicUrl = this.storageService.buildPublicUrl(

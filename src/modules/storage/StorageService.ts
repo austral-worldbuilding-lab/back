@@ -28,4 +28,9 @@ export interface StorageService {
     fileName: string,
     folderName: StorageFolder,
   ): string;
+  blobExists(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): Promise<boolean>;
 }
