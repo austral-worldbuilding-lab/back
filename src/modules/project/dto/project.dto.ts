@@ -74,4 +74,13 @@ export class ProjectDto {
   @IsString()
   @IsNotEmpty()
   icon!: string;
+
+  @ApiProperty({
+    description: 'Color del icono del proyecto',
+    example: '#172187',
+    default: '#172187',
+  })
+  @IsString()
+  @IsNotEmpty()
+  iconColor!: string;
 }
