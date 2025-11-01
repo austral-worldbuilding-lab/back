@@ -321,7 +321,7 @@ export class OrganizationService {
     if (!presignedUrls[0]?.url) {
       throw new ResourceNotFoundException('PresignedUrl', fileName);
     }
-    
+
     return presignedUrls[0].url;
   }
 
