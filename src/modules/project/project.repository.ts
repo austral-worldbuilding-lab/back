@@ -74,7 +74,7 @@ export class ProjectRepository {
       id: project.id,
       name: project.name,
       icon: project.icon,
-      iconColor: project.iconColor ?? undefined,
+      iconColor: project.iconColor,
       description: project.description ?? undefined,
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
@@ -553,7 +553,7 @@ export class ProjectRepository {
           name: createChildProjectDto.name,
           description: createChildProjectDto.description || null,
           icon: createChildProjectDto.icon || 'folder',
-          iconColor: createChildProjectDto.iconColor || null,
+          iconColor: createChildProjectDto.iconColor,
           configuration: this.parseToJson({
             dimensions: parentConfig.dimensions,
             scales: parentConfig.scales,
