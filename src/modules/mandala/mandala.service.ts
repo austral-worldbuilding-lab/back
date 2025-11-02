@@ -1587,7 +1587,11 @@ export class MandalaService {
       }
 
       // Validar section (scale normalizado)
-      if (!comparison.section || typeof comparison.section !== 'string') {
+      if (
+        !comparison.section ||
+        typeof comparison.section !== 'string' ||
+        comparison.section.trim().length === 0
+      ) {
         compErrors.push('section debe ser un string no vacío');
       }
 
