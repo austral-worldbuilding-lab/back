@@ -20,4 +20,3 @@ export class DeliverableDto {
   })
   url!: string;
 }
-

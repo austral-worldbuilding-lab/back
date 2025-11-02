@@ -9,4 +9,3 @@ export class ProjectDeliverablesResponseDto {
   })
   deliverables!: DeliverableDto[];
 }
-
