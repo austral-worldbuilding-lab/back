@@ -36,7 +36,10 @@ export const createPostitsSummaryResponseSchema = (limits: {
           dimension: { type: 'string' },
           scale: { type: 'string' },
           type: { type: 'string' },
-          fromSummary: { type: 'array', items: { type: 'string' } },
+          fromSummary: {
+            type: 'array',
+            items: { type: 'string' },
+          },
         },
         required: ['content', 'dimension', 'scale', 'type', 'fromSummary'],
         propertyOrdering: [
@@ -54,9 +57,21 @@ export const createPostitsSummaryResponseSchema = (limits: {
       type: 'object',
       properties: {
         summary: { type: 'string', maxLength: 1200 },
-        coincidences: { type: 'array', items: { type: 'string' } },
-        tensions: { type: 'array', items: { type: 'string' } },
-        insights: { type: 'array', items: { type: 'string' } },
+        coincidences: {
+          type: 'array',
+          items: { type: 'string' },
+          maxItems: 8,
+        },
+        tensions: {
+          type: 'array',
+          items: { type: 'string' },
+          maxItems: 8,
+        },
+        insights: {
+          type: 'array',
+          items: { type: 'string' },
+          maxItems: 8,
+        },
       },
       required: ['summary', 'coincidences', 'tensions', 'insights'],
     },
