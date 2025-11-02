@@ -3,10 +3,6 @@ import { CacheService } from '@common/services/cache.service';
 import { AppLogger } from '@common/services/logger.service';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
-import {
-  OVERLAP_ERROR_MESSAGES,
-  OVERLAP_ERROR_TYPES,
-} from '@modules/mandala/constants/overlap-error-messages';
 import { CreateOverlappedMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
 import { MandalaRepository } from '@modules/mandala/mandala.repository';
@@ -256,7 +252,7 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
       // Simular que la IA responde PERO con report: null (respuesta inválida)
       postitService.generateComparisonPostits.mockResolvedValue({
         comparisons: [],
-        report: null as any, // NULL indica que la IA no generó el reporte
+        report: null as unknown as AiMandalaReport, // NULL indica que la IA no generó el reporte
       });
 
       const removeSpy = jest
@@ -273,7 +269,7 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.stringContaining(
           'Removing mandala overlap-mandala-1 due to error',
-        ),
+        ) as string,
       );
     });
 
@@ -394,13 +390,13 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
 
       // Crear datos de ejemplo válidos
       const mockComparison: PostitComparison = {
-        id: 'comparison-1',
+        id: 'postit-1',
         content: 'Test comparison',
         dimension: 'Dimension 1',
         section: 'Scale 1',
         tags: [],
         childrens: [],
-        type: 'comparison',
+        type: 'SIMILITUD',
         fromSummary: ['mandala-1', 'mandala-2'],
       };
 
@@ -448,7 +444,9 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
 
       // Verificar que se loguea el éxito
       expect(logger.log).toHaveBeenCalledWith(
-        expect.stringContaining('Successfully created overlapped mandala'),
+        expect.stringContaining(
+          'Successfully created overlapped mandala',
+        ) as string,
       );
     });
   });

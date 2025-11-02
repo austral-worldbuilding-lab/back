@@ -11,7 +11,10 @@ import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
-import { PostitWithCoordinates } from '@modules/mandala/types/postits';
+import {
+  PostitComparison,
+  PostitWithCoordinates,
+} from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
@@ -1559,7 +1562,10 @@ export class MandalaService {
    * @param mandalaId - ID de la mandala (para logging)
    * @throws InternalServerErrorException si alguna comparison no es válida
    */
-  private validateComparisons(comparisons: any[], mandalaId: string): void {
+  private validateComparisons(
+    comparisons: Array<PostitComparison>,
+    mandalaId: string,
+  ): void {
     const VALID_TYPES = ['SIMILITUD', 'DIFERENCIA', 'UNICO'];
     const errors: string[] = [];
 
@@ -1581,7 +1587,7 @@ export class MandalaService {
         compErrors.push('section debe ser un string no vacío');
       }
 
-      // Validar type - CRÍTICO: debe ser SIMILITUD, DIFERENCIA o UNICO
+      // Validar type: debe ser SIMILITUD, DIFERENCIA o UNICO
       if (!comparison.type || typeof comparison.type !== 'string') {
         compErrors.push('type debe ser un string no vacío');
       } else if (!VALID_TYPES.includes(comparison.type)) {
