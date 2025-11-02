@@ -38,10 +38,13 @@ import {
   ApiUpdateOrganizationUserRole,
   ApiRemoveUserFromOrganization,
   ApiUploadOrganizationTextFile,
+  ApiConfirmOrganizationImageUpload,
 } from './decorators/organization-swagger.decorators';
+import { ConfirmOrganizationImageDto } from './dto/confirm-organization-image.dto';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from './dto/organization-user.dto';
+import { OrganizationWithPresignedUrlDto } from './dto/organization-with-presigned-url.dto';
 import { OrganizationDto } from './dto/organization.dto';
 import { UpdateOrganizationUserRoleDto } from './dto/update-organization-user-role.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -63,7 +66,7 @@ export class OrganizationController {
   async create(
     @Body() dto: CreateOrganizationDto,
     @Req() req: RequestWithUser,
-  ): Promise<MessageResponse<OrganizationDto>> {
+  ): Promise<MessageResponse<OrganizationWithPresignedUrlDto>> {
     const org = await this.organizationService.create(dto, req.user.id);
     return {
       message: 'Organization created successfully',
@@ -112,7 +115,7 @@ export class OrganizationController {
   async update(
     @Param('id', new UuidValidationPipe()) id: string,
     @Body() dto: UpdateOrganizationDto,
-  ): Promise<MessageResponse<OrganizationDto>> {
+  ): Promise<MessageResponse<OrganizationWithPresignedUrlDto>> {
     const org = await this.organizationService.update(id, dto);
     return {
       message: 'Organization updated successfully',
@@ -227,6 +230,24 @@ export class OrganizationController {
     );
     return {
       data: { url },
+    };
+  }
+
+  @Post(':id/image/confirm')
+  @UseGuards(OrganizationRoleGuard)
+  @RequireOrganizationRoles('dueño')
+  @ApiConfirmOrganizationImageUpload()
+  async confirmImageUpload(
+    @Param('id', new UuidValidationPipe()) organizationId: string,
+    @Body() dto: ConfirmOrganizationImageDto,
+  ): Promise<MessageResponse<OrganizationDto>> {
+    const org = await this.organizationService.confirmImageUpload(
+      organizationId,
+      dto.imageId,
+    );
+    return {
+      message: 'Organization image confirmed successfully',
+      data: org,
     };
   }
 }

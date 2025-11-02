@@ -275,6 +275,21 @@ export class AzureBlobStorageService implements StorageService {
     });
   }
 
+  async blobExists(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): Promise<boolean> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(scope, folderName);
+    const blobName = `${prefix}${fileName}`;
+    const blobClient = containerClient.getBlobClient(blobName);
+
+    return await blobClient.exists();
+  }
+
   private handleAzureDeletionError(error: unknown, blobName: string): never {
     const isNativeError = error instanceof Error;
     const stack = isNativeError ? error.stack : undefined;
