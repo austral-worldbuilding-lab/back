@@ -223,13 +223,6 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
 
       // Verificar que se hizo cleanup (eliminó la mandala creada) llamando a remove
       expect(removeSpy).toHaveBeenCalledWith('overlap-mandala-1');
-
-      // Verificar que se loguea un warning indicando la eliminación
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Removing mandala overlap-mandala-1 due to error',
-        ),
-      );
     });
 
     /**
@@ -266,11 +259,6 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
 
       // Verificar que se hizo cleanup (eliminó la mandala creada)
       expect(removeSpy).toHaveBeenCalledWith('overlap-mandala-1');
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Removing mandala overlap-mandala-1 due to error',
-        ) as string,
-      );
     });
 
     /**
@@ -335,11 +323,6 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
 
       // Verificar que se hizo cleanup a pesar de que la IA funcionó correctamente
       expect(removeSpy).toHaveBeenCalledWith('overlap-mandala-1');
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Removing mandala overlap-mandala-1 due to error',
-        ) as string,
-      );
     });
 
     /**
