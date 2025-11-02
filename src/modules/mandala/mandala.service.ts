@@ -1521,7 +1521,11 @@ export class MandalaService {
     const errors: string[] = [];
 
     // Validar que exista el campo summary
-    if (!report.summary || typeof report.summary !== 'string')
+    if (
+      !report.summary ||
+      typeof report.summary !== 'string' ||
+      report.summary.trim().length === 0
+    )
       errors.push('report.summary debe ser un string no vacío');
 
     // Validar que exista el campo coincidences y sea un array
