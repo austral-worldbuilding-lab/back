@@ -1592,7 +1592,11 @@ export class MandalaService {
       }
 
       // Validar type: debe ser SIMILITUD, DIFERENCIA o UNICO
-      if (!comparison.type || typeof comparison.type !== 'string') {
+      if (
+        !comparison.type ||
+        typeof comparison.type !== 'string' ||
+        comparison.type.trim().length === 0
+      ) {
         compErrors.push('type debe ser un string no vacío');
       } else if (!VALID_TYPES.includes(comparison.type)) {
         compErrors.push(
