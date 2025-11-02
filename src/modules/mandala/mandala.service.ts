@@ -1582,7 +1582,10 @@ export class MandalaService {
       }
 
       // Validar dimension
-      if (!comparison.dimension || typeof comparison.dimension !== 'string') {
+      if (
+        typeof comparison.dimension !== 'string' ||
+        comparison.dimension.trim().length === 0
+      ) {
         compErrors.push('dimension debe ser un string no vacío');
       }
 
