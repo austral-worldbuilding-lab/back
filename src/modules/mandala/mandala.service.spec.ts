@@ -338,7 +338,7 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.stringContaining(
           'Removing mandala overlap-mandala-1 due to error',
-        ),
+        ) as string,
       );
     });
 
