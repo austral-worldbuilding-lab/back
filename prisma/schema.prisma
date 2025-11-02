@@ -25,6 +25,7 @@ model Project {
   id            String            @id @default(uuid())
   name          String
   icon          String    @default("folder")
+  iconColor     String    @default("#172187")
   description   String?
   configuration Json // Contains dimensions[] and scales[]
   createdAt     DateTime          @default(now())
