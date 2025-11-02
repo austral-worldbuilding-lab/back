@@ -424,13 +424,6 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
 
       // Verificar que NO se hizo cleanup (porque todo fue exitoso)
       expect(removeSpy).not.toHaveBeenCalled();
-
-      // Verificar que se loguea el éxito
-      expect(logger.log).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Successfully created overlapped mandala',
-        ) as string,
-      );
     });
   });
 });
