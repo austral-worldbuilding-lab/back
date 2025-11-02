@@ -29,7 +29,6 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
   let mandalaRepository: jest.Mocked<MandalaRepository>;
   let firebaseDataService: jest.Mocked<FirebaseDataService>;
   let postitService: jest.Mocked<PostitService>;
-  let logger: jest.Mocked<AppLogger>;
 
   // Datos de prueba: Mandala de ejemplo tipo CHARACTER
   const mockMandalaDto: MandalaDto = {
@@ -163,7 +162,6 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
     mandalaRepository = module.get(MandalaRepository);
     firebaseDataService = module.get(FirebaseDataService);
     postitService = module.get(PostitService);
-    logger = module.get(AppLogger);
   });
 
   /**
