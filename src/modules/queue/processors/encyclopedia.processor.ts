@@ -261,13 +261,14 @@ export class EncyclopediaProcessor implements OnModuleInit {
       buffer,
       fileName,
       scope,
+      'deliverables',
       'text/markdown',
     );
 
     const publicUrl = this.blobStorageService.buildPublicUrl(
       scope,
       fileName,
-      'files',
+      'deliverables',
     );
 
     this.logger.log('Successfully saved encyclopedia', {

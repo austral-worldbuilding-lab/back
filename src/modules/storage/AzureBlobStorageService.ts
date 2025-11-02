@@ -79,12 +79,21 @@ export class AzureBlobStorageService implements StorageService {
     return `https://${account}.blob.core.windows.net/${this.containerName}/${blobName}`;
   }
 
-  async getFiles(scope: FileScope): Promise<CreateFileDto[]> {
+  async getFiles(
+    scope: FileScope,
+    folderName: StorageFolder = 'files',
+  ): Promise<CreateFileDto[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const descriptors: CreateFileDto[] = [];
-    const prefix = buildPrefix(scope, 'files');
+    const prefix = buildPrefix(scope, folderName);
+
+    this.logger.debug('Listing files from storage', {
+      scope,
+      folderName,
+      prefix,
+    });
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: prefix,
@@ -94,6 +103,11 @@ export class AzureBlobStorageService implements StorageService {
         file_type: blob.properties.contentType || 'unknown',
       });
     }
+
+    this.logger.debug(`Found ${descriptors.length} files in ${folderName}`, {
+      scope,
+      folderName,
+    });
 
     return descriptors;
   }
@@ -213,12 +227,13 @@ export class AzureBlobStorageService implements StorageService {
     buffer: Buffer,
     fileName: string,
     scope: FileScope,
+    folderName: StorageFolder = 'files',
     contentType: string = 'application/octet-stream',
   ): Promise<void> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope, 'files');
+    const prefix = buildPrefix(scope, folderName);
     const blobName = `${prefix}${fileName}`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
@@ -228,7 +243,10 @@ export class AzureBlobStorageService implements StorageService {
       },
     });
 
-    this.logger.debug(`Successfully uploaded ${fileName} to ${blobName}`);
+    this.logger.debug(`Successfully uploaded ${fileName} to ${blobName}`, {
+      folderName,
+      scope,
+    });
   }
 
   /**
