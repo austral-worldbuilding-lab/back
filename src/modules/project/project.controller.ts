@@ -445,8 +445,7 @@ export class ProjectController {
   async getProjectDeliverables(
     @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<DataResponse<ProjectDeliverablesResponseDto>> {
-    const deliverables =
-      await this.projectService.getProjectDeliverables(id);
+    const deliverables = await this.projectService.getProjectDeliverables(id);
     return {
       data: { deliverables },
     };
