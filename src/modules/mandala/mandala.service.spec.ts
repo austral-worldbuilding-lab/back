@@ -389,4 +389,3 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
     });
   });
 });
-
