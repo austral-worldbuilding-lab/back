@@ -1008,6 +1008,9 @@ export class MandalaService {
     this.logger.log(
       `Starting overlap summary operation for ${createOverlapDto.mandalas.length} mandalas`,
     );
+
+    let newMandala: MandalaDto | null = null;
+
     try {
       const mandalas = await this.validateAndRetrieveMandalas(
         createOverlapDto.mandalas,
@@ -1052,7 +1055,7 @@ export class MandalaService {
         mandalas.map((m) => this.getFirestoreDocument(m.projectId, m.id)),
       );
 
-      const newMandala = await this.create(
+      newMandala = await this.create(
         createOverlappedMandalaDto,
         MandalaType.OVERLAP_SUMMARY,
       );
@@ -1094,6 +1097,14 @@ export class MandalaService {
 
       return { mandala: newMandala, summaryReport: report };
     } catch (error: unknown) {
+      // Clean up: remove the mandala if it was created before the error occurred
+      if (newMandala) {
+        this.logger.warn(
+          `Removing mandala ${newMandala.id} due to error during overlap summary generation`,
+        );
+        await this.remove(newMandala.id);
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(
