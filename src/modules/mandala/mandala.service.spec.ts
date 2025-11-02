@@ -284,7 +284,7 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
         section: 'Scale 1',
         tags: [],
         childrens: [],
-        type: 'comparison',
+        type: 'SIMILITUD',
         fromSummary: ['mandala-1', 'mandala-2'],
       };
 
