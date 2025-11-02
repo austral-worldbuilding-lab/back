@@ -35,7 +35,7 @@ export interface StorageService {
     buffer: Buffer,
     fileName: string,
     scope: FileScope,
-    folderName: StorageFolder,
+    folderName?: StorageFolder,
     contentType?: string,
   ): Promise<void>;
   blobExists(

@@ -438,15 +438,15 @@ export class ProjectController {
     };
   }
 
-  @Get(':projectId/deliverables')
+  @Get(':id/deliverables')
   @UseGuards(ProjectRoleGuard)
   @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador', 'lector')
   @ApiGetProjectDeliverables()
   async getProjectDeliverables(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('id', new UuidValidationPipe()) id: string,
   ): Promise<DataResponse<ProjectDeliverablesResponseDto>> {
     const deliverables =
-      await this.projectService.getProjectDeliverables(projectId);
+      await this.projectService.getProjectDeliverables(id);
     return {
       data: { deliverables },
     };
