@@ -676,18 +676,11 @@ export class ProjectService {
     projectId: string,
     selectedFiles?: string[],
   ): Promise<string> {
-    this.logger.log(
-      `Queuing encyclopedia generation job for project ${projectId}`,
-    );
     await this.findOne(projectId);
 
     const jobId = await this.encyclopediaQueueService.addEncyclopediaJob(
       projectId,
       selectedFiles,
-    );
-
-    this.logger.log(
-      `Encyclopedia generation job queued for project ${projectId} with ID: ${jobId}`,
     );
 
     return jobId;

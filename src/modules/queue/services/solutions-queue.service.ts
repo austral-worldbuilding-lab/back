@@ -1,12 +1,9 @@
 import { AppLogger } from '@common/services/logger.service';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Queue } from 'bullmq';
+import { Queue, QueueEvents } from 'bullmq';
 
+import { BaseOnDemandProcessor } from '../processors/base/on-demand.processor';
 import {
   SolutionsJobData,
   SolutionsJobResult,
@@ -17,6 +14,10 @@ import {
 @Injectable()
 export class SolutionsQueueService {
   private queue: Queue<SolutionsJobData, SolutionsJobResult>;
+  private processor: BaseOnDemandProcessor<
+    SolutionsJobData,
+    SolutionsJobResult
+  > | null = null;
 
   constructor(
     private readonly configService: ConfigService,
@@ -79,9 +80,7 @@ export class SolutionsQueueService {
       },
     );
 
-    this.logger.log(
-      `Solutions job added for project ${projectId} with ID: ${job.id}`,
-    );
+    await this.notifyJobAdded();
 
     return job.id!;
   }
@@ -96,7 +95,9 @@ export class SolutionsQueueService {
     return allPendingJobs.find((job) => job.data.projectId === projectId);
   }
 
-  async getJobStatus(projectId: string): Promise<SolutionsJobStatusResponse> {
+  async getJobStatusByProjectId(
+    projectId: string,
+  ): Promise<SolutionsJobStatusResponse> {
     // Check active/waiting jobs first
     const activeJob = await this.findActiveJobForProject(projectId);
 
@@ -165,34 +166,6 @@ export class SolutionsQueueService {
     };
   }
 
-  async getJobById(jobId: string): Promise<SolutionsJobStatusResponse> {
-    const job = await this.queue.getJob(jobId);
-
-    if (!job) {
-      throw new NotFoundException(`Job with ID ${jobId} not found`);
-    }
-
-    const state = await job.getState();
-
-    const response: SolutionsJobStatusResponse = {
-      jobId: job.id!,
-      status: this.mapJobState(state),
-      progress: job.progress as number | undefined,
-      createdAt: new Date(job.timestamp),
-      processedAt: job.processedOn ? new Date(job.processedOn) : undefined,
-      finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
-    };
-
-    if (state === 'completed') {
-      response.result = job.returnvalue;
-    } else if (state === 'failed') {
-      response.error = job.failedReason;
-      response.failedReason = job.failedReason;
-    }
-
-    return response;
-  }
-
   private mapJobState(state: string): SolutionsJobStatus {
     switch (state) {
       case 'completed':
@@ -207,6 +180,41 @@ export class SolutionsQueueService {
         return SolutionsJobStatus.DELAYED;
       default:
         return SolutionsJobStatus.NONE;
+    }
+  }
+
+  getQueue() {
+    return this.queue;
+  }
+
+  getQueueEvents() {
+    return new QueueEvents(this.queue.name, {
+      connection: this.queue.opts.connection,
+    });
+  }
+
+  /**
+   * Registers the processor to receive notifications when jobs are added.
+   *
+   * This allows starting the worker immediately without polling.
+   *
+   * @param processor - The processor instance to register
+   */
+  registerProcessor(
+    processor: BaseOnDemandProcessor<SolutionsJobData, SolutionsJobResult>,
+  ): void {
+    this.processor = processor;
+    this.logger.debug('Solutions processor registered');
+  }
+
+  /**
+   * Notifies the processor that a new job was added.
+   *
+   * This starts the worker immediately if it's not running.
+   */
+  async notifyJobAdded(): Promise<void> {
+    if (this.processor) {
+      await this.processor.ensureWorkerRunning();
     }
   }
 }

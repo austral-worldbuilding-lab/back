@@ -12,4 +12,7 @@ export default registerAs('queue', () => ({
       },
     }),
   },
+  worker: {
+    idleTimeout: parseInt(process.env.WORKER_IDLE_TIMEOUT_MS || '60000', 10), // 1 min default - tiempo antes de cerrar worker cuando esta en idle
+  },
 }));

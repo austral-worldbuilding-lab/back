@@ -20,6 +20,13 @@ services:
       - '6379:6379'
     volumes:
       - redis-data:/data
+      
+  awbl-redis-ui:
+    image: redis/redisinsight:latest
+    container_name: awbl-redis-ui
+    restart: always
+    ports:
+      - '5540:5540'
 
   awbl-app:
     build:
@@ -40,3 +47,4 @@ services:
 volumes:
   db-data:
   redis-data:
+  
