@@ -1457,6 +1457,49 @@ export class ProjectRepository {
     return provocationQuestions.join(' -> ');
   }
 
+  async deleteProvocation(provocationId: string): Promise<ProvocationDto> {
+    const provocation = await this.prisma.provocation.update({
+      where: { id: provocationId },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
+      include: {
+        projects: {
+          include: {
+            project: true,
+          },
+        },
+      },
+    });
+
+    return this.parseToProvocationDto(provocation);
+  }
+
+  async findProvocationById(
+    provocationId: string,
+  ): Promise<ProvocationDto | null> {
+    const provocation = await this.prisma.provocation.findFirst({
+      where: {
+        id: provocationId,
+        isActive: true,
+      },
+      include: {
+        projects: {
+          include: {
+            project: true,
+          },
+        },
+      },
+    });
+
+    if (!provocation) {
+      return null;
+    }
+
+    return this.parseToProvocationDto(provocation);
+  }
+
   async getTimelineGraph(
     organizationId: string,
     highlightProjectId?: string,

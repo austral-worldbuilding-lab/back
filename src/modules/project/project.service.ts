@@ -17,12 +17,12 @@ import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia
 import { RoleService } from '@modules/role/role.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
 
 import { CreateChildProjectDto } from './dto/create-child-project.dto';
@@ -678,12 +678,10 @@ export class ProjectService {
   ): Promise<string> {
     await this.findOne(projectId);
 
-    const jobId = await this.encyclopediaQueueService.addEncyclopediaJob(
+    return await this.encyclopediaQueueService.addEncyclopediaJob(
       projectId,
       selectedFiles,
     );
-
-    return jobId;
   }
 
   /**
@@ -894,5 +892,21 @@ export class ProjectService {
       uploadContext.filename,
       scope,
     );
+  }
+
+  async removeProvocation(
+    projectId: string,
+    provocationId: string,
+  ): Promise<ProvocationDto> {
+    await this.findOne(projectId);
+
+    // Verify provocation exists
+    const provocation =
+      await this.projectRepository.findProvocationById(provocationId);
+    if (!provocation) {
+      throw new ResourceNotFoundException('Provocation', provocationId);
+    }
+
+    return this.projectRepository.deleteProvocation(provocationId);
   }
 }
