@@ -13,10 +13,15 @@ import {
   EncyclopediaJobStatus,
   EncyclopediaJobStatusResponse,
 } from '../types/encyclopedia-job.types';
+import { BaseOnDemandProcessor } from '../processors/base/on-demand.processor';
 
 @Injectable()
 export class EncyclopediaQueueService {
   private queue: Queue<EncyclopediaJobData, EncyclopediaJobResult>;
+  private processor: BaseOnDemandProcessor<
+    EncyclopediaJobData,
+    EncyclopediaJobResult
+  > | null = null;
 
   constructor(
     private readonly configService: ConfigService,
@@ -62,8 +67,9 @@ export class EncyclopediaQueueService {
     const existingJob = await this.findActiveJobForProject(projectId);
 
     if (existingJob) {
+      const state = await existingJob.getState();
       this.logger.log(
-        `Found existing encyclopedia job for project ${projectId}: ${existingJob.id} (${existingJob.state})`,
+        `Found existing encyclopedia job for project ${projectId}: ${existingJob.id} (${state})`,
       );
       throw new BadRequestException(
         `An encyclopedia generation is already in progress for this project. Job ID: ${existingJob.id}`,
@@ -78,118 +84,151 @@ export class EncyclopediaQueueService {
       },
     );
 
-    this.logger.log(
-      `Encyclopedia job added for project ${projectId} with ID: ${job.id}`,
-    );
+    await this.notifyJobAdded();
 
     return job.id!;
   }
 
   private async findActiveJobForProject(projectId: string) {
     const activeJobs = await this.queue.getActive();
-    for (const job of activeJobs) {
-      if (job.data.projectId === projectId) {
-        return { id: job.id!, state: 'active' };
-      }
-    }
-
     const waitingJobs = await this.queue.getWaiting();
-    for (const job of waitingJobs) {
-      if (job.data.projectId === projectId) {
-        return { id: job.id!, state: 'waiting' };
-      }
-    }
+    const delayedJobs = await this.queue.getDelayed();
 
-    return null;
+    const allPendingJobs = [...activeJobs, ...waitingJobs, ...delayedJobs];
+    return allPendingJobs.find((job) => job.data.projectId === projectId);
   }
 
-  /**
-   * Get current encyclopedia job status for a project
-   * Returns the active/waiting job status, or NONE if no job is active
-   */
   async getJobStatusByProjectId(
     projectId: string,
   ): Promise<EncyclopediaJobStatusResponse> {
+    // Check active/waiting/delayed jobs first
     const activeJob = await this.findActiveJobForProject(projectId);
 
-    if (!activeJob) {
-      // No job active - this is a normal state, not an error
+    if (activeJob) {
+      const state = await activeJob.getState();
       return {
-        status: EncyclopediaJobStatus.NONE,
+        jobId: activeJob.id!,
+        status: this.mapJobState(state),
+        progress:
+          typeof activeJob.progress === 'number'
+            ? activeJob.progress
+            : undefined,
+        createdAt: new Date(activeJob.timestamp),
+        processedAt: activeJob.processedOn
+          ? new Date(activeJob.processedOn)
+          : undefined,
+        finishedAt: activeJob.finishedOn
+          ? new Date(activeJob.finishedOn)
+          : undefined,
       };
     }
 
-    return this.getJobStatus(activeJob.id);
-  }
+    // Check completed jobs
+    const completedJobs = await this.queue.getCompleted();
+    const completedJob = completedJobs.find(
+      (job) => job.data.projectId === projectId,
+    );
 
-  private async getJobStatus(
-    jobId: string,
-  ): Promise<EncyclopediaJobStatusResponse> {
-    const job = await this.queue.getJob(jobId);
-
-    if (!job) {
-      throw new NotFoundException(`Job with ID ${jobId} not found`);
+    if (completedJob) {
+      return {
+        jobId: completedJob.id!,
+        status: EncyclopediaJobStatus.COMPLETED,
+        result: completedJob.returnvalue,
+        createdAt: new Date(completedJob.timestamp),
+        processedAt: completedJob.processedOn
+          ? new Date(completedJob.processedOn)
+          : undefined,
+        finishedAt: completedJob.finishedOn
+          ? new Date(completedJob.finishedOn)
+          : undefined,
+      };
     }
 
-    const state = await job.getState();
-    const progress = job.progress;
-    const failedReason = job.failedReason;
+    // Check failed jobs
+    const failedJobs = await this.queue.getFailed();
+    const failedJob = failedJobs.find(
+      (job) => job.data.projectId === projectId,
+    );
 
-    let status: EncyclopediaJobStatus;
+    if (failedJob) {
+      return {
+        jobId: failedJob.id!,
+        status: EncyclopediaJobStatus.FAILED,
+        error: failedJob.failedReason,
+        failedReason: failedJob.failedReason,
+        createdAt: new Date(failedJob.timestamp),
+        processedAt: failedJob.processedOn
+          ? new Date(failedJob.processedOn)
+          : undefined,
+        finishedAt: failedJob.finishedOn
+          ? new Date(failedJob.finishedOn)
+          : undefined,
+      };
+    }
+
+    // No job found
+    return {
+      status: EncyclopediaJobStatus.NONE,
+    };
+  }
+
+  private mapJobState(state: string): EncyclopediaJobStatus {
     switch (state) {
       case 'waiting':
       case 'waiting-children':
-        status = EncyclopediaJobStatus.WAITING;
-        break;
+        return EncyclopediaJobStatus.WAITING;
       case 'active':
-        status = EncyclopediaJobStatus.ACTIVE;
-        break;
+        return EncyclopediaJobStatus.ACTIVE;
       case 'completed':
-        status = EncyclopediaJobStatus.COMPLETED;
-        break;
+        return EncyclopediaJobStatus.COMPLETED;
       case 'failed':
-        status = EncyclopediaJobStatus.FAILED;
-        break;
+        return EncyclopediaJobStatus.FAILED;
       case 'delayed':
-        status = EncyclopediaJobStatus.DELAYED;
-        break;
+        return EncyclopediaJobStatus.DELAYED;
       default:
-        status = EncyclopediaJobStatus.WAITING;
+        return EncyclopediaJobStatus.WAITING;
     }
-
-    const response: EncyclopediaJobStatusResponse = {
-      jobId: job.id!,
-      status,
-      progress: typeof progress === 'number' ? progress : undefined,
-      createdAt: job.timestamp ? new Date(job.timestamp) : undefined,
-      processedAt: job.processedOn ? new Date(job.processedOn) : undefined,
-      finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
-    };
-
-    if (status === EncyclopediaJobStatus.COMPLETED && job.returnvalue) {
-      response.result = job.returnvalue;
-    }
-
-    if (status === EncyclopediaJobStatus.FAILED) {
-      response.error = failedReason || 'Job failed without error message';
-      response.failedReason = failedReason;
-    }
-
-    return response;
-  }
-
-  async closeQueue(): Promise<void> {
-    await this.queue.close();
-    this.logger.log('Encyclopedia queue closed');
   }
 
   async getJobById(jobId: string) {
     return this.queue.getJob(jobId);
   }
 
+  getQueue() {
+    return this.queue;
+  }
+
   getQueueEvents() {
     return new QueueEvents(this.queue.name, {
       connection: this.queue.opts.connection,
     });
+  }
+
+  /**
+   * Registers the processor to receive notifications when jobs are added.
+   *
+   * This allows starting the worker immediately without polling.
+   *
+   * @param processor - The processor instance to register
+   */
+  registerProcessor(
+    processor: BaseOnDemandProcessor<
+      EncyclopediaJobData,
+      EncyclopediaJobResult
+    >,
+  ): void {
+    this.processor = processor;
+    this.logger.debug('Encyclopedia processor registered');
+  }
+
+  /**
+   * Notifies the processor that a new job was added.
+   *
+   * This starts the worker immediately if it's not running.
+   */
+  async notifyJobAdded(): Promise<void> {
+    if (this.processor) {
+      await this.processor.ensureWorkerRunning();
+    }
   }
 }

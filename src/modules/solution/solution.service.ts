@@ -86,19 +86,12 @@ export class SolutionService {
     userId: string,
     organizationId?: string,
   ): Promise<string> {
-    this.logger.log(
-      `Queuing solutions generation job for project ${projectId}`,
-    );
     await this.projectService.findOne(projectId);
 
     const jobId = await this.solutionsQueueService.addSolutionsJob(
       projectId,
       userId,
       organizationId,
-    );
-
-    this.logger.log(
-      `Solutions generation job queued for project ${projectId} with ID: ${jobId}`,
     );
 
     return jobId;
@@ -111,7 +104,7 @@ export class SolutionService {
   async getSolutionsJobStatus(
     projectId: string,
   ): Promise<SolutionsJobStatusResponse> {
-    return this.solutionsQueueService.getJobStatus(projectId);
+    return this.solutionsQueueService.getJobStatusByProjectId(projectId);
   }
 
   /**
