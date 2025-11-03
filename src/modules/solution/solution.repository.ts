@@ -117,19 +117,6 @@ export class SolutionRepository {
     return this.parseToSolutionDto(solution);
   }
 
-  async findOneWithProjects(id: string): Promise<any> {
-    return this.prisma.solution.findUnique({
-      where: { id, isActive: true },
-      include: {
-        projects: {
-          select: {
-            projectId: true,
-          },
-        },
-      },
-    });
-  }
-
   async remove(id: string): Promise<SolutionDto> {
     const solution = await this.prisma.solution.update({
       where: { id },
