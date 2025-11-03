@@ -29,6 +29,8 @@ export class AiAdapterUtilsService {
   private readonly maxProvocations: number;
   private readonly minSolutions: number;
   private readonly maxSolutions: number;
+  private readonly maxActionItems: number;
+  private readonly minActionItems: number;
   constructor(
     private configService: ConfigService,
     private fileLoader: FileLoaderService,
@@ -48,6 +50,8 @@ export class AiAdapterUtilsService {
     this.maxProvocations = config.maxProvocationsPerRequest;
     this.minSolutions = config.minSolutionsPerRequest;
     this.maxSolutions = config.maxSolutionsPerRequest;
+    this.minActionItems = config.minActionItemsPerRequest;
+    this.maxActionItems = config.maxActionItemsPerRequest;
   }
 
   getMaxResults(): number {
@@ -88,6 +92,14 @@ export class AiAdapterUtilsService {
 
   getMaxQuestions(): number {
     return this.maxQuestions;
+  }
+
+  getMinActionItems(): number {
+    return this.minActionItems;
+  }
+
+  getMaxActionItems(): number {
+    return this.maxActionItems;
   }
 
   validateConfiguration(modelConfigKey: string): string {
