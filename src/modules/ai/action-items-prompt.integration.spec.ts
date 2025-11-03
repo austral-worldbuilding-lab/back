@@ -1,8 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
 import { AiAdapterUtilsService } from '@modules/ai/services/ai-adapter-utils.service';
 import { AiPromptBuilderService } from '@modules/ai/services/ai-prompt-builder.service';
 import { PrismaService } from '@modules/prisma/prisma.service';
+import { Test, TestingModule } from '@nestjs/testing';
 
 /**
  * Test de Integración: buildActionItemsPrompt
@@ -13,7 +12,6 @@ import { PrismaService } from '@modules/prisma/prisma.service';
  */
 describe('AiPromptBuilderService - buildActionItemsPrompt (Integration)', () => {
   let service: AiPromptBuilderService;
-  let prismaService: PrismaService;
 
   beforeEach(async () => {
     // Configurar el módulo de testing con providers simplificados
@@ -56,7 +54,6 @@ describe('AiPromptBuilderService - buildActionItemsPrompt (Integration)', () => 
     }).compile();
 
     service = module.get<AiPromptBuilderService>(AiPromptBuilderService);
-    prismaService = module.get<PrismaService>(PrismaService);
   });
 
   it('debe generar el prompt correctamente con el template real', async () => {

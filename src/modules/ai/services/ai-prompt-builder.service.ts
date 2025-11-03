@@ -1,7 +1,6 @@
 import * as path from 'path';
 
 import { PrismaService } from '@modules/prisma/prisma.service';
-import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 import { Injectable } from '@nestjs/common';
 import { ProjProvLinkRole } from '@prisma/client';
 
