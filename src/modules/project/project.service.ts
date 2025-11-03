@@ -31,6 +31,7 @@ import { CreateProjectFromQuestionDto } from './dto/create-project-from-question
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { DeliverableDto } from './dto/deliverable.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
@@ -830,19 +831,18 @@ export class ProjectService {
 
     const buffer = Buffer.from(content, 'utf-8');
 
-    // Use the same approach as VideoProcessingService
     await this.blobStorageService.uploadBuffer(
       buffer,
       fileName,
       scope,
+      'deliverables',
       'text/markdown',
     );
 
-    // Get the public URL
     const publicUrl = this.blobStorageService.buildPublicUrl(
       scope,
       fileName,
-      'files',
+      'deliverables',
     );
 
     this.logger.log('Successfully saved encyclopedia', {
@@ -854,6 +854,35 @@ export class ProjectService {
     });
 
     return publicUrl;
+  }
+
+  async getProjectDeliverables(projectId: string): Promise<DeliverableDto[]> {
+    this.logger.log('Fetching project deliverables', { projectId });
+
+    const project = await this.findOne(projectId);
+
+    const scope = {
+      orgId: project.organizationId,
+      projectId,
+    };
+
+    const files = await this.blobStorageService.getFiles(scope, 'deliverables');
+
+    const deliverables: DeliverableDto[] = files.map((file) => ({
+      fileName: file.file_name,
+      fileType: file.file_type,
+      url: this.blobStorageService.buildPublicUrl(
+        scope,
+        file.file_name,
+        'deliverables',
+      ),
+    }));
+
+    this.logger.log(
+      `Found ${deliverables.length} deliverables for project ${projectId}`,
+    );
+
+    return deliverables;
   }
 
   async uploadTextFile(

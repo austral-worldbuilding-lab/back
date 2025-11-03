@@ -54,6 +54,7 @@ import {
   ApiUploadProjectTextFile,
   ApiGetSolutionValidationStatus,
   ApiCreateChildProject,
+  ApiGetProjectDeliverables,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateChildProjectDto } from './dto/create-child-project.dto';
@@ -63,6 +64,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { GenerateProvocationsDto } from './dto/generate-provocations.dto';
+import { ProjectDeliverablesResponseDto } from './dto/project-deliverables-response.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
@@ -433,6 +435,19 @@ export class ProjectController {
     );
     return {
       data: { url },
+    };
+  }
+
+  @Get(':id/deliverables')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador', 'lector')
+  @ApiGetProjectDeliverables()
+  async getProjectDeliverables(
+    @Param('id', new UuidValidationPipe()) id: string,
+  ): Promise<DataResponse<ProjectDeliverablesResponseDto>> {
+    const deliverables = await this.projectService.getProjectDeliverables(id);
+    return {
+      data: { deliverables },
     };
   }
 

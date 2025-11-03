@@ -14,6 +14,7 @@ import {
 } from '@nestjs/swagger';
 
 import { AiProvocationResponseDto } from '../dto/ai-provocation-response.dto';
+import { ProjectDeliverablesResponseDto } from '../dto/project-deliverables-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { ProvocationDto } from '../dto/provocation.dto';
@@ -1278,6 +1279,58 @@ export const ApiCreateChildProject = () =>
     ApiForbiddenResponse({
       description:
         'Prohibido - No tiene permisos suficientes en el proyecto padre (requiere rol de dueño, facilitador o worldbuilder)',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Forbidden resource' },
+          error: { type: 'string', example: 'Forbidden' },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiGetProjectDeliverables = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener entregables del proyecto',
+      description:
+        'Obtiene la lista de todos los entregables (deliverables) generados para el proyecto, ' +
+        'como enciclopedias u otros archivos generados automáticamente por IA. ' +
+        'Retorna una lista vacía si el proyecto no tiene entregables.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de entregables obtenida exitosamente',
+      type: ProjectDeliverablesResponseDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example:
+              'Project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description:
+        'Prohibido - No tiene permisos suficientes para acceder al proyecto',
       schema: {
         type: 'object',
         properties: {
