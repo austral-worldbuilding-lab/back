@@ -14,6 +14,7 @@ import {
   replaceContextPostitPlaceholders,
   replaceSolutionPlaceholders,
   replaceMandalaImagesPlaceholders,
+  replaceActionItemsPlaceholders,
 } from '../utils/prompt-placeholder-replacer';
 
 import { AiAdapterUtilsService } from './ai-adapter-utils.service';
@@ -451,6 +452,39 @@ export class AiPromptBuilderService {
       encyclopedia: encyclopedia,
       maxSolutions: this.utilsService.getMaxSolutions(),
       minSolutions: this.utilsService.getMinSolutions(),
+      provocationTimeline: provocationTimeline,
+    });
+    return this.buildPromptWithCiclo3Instructions(promptTask);
+  }
+
+  /**
+   * Builds a complete prompt for action items generation.
+   * @param projectId - Project ID for provocation timeline
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param solution - Solution content to generate action items for
+   * @returns Complete prompt ready for AI processing
+   */
+  async buildActionItemsPrompt(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solution: string,
+  ): Promise<string> {
+    const promptFilePath = path.resolve(
+      __dirname,
+      '../resources/prompts/prompt_generar_action_items.txt',
+    );
+    const promptTemplate =
+      await this.utilsService.readPromptTemplate(promptFilePath);
+    const provocationTimeline =
+      await this.getProvocationTimelineString(projectId);
+    const promptTask = replaceActionItemsPlaceholders(promptTemplate, {
+      projectName: projectName,
+      projectDescription: projectDescription,
+      solution: solution,
+      maxActionItems: this.utilsService.getMaxActionItems(),
+      minActionItems: this.utilsService.getMinActionItems(),
       provocationTimeline: provocationTimeline,
     });
     return this.buildPromptWithCiclo3Instructions(promptTask);
