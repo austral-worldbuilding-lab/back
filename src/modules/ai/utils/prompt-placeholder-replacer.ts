@@ -20,6 +20,9 @@ export interface PromptReplacementConfig {
   projectName?: string;
   projectDescription?: string;
   provocationTimeline?: string;
+  maxActionItems?: number;
+  minActionItems?: number;
+  solution?: string;
 }
 
 type PlaceholderReplacer = (
@@ -310,6 +313,48 @@ const replaceProvocationTimeline: PlaceholderReplacer = (prompt, config) => {
   );
 };
 
+const replaceSolution: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{solution}/.test(prompt)) {
+    throw new Error('Missing placeholder ${solution} in prompt');
+  }
+  if (config.solution === undefined) {
+    throw new Error(
+      'solution config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{solution}/g, config.solution);
+};
+
+const replaceMaxActionItems: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{maxActionItems}/.test(prompt)) {
+    throw new Error('Missing placeholder ${maxActionItems} in prompt');
+  }
+  if (config.maxActionItems === undefined) {
+    throw new Error(
+      'maxActionItems config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(
+    /\$\{maxActionItems}/g,
+    config.maxActionItems.toString(),
+  );
+};
+
+const replaceMinActionItems: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{minActionItems}/.test(prompt)) {
+    throw new Error('Missing placeholder ${minActionItems} in prompt');
+  }
+  if (config.minActionItems === undefined) {
+    throw new Error(
+      'minActionItems config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(
+    /\$\{minActionItems}/g,
+    config.minActionItems.toString(),
+  );
+};
+
 const composeReplacers = (
   ...replacers: PlaceholderReplacer[]
 ): PlaceholderReplacer => {
@@ -403,6 +448,15 @@ const solutionReplacer = composeReplacers(
   replaceEncyclopedia,
   replaceMaxSolutions,
   replaceMinSolutions,
+  replaceProvocationTimeline,
+);
+
+const actionItemsReplacer = composeReplacers(
+  replaceProjectName,
+  replaceProjectDescription,
+  replaceSolution,
+  replaceMaxActionItems,
+  replaceMinActionItems,
   replaceProvocationTimeline,
 );
 
@@ -575,6 +629,24 @@ export function replaceSolutionPlaceholders(
     config,
     solutionReplacer,
     'solution',
+  );
+}
+
+/**
+ * Replace placeholders for action items generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceActionItemsPlaceholders(
+  promptTemplate: string,
+  config: PromptReplacementConfig = {},
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    actionItemsReplacer,
+    'action items',
   );
 }
 

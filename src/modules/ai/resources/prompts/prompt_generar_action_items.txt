@@ -1,0 +1,106 @@
+OBJETIVO:
+  Generar action items específicos, concretos y accionables para implementar la solución propuesta. El propósito es descomponer la solución en pasos prácticos y ordenados que permitan su ejecución efectiva, identificando acciones claras con responsabilidades y tiempos estimados.
+
+CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}
+
+CONTEXTO DE PROVOCACIONES:
+  • Para llegar a este mundo, se analizaron las provocaciones: ${provocations-timeline}
+
+SOLUCIÓN A IMPLEMENTAR:
+  ${solution}
+
+CONFIGURACIÓN DE LA GENERACIÓN:
+  • Cantidad mínima de action items: ${minActionItems}
+  • Cantidad máxima de action items: ${maxActionItems}
+
+REGLAS PARA LOS ACTION ITEMS:
+  • El campo `order` debe ser un número secuencial (1, 2, 3...) que indique el orden lógico de ejecución de los action items.
+  • El campo `title` debe ser un título corto y descriptivo de la acción a realizar (máximo 8-10 palabras).
+  • El campo `description` debe explicar en detalle qué implica realizar esta acción, qué se debe hacer específicamente, qué recursos se necesitan, y qué resultado se espera obtener.
+  • El campo `duration` es opcional y debe contener una estimación de tiempo realista para completar esta acción (ej: "1 mes", "2 semanas", "3 meses", "15 días").
+  • Los action items deben ser ESPECÍFICOS y CONCRETOS, no genéricos ni abstractos.
+  • Cada action item debe ser ACCIONABLE: debe quedar claro qué hacer, quién debería hacerlo (rol/área), y cómo se vería el resultado.
+  • Los action items deben estar ordenados lógicamente según la secuencia de implementación: primero las acciones de preparación, luego las de ejecución, y finalmente las de consolidación.
+  • Evitar acciones demasiado genéricas como "hacer seguimiento" o "coordinar equipo". En su lugar, ser específico sobre QUÉ se debe coordinar o hacer seguimiento.
+  • Si la solución menciona múltiples componentes o fases, generar action items que cubran todos esos aspectos de forma equilibrada.
+  • Los action items deben considerar el contexto del mundo y ser viables dentro de sus particularidades.
+
+FORMATO DE RESPUESTA:
+  Debes responder con un array JSON de objetos. Cada objeto debe tener esta estructura:
+  {
+    "order": <número>,
+    "title": "<título corto>",
+    "description": "<descripción detallada>",
+    "duration": "<duración estimada>" // OPCIONAL
+  }
+
+EJEMPLO DE USO:
+  Mundo: Festejos UA
+  Descripción: El mundo Festejos UA se desarrolla en el campus de la Universidad Austral y se centra en las celebraciones de los estudiantes.
+  Solución: {
+    "title": "Festejódromo: Espacio Dedicado para Celebraciones",
+    "description": "Creación de un espacio específico dentro del campus universitario diseñado exclusivamente para celebraciones de graduación. Este 'Festejódromo' contaría con infraestructura que facilita la limpieza inmediata, estaciones para donación de alimentos sobrantes, y mensajería inspiradora para graduados.",
+    "problem": "Las celebraciones de graduación actuales generan desorden en espacios no preparados",
+    "impactLevel": "HIGH"
+  }
+
+  [
+    {
+      "order": 1,
+      "title": "Identificar y evaluar espacios disponibles en el campus",
+      "description": "Realizar un relevamiento completo de todas las áreas del campus que podrían adaptarse como Festejódromo. Evaluar cada espacio considerando: accesibilidad, capacidad (mínimo 200 personas), proximidad a servicios (baños, electricidad, agua), impacto en actividades académicas, y viabilidad de instalación de infraestructura permanente. Documentar con fotos, medidas exactas y análisis de ventajas/desventajas de cada opción.",
+      "duration": "2 semanas"
+    },
+    {
+      "order": 2,
+      "title": "Diseñar la infraestructura del Festejódromo con arquitectos",
+      "description": "Contratar equipo de arquitectos especializados en espacios públicos para diseñar el Festejódromo. El diseño debe incluir: áreas techadas y descubiertas, sistema modular de gestión de residuos (reciclaje, compostaje, residuos generales), estaciones de donación de alimentos con refrigeración, iluminación LED de bajo consumo, sistema de drenaje para fácil limpieza, y murales/pantallas para mensajes inspiradores. Entregar planos detallados, presupuesto itemizado y cronograma de construcción.",
+      "duration": "1 mes"
+    },
+    {
+      "order": 3,
+      "title": "Establecer alianzas con organizaciones benéficas locales",
+      "description": "Contactar y firmar convenios con al menos 3 organizaciones benéficas de la zona (bancos de alimentos, comedores comunitarios, refugios) para coordinar la logística de donación de alimentos post-festejo. Definir protocolos de recolección (horarios, tipos de alimentos aceptados, condiciones de almacenamiento), responsables de contacto, y sistema de notificación. Capacitar al personal del Festejódromo en estos protocolos.",
+      "duration": "3 semanas"
+    },
+    {
+      "order": 4,
+      "title": "Implementar sistema de reservas online del espacio",
+      "description": "Desarrollar plataforma web integrada con el sistema universitario donde los graduados puedan: seleccionar fecha/horario de su celebración, ver disponibilidad en tiempo real, conocer las normas de uso, reservar servicios adicionales (catering sostenible, equipo de música), y realizar el pago del depósito reembolsable. El sistema debe enviar recordatorios automáticos con las reglas y checklist pre-evento.",
+      "duration": "6 semanas"
+    },
+    {
+      "order": 5,
+      "title": "Lanzar programa piloto con 3 graduaciones",
+      "description": "Seleccionar 3 carreras que se gradúen en fechas diferentes para testear el Festejódromo. Durante cada evento, recopilar feedback mediante encuestas digitales a estudiantes, observación directa del uso del espacio, medición de residuos generados vs. donados, registro de incidentes, y evaluación del tiempo de limpieza post-evento. Documentar lecciones aprendidas y ajustes necesarios.",
+      "duration": "2 meses"
+    },
+    {
+      "order": 6,
+      "title": "Ajustar infraestructura según resultados del piloto",
+      "description": "Analizar el feedback y métricas del programa piloto para identificar mejoras necesarias. Implementar ajustes en: señalización, distribución de estaciones de residuos, capacidad de refrigeración para donaciones, flujo de personas, horarios de apertura/cierre. Actualizar el manual de uso y las reglas basándose en situaciones reales observadas.",
+      "duration": "3 semanas"
+    },
+    {
+      "order": 7,
+      "title": "Capacitar personal de limpieza y coordinadores del espacio",
+      "description": "Diseñar y ejecutar talleres de capacitación para el personal que gestionará el Festejódromo. Temas a cubrir: uso del sistema de gestión de residuos, coordinación con organizaciones benéficas, manejo del sistema de reservas, protocolos de seguridad, resolución de conflictos con estudiantes, y procedimientos de limpieza rápida. Crear manual operativo y videos de referencia.",
+      "duration": "1 mes"
+    },
+    {
+      "order": 8,
+      "title": "Lanzar campaña de comunicación para graduados",
+      "description": "Crear estrategia de comunicación multicanal (redes sociales, email, cartelería en campus, charlas en clases) para informar a los estudiantes próximos a graduarse sobre el Festejódromo. La campaña debe destacar: beneficios del espacio, facilidad de uso, impacto ambiental positivo, historias de éxito del piloto, y proceso de reserva. Incluir testimonios de graduados que ya lo usaron.",
+      "duration": "2 semanas"
+    }
+  ]
+
+IMPORTANTE:
+  • Genera entre ${minActionItems} y ${maxActionItems} action items
+  • Cada action item debe ser único y aportar valor específico
+  • El orden debe reflejar la secuencia lógica de implementación
+  • Sé específico y concreto en las descripciones, evita generalidades
+  • La duración es opcional pero ayuda a la planificación
+
