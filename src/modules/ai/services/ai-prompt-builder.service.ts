@@ -459,13 +459,19 @@ export class AiPromptBuilderService {
 
   /**
    *
+   * Builds a complete prompt for action items generation.
+   * @param projectId - Project ID for provocation timeline
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param solution - Solution content to generate action items for
+   * @returns Complete prompt ready for AI processing
    */
   async buildActionItemsPrompt(
     projectId: string,
     projectName: string,
     projectDescription: string,
     solution: string,
-  ) {
+  ): Promise<string> {
     const promptFilePath = path.resolve(
       __dirname,
       '../resources/prompts/prompt_generar_action_items.txt',

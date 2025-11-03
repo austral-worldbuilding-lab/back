@@ -69,7 +69,7 @@ EJEMPLO DE USO:
       "order": 4,
       "title": "Implementar sistema de reservas online del espacio",
       "description": "Desarrollar plataforma web integrada con el sistema universitario donde los graduados puedan: seleccionar fecha/horario de su celebración, ver disponibilidad en tiempo real, conocer las normas de uso, reservar servicios adicionales (catering sostenible, equipo de música), y realizar el pago del depósito reembolsable. El sistema debe enviar recordatorios automáticos con las reglas y checklist pre-evento.",
-      "duration": "🕒 6 semanas"
+      "duration": "6 semanas"
     },
     {
       "order": 5,
