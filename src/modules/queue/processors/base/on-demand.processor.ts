@@ -26,6 +26,19 @@ export interface BaseJobData {
 }
 
 /**
+ * Redis connection configuration type for BullMQ.
+ */
+export interface RedisConnectionConfig {
+  host: string;
+  port: number;
+  password?: string;
+  maxRetriesPerRequest: null;
+  tls?: {
+    rejectUnauthorized: boolean;
+  };
+}
+
+/**
  * Abstract base class for Processors that implement on-demand strategy without polling.
  *
  * Handles all shared logic for on-demand workers:
@@ -45,7 +58,7 @@ export abstract class BaseOnDemandProcessor<
   protected queue: Queue<TJobData, TJobResult> | null = null;
   protected idleTimeout: NodeJS.Timeout | null = null;
   protected isWorkerInitializing = false;
-  protected redisConfig: any = null;
+  protected redisConfig: RedisConnectionConfig | null = null;
 
   constructor(
     protected readonly configService: ConfigService,
@@ -64,18 +77,16 @@ export abstract class BaseOnDemandProcessor<
    *
    */
   async onModuleInit() {
-    const redisConfig = this.configService.get<{
-      host: string;
-      port: number;
-      password?: string;
-      maxRetriesPerRequest: null;
-    }>('queue.redis')!;
+    const redisConfig =
+      this.configService.get<RedisConnectionConfig>('queue.redis')!;
 
     this.redisConfig = redisConfig;
     this.queue = this.queueService.getQueue();
 
     if (this.queueService.registerProcessor) {
-      this.queueService.registerProcessor(this as any);
+      this.queueService.registerProcessor(
+        this as unknown as BaseOnDemandProcessor<TJobData, TJobResult>,
+      );
     }
 
     await this.checkAndStartWorkerIfNeeded(redisConfig);
@@ -93,8 +104,9 @@ export abstract class BaseOnDemandProcessor<
    *
    * @param redisConfig - Optional Redis configuration (uses stored config if not provided)
    */
-  public async ensureWorkerRunning(redisConfig?: any) {
-    const config = redisConfig || this.redisConfig;
+  public async ensureWorkerRunning(redisConfig?: RedisConnectionConfig) {
+    const config: RedisConnectionConfig | null =
+      redisConfig || this.redisConfig;
 
     if (!config) {
       this.logger.error('Cannot start worker: Redis config not available');
@@ -144,10 +156,8 @@ export abstract class BaseOnDemandProcessor<
    * - completed: Logs when a job completes
    * - failed: Logs when a job fails
    * - drained: Schedules worker shutdown after idle timeout
-   *
-   * @param redisConfig - Redis configuration
    */
-  protected setupWorkerEvents(redisConfig: any) {
+  protected setupWorkerEvents(_redisConfig: RedisConnectionConfig) {
     if (!this.worker) return;
 
     const workerConfig = this.configService.get<{
@@ -167,7 +177,7 @@ export abstract class BaseOnDemandProcessor<
       );
     });
 
-    this.worker.on('drained', async () => {
+    this.worker.on('drained', () => {
       this.logger.debug(
         `${this.getProcessorName()} worker drained - scheduling idle timeout`,
       );
@@ -176,8 +186,8 @@ export abstract class BaseOnDemandProcessor<
         clearTimeout(this.idleTimeout);
       }
 
-      this.idleTimeout = setTimeout(async () => {
-        await this.closeWorkerIfIdle();
+      this.idleTimeout = setTimeout(() => {
+        void this.closeWorkerIfIdle();
       }, workerConfig.idleTimeout);
     });
   }
@@ -216,7 +226,9 @@ export abstract class BaseOnDemandProcessor<
    *
    * @param redisConfig - Redis configuration
    */
-  protected async checkAndStartWorkerIfNeeded(redisConfig: any) {
+  protected async checkAndStartWorkerIfNeeded(
+    redisConfig: RedisConnectionConfig,
+  ) {
     if (this.isWorkerInitializing) return;
     if (!this.queue) return;
 

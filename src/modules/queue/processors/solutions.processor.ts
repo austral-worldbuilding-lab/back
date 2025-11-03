@@ -2,7 +2,6 @@ import { AppLogger } from '@common/services/logger.service';
 import { AiService } from '@modules/ai/ai.service';
 import { ProjectService } from '@modules/project/project.service';
 import { SolutionService } from '@modules/solution/solution.service';
-import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
@@ -13,6 +12,7 @@ import {
   SolutionsJobData,
   SolutionsJobResult,
 } from '../types/solutions-job.types';
+
 import { BaseOnDemandProcessor } from './base/on-demand.processor';
 
 @Injectable()

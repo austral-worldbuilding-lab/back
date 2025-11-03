@@ -1,19 +1,15 @@
 import { AppLogger } from '@common/services/logger.service';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue, QueueEvents } from 'bullmq';
 
+import { BaseOnDemandProcessor } from '../processors/base/on-demand.processor';
 import {
   EncyclopediaJobData,
   EncyclopediaJobResult,
   EncyclopediaJobStatus,
   EncyclopediaJobStatusResponse,
 } from '../types/encyclopedia-job.types';
-import { BaseOnDemandProcessor } from '../processors/base/on-demand.processor';
 
 @Injectable()
 export class EncyclopediaQueueService {

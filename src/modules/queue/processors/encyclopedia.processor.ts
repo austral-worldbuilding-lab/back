@@ -7,11 +7,12 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
 
+import { EncyclopediaQueueService } from '../services/encyclopedia-queue.service';
 import {
   EncyclopediaJobData,
   EncyclopediaJobResult,
 } from '../types/encyclopedia-job.types';
-import { EncyclopediaQueueService } from '../services/encyclopedia-queue.service';
+
 import { BaseOnDemandProcessor } from './base/on-demand.processor';
 
 @Injectable()
