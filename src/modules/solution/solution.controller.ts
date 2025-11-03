@@ -1,23 +1,27 @@
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { AiService } from '@modules/ai/ai.service';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { ProjectService } from '@modules/project/project.service';
+import { ActionItemDto } from '@modules/solution/dto/action-item.dto';
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
   Body,
-  Param,
-  UseGuards,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
+  Param,
+  Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CreateSolutionDecorator } from './decorators/create-solution.decorator';
 import { DeleteSolutionDecorator } from './decorators/delete-solution.decorator';
+import { GenerateActionItemsDecorator } from './decorators/generate-action-items.decorator';
 import { GenerateSolutionsDecorator } from './decorators/generate-solutions.decorator';
 import { GetCachedSolutionsDecorator } from './decorators/get-cached-solutions.decorator';
 import { GetSolutionByIdDecorator } from './decorators/get-solution-by-id.decorator';
@@ -38,6 +42,7 @@ export class SolutionController {
   constructor(
     private readonly solutionService: SolutionService,
     private readonly projectService: ProjectService,
+    private readonly aiService: AiService,
   ) {}
 
   @Post('project/:projectId/solution')
@@ -119,5 +124,36 @@ export class SolutionController {
     await this.projectService.findOne(projectId);
 
     return this.solutionService.getCachedSolutions(projectId);
+  }
+
+  @Post('project/:projectId/solutions/:solutionId/action-items/generate')
+  @GenerateActionItemsDecorator()
+  async generateActionItems(
+    @Param('solutionId', new UuidValidationPipe()) solutionId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Req() req: RequestWithUser,
+  ): Promise<ActionItemDto[]> {
+    const userId = req.user.id;
+
+    // Validar que la solución exista y obtener sus datos
+    const solution = await this.solutionService.findOne(solutionId);
+    if (!solution)
+      throw new NotFoundException(`Solution with id ${solutionId} not found`);
+
+    const project = await this.projectService.findOne(projectId);
+    if (!project)
+      throw new NotFoundException(`Project with id ${projectId} not found`);
+
+    // Generar action items usando AI
+    return await this.aiService.generateActionItems(
+      project.id,
+      project.name,
+      project.description || '',
+      solution.title,
+      solution.description,
+      solution.problem,
+      userId,
+      project.organizationId,
+    );
   }
 }

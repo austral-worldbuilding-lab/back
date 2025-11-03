@@ -19,6 +19,7 @@ import { FileLoaderService } from './services/file-loader.service';
 import { FileValidationService } from './services/file-validation.service';
 import { GeminiFileCacheService } from './services/gemini-file-cache.service';
 import { GeminiGenerationEngineService } from './services/gemini-generation-engine.service';
+import { ActionItemsStrategy } from './strategies/action-items.strategy';
 import { ContextPostitsStrategy } from './strategies/context-postits.strategy';
 import { EncyclopediaStrategy } from './strategies/encyclopedia.strategy';
 import { MandalaImagesStrategy } from './strategies/mandala-images.strategy';
@@ -47,6 +48,7 @@ import { SolutionsStrategy } from './strategies/solutions.strategy';
     EncyclopediaStrategy,
     MandalaSummaryStrategy,
     SolutionsStrategy,
+    ActionItemsStrategy,
     MandalaImagesStrategy,
     // Registry and Engine
     AiStrategyRegistryService,
