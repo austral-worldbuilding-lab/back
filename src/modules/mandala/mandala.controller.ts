@@ -441,7 +441,7 @@ export class MandalaController {
 
   @Post(':id/generate-images')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGenerateMandalaImages()
   async generateMandalaImages(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
