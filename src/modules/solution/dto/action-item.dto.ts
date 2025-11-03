@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class ActionItemDto {
   @ApiProperty({
@@ -15,6 +15,7 @@ export class ActionItemDto {
     example: 'Organize a Community Workshop',
   })
   @IsNotEmpty()
+  @IsString()
   title!: string;
 
   @ApiProperty({
@@ -22,6 +23,7 @@ export class ActionItemDto {
     example: 'Conduct a community workshop to raise awareness about recycling.',
   })
   @IsNotEmpty()
+  @IsString()
   description!: string;
 
   @ApiProperty({
@@ -30,5 +32,6 @@ export class ActionItemDto {
     required: false,
   })
   @IsString()
+  @IsOptional()
   duration?: string;
 }

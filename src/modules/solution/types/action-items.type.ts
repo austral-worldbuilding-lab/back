@@ -4,6 +4,3 @@ export interface AiActionItemResponse {
   description: string;
   duration?: string;
 }
-
-// Ensure this file is treated as a module
-export {};

@@ -28,21 +28,25 @@ export function GenerateActionItemsDecorator() {
       status: 200,
       description: 'Action items successfully generated',
       schema: {
-        type: 'object',
-        properties: {
-          actionItems: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                order: { type: 'number', example: 1 },
-                title: { type: 'string', example: 'Define project scope' },
-                description: {
-                  type: 'string',
-                  example: 'Create a detailed project scope document',
-                },
-                duration: { type: 'string', example: '2 weeks' },
-              },
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            order: {
+              type: 'number',
+              example: 1,
+            },
+            title: {
+              type: 'string',
+              example: 'Define project scope',
+            },
+            description: {
+              type: 'string',
+              example: 'Create a detailed project scope document',
+            },
+            duration: {
+              type: 'string',
+              example: '2 weeks',
             },
           },
         },
