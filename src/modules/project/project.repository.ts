@@ -688,12 +688,65 @@ export class ProjectRepository {
     return this.parseToProjectDto(project);
   }
 
+  /**
+   * aux para obtener recursivamente a todos los hijos
+   */
+  private async getAllChildProjectIds(
+    projectId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<string[]> {
+    const children = await tx.project.findMany({
+      where: {
+        parentProjectId: projectId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (children.length === 0) {
+      return [];
+    }
+
+    const childIds = children.map((child) => child.id);
+    const grandchildIds = await Promise.all(
+      childIds.map((childId) => this.getAllChildProjectIds(childId, tx)),
+    );
+
+    return [...childIds, ...grandchildIds.flat()];
+  }
+
   async removeWithCascade(id: string): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Soft delete all mandalas in the project
+      // Collect all child project IDs
+      const childProjectIds = await this.getAllChildProjectIds(id, tx);
+      const allProjectIds = [id, ...childProjectIds];
+
+      // Delete all ProjProvLink entries for the project and its children
+      await tx.projProvLink.deleteMany({
+        where: {
+          projectId: {
+            in: allProjectIds,
+          },
+        },
+      });
+
+      // Delete all ProjSolLink entries for the project and its children
+      await tx.projSolLink.deleteMany({
+        where: {
+          projectId: {
+            in: allProjectIds,
+          },
+        },
+      });
+
+      // Soft delete all mandalas in the project and its children
       await tx.mandala.updateMany({
         where: {
-          projectId: id,
+          projectId: {
+            in: allProjectIds,
+          },
           isActive: true,
         },
         data: {
@@ -702,7 +755,18 @@ export class ProjectRepository {
         },
       });
 
-      // 2. Soft delete the project itself
+      // Soft delete all child projects
+      for (const childId of childProjectIds.reverse()) {
+        await tx.project.update({
+          where: { id: childId },
+          data: {
+            isActive: false,
+            deletedAt: new Date(),
+          },
+        });
+      }
+
+      // Soft delete the project itself
       const project = await tx.project.update({
         where: { id },
         data: {
