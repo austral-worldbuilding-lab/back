@@ -470,7 +470,7 @@ export class AiPromptBuilderService {
     projectName: string,
     projectDescription: string,
     solution: string,
-  ) {
+  ): Promise<string> {
     const promptFilePath = path.resolve(
       __dirname,
       '../resources/prompts/prompt_generar_action_items.txt',
