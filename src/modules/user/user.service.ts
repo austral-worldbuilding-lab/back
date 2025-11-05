@@ -6,8 +6,8 @@ import { Injectable } from '@nestjs/common';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserDto } from './dto/user.dto';
 import { UserStatsDto } from './dto/user-stats.dto';
+import { UserDto } from './dto/user.dto';
 import { UserRepository } from './user.repository';
 
 @Injectable()

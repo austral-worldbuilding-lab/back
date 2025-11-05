@@ -1,8 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
-import { UserDto } from '../dto/user.dto';
 import { UserStatsDto } from '../dto/user-stats.dto';
+import { UserDto } from '../dto/user.dto';
 
 export const ApiCreateUser = () =>
   applyDecorators(

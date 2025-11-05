@@ -1,3 +1,4 @@
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiOperation,
@@ -21,7 +22,6 @@ import { MandalaWithPostitsAndLinkedCentersDto } from '../dto/mandala-with-posti
 import { MandalaDto } from '../dto/mandala.dto';
 import { PostitResponseDto } from '../dto/postit/postit-response.dto';
 import { PostitWithCoordinatesDto } from '../dto/postit/postit-with-coordinates.dto';
-import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 
 export const ApiCreateMandala = () =>
   applyDecorators(
