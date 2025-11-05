@@ -19,11 +19,11 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 
-import { CreateOrganizationDto } from './dto/create-organization.dto';
 import {
   ConfirmOrganizationImageDto,
   OrganizationImageType,
 } from './dto/confirm-organization-image.dto';
+import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from './dto/organization-user.dto';
 import { OrganizationWithPresignedUrlDto } from './dto/organization-with-presigned-url.dto';
