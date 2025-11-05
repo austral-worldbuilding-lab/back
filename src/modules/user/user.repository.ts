@@ -110,7 +110,7 @@ export class UserRepository {
 
     const [organizationsCount, projectsCount, mandalasCount, solutionsCount] =
       await Promise.all([
-        // Contamos orgs
+        // Count organizations
         userOrganizationIds.length > 0
           ? this.prisma.organization.count({
               where: {
@@ -120,7 +120,7 @@ export class UserRepository {
             })
           : 0,
 
-        // Contamos proyectos
+        // Count projects
         userProjectIds.length > 0
           ? this.prisma.project.count({
               where: {
@@ -130,7 +130,7 @@ export class UserRepository {
             })
           : 0,
 
-        // Contamos mandalas
+        // Count mandalas
         userProjectIds.length > 0
           ? this.prisma.mandala.count({
               where: {
@@ -140,7 +140,7 @@ export class UserRepository {
             })
           : 0,
 
-        // Contamos soluciones
+        // Count solutions
         userProjectIds.length > 0
           ? this.prisma.projSolLink.count({
               where: {
