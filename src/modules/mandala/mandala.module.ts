@@ -1,5 +1,6 @@
 import { AiModule } from '@modules/ai/ai.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { FirebaseModule } from '@modules/firebase/firebase.module';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { ProjectModule } from '@modules/project/project.module';
@@ -34,6 +35,7 @@ import { PostitService } from './services/postit.service';
     ImageService,
     MandalaRoleGuard,
     AzureBlobStorageService,
+    TextStorageService,
   ],
   exports: [MandalaService],
 })

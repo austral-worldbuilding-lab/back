@@ -26,7 +26,9 @@ export class UserService {
     // Create default organization for new user
     try {
       await this.organizationService.createDefaultOrganization(user.id);
-      this.logger.log('Default organization created for user', { userId: user.id });
+      this.logger.log('Default organization created for user', {
+        userId: user.id,
+      });
     } catch (error) {
       this.logger.error(
         'Failed to create default organization for user',
