@@ -102,10 +102,18 @@ export class SolutionRepository {
             provocation: true,
           },
         },
+        projects: {
+          include: {
+            project: true,
+          },
+        },
       },
     });
 
-    if (!solution) return null;
+    if (!solution || !solution.isActive) {
+      return null;
+    }
+
     return this.parseToSolutionDto(solution);
   }
 

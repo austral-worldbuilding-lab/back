@@ -5,6 +5,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
+import { AiActionItemResponse } from '@modules/solution/types/action-items.type';
 import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
@@ -232,6 +233,30 @@ export interface AiProvider {
     projectDescription: string,
     encyclopedia: string,
   ): Promise<AiResponseWithUsage<AiSolutionResponse[]>>;
+
+  /**
+   * Generates action items for a solution
+   *
+   * This method takes a solution and generates concrete, actionable steps
+   * to implement it. Each action item includes an order, title, description,
+   * and optional duration.
+   *
+   * @param projectId - Unique identifier of the project
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param solutionTitle - Title of the solution
+   * @param solutionDescription - Description of the solution
+   * @param solutionProblem - Problem that the solution addresses
+   * @returns Promise resolving to an array of action item responses
+   */
+  generateActionItems(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionTitle: string,
+    solutionDescription: string,
+    solutionProblem: string,
+  ): Promise<AiResponseWithUsage<AiActionItemResponse[]>>;
 
   /**
    * Generates images for a mandala based on its content and context

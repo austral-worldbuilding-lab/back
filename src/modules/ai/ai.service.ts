@@ -7,6 +7,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
+import { AiActionItemResponse } from '@modules/solution/types/action-items.type';
 import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 import { Injectable, Inject } from '@nestjs/common';
 import { AiService as AiServiceEnum, AiModel } from '@prisma/client';
@@ -430,6 +431,52 @@ export class AiService {
 
     this.logger.log(
       `Generated ${response.data.length} solutions for project: ${projectId}`,
+    );
+
+    return response.data;
+  }
+
+  async generateActionItems(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionTitle: string,
+    solutionDescription: string,
+    solutionProblem: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<AiActionItemResponse[]> {
+    this.logger.log(
+      `Starting action items generation for project: ${projectId}`,
+    );
+
+    const response = await this.aiProvider.generateActionItems(
+      projectId,
+      projectName,
+      projectDescription,
+      solutionTitle,
+      solutionDescription,
+      solutionProblem,
+    );
+
+    // Trackear consumo de IA
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_ACTION_ITEMS,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
+    this.logger.log(
+      `Generated ${response.data.length} action items for project: ${projectId}`,
     );
 
     return response.data;
