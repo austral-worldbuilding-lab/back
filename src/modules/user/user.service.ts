@@ -7,6 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
+import { UserStatsDto } from './dto/user-stats.dto';
 import { UserRepository } from './user.repository';
 
 @Injectable()
@@ -82,5 +83,9 @@ export class UserService {
     }
     this.logger.log('Deactivating user', { targetUserId });
     return this.userRepository.deactivateUser(targetUserId);
+  }
+
+  async getUserStats(userId: string): Promise<UserStatsDto> {
+    return this.userRepository.getUserStats(userId);
   }
 }

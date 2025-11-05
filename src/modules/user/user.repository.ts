@@ -1,9 +1,11 @@
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
+import { ProjSolLinkRole } from '@prisma/client';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
+import { UserStatsDto } from './dto/user-stats.dto';
 
 @Injectable()
 export class UserRepository {
@@ -84,5 +86,79 @@ export class UserRepository {
         is_active: true,
       },
     });
+  }
+
+  async getUserStats(userId: string): Promise<UserStatsDto> {
+    const userOrganizationIds = await this.prisma.userOrganizationRole
+      .findMany({
+        where: { userId },
+        select: { organizationId: true },
+      })
+      .then((roles) => roles.map((r) => r.organizationId));
+
+    const userProjectIds = await this.prisma.userProjectRole
+      .findMany({
+        where: {
+          userId,
+          project: {
+            isActive: true,
+          },
+        },
+        select: { projectId: true },
+      })
+      .then((roles) => roles.map((r) => r.projectId));
+
+    const [organizationsCount, projectsCount, mandalasCount, solutionsCount] =
+      await Promise.all([
+        // Contamos orgs
+        userOrganizationIds.length > 0
+          ? this.prisma.organization.count({
+              where: {
+                id: { in: userOrganizationIds },
+                isActive: true,
+              },
+            })
+          : 0,
+
+        // Contamos proyectos
+        userProjectIds.length > 0
+          ? this.prisma.project.count({
+              where: {
+                id: { in: userProjectIds },
+                isActive: true,
+              },
+            })
+          : 0,
+
+        // Contamos mandalas
+        userProjectIds.length > 0
+          ? this.prisma.mandala.count({
+              where: {
+                projectId: { in: userProjectIds },
+                isActive: true,
+              },
+            })
+          : 0,
+
+        // Contamos soluciones
+        userProjectIds.length > 0
+          ? this.prisma.projSolLink.count({
+              where: {
+                projectId: { in: userProjectIds },
+                role: ProjSolLinkRole.GENERATED,
+                project: {
+                  isActive: true,
+                },
+              },
+            })
+          : 0,
+      ]);
+
+    return {
+      organizationsCount,
+      projectsCount,
+      mandalasCount,
+      solutionsCount,
+    };
   }
 }

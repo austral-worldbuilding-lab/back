@@ -2,6 +2,7 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 
 import { UserDto } from '../dto/user.dto';
+import { UserStatsDto } from '../dto/user-stats.dto';
 
 export const ApiCreateUser = () =>
   applyDecorators(
@@ -91,6 +92,21 @@ export const ApiGetCurrentUser = () =>
       status: 200,
       description: 'Devuelve el usuario autenticado',
       type: UserDto,
+    }),
+    ApiResponse({ status: 401, description: 'Sin autorización.' }),
+  );
+
+export const ApiGetUserStats = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener estadísticas del usuario autenticado',
+      description:
+        'Devuelve estadísticas del usuario: cantidad de organizaciones (creadas e invitadas), mundos/proyectos creados (incluye subproyectos y proyectos de provocaciones), total de mandalas y soluciones generadas',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Devuelve las estadísticas del usuario',
+      type: UserStatsDto,
     }),
     ApiResponse({ status: 401, description: 'Sin autorización.' }),
   );
