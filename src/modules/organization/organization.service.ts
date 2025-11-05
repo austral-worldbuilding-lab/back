@@ -61,6 +61,16 @@ export class OrganizationService {
     };
   }
 
+  async createDefaultOrganization(userId: string): Promise<OrganizationDto> {
+    const ownerRole = await this.roleService.findOrCreate('dueño');
+
+    return this.organizationRepository.create(
+      { name: 'Mi Organización' },
+      userId,
+      ownerRole.id,
+    );
+  }
+
   async findAllPaginated(
     page: number,
     limit: number,
