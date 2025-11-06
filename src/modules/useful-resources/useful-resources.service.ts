@@ -1,4 +1,3 @@
-import { BlobServiceClient } from '@azure/storage-blob';
 import { AppLogger } from '@common/services/logger.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { Injectable } from '@nestjs/common';
@@ -41,12 +40,9 @@ export class UsefulResourcesService {
   }
 
   private async getBlobFiles(): Promise<UsefulResourceDto[]> {
-    const containerName = (this.blobStorageService as any)
-      .containerName as string;
-    const blobServiceClient = (this.blobStorageService as any)
-      .blobServiceClient as BlobServiceClient;
-
-    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const containerClient = this.blobStorageService[
+      'blobServiceClient'
+    ].getContainerClient(this.blobStorageService['containerName']);
     const prefix = this.usefulResourcesPath;
 
     const resources: UsefulResourceDto[] = [];
@@ -56,6 +52,7 @@ export class UsefulResourcesService {
       const contentType = blob.properties.contentType || 'unknown';
 
       const account = process.env.AZURE_STORAGE_ACCOUNT!;
+      const containerName = this.blobStorageService['containerName'];
       const publicUrl = `https://${account}.blob.core.windows.net/${containerName}/${blob.name}`;
 
       resources.push({
