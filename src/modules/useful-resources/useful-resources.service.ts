@@ -40,28 +40,16 @@ export class UsefulResourcesService {
   }
 
   private async getBlobFiles(): Promise<UsefulResourceDto[]> {
-    const containerClient = this.blobStorageService[
-      'blobServiceClient'
-    ].getContainerClient(this.blobStorageService['containerName']);
-    const prefix = this.usefulResourcesPath;
+    const files = await this.blobStorageService.listBlobsByPrefix(
+      this.usefulResourcesPath,
+    );
 
-    const resources: UsefulResourceDto[] = [];
-
-    for await (const blob of containerClient.listBlobsFlat({ prefix })) {
-      const fileName = blob.name.replace(prefix, '');
-      const contentType = blob.properties.contentType || 'unknown';
-
-      const account = process.env.AZURE_STORAGE_ACCOUNT!;
-      const containerName = this.blobStorageService['containerName'];
-      const publicUrl = `https://${account}.blob.core.windows.net/${containerName}/${blob.name}`;
-
-      resources.push({
-        file_name: fileName,
-        file_type: contentType,
-        url: publicUrl,
-      });
-    }
-
-    return resources;
+    return files.map((file) => ({
+      file_name: file.file_name,
+      file_type: file.file_type,
+      url: this.blobStorageService.buildPublicUrlForPath(
+        `${this.usefulResourcesPath}${file.file_name}`,
+      ),
+    }));
   }
 }

@@ -74,9 +74,7 @@ export class AzureBlobStorageService implements StorageService {
   ): string {
     const prefix = buildPrefix(scope, folderName);
     const blobName = `${prefix}${fileName}`;
-    const account = process.env.AZURE_STORAGE_ACCOUNT!;
-
-    return `https://${account}.blob.core.windows.net/${this.containerName}/${blobName}`;
+    return this.buildPublicUrlForPath(blobName);
   }
 
   async getFiles(
@@ -306,6 +304,31 @@ export class AzureBlobStorageService implements StorageService {
     const blobClient = containerClient.getBlobClient(blobName);
 
     return await blobClient.exists();
+  }
+
+  async listBlobsByPrefix(prefix: string): Promise<CreateFileDto[]> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const descriptors: CreateFileDto[] = [];
+
+    this.logger.debug('Listing blobs by prefix', { prefix });
+
+    for await (const blob of containerClient.listBlobsFlat({ prefix })) {
+      descriptors.push({
+        file_name: blob.name.replace(prefix, ''),
+        file_type: blob.properties.contentType || 'unknown',
+      });
+    }
+
+    this.logger.debug(`Found ${descriptors.length} blobs with prefix ${prefix}`);
+
+    return descriptors;
+  }
+
+  buildPublicUrlForPath(blobPath: string): string {
+    const account = process.env.AZURE_STORAGE_ACCOUNT!;
+    return `https://${account}.blob.core.windows.net/${this.containerName}/${blobPath}`;
   }
 
   private handleAzureDeletionError(error: unknown, blobName: string): never {
