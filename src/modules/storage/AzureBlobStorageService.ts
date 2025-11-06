@@ -321,7 +321,9 @@ export class AzureBlobStorageService implements StorageService {
       });
     }
 
-    this.logger.debug(`Found ${descriptors.length} blobs with prefix ${prefix}`);
+    this.logger.debug(
+      `Found ${descriptors.length} blobs with prefix ${prefix}`,
+    );
 
     return descriptors;
   }
