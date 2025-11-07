@@ -887,12 +887,11 @@ export class ProjectService {
         projectId: parentProject.id,
       };
 
-      const encyclopediaBuffer =
-        await this.blobStorageService.getFileBuffer(
-          encyclopediaFileName,
-          parentScope,
-          'deliverables',
-        );
+      const encyclopediaBuffer = await this.blobStorageService.getFileBuffer(
+        encyclopediaFileName,
+        parentScope,
+        'deliverables',
+      );
 
       const newFileName = `Enciclopedia Mundo Padre - ${parentProject.name}.md`;
       const newScope = {
