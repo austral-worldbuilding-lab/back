@@ -1458,22 +1458,36 @@ export class ProjectRepository {
   }
 
   async deleteProvocation(provocationId: string): Promise<ProvocationDto> {
-    const provocation = await this.prisma.provocation.update({
-      where: { id: provocationId },
-      data: {
-        isActive: false,
-        deletedAt: new Date(),
-      },
-      include: {
-        projects: {
-          include: {
-            project: true,
+    return this.prisma.$transaction(async (tx) => {
+      await tx.projProvLink.deleteMany({
+        where: {
+          provocationId: provocationId,
+        },
+      });
+
+      await tx.solProvLink.deleteMany({
+        where: {
+          provocationId: provocationId,
+        },
+      });
+
+      const provocation = await tx.provocation.update({
+        where: { id: provocationId },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+        },
+        include: {
+          projects: {
+            include: {
+              project: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return this.parseToProvocationDto(provocation);
+      return this.parseToProvocationDto(provocation);
+    });
   }
 
   async findProvocationById(
@@ -1565,6 +1579,9 @@ export class ProjectRepository {
       where: {
         projectId: { in: projectIds },
         role: ProjProvLinkRole.ORIGIN,
+        provocation: {
+          isActive: true,
+        },
       },
       include: {
         provocation: {
