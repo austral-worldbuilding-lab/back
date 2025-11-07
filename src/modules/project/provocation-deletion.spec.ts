@@ -7,15 +7,26 @@ import { ProjectRepository } from './project.repository';
 
 describe('ProjectRepository - Provocation Deletion', () => {
   let projectRepository: ProjectRepository;
-  let mockPrisma: {
-    provocation: {
-      update: jest.Mock;
-      findFirst: jest.Mock;
-    };
-  };
+  let mockPrisma: any;
+  let mockTransaction: any;
 
   beforeEach(async () => {
+    // Mock para las operaciones dentro de la transacción
+    mockTransaction = {
+      projProvLink: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+      solProvLink: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+      provocation: {
+        update: jest.fn(),
+        findFirst: jest.fn(),
+      },
+    };
+
     mockPrisma = {
+      $transaction: jest.fn((callback) => callback(mockTransaction)),
       provocation: {
         update: jest.fn(),
         findFirst: jest.fn(),
@@ -39,7 +50,7 @@ describe('ProjectRepository - Provocation Deletion', () => {
     it('should soft delete by setting isActive=false and deletedAt', async () => {
       const provocationId = 'test-provocation-id';
 
-      mockPrisma.provocation.update.mockResolvedValue({
+      mockTransaction.provocation.update.mockResolvedValue({
         id: provocationId,
         question: 'Test question?',
         content: null,
@@ -53,7 +64,21 @@ describe('ProjectRepository - Provocation Deletion', () => {
 
       await projectRepository.deleteProvocation(provocationId);
 
-      expect(mockPrisma.provocation.update).toHaveBeenCalledWith({
+      // Verificar que se llama a la transacción
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+
+      // Verificar que se eliminan los links de ProjProvLink
+      expect(mockTransaction.projProvLink.deleteMany).toHaveBeenCalledWith({
+        where: { provocationId: provocationId },
+      });
+
+      // Verificar que se eliminan los links de SolProvLink
+      expect(mockTransaction.solProvLink.deleteMany).toHaveBeenCalledWith({
+        where: { provocationId: provocationId },
+      });
+
+      // Verificar que se hace soft delete de la provocación
+      expect(mockTransaction.provocation.update).toHaveBeenCalledWith({
         where: { id: provocationId },
         data: {
           isActive: false,
