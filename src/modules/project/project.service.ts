@@ -13,7 +13,10 @@ import { FileService } from '@modules/files/file.service';
 import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
-import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
+import {
+  EncyclopediaJobStatus,
+  EncyclopediaJobStatusResponse,
+} from '@modules/queue/types/encyclopedia-job.types';
 import { RoleService } from '@modules/role/role.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
@@ -867,7 +870,7 @@ export class ProjectService {
       );
 
       if (
-        encyclopediaStatus.status !== 'completed' ||
+        encyclopediaStatus.status !== EncyclopediaJobStatus.COMPLETED ||
         !encyclopediaStatus.result?.storageUrl
       ) {
         this.logger.log(
