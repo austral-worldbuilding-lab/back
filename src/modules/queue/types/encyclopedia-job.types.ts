@@ -5,7 +5,9 @@ export interface EncyclopediaJobData {
 
 export interface EncyclopediaJobResult {
   encyclopedia: string;
+  html?: string;
   storageUrl: string;
+  htmlStorageUrl?: string;
 }
 
 export enum EncyclopediaJobStatus {

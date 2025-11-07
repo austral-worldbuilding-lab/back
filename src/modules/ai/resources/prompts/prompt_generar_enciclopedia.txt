@@ -55,4 +55,30 @@ LIMITACIONES:
   • Longitud: entre 800-1500 palabras (máximo 10,000 caracteres)
 
 FORMATO DE SALIDA:
-  Proporcionar únicamente el texto de la enciclopedia en formato narrativo, sin estructura JSON ni metadatos adicionales. El texto debe ser directamente utilizable como contexto para futuras generaciones de IA.
+  Debes proporcionar un objeto JSON con dos campos:
+  
+  1. "encyclopedia": El texto de la enciclopedia en formato narrativo/markdown. El texto debe ser directamente utilizable como contexto para futuras generaciones de IA.
+  
+  2. "html": Un documento HTML completo y navegable que incluya:
+     • Estructura HTML5 válida con <!DOCTYPE html>, <head> y <body>
+     • Meta tags apropiados (charset UTF-8, viewport)
+     • Título descriptivo que incluya el nombre del proyecto
+     • Sistema de navegación por pestañas (tabs) para las 5 secciones:
+       1. Contexto del Mundo
+       2. Personajes y Perspectivas
+       3. Dimensiones y Escalas
+       4. Patrones y Tendencias
+       5. Insights y Oportunidades
+     • CSS inline completo para estilos profesionales, responsive y modernos
+     • JavaScript inline para funcionalidad de pestañas (sin dependencias externas)
+     • Contenido completamente auto-contenido (sin recursos externos)
+     • Funcionamiento offline completo
+     • El contenido debe ser el mismo que en el campo "encyclopedia" pero estructurado en las secciones HTML
+     • Diseño limpio, profesional y fácil de leer
+     • Responsive design que funcione en móviles y escritorio
+
+Ejemplo de estructura JSON de salida:
+{
+  "encyclopedia": "# CONTEXTO DEL MUNDO\n\nEl mundo del proyecto...",
+  "html": "<!DOCTYPE html>\n<html lang=\"es\">..."
+}

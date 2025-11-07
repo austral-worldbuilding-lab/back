@@ -64,6 +64,7 @@ export class EncyclopediaController {
       progress: status.progress,
       encyclopedia: status.result?.encyclopedia,
       storageUrl: status.result?.storageUrl,
+      htmlStorageUrl: status.result?.htmlStorageUrl,
       error: status.error,
       failedReason: status.failedReason,
       createdAt: status.createdAt,

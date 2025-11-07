@@ -154,7 +154,9 @@ export class EncyclopediaProcessor extends BaseOnDemandProcessor<
       await job.updateProgress(90);
       const result = {
         encyclopedia: encyclopediaResponse.encyclopedia,
+        html: encyclopediaResponse.html,
         storageUrl: '',
+        htmlStorageUrl: '',
       };
 
       await this.saveResult(job, result);
@@ -176,20 +178,23 @@ export class EncyclopediaProcessor extends BaseOnDemandProcessor<
    * Saves encyclopedia to blob storage.
    *
    * @param job - The processed job
-   * @param result - The encyclopedia result (storageUrl will be set)
+   * @param result - The encyclopedia result (storageUrl and htmlStorageUrl will be set)
    */
   protected async saveResult(
     job: Job<EncyclopediaJobData>,
     result: EncyclopediaJobResult,
   ): Promise<void> {
     const project = await this.projectService.findOne(job.data.projectId);
-    const fileName = `Enciclopedia del mundo - ${project.name}.md`;
+    const baseFileName = `Enciclopedia del mundo - ${project.name}`;
+    const mdFileName = `${baseFileName}.md`;
+    const htmlFileName = `${baseFileName}.html`;
 
-    this.logger.log('Saving encyclopedia to blob storage', {
+    this.logger.log('Saving encyclopedia files to blob storage', {
       organizationId: project.organizationId,
       projectId: project.id,
-      fileName,
-      contentLength: result.encyclopedia.length,
+      mdFileName,
+      htmlFileName,
+      markdownLength: result.encyclopedia.length,
     });
 
     const scope = {
@@ -197,29 +202,50 @@ export class EncyclopediaProcessor extends BaseOnDemandProcessor<
       projectId: project.id,
     };
 
-    const buffer = Buffer.from(result.encyclopedia, 'utf-8');
-
+    const mdBuffer = Buffer.from(result.encyclopedia, 'utf-8');
     await this.blobStorageService.uploadBuffer(
-      buffer,
-      fileName,
+      mdBuffer,
+      mdFileName,
       scope,
       'deliverables',
       'text/markdown',
     );
 
-    const publicUrl = this.blobStorageService.buildPublicUrl(
+    const mdPublicUrl = this.blobStorageService.buildPublicUrl(
       scope,
-      fileName,
+      mdFileName,
       'deliverables',
     );
+    result.storageUrl = mdPublicUrl;
 
-    result.storageUrl = publicUrl;
+    if (result.html) {
+      const htmlBuffer = Buffer.from(result.html, 'utf-8');
+      await this.blobStorageService.uploadBuffer(
+        htmlBuffer,
+        htmlFileName,
+        scope,
+        'deliverables',
+        'text/html',
+      );
 
-    this.logger.log('Encyclopedia saved', {
-      projectId: project.id,
-      fileName,
-      url: publicUrl,
-    });
+      const htmlPublicUrl = this.blobStorageService.buildPublicUrl(
+        scope,
+        htmlFileName,
+        'deliverables',
+      );
+      result.htmlStorageUrl = htmlPublicUrl;
+
+      this.logger.log('Encyclopedia files saved successfully', {
+        projectId: project.id,
+        mdFileName,
+        htmlFileName,
+        mdUrl: mdPublicUrl,
+        htmlUrl: htmlPublicUrl,
+        htmlLength: result.html.length,
+      });
+    } else {
+      this.logger.warn('No HTML content available, only markdown saved');
+    }
   }
 
   /**

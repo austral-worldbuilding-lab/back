@@ -44,7 +44,29 @@ export class EncyclopediaStrategy
     if (!responseText) {
       throw new Error('No response text received from Gemini API');
     }
-    this.logger.log('Successfully parsed encyclopedia response from AI');
-    return { encyclopedia: responseText };
+
+    try {
+      const parsed = JSON.parse(responseText) as {
+        encyclopedia?: string;
+        html?: string;
+      };
+
+      if (!parsed.encyclopedia || !parsed.html) {
+        throw new Error(
+          'Response missing required fields: encyclopedia or html',
+        );
+      }
+
+      this.logger.log('Successfully parsed encyclopedia response from AI');
+      return {
+        encyclopedia: parsed.encyclopedia,
+        html: parsed.html,
+      };
+    } catch (error) {
+      this.logger.error('Failed to parse encyclopedia response', { error });
+      throw new Error(
+        `Invalid encyclopedia response format: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 }
