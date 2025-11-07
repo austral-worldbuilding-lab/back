@@ -906,7 +906,7 @@ export class ProjectService {
         encyclopediaBuffer,
         newFileName,
         newScope,
-        'files', // Importante: 'files' para que la IA lo use como contexto
+        'files', // Important: 'files' so AI can use it as context
         'text/markdown',
       );
 
