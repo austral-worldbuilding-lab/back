@@ -69,7 +69,7 @@ export class ProjectRepository {
     };
   }
 
-  private parseToProjectDto(project: Project): ProjectDto {
+  parseToProjectDto(project: Project): ProjectDto {
     return {
       id: project.id,
       name: project.name,
