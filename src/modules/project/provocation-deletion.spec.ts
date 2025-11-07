@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { PrismaService } from '@modules/prisma/prisma.service';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -11,7 +14,6 @@ describe('ProjectRepository - Provocation Deletion', () => {
   let mockTransaction: any;
 
   beforeEach(async () => {
-    // Mock para las operaciones dentro de la transacción
     mockTransaction = {
       projProvLink: {
         deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
@@ -64,20 +66,16 @@ describe('ProjectRepository - Provocation Deletion', () => {
 
       await projectRepository.deleteProvocation(provocationId);
 
-      // Verificar que se llama a la transacción
       expect(mockPrisma.$transaction).toHaveBeenCalled();
 
-      // Verificar que se eliminan los links de ProjProvLink
       expect(mockTransaction.projProvLink.deleteMany).toHaveBeenCalledWith({
         where: { provocationId: provocationId },
       });
 
-      // Verificar que se eliminan los links de SolProvLink
       expect(mockTransaction.solProvLink.deleteMany).toHaveBeenCalledWith({
         where: { provocationId: provocationId },
       });
 
-      // Verificar que se hace soft delete de la provocación
       expect(mockTransaction.provocation.update).toHaveBeenCalledWith({
         where: { id: provocationId },
         data: {
