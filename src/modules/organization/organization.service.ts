@@ -65,7 +65,7 @@ export class OrganizationService {
     const ownerRole = await this.roleService.findOrCreate('dueño');
 
     return this.organizationRepository.create(
-      { name: 'Mi Organización' },
+      { name: 'Mi Espacio de Trabajo' },
       userId,
       ownerRole.id,
     );
