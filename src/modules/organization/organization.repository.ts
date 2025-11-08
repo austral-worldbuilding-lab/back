@@ -19,6 +19,7 @@ export class OrganizationRepository {
       name: org.name,
       createdAt: org.createdAt,
       imageUrl: org.imageUrl ?? undefined,
+      bannerUrl: org.bannerUrl ?? undefined,
     };
   }
 
@@ -337,6 +338,18 @@ export class OrganizationRepository {
     const org = await this.prisma.organization.update({
       where: { id },
       data: { imageUrl },
+    });
+
+    return this.parseToOrganizationDto(org);
+  }
+
+  async updateBannerUrl(
+    id: string,
+    bannerUrl: string,
+  ): Promise<OrganizationDto> {
+    const org = await this.prisma.organization.update({
+      where: { id },
+      data: { bannerUrl },
     });
 
     return this.parseToOrganizationDto(org);

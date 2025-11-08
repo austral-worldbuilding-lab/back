@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+
+export enum OrganizationImageType {
+  PROFILE_PICTURE = 'profilePicture',
+  BANNER_PICTURE = 'bannerPicture',
+}
 
 export class ConfirmOrganizationImageDto {
   @ApiProperty({
@@ -9,4 +14,13 @@ export class ConfirmOrganizationImageDto {
   @IsString()
   @IsNotEmpty()
   imageId!: string;
+
+  @ApiProperty({
+    description: 'Tipo de imagen a confirmar',
+    enum: OrganizationImageType,
+    example: OrganizationImageType.PROFILE_PICTURE,
+  })
+  @IsEnum(OrganizationImageType)
+  @IsNotEmpty()
+  imageType!: OrganizationImageType;
 }

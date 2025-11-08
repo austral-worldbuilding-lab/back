@@ -19,6 +19,10 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 
+import {
+  ConfirmOrganizationImageDto,
+  OrganizationImageType,
+} from './dto/confirm-organization-image.dto';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationUserRoleResponseDto } from './dto/organization-user-role-response.dto';
 import { OrganizationUserDto } from './dto/organization-user.dto';
@@ -50,15 +54,7 @@ export class OrganizationService {
       ownerRole.id,
     );
 
-    // Generate presigned URL for image upload
-    const imageId = randomUUID();
-    const presignedUrl = await this.generatePresignedUrl(org.id, imageId);
-
-    return {
-      ...org,
-      imageId,
-      presignedUrl,
-    };
+    return this.addPresignedUrlsToOrganization(org);
   }
 
   async findAllPaginated(
@@ -103,15 +99,7 @@ export class OrganizationService {
 
     const updatedOrg = await this.organizationRepository.update(id, dto);
 
-    // Generate presigned URL for image upload
-    const imageId = randomUUID();
-    const presignedUrl = await this.generatePresignedUrl(id, imageId);
-
-    return {
-      ...updatedOrg,
-      imageId,
-      presignedUrl,
-    };
+    return this.addPresignedUrlsToOrganization(updatedOrg);
   }
 
   async remove(id: string): Promise<OrganizationDto> {
@@ -325,9 +313,38 @@ export class OrganizationService {
     return presignedUrls[0].url;
   }
 
+  private async addPresignedUrlsToOrganization(
+    org: OrganizationDto,
+  ): Promise<OrganizationWithPresignedUrlDto> {
+    // Generate presigned URLs for profile picture and banner upload
+    const profileImageId = randomUUID();
+    const profilePresignedUrl = await this.generatePresignedUrl(
+      org.id,
+      profileImageId,
+    );
+
+    const bannerImageId = randomUUID();
+    const bannerPresignedUrl = await this.generatePresignedUrl(
+      org.id,
+      bannerImageId,
+    );
+
+    return {
+      ...org,
+      profilePicture: {
+        imageId: profileImageId,
+        presignedUrl: profilePresignedUrl,
+      },
+      bannerPicture: {
+        imageId: bannerImageId,
+        presignedUrl: bannerPresignedUrl,
+      },
+    };
+  }
+
   async confirmImageUpload(
     organizationId: string,
-    imageId: string,
+    dto: ConfirmOrganizationImageDto,
   ): Promise<OrganizationDto> {
     const org = await this.organizationRepository.findOne(organizationId);
     if (!org) {
@@ -336,23 +353,30 @@ export class OrganizationService {
 
     const blobExists = await this.storageService.blobExists(
       { orgId: organizationId },
-      imageId,
+      dto.imageId,
       'images',
     );
 
     if (!blobExists) {
-      throw new ResourceNotFoundException('Image', imageId);
+      throw new ResourceNotFoundException('Image', dto.imageId);
     }
 
     const publicUrl = this.storageService.buildPublicUrl(
       { orgId: organizationId },
-      imageId,
+      dto.imageId,
       'images',
     );
 
-    return this.organizationRepository.updateImageUrl(
-      organizationId,
-      publicUrl,
-    );
+    if (dto.imageType === OrganizationImageType.PROFILE_PICTURE) {
+      return this.organizationRepository.updateImageUrl(
+        organizationId,
+        publicUrl,
+      );
+    } else {
+      return this.organizationRepository.updateBannerUrl(
+        organizationId,
+        publicUrl,
+      );
+    }
   }
 }

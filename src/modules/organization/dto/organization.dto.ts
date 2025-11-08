@@ -19,10 +19,18 @@ export class OrganizationDto {
   accessType?: 'full' | 'limited';
 
   @ApiProperty({
-    description: 'Imagen de la organización',
+    description: 'Imagen de perfil de la organización',
     example:
       'https://account.blob.core.windows.net/container/org/123/images/uuid.jpg',
     required: false,
   })
   imageUrl?: string;
+
+  @ApiProperty({
+    description: 'Imagen de banner de la organización',
+    example:
+      'https://account.blob.core.windows.net/container/org/123/images/uuid.jpg',
+    required: false,
+  })
+  bannerUrl?: string;
 }

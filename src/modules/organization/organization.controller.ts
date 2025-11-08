@@ -243,7 +243,7 @@ export class OrganizationController {
   ): Promise<MessageResponse<OrganizationDto>> {
     const org = await this.organizationService.confirmImageUpload(
       organizationId,
-      dto.imageId,
+      dto,
     );
     return {
       message: 'Organization image confirmed successfully',
