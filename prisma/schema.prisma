@@ -146,6 +146,7 @@ model Organization {
   id        String    @id @default(uuid())
   name      String
   imageUrl  String?
+  bannerUrl String?
   createdAt DateTime  @default(now())
   isActive  Boolean   @default(true)
   deletedAt DateTime?
