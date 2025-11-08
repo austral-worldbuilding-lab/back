@@ -532,4 +532,52 @@ export class AiService {
     );
     return response.data;
   }
+
+  async generateSolutionImages(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionId: string,
+    solutionTitle: string,
+    solutionSummary: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<
+    import('./strategies/solution-images.strategy').SolutionImageResponse[]
+  > {
+    this.logger.log(
+      `Starting solution images generation for project: ${projectId}, solution: ${solutionId}`,
+    );
+
+    const response = await this.aiProvider.generateSolutionImages(
+      projectId,
+      projectName,
+      projectDescription,
+      solutionId,
+      solutionTitle,
+      solutionSummary,
+    );
+
+    // Track AI usage
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_SOLUTIONS,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
+    this.logger.log(
+      `Generated ${response.data.length} solution image prompts for solution: ${solutionId}`,
+    );
+
+    return response.data;
+  }
 }

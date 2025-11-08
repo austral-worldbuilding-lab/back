@@ -26,6 +26,10 @@ import { PostitsSummaryInput } from '../strategies/postits-summary.strategy';
 import { PostitsInput } from '../strategies/postits.strategy';
 import { ProvocationsInput } from '../strategies/provocations.strategy';
 import { QuestionsInput } from '../strategies/questions.strategy';
+import {
+  SolutionImageResponse,
+  SolutionImagesInput,
+} from '../strategies/solution-images.strategy';
 import { SolutionsInput } from '../strategies/solutions.strategy';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
@@ -456,6 +460,42 @@ export class GeminiAdapter implements AiProvider {
     );
     this.logger.log(
       `Mandala images generation completed for mandala: ${mandalaId}`,
+    );
+    return { data, usage };
+  }
+
+  async generateSolutionImages(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionId: string,
+    solutionTitle: string,
+    solutionSummary: string,
+  ): Promise<AiResponseWithUsage<SolutionImageResponse[]>> {
+    this.logger.log(
+      `Starting solution images generation for solution: ${solutionId}`,
+    );
+    const strategy = this.strategies.getSolutionImages();
+    const input: SolutionImagesInput = {
+      projectId,
+      projectName,
+      projectDescription,
+      solutionId,
+      solutionTitle,
+      solutionSummary,
+    };
+    const prompt = await strategy.buildPrompt(input);
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
+      prompt,
+      schema,
+      { projectId },
+      this.temperatureConfig.solutions,
+    );
+    const data = strategy.parseAndValidate(text);
+    this.logger.log(
+      `Solution images generation completed for solution: ${solutionId}`,
     );
     return { data, usage };
   }

@@ -25,6 +25,8 @@ import {
   forwardRef,
 } from '@nestjs/common';
 
+import { SolutionImageService } from '../solution/solution-image.service';
+
 import { CreateChildProjectDto } from './dto/create-child-project.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
@@ -62,6 +64,8 @@ export class ProjectService {
     private readonly textStorageService: TextStorageService,
     @Inject(forwardRef(() => EncyclopediaQueueService))
     private readonly encyclopediaQueueService: EncyclopediaQueueService,
+    @Inject(forwardRef(() => SolutionImageService))
+    private readonly solutionImageService: SolutionImageService,
   ) {
     this.logger.setContext(ProjectService.name);
   }
@@ -893,6 +897,28 @@ export class ProjectService {
       uploadContext.content,
       uploadContext.filename,
       scope,
+    );
+  }
+
+  async generateSolutionImages(
+    projectId: string,
+    solutionId: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<string[]> {
+    this.logger.log('Generating solution images', {
+      projectId,
+      solutionId,
+    });
+
+    // Verify project exists
+    await this.findOne(projectId);
+
+    return this.solutionImageService.generateAndSaveSolutionImages(
+      projectId,
+      solutionId,
+      userId,
+      organizationId,
     );
   }
 }
