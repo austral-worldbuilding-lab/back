@@ -23,6 +23,10 @@ export interface PromptReplacementConfig {
   maxActionItems?: number;
   minActionItems?: number;
   solution?: string;
+  solutionId?: string;
+  solutionTitle?: string;
+  solutionSummary?: string;
+  projectId?: string;
 }
 
 type PlaceholderReplacer = (
@@ -355,6 +359,87 @@ const replaceMinActionItems: PlaceholderReplacer = (prompt, config) => {
   );
 };
 
+const replaceSolutionId: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{solution\.id}/.test(prompt)) {
+    throw new Error('Missing placeholder ${solution.id} in prompt');
+  }
+  if (config.solutionId === undefined) {
+    throw new Error(
+      'solutionId config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{solution\.id}/g, config.solutionId);
+};
+
+const replaceSolutionTitle: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{solution\.title}/.test(prompt)) {
+    throw new Error('Missing placeholder ${solution.title} in prompt');
+  }
+  if (config.solutionTitle === undefined) {
+    throw new Error(
+      'solutionTitle config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{solution\.title}/g, config.solutionTitle);
+};
+
+const replaceSolutionSummary: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{solution\.summary}/.test(prompt)) {
+    throw new Error('Missing placeholder ${solution.summary} in prompt');
+  }
+  if (config.solutionSummary === undefined) {
+    throw new Error(
+      'solutionSummary config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{solution\.summary}/g, config.solutionSummary);
+};
+
+const replaceProjectId: PlaceholderReplacer = (prompt, config) => {
+  if (!/\$\{project\.id}/.test(prompt)) {
+    throw new Error('Missing placeholder ${project.id} in prompt');
+  }
+  if (config.projectId === undefined) {
+    throw new Error(
+      'projectId config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{project\.id}/g, config.projectId);
+};
+
+const replaceProjectNameAsProjectDot: PlaceholderReplacer = (
+  prompt,
+  config,
+) => {
+  if (!/\$\{project\.name}/.test(prompt)) {
+    throw new Error('Missing placeholder ${project.name} in prompt');
+  }
+  if (config.projectName === undefined) {
+    throw new Error(
+      'projectName config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(/\$\{project\.name}/g, config.projectName);
+};
+
+const replaceProjectDescriptionAsProjectDot: PlaceholderReplacer = (
+  prompt,
+  config,
+) => {
+  if (!/\$\{project\.description}/.test(prompt)) {
+    throw new Error('Missing placeholder ${project.description} in prompt');
+  }
+  if (config.projectDescription === undefined) {
+    throw new Error(
+      'projectDescription config placeholder is required in prompt to be replaced',
+    );
+  }
+  return prompt.replace(
+    /\$\{project\.description}/g,
+    config.projectDescription,
+  );
+};
+
 const composeReplacers = (
   ...replacers: PlaceholderReplacer[]
 ): PlaceholderReplacer => {
@@ -468,6 +553,18 @@ const mandalaImagesReplacer = composeReplacers(
   replaceCenterCharacter,
   replaceCenterCharacterDescription,
   replaceMandalaDocument,
+  replaceProvocationTimeline,
+);
+
+const solutionImagesReplacer = composeReplacers(
+  replaceSolutionId,
+  replaceSolutionTitle,
+  replaceSolutionSummary,
+  replaceProjectId,
+  replaceProjectNameAsProjectDot,
+  replaceProjectDescriptionAsProjectDot,
+  replaceProjectName,
+  replaceProjectDescription,
   replaceProvocationTimeline,
 );
 
@@ -665,5 +762,23 @@ export function replaceMandalaImagesPlaceholders(
     config,
     mandalaImagesReplacer,
     'mandala images',
+  );
+}
+
+/**
+ * Replace placeholders for solution images generation prompts
+ * @param promptTemplate - The template string containing placeholders
+ * @param config - Configuration object with values to replace placeholders
+ * @returns The prompt with all placeholders replaced
+ */
+export function replaceSolutionImagesPlaceholders(
+  promptTemplate: string,
+  config: PromptReplacementConfig = {},
+): string {
+  return replaceWithReplacer(
+    promptTemplate,
+    config,
+    solutionImagesReplacer,
+    'solution images',
   );
 }
