@@ -205,6 +205,8 @@ export class PostitService {
         mandalasDocument,
       );
 
+    console.log('AI Comparisons:', aiComparisons);
+
     const comparisons: PostitComparison[] = aiComparisons.map(
       (aiPostit: AiPostitComparisonResponse): PostitComparison => ({
         id: randomUUID(),
@@ -217,6 +219,8 @@ export class PostitService {
         fromSummary: aiPostit.fromSummary,
       }),
     );
+
+    console.log('Comparisons:', comparisons);
 
     return { comparisons, report };
   }

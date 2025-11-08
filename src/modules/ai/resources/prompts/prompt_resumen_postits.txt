@@ -84,7 +84,7 @@ Devolver EXCLUSIVAMENTE JSON válido con la siguiente estructura EXACTA:
     "content": "string (3-5 palabras)",
     "dimension": "string (misma que en los post-its originales)",
     "scale": "string (misma que en los post-its originales)",
-    "type": "CHARACTER | OVERLAP | OVERLAP_SUMMARY",
+    "type": "SIMILITUD | DIFERENCIA | UNICO",
     "fromSummary": ["string (nombre del personaje)"]
   }],
   "report": {
