@@ -9,6 +9,8 @@ import { CacheService } from '@common/services/cache.service';
 import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
 import {
@@ -73,6 +75,7 @@ export class MandalaService {
     private readonly logger: AppLogger,
     private notificationService: NotificationService,
     private organizationService: OrganizationService,
+    private textStorageService: TextStorageService,
   ) {
     this.logger.setContext(MandalaService.name);
   }
@@ -1508,6 +1511,26 @@ export class MandalaService {
     );
 
     return summaries.join('\n\n');
+  }
+
+  async uploadTextFile(
+    mandalaId: string,
+    uploadContext: UploadContextDto,
+  ): Promise<string> {
+    const mandala = await this.findOne(mandalaId);
+    const project = await this.projectService.findOne(mandala.projectId);
+
+    const scope = {
+      orgId: project.organizationId,
+      projectId: mandala.projectId,
+      mandalaId,
+    };
+
+    return this.textStorageService.uploadText(
+      uploadContext.content,
+      uploadContext.filename,
+      scope,
+    );
   }
 
   /**
