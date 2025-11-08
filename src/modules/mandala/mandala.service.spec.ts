@@ -2,6 +2,7 @@ import { InternalServerErrorException } from '@common/exceptions/custom-exceptio
 import { CacheService } from '@common/services/cache.service';
 import { AppLogger } from '@common/services/logger.service';
 import { AiService } from '@modules/ai/ai.service';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { CreateOverlappedMandalaDto } from '@modules/mandala/dto/create-mandala.dto';
 import { MandalaDto } from '@modules/mandala/dto/mandala.dto';
@@ -29,6 +30,7 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
   let mandalaRepository: jest.Mocked<MandalaRepository>;
   let firebaseDataService: jest.Mocked<FirebaseDataService>;
   let postitService: jest.Mocked<PostitService>;
+  let TextStorageModule: jest.Mocked<TextStorageService>;
 
   // Datos de prueba: Mandala de ejemplo tipo CHARACTER
   const mockMandalaDto: MandalaDto = {
@@ -152,6 +154,11 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
         // MOCK: OrganizationService - Simula manejo de organizaciones
         {
           provide: OrganizationService,
+          useValue: {},
+        },
+
+        {
+          provide: TextStorageService,
           useValue: {},
         },
       ],
