@@ -148,7 +148,6 @@ export class SolutionImageService {
     );
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    // Upload to deliverables folder
     // Upload to deliverables folder using the service method
     await this.storageService.uploadImageToDeliverables(
       imageBuffer,
