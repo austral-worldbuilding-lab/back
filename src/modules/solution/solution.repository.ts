@@ -195,7 +195,8 @@ export class SolutionRepository {
       if (actionItems === null) {
         updateData.actionItems = Prisma.DbNull;
       } else {
-        updateData.actionItems = actionItems as unknown as Prisma.InputJsonValue;
+        updateData.actionItems =
+          actionItems as unknown as Prisma.InputJsonValue;
       }
     }
 
