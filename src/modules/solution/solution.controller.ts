@@ -30,10 +30,7 @@ import { GetSolutionByIdDecorator } from './decorators/get-solution-by-id.decora
 import { GetSolutionsByProjectDecorator } from './decorators/get-solutions-by-project.decorator';
 import { GetSolutionsStatusDecorator } from './decorators/get-solutions-status.decorator';
 import { CreateSolutionDto } from './dto/create-solution.dto';
-import {
-  GenerateSolutionImagesDto,
-  GenerateSolutionImagesResponseDto,
-} from './dto/generate-solution-images.dto';
+import { GenerateSolutionImagesResponseDto } from './dto/generate-solution-images.dto';
 import { SolutionDto } from './dto/solution.dto';
 import { SolutionsJobResponseDto } from './dto/solutions-job-response.dto';
 import { SolutionsJobStatusDto } from './dto/solutions-job-status.dto';
@@ -171,13 +168,13 @@ export class SolutionController {
   @ApiGenerateSolutionImages()
   async generateSolutionImages(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Body() generateImagesDto: GenerateSolutionImagesDto,
+    @Param('solutionId', new UuidValidationPipe()) solutionId: string,
     @Req() req: RequestWithUser,
   ): Promise<DataResponse<GenerateSolutionImagesResponseDto>> {
     const project = await this.projectService.findOne(projectId);
     const urls = await this.projectService.generateSolutionImages(
       projectId,
-      generateImagesDto.solutionId,
+      solutionId,
       req.user.id,
       project.organizationId,
     );
