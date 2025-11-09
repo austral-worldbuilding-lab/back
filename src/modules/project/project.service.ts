@@ -13,16 +13,19 @@ import { FileService } from '@modules/files/file.service';
 import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
-import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
+import {
+  EncyclopediaJobStatus,
+  EncyclopediaJobStatusResponse,
+} from '@modules/queue/types/encyclopedia-job.types';
 import { RoleService } from '@modules/role/role.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
 
 import { SolutionImageService } from '../solution/solution-image.service';
@@ -344,6 +347,10 @@ export class ProjectService {
         userId,
         ownerRole.id,
       );
+
+      const parentProjectDto =
+        this.projectRepository.parseToProjectDto(parentProject);
+      await this.copyParentEncyclopediaIfExists(parentProjectDto, project);
     } else {
       await this.projectRepository.autoAssignOrganizationMembers(
         project.id,
@@ -682,12 +689,10 @@ export class ProjectService {
   ): Promise<string> {
     await this.findOne(projectId);
 
-    const jobId = await this.encyclopediaQueueService.addEncyclopediaJob(
+    return await this.encyclopediaQueueService.addEncyclopediaJob(
       projectId,
       selectedFiles,
     );
-
-    return jobId;
   }
 
   /**
@@ -698,6 +703,57 @@ export class ProjectService {
     projectId: string,
   ): Promise<EncyclopediaJobStatusResponse> {
     return this.encyclopediaQueueService.getJobStatusByProjectId(projectId);
+  }
+
+  /**
+   * Gets encyclopedia content for a project if it exists.
+   * First checks if a completed encyclopedia job exists with content in the result.
+   * If not but storageUrl exists, fetches the content from blob storage.
+   *
+   * @param projectId - The project ID
+   * @returns The encyclopedia content, or null if not available
+   */
+  async getEncyclopediaContent(projectId: string): Promise<string | null> {
+    const project = await this.findOne(projectId);
+    const encyclopediaStatus = await this.getEncyclopediaJobStatus(projectId);
+
+    // If completed and content is in result, return it
+    if (
+      encyclopediaStatus.status === EncyclopediaJobStatus.COMPLETED &&
+      encyclopediaStatus.result?.encyclopedia
+    ) {
+      return encyclopediaStatus.result.encyclopedia;
+    }
+
+    // If completed but content not in result, try to fetch from blob storage
+    if (
+      encyclopediaStatus.status === EncyclopediaJobStatus.COMPLETED &&
+      encyclopediaStatus.result?.storageUrl
+    ) {
+      try {
+        const fileName = `Enciclopedia del mundo - ${project.name}.md`;
+        const scope = {
+          orgId: project.organizationId,
+          projectId: project.id,
+        };
+
+        const buffer = await this.blobStorageService.getFileBuffer(
+          fileName,
+          scope,
+          'deliverables',
+        );
+
+        return buffer.toString('utf-8');
+      } catch (error) {
+        this.logger.warn(
+          `Failed to fetch encyclopedia from blob storage for project ${projectId}`,
+          { error: error instanceof Error ? error.message : undefined },
+        );
+        return null;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -853,6 +909,57 @@ export class ProjectService {
     return publicUrl;
   }
 
+  private async copyParentEncyclopediaIfExists(
+    parentProject: ProjectDto,
+    newProject: ProjectDto,
+  ): Promise<void> {
+    try {
+      this.logger.log(
+        `Checking if encyclopedia exists for parent project ${parentProject.id}`,
+      );
+
+      const encyclopediaContent = await this.getEncyclopediaContent(
+        parentProject.id,
+      );
+
+      if (!encyclopediaContent) {
+        this.logger.log(
+          `No completed encyclopedia found for parent project ${parentProject.id}`,
+        );
+        return;
+      }
+
+      this.logger.log(
+        `Encyclopedia found for parent project ${parentProject.id}, copying to new project ${newProject.id}`,
+      );
+
+      const newFileName = `Enciclopedia Mundo Padre - ${parentProject.name}.md`;
+      const newScope = {
+        orgId: newProject.organizationId,
+        projectId: newProject.id,
+      };
+
+      const encyclopediaBuffer = Buffer.from(encyclopediaContent, 'utf-8');
+
+      await this.blobStorageService.uploadBuffer(
+        encyclopediaBuffer,
+        newFileName,
+        newScope,
+        'files', // Important: 'files' so AI can use it as context
+        'text/markdown',
+      );
+
+      this.logger.log(
+        `Successfully copied encyclopedia from parent ${parentProject.id} to new project ${newProject.id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to copy encyclopedia from parent project ${parentProject.id}`,
+        error,
+      );
+    }
+  }
+
   async getProjectDeliverables(projectId: string): Promise<DeliverableDto[]> {
     this.logger.log('Fetching project deliverables', { projectId });
 
@@ -900,6 +1007,22 @@ export class ProjectService {
       uploadContext.filename,
       scope,
     );
+  }
+
+  async removeProvocation(
+    projectId: string,
+    provocationId: string,
+  ): Promise<ProvocationDto> {
+    await this.findOne(projectId);
+
+    // Verify provocation exists
+    const provocation =
+      await this.projectRepository.findProvocationById(provocationId);
+    if (!provocation) {
+      throw new ResourceNotFoundException('Provocation', provocationId);
+    }
+
+    return this.projectRepository.deleteProvocation(provocationId);
   }
 
   async generateSolutionImages(

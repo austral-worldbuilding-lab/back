@@ -1,3 +1,4 @@
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiOperation,
@@ -5,6 +6,9 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiNotFoundResponse,
+  ApiForbiddenResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { AiMandalaImageResponseDto } from '../dto/ai-mandala-image-response.dto';
@@ -669,5 +673,50 @@ export const ApiDeleteImage = () =>
     ApiResponse({
       status: 404,
       description: 'Mandala o imagen no encontrada',
+    }),
+  );
+
+export const ApiUploadMandalaTextFile = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear archivo de texto desde contenido',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID de la mandala',
+      type: String,
+    }),
+    ApiBody({
+      type: UploadContextDto,
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Archivo de contexto subido exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL pública del archivo subido',
+                example:
+                  'https://storage.blob.core.windows.net/container/org-id/project-id/mandala-id/files/context.txt',
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiNotFoundResponse({
+      description: 'Mandala no encontrada',
+    }),
+    ApiForbiddenResponse({
+      description:
+        'Prohibido - No tiene permisos para subir contextos en esta mandala',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
     }),
   );

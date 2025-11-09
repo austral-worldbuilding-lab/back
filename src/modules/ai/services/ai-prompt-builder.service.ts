@@ -561,13 +561,13 @@ export class AiPromptBuilderService {
     const provocationTimeline =
       await this.getProvocationTimelineString(projectId);
     const promptTask = replaceSolutionImagesPlaceholders(promptTemplate, {
-      projectId: projectId,
-      projectName: projectName,
-      projectDescription: projectDescription,
-      solutionId: solutionId,
-      solutionTitle: solutionTitle,
-      solutionSummary: solutionSummary,
-      provocationTimeline: provocationTimeline,
+      projectId,
+      projectName,
+      projectDescription,
+      solutionId,
+      solutionTitle,
+      solutionSummary,
+      provocationTimeline,
     });
     return this.buildPromptWithCiclo3Instructions(promptTask);
   }

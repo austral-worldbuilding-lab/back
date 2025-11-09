@@ -1350,6 +1350,36 @@ export const ApiGetProjectDeliverables = () =>
     }),
   );
 
+export const ApiDeleteProvocation = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Eliminar una provocación',
+      description:
+        'Elimina (soft delete) una provocación del proyecto. Las provocaciones hijas no se eliminan.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+    }),
+    ApiParam({
+      name: 'provocationId',
+      description: 'ID de la provocación',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'La provocación ha sido eliminada exitosamente',
+      type: ProvocationDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto o provocación no encontrado',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
 export const ApiGenerateSolutionImages = () =>
   applyDecorators(
     ApiOperation({

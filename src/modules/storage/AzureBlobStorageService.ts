@@ -203,11 +203,15 @@ export class AzureBlobStorageService implements StorageService {
     }
   }
 
-  async getFileBuffer(fileName: string, scope: FileScope): Promise<Buffer> {
+  async getFileBuffer(
+    fileName: string,
+    scope: FileScope,
+    folderName: StorageFolder = 'files',
+  ): Promise<Buffer> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope, 'files');
+    const prefix = buildPrefix(scope, folderName);
     const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
 
