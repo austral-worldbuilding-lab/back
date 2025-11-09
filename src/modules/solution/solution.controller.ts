@@ -20,6 +20,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+import { ApiGenerateSolutionImages } from '../project/decorators/project-swagger.decorators';
+
 import { CreateSolutionDecorator } from './decorators/create-solution.decorator';
 import { DeleteSolutionDecorator } from './decorators/delete-solution.decorator';
 import { GenerateActionItemsDecorator } from './decorators/generate-action-items.decorator';
@@ -30,12 +32,16 @@ import { GetSolutionsByProjectDecorator } from './decorators/get-solutions-by-pr
 import { GetSolutionsStatusDecorator } from './decorators/get-solutions-status.decorator';
 import { UpdateSolutionDecorator } from './decorators/update-solution.decorator';
 import { CreateSolutionDto } from './dto/create-solution.dto';
+import { GenerateSolutionImagesResponseDto } from './dto/generate-solution-images.dto';
 import { SolutionDto } from './dto/solution.dto';
 import { SolutionsJobResponseDto } from './dto/solutions-job-response.dto';
 import { SolutionsJobStatusDto } from './dto/solutions-job-status.dto';
 import { UpdateSolutionDto } from './dto/update-solution.dto';
+import { SolutionImageService } from './solution-image.service';
 import { SolutionService } from './solution.service';
 import { AiSolutionResponse } from './types/solutions.type';
+
+import { DataResponse } from '@/common/types/responses';
 
 @ApiTags('Solution')
 @ApiBearerAuth()
@@ -46,6 +52,7 @@ export class SolutionController {
     private readonly solutionService: SolutionService,
     private readonly projectService: ProjectService,
     private readonly aiService: AiService,
+    private readonly solutionImageService: SolutionImageService,
   ) {}
 
   @Post('project/:projectId/solution')
@@ -171,5 +178,38 @@ export class SolutionController {
     await this.solutionService.saveActionItems(solutionId, actionItems);
 
     return actionItems;
+  }
+
+  @Post('project/:projectId/solutions/:solutionId/images/generate')
+  @ApiGenerateSolutionImages()
+  async generateSolutionImages(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('solutionId', new UuidValidationPipe()) solutionId: string,
+    @Req() req: RequestWithUser,
+  ): Promise<DataResponse<GenerateSolutionImagesResponseDto>> {
+    const project = await this.projectService.findOne(projectId);
+    const urls = await this.projectService.generateSolutionImages(
+      projectId,
+      solutionId,
+      req.user.id,
+      project.organizationId,
+    );
+    return {
+      data: { urls },
+    };
+  }
+
+  @Get('project/:projectId/solutions/:solutionId/images')
+  async listSolutionImages(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('solutionId', new UuidValidationPipe()) solutionId: string,
+  ): Promise<DataResponse<{ urls: string[] }>> {
+    await this.projectService.findOne(projectId);
+    const urls = await this.solutionImageService.listSolutionImageUrls(
+      projectId,
+      solutionId,
+    );
+
+    return { data: { urls } };
   }
 }

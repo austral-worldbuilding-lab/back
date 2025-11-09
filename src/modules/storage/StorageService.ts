@@ -43,4 +43,9 @@ export interface StorageService {
     fileName: string,
     folderName: StorageFolder,
   ): Promise<boolean>;
+  uploadImageToDeliverables(
+    imageBuffer: Buffer,
+    fileName: string,
+    fileScope: FileScope,
+  ): Promise<void>;
 }

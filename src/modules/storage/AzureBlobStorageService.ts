@@ -358,4 +358,25 @@ export class AzureBlobStorageService implements StorageService {
 
     throw new ExternalServiceException('AzureBlobStorage', message, err);
   }
+
+  async uploadImageToDeliverables(
+    imageBuffer: Buffer,
+    fileName: string,
+    fileScope: FileScope,
+  ): Promise<void> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(fileScope, 'deliverables');
+    const blobName = `${prefix}${fileName}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.upload(imageBuffer, imageBuffer.length, {
+      blobHTTPHeaders: {
+        blobContentType: 'image/png',
+      },
+    });
+    this.logger.debug(
+      `Successfully uploaded ${fileName} to deliverables folder: ${blobName}`,
+    );
+  }
 }

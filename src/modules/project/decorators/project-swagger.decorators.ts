@@ -23,6 +23,11 @@ import { TagDto } from '../dto/tag.dto';
 import { TimelineGraphDto } from '../dto/timeline.dto';
 import { ProjectConfiguration } from '../types/project-configuration.type';
 
+import {
+  GenerateSolutionImagesDto,
+  GenerateSolutionImagesResponseDto,
+} from '@/modules/solution/dto/generate-solution-images.dto';
+
 export const ApiCreateProject = () =>
   applyDecorators(
     ApiOperation({ summary: 'Crear un nuevo proyecto' }),
@@ -1369,6 +1374,45 @@ export const ApiDeleteProvocation = () =>
     }),
     ApiNotFoundResponse({
       description: 'Proyecto o provocación no encontrado',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiGenerateSolutionImages = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar imágenes para una solución',
+      description:
+        'Genera imágenes para una solución usando IA. Las imágenes se guardan en el folder deliverables del proyecto.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiBody({
+      type: GenerateSolutionImagesDto,
+      description: 'Datos de la solución para generar imágenes',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Imágenes generadas exitosamente',
+      type: GenerateSolutionImagesResponseDto,
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Proyecto o solución no encontrado',
+    }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - El usuario no tiene permiso para generar imágenes',
+    }),
+    ApiBadRequestResponse({
+      description: 'Solicitud incorrecta - Datos inválidos',
     }),
     ApiUnauthorizedResponse({
       description: 'No autorizado - Token de acceso requerido',

@@ -28,6 +28,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { SolutionImageService } from '../solution/solution-image.service';
+
 import { CreateChildProjectDto } from './dto/create-child-project.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
 import { CreateProjectFromQuestionDto } from './dto/create-project-from-question.dto';
@@ -65,6 +67,8 @@ export class ProjectService {
     private readonly textStorageService: TextStorageService,
     @Inject(forwardRef(() => EncyclopediaQueueService))
     private readonly encyclopediaQueueService: EncyclopediaQueueService,
+    @Inject(forwardRef(() => SolutionImageService))
+    private readonly solutionImageService: SolutionImageService,
   ) {
     this.logger.setContext(ProjectService.name);
   }
@@ -968,15 +972,17 @@ export class ProjectService {
 
     const files = await this.blobStorageService.getFiles(scope, 'deliverables');
 
-    const deliverables: DeliverableDto[] = files.map((file) => ({
-      fileName: file.file_name,
-      fileType: file.file_type,
-      url: this.blobStorageService.buildPublicUrl(
-        scope,
-        file.file_name,
-        'deliverables',
-      ),
-    }));
+    const deliverables: DeliverableDto[] = files
+      .filter((file) => !file.file_name.includes('image-'))
+      .map((file) => ({
+        fileName: file.file_name,
+        fileType: file.file_type,
+        url: this.blobStorageService.buildPublicUrl(
+          scope,
+          file.file_name,
+          'deliverables',
+        ),
+      }));
 
     this.logger.log(
       `Found ${deliverables.length} deliverables for project ${projectId}`,
@@ -1017,5 +1023,27 @@ export class ProjectService {
     }
 
     return this.projectRepository.deleteProvocation(provocationId);
+  }
+
+  async generateSolutionImages(
+    projectId: string,
+    solutionId: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<string[]> {
+    this.logger.log('Generating solution images', {
+      projectId,
+      solutionId,
+    });
+
+    // Verify project exists
+    await this.findOne(projectId);
+
+    return this.solutionImageService.generateAndSaveSolutionImages(
+      projectId,
+      solutionId,
+      userId,
+      organizationId,
+    );
   }
 }

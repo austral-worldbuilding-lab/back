@@ -18,6 +18,7 @@ import { AiMandalaImageResponse } from '../mandala/types/mandala-images.type';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
+import { SolutionImageResponse } from './strategies/solution-images.strategy';
 import { AiEncyclopediaResponse } from './types/ai-encyclopedia-response.type';
 import {
   createCleanMandalaForQuestions,
@@ -530,6 +531,52 @@ export class AiService {
     this.logger.log(
       `Generated ${response.data.length} images for mandala: ${mandalaId}`,
     );
+    return response.data;
+  }
+
+  async generateSolutionImages(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionId: string,
+    solutionTitle: string,
+    solutionSummary: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<SolutionImageResponse[]> {
+    this.logger.log(
+      `Starting solution images generation for project: ${projectId}, solution: ${solutionId}`,
+    );
+
+    const response = await this.aiProvider.generateSolutionImages(
+      projectId,
+      projectName,
+      projectDescription,
+      solutionId,
+      solutionTitle,
+      solutionSummary,
+    );
+
+    // Track AI usage
+    if (userId) {
+      await this.consumptionService.trackAiUsage(
+        userId,
+        AiServiceEnum.GENERATE_SOLUTION_IMAGES,
+        AiModel.GEMINI_25_FLASH,
+        response.usage.totalTokens,
+        projectId,
+        organizationId,
+      );
+
+      this.logger.log(
+        `Tracked AI usage: ${response.usage.totalTokens} tokens for user ${userId}`,
+      );
+    }
+
+    this.logger.log(
+      `Generated ${response.data.length} solution image prompts for solution: ${solutionId}`,
+    );
+
     return response.data;
   }
 }
