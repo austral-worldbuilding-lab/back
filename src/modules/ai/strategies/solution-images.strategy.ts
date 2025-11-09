@@ -9,9 +9,8 @@ import { AiRequestValidationService } from '../services/ai-request-validation.se
 import { AiGenerationStrategy } from './ai-generation-strategy.interface';
 
 export interface SolutionImageResponse {
-  dimension: string;
-  scale: string;
-  prompt: string;
+  id: string;
+  imageData: string;
 }
 
 export interface SolutionImagesInput {
@@ -73,20 +72,6 @@ export class SolutionImagesStrategy
           `Generated ${images.length} images, but maximum allowed is ${maxImages}`,
         ]);
       }
-
-      for (const image of images) {
-        if (!image.dimension || !image.scale || !image.prompt) {
-          throw new AiValidationException([
-            'Each solution image must have dimension, scale, and prompt fields',
-          ]);
-        }
-        if (image.prompt.length < 200 || image.prompt.length > 500) {
-          throw new AiValidationException([
-            `Image prompt must be between 200-500 characters. Got ${image.prompt.length}`,
-          ]);
-        }
-      }
-
       return images;
     } catch (error) {
       if (error instanceof AiValidationException) throw error;
