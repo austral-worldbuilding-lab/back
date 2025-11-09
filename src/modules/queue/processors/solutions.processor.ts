@@ -47,10 +47,11 @@ export class SolutionsProcessor extends BaseOnDemandProcessor<
    *
    * Steps:
    * 1. Get project
-   * 2. Queue encyclopedia generation and wait for completion
-   * 3. Wait for encyclopedia job to complete using BullMQ's waitUntilFinished
-   * 4. Generate solutions using encyclopedia
-   * 5. Save solutions to cache
+   * 2. Check if encyclopedia already exists for the project
+   * 3. If exists and completed, use it; otherwise queue encyclopedia generation
+   * 4. Wait for encyclopedia job to complete if needed
+   * 5. Generate solutions using encyclopedia
+   * 6. Save solutions to cache
    *
    * @param job - The solutions job to process
    * @returns The solutions result
@@ -69,28 +70,55 @@ export class SolutionsProcessor extends BaseOnDemandProcessor<
       const project = await this.projectService.findOne(projectId);
 
       await job.updateProgress(20);
-      const encyclopediaJobId =
-        await this.projectService.queueEncyclopediaGeneration(projectId);
-
       this.logger.log(
-        `Waiting for encyclopedia job ${encyclopediaJobId} to complete`,
+        `Checking if encyclopedia exists for project ${projectId}`,
       );
 
-      const encyclopediaResult = await this.waitForEncyclopediaJob(
-        encyclopediaJobId,
-        job,
-      );
+      let encyclopediaContent: string | null =
+        await this.projectService.getEncyclopediaContent(projectId);
+
+      if (encyclopediaContent) {
+        this.logger.log(
+          `Using existing encyclopedia for project ${projectId}`,
+        );
+        await job.updateProgress(50);
+      } else {
+        this.logger.log(
+          `No completed encyclopedia found for project ${projectId}, queueing new generation`,
+        );
+        const encyclopediaJobId =
+          await this.projectService.queueEncyclopediaGeneration(projectId);
+
+        this.logger.log(
+          `Waiting for encyclopedia job ${encyclopediaJobId} to complete`,
+        );
+
+        const encyclopediaResult = await this.waitForEncyclopediaJob(
+          encyclopediaJobId,
+          job,
+        );
+        encyclopediaContent = encyclopediaResult.encyclopedia;
+        await job.updateProgress(50);
+      }
 
       await job.updateProgress(60);
       this.logger.log(
         `Generating solutions for project ${projectId} using encyclopedia`,
       );
 
+      // At this point, encyclopediaContent is guaranteed to be a string
+      // (either from existing encyclopedia or newly generated)
+      if (!encyclopediaContent) {
+        throw new Error(
+          `Failed to obtain encyclopedia content for project ${projectId}`,
+        );
+      }
+
       const solutions = await this.aiService.generateSolutions(
         projectId,
         project.name,
         project.description || '',
-        encyclopediaResult.encyclopedia,
+        encyclopediaContent,
         userId,
         organizationId,
       );
