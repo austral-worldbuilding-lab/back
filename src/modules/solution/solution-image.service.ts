@@ -141,7 +141,6 @@ export class SolutionImageService {
     fileScope: FileScope,
   ): Promise<void> {
     // Convert base64 to buffer
-    console.log(imageData);
     const base64Data = imageData.imageData.replace(
       /^data:image\/\w+;base64,/,
       '',
