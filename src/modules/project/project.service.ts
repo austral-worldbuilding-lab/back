@@ -13,7 +13,10 @@ import { FileService } from '@modules/files/file.service';
 import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
-import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
+import {
+  EncyclopediaJobStatus,
+  EncyclopediaJobStatusResponse,
+} from '@modules/queue/types/encyclopedia-job.types';
 import { RoleService } from '@modules/role/role.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
@@ -340,6 +343,10 @@ export class ProjectService {
         userId,
         ownerRole.id,
       );
+
+      const parentProjectDto =
+        this.projectRepository.parseToProjectDto(parentProject);
+      await this.copyParentEncyclopediaIfExists(parentProjectDto, project);
     } else {
       await this.projectRepository.autoAssignOrganizationMembers(
         project.id,
@@ -845,6 +852,71 @@ export class ProjectService {
     });
 
     return publicUrl;
+  }
+
+  private async copyParentEncyclopediaIfExists(
+    parentProject: ProjectDto,
+    newProject: ProjectDto,
+  ): Promise<void> {
+    try {
+      this.logger.log(
+        `Checking if encyclopedia exists for parent project ${parentProject.id}`,
+      );
+
+      const encyclopediaStatus = await this.getEncyclopediaJobStatus(
+        parentProject.id,
+      );
+
+      if (
+        encyclopediaStatus.status !== EncyclopediaJobStatus.COMPLETED ||
+        !encyclopediaStatus.result?.storageUrl
+      ) {
+        this.logger.log(
+          `No completed encyclopedia found for parent project ${parentProject.id}`,
+        );
+        return;
+      }
+
+      this.logger.log(
+        `Encyclopedia found for parent project ${parentProject.id}, copying to new project ${newProject.id}`,
+      );
+
+      const encyclopediaFileName = `Enciclopedia del mundo - ${parentProject.name}.md`;
+
+      const parentScope = {
+        orgId: parentProject.organizationId,
+        projectId: parentProject.id,
+      };
+
+      const encyclopediaBuffer = await this.blobStorageService.getFileBuffer(
+        encyclopediaFileName,
+        parentScope,
+        'deliverables',
+      );
+
+      const newFileName = `Enciclopedia Mundo Padre - ${parentProject.name}.md`;
+      const newScope = {
+        orgId: newProject.organizationId,
+        projectId: newProject.id,
+      };
+
+      await this.blobStorageService.uploadBuffer(
+        encyclopediaBuffer,
+        newFileName,
+        newScope,
+        'files', // Important: 'files' so AI can use it as context
+        'text/markdown',
+      );
+
+      this.logger.log(
+        `Successfully copied encyclopedia from parent ${parentProject.id} to new project ${newProject.id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to copy encyclopedia from parent project ${parentProject.id}`,
+        error,
+      );
+    }
   }
 
   async getProjectDeliverables(projectId: string): Promise<DeliverableDto[]> {
