@@ -865,15 +865,17 @@ export class ProjectService {
 
     const files = await this.blobStorageService.getFiles(scope, 'deliverables');
 
-    const deliverables: DeliverableDto[] = files.map((file) => ({
-      fileName: file.file_name,
-      fileType: file.file_type,
-      url: this.blobStorageService.buildPublicUrl(
-        scope,
-        file.file_name,
-        'deliverables',
-      ),
-    }));
+    const deliverables: DeliverableDto[] = files
+      .filter((file) => !file.file_name.includes('image-'))
+      .map((file) => ({
+        fileName: file.file_name,
+        fileType: file.file_type,
+        url: this.blobStorageService.buildPublicUrl(
+          scope,
+          file.file_name,
+          'deliverables',
+        ),
+      }));
 
     this.logger.log(
       `Found ${deliverables.length} deliverables for project ${projectId}`,
