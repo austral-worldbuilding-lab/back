@@ -42,6 +42,7 @@ export class VideoProcessingService {
         audioBuffer,
         audioFileName,
         scope,
+        'files',
         'audio/mp3',
       );
 

@@ -13,6 +13,8 @@ export interface AiValidationConfig {
   maxProvocationsPerRequest: number;
   minSolutionsPerRequest: number;
   maxSolutionsPerRequest: number;
+  minActionItemsPerRequest: number;
+  maxActionItemsPerRequest: number;
 }
 
 /**
@@ -35,13 +37,20 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
     'image/webp',
     'application/json',
     'text/markdown',
-    'audio/mp3',
-    'audio/wav',
-    'audio/flac',
+    // Audio formats supported by Gemini
     'audio/aac',
-    'audio/ogg',
-    'audio/wma',
+    'audio/aiff',
+    'audio/flac',
+    'audio/m4a',
+    'audio/mp3',
+    'audio/mp4',
     'audio/mpeg',
+    'audio/mpga',
+    'audio/ogg',
+    'audio/pcm',
+    'audio/wav',
+    'audio/webm',
+    'audio/x-aac',
   ],
 
   blockedMimeTypes: [
@@ -94,5 +103,11 @@ export const getAiValidationConfig = (): AiValidationConfig => ({
   ),
   maxSolutionsPerRequest: parseInt(
     process.env.AI_MAX_SOLUTIONS_PER_REQUEST || '6',
+  ),
+  minActionItemsPerRequest: parseInt(
+    process.env.AI_MIN_ACTION_ITEMS_PER_REQUEST || '1',
+  ),
+  maxActionItemsPerRequest: parseInt(
+    process.env.AI_MAX_ACTION_ITEMS_PER_REQUEST || '9',
   ),
 });

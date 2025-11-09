@@ -10,6 +10,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
+import { AiActionItemResponse } from '@modules/solution/types/action-items.type';
 import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -17,6 +18,7 @@ import { ConfigService } from '@nestjs/config';
 import { AiProvider } from '../interfaces/ai-provider.interface';
 import { AiGenerationEngine } from '../services/ai-generation-engine.interface';
 import { AiStrategyRegistryService } from '../services/ai-strategy-registry.service';
+import { ActionItemsInput } from '../strategies/action-items.strategy';
 import { ContextPostitsInput } from '../strategies/context-postits.strategy';
 import { MandalaImagesInput } from '../strategies/mandala-images.strategy';
 import { MandalaSummaryInput } from '../strategies/mandala-summary.strategy';
@@ -24,6 +26,10 @@ import { PostitsSummaryInput } from '../strategies/postits-summary.strategy';
 import { PostitsInput } from '../strategies/postits.strategy';
 import { ProvocationsInput } from '../strategies/provocations.strategy';
 import { QuestionsInput } from '../strategies/questions.strategy';
+import {
+  SolutionImageResponse,
+  SolutionImagesInput,
+} from '../strategies/solution-images.strategy';
 import { SolutionsInput } from '../strategies/solutions.strategy';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
@@ -380,6 +386,45 @@ export class GeminiAdapter implements AiProvider {
     return { data, usage };
   }
 
+  async generateActionItems(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionTitle: string,
+    solutionDescription: string,
+    solutionProblem: string,
+  ): Promise<AiResponseWithUsage<AiActionItemResponse[]>> {
+    this.logger.log(
+      `Starting action items generation for project: ${projectId}`,
+      {
+        temperature: this.temperatureConfig.solutions,
+      },
+    );
+    const strategy = this.strategies.getActionItems();
+    const input: ActionItemsInput = {
+      projectId,
+      projectName,
+      projectDescription,
+      solutionTitle,
+      solutionDescription,
+      solutionProblem,
+    };
+    const prompt = await strategy.buildPrompt(input);
+    const schema = strategy.getResponseSchema();
+    const { text, usage } = await this.engine.runTextGeneration(
+      this.geminiTextModel,
+      prompt,
+      schema,
+      { projectId },
+      this.temperatureConfig.solutions,
+    );
+    const data = strategy.parseAndValidate(text);
+    this.logger.log(
+      `Action items generation completed for project: ${projectId}`,
+    );
+    return { data, usage };
+  }
+
   async generateMandalaImages(
     projectId: string,
     mandalaId: string,
@@ -415,6 +460,38 @@ export class GeminiAdapter implements AiProvider {
     );
     this.logger.log(
       `Mandala images generation completed for mandala: ${mandalaId}`,
+    );
+    return { data, usage };
+  }
+
+  async generateSolutionImages(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionId: string,
+    solutionTitle: string,
+    solutionSummary: string,
+  ): Promise<AiResponseWithUsage<SolutionImageResponse[]>> {
+    this.logger.log(
+      `Starting solution images generation for solution: ${solutionId}`,
+    );
+    const strategy = this.strategies.getSolutionImages();
+    const input: SolutionImagesInput = {
+      projectId,
+      projectName,
+      projectDescription,
+      solutionId,
+      solutionTitle,
+      solutionSummary,
+    };
+    const prompt = await strategy.buildPrompt(input);
+    const { data, usage } = await this.engine.runImageGeneration(
+      this.geminiImageModel,
+      prompt,
+      { projectId },
+    );
+    this.logger.log(
+      `Solution images generation completed for solution: ${solutionId}`,
     );
     return { data, usage };
   }

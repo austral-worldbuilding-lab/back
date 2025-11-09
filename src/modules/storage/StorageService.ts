@@ -11,7 +11,10 @@ export interface StorageService {
     scope: FileScope,
     folderName: StorageFolder,
   ): Promise<PresignedUrl[]>;
-  getFiles(scope: FileScope): Promise<CreateFileDto[]>;
+  getFiles(
+    scope: FileScope,
+    folderName?: StorageFolder,
+  ): Promise<CreateFileDto[]>;
   readAllFilesAsBuffers(scope: FileScope): Promise<Buffer[]>;
   readAllFilesAsBuffersWithMetadata(scope: FileScope): Promise<FileBuffer[]>;
   deleteFile(
@@ -28,4 +31,21 @@ export interface StorageService {
     fileName: string,
     folderName: StorageFolder,
   ): string;
+  uploadBuffer(
+    buffer: Buffer,
+    fileName: string,
+    scope: FileScope,
+    folderName?: StorageFolder,
+    contentType?: string,
+  ): Promise<void>;
+  blobExists(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): Promise<boolean>;
+  uploadImageToDeliverables(
+    imageBuffer: Buffer,
+    fileName: string,
+    fileScope: FileScope,
+  ): Promise<void>;
 }

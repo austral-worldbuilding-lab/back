@@ -13,17 +13,22 @@ import { FileService } from '@modules/files/file.service';
 import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { EncyclopediaQueueService } from '@modules/queue/services/encyclopedia-queue.service';
-import { EncyclopediaJobStatusResponse } from '@modules/queue/types/encyclopedia-job.types';
+import {
+  EncyclopediaJobStatus,
+  EncyclopediaJobStatusResponse,
+} from '@modules/queue/types/encyclopedia-job.types';
 import { RoleService } from '@modules/role/role.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
+
+import { SolutionImageService } from '../solution/solution-image.service';
 
 import { CreateChildProjectDto } from './dto/create-child-project.dto';
 import { CreateProjectFromProvocationDto } from './dto/create-project-from-provocation.dto';
@@ -31,6 +36,7 @@ import { CreateProjectFromQuestionDto } from './dto/create-project-from-question
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProvocationDto } from './dto/create-provocation.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
+import { DeliverableDto } from './dto/deliverable.dto';
 import { ProjectUserDto } from './dto/project-user.dto';
 import { ProjectDto } from './dto/project.dto';
 import { ProvocationDto } from './dto/provocation.dto';
@@ -61,6 +67,8 @@ export class ProjectService {
     private readonly textStorageService: TextStorageService,
     @Inject(forwardRef(() => EncyclopediaQueueService))
     private readonly encyclopediaQueueService: EncyclopediaQueueService,
+    @Inject(forwardRef(() => SolutionImageService))
+    private readonly solutionImageService: SolutionImageService,
   ) {
     this.logger.setContext(ProjectService.name);
   }
@@ -339,6 +347,10 @@ export class ProjectService {
         userId,
         ownerRole.id,
       );
+
+      const parentProjectDto =
+        this.projectRepository.parseToProjectDto(parentProject);
+      await this.copyParentEncyclopediaIfExists(parentProjectDto, project);
     } else {
       await this.projectRepository.autoAssignOrganizationMembers(
         project.id,
@@ -675,21 +687,12 @@ export class ProjectService {
     projectId: string,
     selectedFiles?: string[],
   ): Promise<string> {
-    this.logger.log(
-      `Queuing encyclopedia generation job for project ${projectId}`,
-    );
     await this.findOne(projectId);
 
-    const jobId = await this.encyclopediaQueueService.addEncyclopediaJob(
+    return await this.encyclopediaQueueService.addEncyclopediaJob(
       projectId,
       selectedFiles,
     );
-
-    this.logger.log(
-      `Encyclopedia generation job queued for project ${projectId} with ID: ${jobId}`,
-    );
-
-    return jobId;
   }
 
   /**
@@ -700,6 +703,57 @@ export class ProjectService {
     projectId: string,
   ): Promise<EncyclopediaJobStatusResponse> {
     return this.encyclopediaQueueService.getJobStatusByProjectId(projectId);
+  }
+
+  /**
+   * Gets encyclopedia content for a project if it exists.
+   * First checks if a completed encyclopedia job exists with content in the result.
+   * If not but storageUrl exists, fetches the content from blob storage.
+   *
+   * @param projectId - The project ID
+   * @returns The encyclopedia content, or null if not available
+   */
+  async getEncyclopediaContent(projectId: string): Promise<string | null> {
+    const project = await this.findOne(projectId);
+    const encyclopediaStatus = await this.getEncyclopediaJobStatus(projectId);
+
+    // If completed and content is in result, return it
+    if (
+      encyclopediaStatus.status === EncyclopediaJobStatus.COMPLETED &&
+      encyclopediaStatus.result?.encyclopedia
+    ) {
+      return encyclopediaStatus.result.encyclopedia;
+    }
+
+    // If completed but content not in result, try to fetch from blob storage
+    if (
+      encyclopediaStatus.status === EncyclopediaJobStatus.COMPLETED &&
+      encyclopediaStatus.result?.storageUrl
+    ) {
+      try {
+        const fileName = `Enciclopedia del mundo - ${project.name}.md`;
+        const scope = {
+          orgId: project.organizationId,
+          projectId: project.id,
+        };
+
+        const buffer = await this.blobStorageService.getFileBuffer(
+          fileName,
+          scope,
+          'deliverables',
+        );
+
+        return buffer.toString('utf-8');
+      } catch (error) {
+        this.logger.warn(
+          `Failed to fetch encyclopedia from blob storage for project ${projectId}`,
+          { error: error instanceof Error ? error.message : undefined },
+        );
+        return null;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -830,19 +884,18 @@ export class ProjectService {
 
     const buffer = Buffer.from(content, 'utf-8');
 
-    // Use the same approach as VideoProcessingService
     await this.blobStorageService.uploadBuffer(
       buffer,
       fileName,
       scope,
+      'deliverables',
       'text/markdown',
     );
 
-    // Get the public URL
     const publicUrl = this.blobStorageService.buildPublicUrl(
       scope,
       fileName,
-      'files',
+      'deliverables',
     );
 
     this.logger.log('Successfully saved encyclopedia', {
@@ -854,6 +907,88 @@ export class ProjectService {
     });
 
     return publicUrl;
+  }
+
+  private async copyParentEncyclopediaIfExists(
+    parentProject: ProjectDto,
+    newProject: ProjectDto,
+  ): Promise<void> {
+    try {
+      this.logger.log(
+        `Checking if encyclopedia exists for parent project ${parentProject.id}`,
+      );
+
+      const encyclopediaContent = await this.getEncyclopediaContent(
+        parentProject.id,
+      );
+
+      if (!encyclopediaContent) {
+        this.logger.log(
+          `No completed encyclopedia found for parent project ${parentProject.id}`,
+        );
+        return;
+      }
+
+      this.logger.log(
+        `Encyclopedia found for parent project ${parentProject.id}, copying to new project ${newProject.id}`,
+      );
+
+      const newFileName = `Enciclopedia Mundo Padre - ${parentProject.name}.md`;
+      const newScope = {
+        orgId: newProject.organizationId,
+        projectId: newProject.id,
+      };
+
+      const encyclopediaBuffer = Buffer.from(encyclopediaContent, 'utf-8');
+
+      await this.blobStorageService.uploadBuffer(
+        encyclopediaBuffer,
+        newFileName,
+        newScope,
+        'files', // Important: 'files' so AI can use it as context
+        'text/markdown',
+      );
+
+      this.logger.log(
+        `Successfully copied encyclopedia from parent ${parentProject.id} to new project ${newProject.id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to copy encyclopedia from parent project ${parentProject.id}`,
+        error,
+      );
+    }
+  }
+
+  async getProjectDeliverables(projectId: string): Promise<DeliverableDto[]> {
+    this.logger.log('Fetching project deliverables', { projectId });
+
+    const project = await this.findOne(projectId);
+
+    const scope = {
+      orgId: project.organizationId,
+      projectId,
+    };
+
+    const files = await this.blobStorageService.getFiles(scope, 'deliverables');
+
+    const deliverables: DeliverableDto[] = files
+      .filter((file) => !file.file_name.includes('image-'))
+      .map((file) => ({
+        fileName: file.file_name,
+        fileType: file.file_type,
+        url: this.blobStorageService.buildPublicUrl(
+          scope,
+          file.file_name,
+          'deliverables',
+        ),
+      }));
+
+    this.logger.log(
+      `Found ${deliverables.length} deliverables for project ${projectId}`,
+    );
+
+    return deliverables;
   }
 
   async uploadTextFile(
@@ -871,6 +1006,44 @@ export class ProjectService {
       uploadContext.content,
       uploadContext.filename,
       scope,
+    );
+  }
+
+  async removeProvocation(
+    projectId: string,
+    provocationId: string,
+  ): Promise<ProvocationDto> {
+    await this.findOne(projectId);
+
+    // Verify provocation exists
+    const provocation =
+      await this.projectRepository.findProvocationById(provocationId);
+    if (!provocation) {
+      throw new ResourceNotFoundException('Provocation', provocationId);
+    }
+
+    return this.projectRepository.deleteProvocation(provocationId);
+  }
+
+  async generateSolutionImages(
+    projectId: string,
+    solutionId: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<string[]> {
+    this.logger.log('Generating solution images', {
+      projectId,
+      solutionId,
+    });
+
+    // Verify project exists
+    await this.findOne(projectId);
+
+    return this.solutionImageService.generateAndSaveSolutionImages(
+      projectId,
+      solutionId,
+      userId,
+      organizationId,
     );
   }
 }

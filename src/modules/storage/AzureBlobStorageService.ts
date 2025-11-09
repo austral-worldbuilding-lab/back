@@ -74,17 +74,24 @@ export class AzureBlobStorageService implements StorageService {
   ): string {
     const prefix = buildPrefix(scope, folderName);
     const blobName = `${prefix}${fileName}`;
-    const account = process.env.AZURE_STORAGE_ACCOUNT!;
-
-    return `https://${account}.blob.core.windows.net/${this.containerName}/${blobName}`;
+    return this.buildPublicUrlForPath(blobName);
   }
 
-  async getFiles(scope: FileScope): Promise<CreateFileDto[]> {
+  async getFiles(
+    scope: FileScope,
+    folderName: StorageFolder = 'files',
+  ): Promise<CreateFileDto[]> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
     const descriptors: CreateFileDto[] = [];
-    const prefix = buildPrefix(scope, 'files');
+    const prefix = buildPrefix(scope, folderName);
+
+    this.logger.debug('Listing files from storage', {
+      scope,
+      folderName,
+      prefix,
+    });
 
     for await (const blob of containerClient.listBlobsFlat({
       prefix: prefix,
@@ -94,6 +101,11 @@ export class AzureBlobStorageService implements StorageService {
         file_type: blob.properties.contentType || 'unknown',
       });
     }
+
+    this.logger.debug(`Found ${descriptors.length} files in ${folderName}`, {
+      scope,
+      folderName,
+    });
 
     return descriptors;
   }
@@ -191,11 +203,15 @@ export class AzureBlobStorageService implements StorageService {
     }
   }
 
-  async getFileBuffer(fileName: string, scope: FileScope): Promise<Buffer> {
+  async getFileBuffer(
+    fileName: string,
+    scope: FileScope,
+    folderName: StorageFolder = 'files',
+  ): Promise<Buffer> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope, 'files');
+    const prefix = buildPrefix(scope, folderName);
     const blobName = `${prefix}${fileName}`;
     const blobClient = containerClient.getBlobClient(blobName);
 
@@ -213,12 +229,13 @@ export class AzureBlobStorageService implements StorageService {
     buffer: Buffer,
     fileName: string,
     scope: FileScope,
+    folderName: StorageFolder = 'files',
     contentType: string = 'application/octet-stream',
   ): Promise<void> {
     const containerClient = this.blobServiceClient.getContainerClient(
       this.containerName,
     );
-    const prefix = buildPrefix(scope, 'files');
+    const prefix = buildPrefix(scope, folderName);
     const blobName = `${prefix}${fileName}`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
@@ -228,7 +245,10 @@ export class AzureBlobStorageService implements StorageService {
       },
     });
 
-    this.logger.debug(`Successfully uploaded ${fileName} to ${blobName}`);
+    this.logger.debug(`Successfully uploaded ${fileName} to ${blobName}`, {
+      folderName,
+      scope,
+    });
   }
 
   /**
@@ -275,6 +295,48 @@ export class AzureBlobStorageService implements StorageService {
     });
   }
 
+  async blobExists(
+    scope: FileScope,
+    fileName: string,
+    folderName: StorageFolder,
+  ): Promise<boolean> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(scope, folderName);
+    const blobName = `${prefix}${fileName}`;
+    const blobClient = containerClient.getBlobClient(blobName);
+
+    return await blobClient.exists();
+  }
+
+  async listBlobsByPrefix(prefix: string): Promise<CreateFileDto[]> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const descriptors: CreateFileDto[] = [];
+
+    this.logger.debug('Listing blobs by prefix', { prefix });
+
+    for await (const blob of containerClient.listBlobsFlat({ prefix })) {
+      descriptors.push({
+        file_name: blob.name.replace(prefix, ''),
+        file_type: blob.properties.contentType || 'unknown',
+      });
+    }
+
+    this.logger.debug(
+      `Found ${descriptors.length} blobs with prefix ${prefix}`,
+    );
+
+    return descriptors;
+  }
+
+  buildPublicUrlForPath(blobPath: string): string {
+    const account = process.env.AZURE_STORAGE_ACCOUNT!;
+    return `https://${account}.blob.core.windows.net/${this.containerName}/${blobPath}`;
+  }
+
   private handleAzureDeletionError(error: unknown, blobName: string): never {
     const isNativeError = error instanceof Error;
     const stack = isNativeError ? error.stack : undefined;
@@ -295,5 +357,26 @@ export class AzureBlobStorageService implements StorageService {
     this.logger.error(`Failed to delete blob ${blobName}: ${message}`, stack);
 
     throw new ExternalServiceException('AzureBlobStorage', message, err);
+  }
+
+  async uploadImageToDeliverables(
+    imageBuffer: Buffer,
+    fileName: string,
+    fileScope: FileScope,
+  ): Promise<void> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const prefix = buildPrefix(fileScope, 'deliverables');
+    const blobName = `${prefix}${fileName}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.upload(imageBuffer, imageBuffer.length, {
+      blobHTTPHeaders: {
+        blobContentType: 'image/png',
+      },
+    });
+    this.logger.debug(
+      `Successfully uploaded ${fileName} to deliverables folder: ${blobName}`,
+    );
   }
 }

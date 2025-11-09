@@ -69,11 +69,12 @@ export class ProjectRepository {
     };
   }
 
-  private parseToProjectDto(project: Project): ProjectDto {
+  parseToProjectDto(project: Project): ProjectDto {
     return {
       id: project.id,
       name: project.name,
       icon: project.icon,
+      iconColor: project.iconColor,
       description: project.description ?? undefined,
       configuration: this.parseToProjectConfiguration(project.configuration),
       createdAt: project.createdAt,
@@ -283,6 +284,7 @@ export class ProjectRepository {
         data: {
           name: createProjectDto.name,
           icon: createProjectDto.icon,
+          iconColor: createProjectDto.iconColor,
           description: createProjectDto.description,
           configuration: this.parseToJson({
             dimensions: createProjectDto.dimensions!,
@@ -395,6 +397,7 @@ export class ProjectRepository {
           name: projectName,
           description: projectDescription,
           icon: createProjectFromProvocationDto.icon,
+          iconColor: createProjectFromProvocationDto.iconColor,
           configuration: this.parseToJson({
             dimensions,
             scales,
@@ -481,6 +484,7 @@ export class ProjectRepository {
           name: projectName,
           description: projectDescription,
           icon: createProjectFromQuestionDto.icon,
+          iconColor: createProjectFromQuestionDto.iconColor,
           configuration: this.parseToJson({
             dimensions: finalDimensions,
             scales: finalScales,
@@ -549,6 +553,7 @@ export class ProjectRepository {
           name: createChildProjectDto.name,
           description: createChildProjectDto.description || null,
           icon: createChildProjectDto.icon || 'folder',
+          iconColor: createChildProjectDto.iconColor,
           configuration: this.parseToJson({
             dimensions: parentConfig.dimensions,
             scales: parentConfig.scales,
@@ -683,12 +688,65 @@ export class ProjectRepository {
     return this.parseToProjectDto(project);
   }
 
+  /**
+   * aux para obtener recursivamente a todos los hijos
+   */
+  private async getAllChildProjectIds(
+    projectId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<string[]> {
+    const children = await tx.project.findMany({
+      where: {
+        parentProjectId: projectId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (children.length === 0) {
+      return [];
+    }
+
+    const childIds = children.map((child) => child.id);
+    const grandchildIds = await Promise.all(
+      childIds.map((childId) => this.getAllChildProjectIds(childId, tx)),
+    );
+
+    return [...childIds, ...grandchildIds.flat()];
+  }
+
   async removeWithCascade(id: string): Promise<ProjectDto> {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Soft delete all mandalas in the project
+      // Collect all child project IDs
+      const childProjectIds = await this.getAllChildProjectIds(id, tx);
+      const allProjectIds = [id, ...childProjectIds];
+
+      // Delete all ProjProvLink entries for the project and its children
+      await tx.projProvLink.deleteMany({
+        where: {
+          projectId: {
+            in: allProjectIds,
+          },
+        },
+      });
+
+      // Delete all ProjSolLink entries for the project and its children
+      await tx.projSolLink.deleteMany({
+        where: {
+          projectId: {
+            in: allProjectIds,
+          },
+        },
+      });
+
+      // Soft delete all mandalas in the project and its children
       await tx.mandala.updateMany({
         where: {
-          projectId: id,
+          projectId: {
+            in: allProjectIds,
+          },
           isActive: true,
         },
         data: {
@@ -697,7 +755,18 @@ export class ProjectRepository {
         },
       });
 
-      // 2. Soft delete the project itself
+      // Soft delete all child projects
+      for (const childId of childProjectIds.reverse()) {
+        await tx.project.update({
+          where: { id: childId },
+          data: {
+            isActive: false,
+            deletedAt: new Date(),
+          },
+        });
+      }
+
+      // Soft delete the project itself
       const project = await tx.project.update({
         where: { id },
         data: {
@@ -733,6 +802,8 @@ export class ProjectRepository {
       name?: string;
       description?: string;
       organizationId?: string;
+      icon?: string;
+      iconColor?: string;
       configuration?: Prisma.InputJsonValue;
     } = {};
 
@@ -746,6 +817,14 @@ export class ProjectRepository {
 
     if (updateProjectDto.organizationId !== undefined) {
       updateData.organizationId = updateProjectDto.organizationId;
+    }
+
+    if (updateProjectDto.icon !== undefined) {
+      updateData.icon = updateProjectDto.icon;
+    }
+
+    if (updateProjectDto.iconColor !== undefined) {
+      updateData.iconColor = updateProjectDto.iconColor;
     }
 
     if (
@@ -1378,6 +1457,63 @@ export class ProjectRepository {
     return provocationQuestions.join(' -> ');
   }
 
+  async deleteProvocation(provocationId: string): Promise<ProvocationDto> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.projProvLink.deleteMany({
+        where: {
+          provocationId: provocationId,
+        },
+      });
+
+      await tx.solProvLink.deleteMany({
+        where: {
+          provocationId: provocationId,
+        },
+      });
+
+      const provocation = await tx.provocation.update({
+        where: { id: provocationId },
+        data: {
+          isActive: false,
+          deletedAt: new Date(),
+        },
+        include: {
+          projects: {
+            include: {
+              project: true,
+            },
+          },
+        },
+      });
+
+      return this.parseToProvocationDto(provocation);
+    });
+  }
+
+  async findProvocationById(
+    provocationId: string,
+  ): Promise<ProvocationDto | null> {
+    const provocation = await this.prisma.provocation.findFirst({
+      where: {
+        id: provocationId,
+        isActive: true,
+      },
+      include: {
+        projects: {
+          include: {
+            project: true,
+          },
+        },
+      },
+    });
+
+    if (!provocation) {
+      return null;
+    }
+
+    return this.parseToProvocationDto(provocation);
+  }
+
   async getTimelineGraph(
     organizationId: string,
     highlightProjectId?: string,
@@ -1443,6 +1579,9 @@ export class ProjectRepository {
       where: {
         projectId: { in: projectIds },
         role: ProjProvLinkRole.ORIGIN,
+        provocation: {
+          isActive: true,
+        },
       },
       include: {
         provocation: {

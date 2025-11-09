@@ -9,6 +9,7 @@ import {
 } from '@common/types/responses';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
 import {
   Controller,
   Get,
@@ -52,6 +53,7 @@ import {
   ApiDeleteImage,
   ApiCreateContextMandala,
   ApiGenerateContextMandala,
+  ApiUploadMandalaTextFile,
 } from './decorators/mandala-swagger.decorators';
 import { AiMandalaImageResponseDto } from './dto/ai-mandala-image-response.dto';
 import { AiQuestionResponseDto } from './dto/ai-question-response.dto';
@@ -441,7 +443,7 @@ export class MandalaController {
 
   @Post(':id/generate-images')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   @ApiGenerateMandalaImages()
   async generateMandalaImages(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
@@ -564,6 +566,23 @@ export class MandalaController {
 
     return {
       message: 'Image deleted successfully',
+    };
+  }
+
+  @Post(':id/text-files')
+  @UseGuards(MandalaRoleGuard)
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
+  @ApiUploadMandalaTextFile()
+  async uploadTextFile(
+    @Param('id', new UuidValidationPipe()) mandalaId: string,
+    @Body() uploadContextDto: UploadContextDto,
+  ): Promise<DataResponse<{ url: string }>> {
+    const url = await this.mandalaService.uploadTextFile(
+      mandalaId,
+      uploadContextDto,
+    );
+    return {
+      data: { url },
     };
   }
 

@@ -1,0 +1,34 @@
+OBJETIVO:
+  Generar imágenes visuales que representen la implementación y el impacto de una solución propuesta, siendo coherente con el mundo y el contexto del proyecto.
+
+CONFIGURACIÓN DEL MUNDO:
+  • Nombre del Mundo: ${projectName}
+  • Descripción del Mundo: ${projectDescription}
+CONTEXTO DE PROVOCACIONES:
+  • Para llegar a este mundo, se analizaron las provocaciones: ${provocations-timeline}
+
+INFORMACIÓN DE LA SOLUCIÓN:
+  • ID de la Solución: ${solution.id}
+  • Título: ${solution.title}
+  • Resumen: ${solution.summary}
+
+CONTEXTO DEL PROYECTO:
+  • ID del Proyecto: ${project.id}
+  • Nombre del Proyecto: ${project.name}
+  • Descripción del Proyecto: ${project.description}
+
+PROCESAMIENTO DE LA INFORMACIÓN:
+  • Prioriza elementos visuales que capturen la esencia de la solución y su impacto esperado.
+  • Usa la descripción del proyecto para entender el contexto general del mundo.
+  • La solución debe verse integrada naturalmente en el mundo descrito.
+
+REGLAS DE LAS IMÁGENES:
+  • Cada imagen debe ser una representación visual coherente de la solución propuesta.
+  • Estilo: realista, evocativo, que capture la atmósfera del mundo y la implementación de la solución.
+  • Composición: debe reflejar visualmente la solución en acción, mostrando su implementación o su impacto positivo.
+  • Consistencia: mantener coherencia visual con el mundo descrito y el contexto del proyecto.
+  • Variedad: si se generan múltiples imágenes, mostrar diferentes ángulos, momentos o aspectos de la solución.
+  • Contexto cultural: respetar el contexto geográfico, temporal y cultural del mundo.
+  • Optimismo realista: mostrar la solución de manera positiva pero creíble, evitando representaciones utópicas irreales.
+  • No incluir texto en las imágenes (excepto si es parte natural del mundo, como carteles o señalética coherente).
+  • Enfoque humano: cuando sea relevante, mostrar personas beneficiándose o interactuando con la solución.

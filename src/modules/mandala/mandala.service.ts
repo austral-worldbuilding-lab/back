@@ -9,9 +9,14 @@ import { CacheService } from '@common/services/cache.service';
 import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
 import { AiService } from '@modules/ai/ai.service';
+import { UploadContextDto } from '@modules/files/dto/upload-context.dto';
+import { TextStorageService } from '@modules/files/services/text-storage.service';
 import { FirebaseDataService } from '@modules/firebase/firebase-data.service';
 import { AiMandalaReport } from '@modules/mandala/types/ai-report';
-import { PostitWithCoordinates } from '@modules/mandala/types/postits';
+import {
+  PostitComparison,
+  PostitWithCoordinates,
+} from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
@@ -70,6 +75,7 @@ export class MandalaService {
     private readonly logger: AppLogger,
     private notificationService: NotificationService,
     private organizationService: OrganizationService,
+    private textStorageService: TextStorageService,
   ) {
     this.logger.setContext(MandalaService.name);
   }
@@ -1008,6 +1014,9 @@ export class MandalaService {
     this.logger.log(
       `Starting overlap summary operation for ${createOverlapDto.mandalas.length} mandalas`,
     );
+
+    let newMandala: MandalaDto | null = null;
+
     try {
       const mandalas = await this.validateAndRetrieveMandalas(
         createOverlapDto.mandalas,
@@ -1052,7 +1061,7 @@ export class MandalaService {
         mandalas.map((m) => this.getFirestoreDocument(m.projectId, m.id)),
       );
 
-      const newMandala = await this.create(
+      newMandala = await this.create(
         createOverlappedMandalaDto,
         MandalaType.OVERLAP_SUMMARY,
       );
@@ -1063,6 +1072,7 @@ export class MandalaService {
           mandalasDocument,
         );
 
+      // Validar que el reporte de IA existe
       if (!report) {
         throw new InternalServerErrorException({
           message: 'AI service failed to generate a report',
@@ -1070,6 +1080,21 @@ export class MandalaService {
           details: { mandalaId: newMandala.id },
         });
       }
+
+      // Validar estructura del reporte
+      this.validateAiReport(report, newMandala.id);
+
+      // Validar que haya comparisons
+      if (!comparisons || comparisons.length === 0) {
+        throw new InternalServerErrorException({
+          message: 'AI service returned empty comparisons array',
+          error: 'AI Validation Error',
+          details: { mandalaId: newMandala.id },
+        });
+      }
+
+      // Validar cada comparison
+      this.validateComparisons(comparisons, newMandala.id);
 
       const aiSummaryPostitsWithCoordinates =
         this.postitService.transformToPostitsWithCoordinates(
@@ -1094,6 +1119,14 @@ export class MandalaService {
 
       return { mandala: newMandala, summaryReport: report };
     } catch (error: unknown) {
+      // Clean up: remove the mandala if it was created before the error occurred
+      if (newMandala) {
+        this.logger.warn(
+          `Removing mandala ${newMandala.id} due to error during overlap summary generation`,
+        );
+        await this.remove(newMandala.id);
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(
@@ -1478,5 +1511,157 @@ export class MandalaService {
     );
 
     return summaries.join('\n\n');
+  }
+
+  async uploadTextFile(
+    mandalaId: string,
+    uploadContext: UploadContextDto,
+  ): Promise<string> {
+    const mandala = await this.findOne(mandalaId);
+    const project = await this.projectService.findOne(mandala.projectId);
+
+    const scope = {
+      orgId: project.organizationId,
+      projectId: mandala.projectId,
+      mandalaId,
+    };
+
+    return this.textStorageService.uploadText(
+      uploadContext.content,
+      uploadContext.filename,
+      scope,
+    );
+  }
+
+  /**
+   * Valida la estructura del reporte generado por la IA
+   * @private
+   * @param report - Reporte de IA a validar
+   * @param mandalaId - ID de la mandala (para logging)
+   * @throws InternalServerErrorException si el reporte no tiene la estructura correcta
+   */
+  private validateAiReport(report: AiMandalaReport, mandalaId: string): void {
+    const errors: string[] = [];
+
+    // Validar que exista el campo summary
+    if (
+      !report.summary ||
+      typeof report.summary !== 'string' ||
+      report.summary.trim().length === 0
+    )
+      errors.push('report.summary debe ser un string no vacío');
+
+    // Validar que exista el campo coincidences y sea un array
+    if (!Array.isArray(report.coincidences)) {
+      errors.push('report.coincidences debe ser un array');
+    }
+
+    // Validar que exista el campo tensions y sea un array
+    if (!Array.isArray(report.tensions)) {
+      errors.push('report.tensions debe ser un array');
+    }
+
+    // Validar que exista el campo insights y sea un array
+    if (!Array.isArray(report.insights)) {
+      errors.push('report.insights debe ser un array');
+    }
+
+    if (errors.length > 0) {
+      this.logger.error(
+        `AI report validation failed for mandala ${mandalaId}: ${errors.join(', ')}`,
+      );
+      throw new InternalServerErrorException({
+        message: 'AI service returned invalid report structure',
+        error: 'AI Report Validation Error',
+        details: {
+          mandalaId,
+          validationErrors: errors,
+          receivedReport: report,
+        },
+      });
+    }
+  }
+
+  /**
+   * Valida que cada comparison tenga la estructura correcta
+   * @private
+   * @param comparisons - Array de comparisons a validar
+   * @param mandalaId - ID de la mandala (para logging)
+   * @throws InternalServerErrorException si alguna comparison no es válida
+   */
+  private validateComparisons(
+    comparisons: Array<PostitComparison>,
+    mandalaId: string,
+  ): void {
+    const VALID_TYPES = ['SIMILITUD', 'DIFERENCIA', 'UNICO'];
+    const errors: string[] = [];
+
+    comparisons.forEach((comparison, index) => {
+      const compErrors: string[] = [];
+
+      // Validar content
+      if (!comparison.content || typeof comparison.content !== 'string') {
+        compErrors.push('content debe ser un string no vacío');
+      }
+
+      // Validar dimension
+      if (
+        typeof comparison.dimension !== 'string' ||
+        comparison.dimension.trim().length === 0
+      ) {
+        compErrors.push('dimension debe ser un string no vacío');
+      }
+
+      // Validar section (scale normalizado)
+      if (
+        !comparison.section ||
+        typeof comparison.section !== 'string' ||
+        comparison.section.trim().length === 0
+      ) {
+        compErrors.push('section debe ser un string no vacío');
+      }
+
+      // Validar type: debe ser SIMILITUD, DIFERENCIA o UNICO
+      if (
+        !comparison.type ||
+        typeof comparison.type !== 'string' ||
+        comparison.type.trim().length === 0
+      ) {
+        compErrors.push('type debe ser un string no vacío');
+      } else if (!VALID_TYPES.includes(comparison.type)) {
+        compErrors.push(
+          `type debe ser uno de [${VALID_TYPES.join(', ')}], pero recibió "${comparison.type}"`,
+        );
+      }
+
+      // Validar fromSummary
+      if (!Array.isArray(comparison.fromSummary)) {
+        compErrors.push('fromSummary debe ser un array');
+      } else if (comparison.fromSummary.length === 0) {
+        compErrors.push('fromSummary no puede estar vacío');
+      }
+
+      if (compErrors.length > 0) {
+        errors.push(
+          `Comparison[${index}]: ${compErrors.join(', ')} (content: "${comparison.content || 'N/A'}")`,
+        );
+      }
+    });
+
+    if (errors.length > 0) {
+      this.logger.error(
+        `AI comparisons validation failed for mandala ${mandalaId}:\n${errors.join('\n')}`,
+      );
+      throw new InternalServerErrorException({
+        message: 'AI service returned invalid comparisons structure',
+        error: 'AI Comparisons Validation Error',
+        details: {
+          mandalaId,
+          validationErrors: errors,
+          totalComparisons: comparisons.length,
+          invalidComparisons: errors.length,
+        },
+      });
+    }
   }
 }

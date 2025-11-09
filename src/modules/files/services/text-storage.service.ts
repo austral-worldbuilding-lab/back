@@ -1,6 +1,7 @@
 import { AppLogger } from '@common/services/logger.service';
 import { FileScope } from '@modules/files/types/file-scope.type';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
+import { StorageFolder } from '@modules/storage/path-builder';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -16,9 +17,11 @@ export class TextStorageService {
     content: string,
     filename: string,
     scope: FileScope,
+    folderName: StorageFolder = 'files',
   ): Promise<string> {
     this.logger.debug(`Uploading text content as ${filename}`, {
       scope,
+      folderName,
       contentLength: content.length,
     });
 
@@ -28,18 +31,20 @@ export class TextStorageService {
       buffer,
       filename,
       scope,
+      folderName,
       'text/plain',
     );
 
     const publicUrl = this.blobStorageService.buildPublicUrl(
       scope,
       filename,
-      'files',
+      folderName,
     );
 
     this.logger.debug(`Successfully uploaded text content`, {
       filename,
       scope,
+      folderName,
       publicUrl,
     });
 

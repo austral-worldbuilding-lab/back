@@ -16,4 +16,4 @@ module.exports = {
     '^@modules/(.*)$': '<rootDir>/modules/$1',
     '^@common/(.*)$': '<rootDir>/common/$1',
   },
-}; 
+};

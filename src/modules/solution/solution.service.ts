@@ -11,8 +11,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 
+import { ActionItemDto } from './dto/action-item.dto';
 import { CreateSolutionDto } from './dto/create-solution.dto';
 import { SolutionDto } from './dto/solution.dto';
+import { UpdateSolutionDto } from './dto/update-solution.dto';
 import { SolutionRepository } from './solution.repository';
 import { AiSolutionResponse } from './types/solutions.type';
 
@@ -74,6 +76,18 @@ export class SolutionService {
     return this.solutionRepository.remove(id);
   }
 
+  async update(
+    id: string,
+    updateSolutionDto: UpdateSolutionDto,
+  ): Promise<SolutionDto> {
+    const solution = await this.solutionRepository.findOne(id);
+    if (!solution) {
+      throw new NotFoundException(`Solution with ID ${id} not found`);
+    }
+
+    return this.solutionRepository.update(id, updateSolutionDto);
+  }
+
   /**
    * Queue solutions generation job
    * @param projectId - The project ID
@@ -86,19 +100,12 @@ export class SolutionService {
     userId: string,
     organizationId?: string,
   ): Promise<string> {
-    this.logger.log(
-      `Queuing solutions generation job for project ${projectId}`,
-    );
     await this.projectService.findOne(projectId);
 
     const jobId = await this.solutionsQueueService.addSolutionsJob(
       projectId,
       userId,
       organizationId,
-    );
-
-    this.logger.log(
-      `Solutions generation job queued for project ${projectId} with ID: ${jobId}`,
     );
 
     return jobId;
@@ -111,7 +118,7 @@ export class SolutionService {
   async getSolutionsJobStatus(
     projectId: string,
   ): Promise<SolutionsJobStatusResponse> {
-    return this.solutionsQueueService.getJobStatus(projectId);
+    return this.solutionsQueueService.getJobStatusByProjectId(projectId);
   }
 
   /**
@@ -145,5 +152,23 @@ export class SolutionService {
       projectId,
     );
     return this.cacheService.getFromCache<AiSolutionResponse>(cacheKey);
+  }
+
+  /**
+   * Save action items to a solution
+   * @param solutionId - The solution ID
+   * @param actionItems - The action items to save
+   * @returns Updated solution with action items
+   */
+  async saveActionItems(
+    solutionId: string,
+    actionItems: ActionItemDto[],
+  ): Promise<SolutionDto> {
+    const solution = await this.solutionRepository.findOne(solutionId);
+    if (!solution) {
+      throw new NotFoundException(`Solution with ID ${solutionId} not found`);
+    }
+
+    return this.solutionRepository.updateActionItems(solutionId, actionItems);
   }
 }

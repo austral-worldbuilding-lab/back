@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { ActionItemsStrategy } from '../strategies/action-items.strategy';
 import { ContextPostitsStrategy } from '../strategies/context-postits.strategy';
 import { EncyclopediaStrategy } from '../strategies/encyclopedia.strategy';
 import { MandalaImagesStrategy } from '../strategies/mandala-images.strategy';
@@ -8,6 +9,7 @@ import { PostitsSummaryStrategy } from '../strategies/postits-summary.strategy';
 import { PostitsStrategy } from '../strategies/postits.strategy';
 import { ProvocationsStrategy } from '../strategies/provocations.strategy';
 import { QuestionsStrategy } from '../strategies/questions.strategy';
+import { SolutionImagesStrategy } from '../strategies/solution-images.strategy';
 import { SolutionsStrategy } from '../strategies/solutions.strategy';
 
 @Injectable()
@@ -22,6 +24,8 @@ export class AiStrategyRegistryService {
     private readonly mandalaSummary: MandalaSummaryStrategy,
     private readonly solutions: SolutionsStrategy,
     private readonly mandalaImages: MandalaImagesStrategy,
+    private readonly actionItems: ActionItemsStrategy,
+    private readonly solutionImages: SolutionImagesStrategy,
   ) {}
 
   getPostits() {
@@ -48,7 +52,13 @@ export class AiStrategyRegistryService {
   getSolutions() {
     return this.solutions;
   }
+  getActionItems() {
+    return this.actionItems;
+  }
   getMandalaImages() {
     return this.mandalaImages;
+  }
+  getSolutionImages() {
+    return this.solutionImages;
   }
 }

@@ -3,69 +3,59 @@ import { AiService } from '@modules/ai/ai.service';
 import { MandalaService } from '@modules/mandala/mandala.service';
 import { ProjectService } from '@modules/project/project.service';
 import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Job, Worker } from 'bullmq';
+import { Job } from 'bullmq';
 
+import { EncyclopediaQueueService } from '../services/encyclopedia-queue.service';
 import {
   EncyclopediaJobData,
   EncyclopediaJobResult,
 } from '../types/encyclopedia-job.types';
 
-@Injectable()
-export class EncyclopediaProcessor implements OnModuleInit {
-  private worker!: Worker<EncyclopediaJobData, EncyclopediaJobResult>;
+import { BaseOnDemandProcessor } from './base/on-demand.processor';
 
+@Injectable()
+export class EncyclopediaProcessor extends BaseOnDemandProcessor<
+  EncyclopediaJobData,
+  EncyclopediaJobResult
+> {
   constructor(
-    private readonly configService: ConfigService,
-    private readonly logger: AppLogger,
+    configService: ConfigService,
+    logger: AppLogger,
     private readonly projectService: ProjectService,
     private readonly mandalaService: MandalaService,
     private readonly aiService: AiService,
     private readonly blobStorageService: AzureBlobStorageService,
+    encyclopediaQueueService: EncyclopediaQueueService,
   ) {
-    this.logger.setContext(EncyclopediaProcessor.name);
+    super(configService, logger, encyclopediaQueueService);
   }
 
-  onModuleInit() {
-    const redisConfig = this.configService.get<{
-      host: string;
-      port: number;
-      password?: string;
-      maxRetriesPerRequest: null;
-    }>('queue.redis')!;
-
-    this.worker = new Worker<EncyclopediaJobData, EncyclopediaJobResult>(
-      'encyclopedia-generation',
-      async (job: Job<EncyclopediaJobData>) => {
-        return this.processEncyclopediaJob(job);
-      },
-      {
-        connection: redisConfig,
-        concurrency: 1, // Process one encyclopedia at a time to avoid overwhelming AI
-      },
-    );
-
-    this.worker.on('completed', (job: Job<EncyclopediaJobData>) => {
-      this.logger.log(
-        `Encyclopedia job ${job.id} completed for project ${job.data.projectId}`,
-      );
-    });
-
-    this.worker.on(
-      'failed',
-      (job: Job<EncyclopediaJobData> | undefined, err: Error) => {
-        this.logger.error(
-          `Encyclopedia job ${job?.id} failed for project ${job?.data.projectId}: ${err.message}`,
-          { error: err.stack },
-        );
-      },
-    );
-
-    this.logger.log('Encyclopedia processor initialized');
+  protected getQueueName(): string {
+    return 'encyclopedia-generation';
   }
 
-  private async processEncyclopediaJob(
+  protected getProcessorName(): string {
+    return 'Encyclopedia';
+  }
+
+  /**
+   * Processes an encyclopedia generation job.
+   *
+   * Steps:
+   * 1. Get project
+   * 2. Get mandalas with summary status
+   * 3. Generate missing summaries sequentially with retry logic
+   * 4. Collect all dimensions and scales
+   * 5. Get all summaries
+   * 6. Generate encyclopedia using AI
+   * 7. Save to blob storage
+   *
+   * @param job - The encyclopedia job to process
+   * @returns The encyclopedia result with storage URL
+   */
+  protected async processJob(
     job: Job<EncyclopediaJobData>,
   ): Promise<EncyclopediaJobResult> {
     const { projectId, selectedFiles } = job.data;
@@ -75,11 +65,9 @@ export class EncyclopediaProcessor implements OnModuleInit {
     );
 
     try {
-      // Step 1: Get project
       await job.updateProgress(10);
       const project = await this.projectService.findOne(projectId);
 
-      // Step 2: Get mandalas with summary status
       await job.updateProgress(20);
       const mandalasWithStatus =
         await this.mandalaService.getMandalasWithSummaryStatus(projectId);
@@ -93,58 +81,19 @@ export class EncyclopediaProcessor implements OnModuleInit {
         `Found ${withoutSummary.length} mandalas without summaries out of ${allMandalas.length} total`,
       );
 
-      // Step 3: Generate missing summaries sequentially with better error handling
       if (withoutSummary.length > 0) {
         this.logger.log(
           `Generating summaries for ${withoutSummary.length} mandalas sequentially...`,
         );
 
-        const progressPerSummary = 50 / withoutSummary.length; // Allocate 50% progress for summaries
+        const progressPerSummary = 50 / withoutSummary.length;
         let currentProgress = 20;
 
         const summaryResults: { mandalaId: string; success: boolean }[] = [];
 
-        // Retry logic for mandala summary generation //TODO remove this when summaries were generated with redis
         for (const { mandala } of withoutSummary) {
-          let summarySuccess = false;
-          let lastError: Error | null = null;
-
-          for (let attempt = 1; attempt <= 3; attempt++) {
-            try {
-              this.logger.log(
-                `Generating summary for mandala ${mandala.id} (attempt ${attempt}/3)`,
-              );
-              await this.mandalaService.generateSummaryReport(mandala.id);
-              summaryResults.push({ mandalaId: mandala.id, success: true });
-              this.logger.log(
-                `Successfully generated summary for mandala ${mandala.id} on attempt ${attempt}`,
-              );
-              summarySuccess = true;
-              break; // Success, exit retry loop
-            } catch (error) {
-              lastError =
-                error instanceof Error ? error : new Error('Unknown error');
-              this.logger.warn(
-                `Attempt ${attempt}/3 failed for mandala ${mandala.id}: ${lastError.message}`,
-              );
-
-              // Wait before retry (exponential backoff: 2s, 4s, 8s)
-
-              if (attempt < 3) {
-                const delayMs = 2000 * Math.pow(2, attempt - 1);
-                this.logger.log(`Waiting ${delayMs}ms before retry...`);
-                await this.delay(delayMs);
-              }
-            }
-          }
-
-          if (!summarySuccess) {
-            this.logger.error(
-              `Failed to generate summary for mandala ${mandala.id} after 3 attempts: ${lastError?.message}`,
-              { error: lastError?.stack },
-            );
-            summaryResults.push({ mandalaId: mandala.id, success: false });
-          }
+          const result = await this.generateSummaryWithRetry(mandala.id);
+          summaryResults.push(result);
 
           currentProgress += progressPerSummary;
           const progress = Math.min(currentProgress, 70);
@@ -167,7 +116,6 @@ export class EncyclopediaProcessor implements OnModuleInit {
         }
       }
 
-      // Step 4: Collect all dimensions and scales
       await job.updateProgress(75);
       const allDimensions = [
         ...new Set(
@@ -181,7 +129,6 @@ export class EncyclopediaProcessor implements OnModuleInit {
         ...new Set(allMandalas.flatMap((m) => m.configuration.scales)),
       ];
 
-      // Step 5: Get all summaries
       const allSummaries =
         await this.mandalaService.getAllMandalaSummariesByProjectId(projectId);
 
@@ -189,7 +136,6 @@ export class EncyclopediaProcessor implements OnModuleInit {
         this.logger.warn(`No summaries available for project ${projectId}`);
       }
 
-      // Step 6: Generate encyclopedia using AI
       await job.updateProgress(80);
       this.logger.log(
         `Generating encyclopedia content for project ${projectId}`,
@@ -205,27 +151,18 @@ export class EncyclopediaProcessor implements OnModuleInit {
         selectedFiles,
       );
 
-      // Step 7: Save to blob storage
       await job.updateProgress(90);
-      const fileName = `Enciclopedia del mundo - ${project.name}.md`;
+      const result = {
+        encyclopedia: encyclopediaResponse.encyclopedia,
+        html: encyclopediaResponse.html,
+        storageUrl: '',
+        htmlStorageUrl: '',
+      };
 
-      const storageUrl = await this.saveEncyclopedia(
-        encyclopediaResponse.encyclopedia,
-        project.organizationId,
-        project.id,
-        fileName,
-      );
-
+      await this.saveResult(job, result);
       await job.updateProgress(100);
 
-      this.logger.log(
-        `Encyclopedia generation completed for project ${projectId}`,
-      );
-
-      return {
-        encyclopedia: encyclopediaResponse.encyclopedia,
-        storageUrl,
-      };
+      return result;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -237,56 +174,139 @@ export class EncyclopediaProcessor implements OnModuleInit {
     }
   }
 
-  private async saveEncyclopedia(
-    content: string,
-    organizationId: string,
-    projectId: string,
-    fileName: string,
-  ): Promise<string> {
-    this.logger.log('Saving encyclopedia to blob storage', {
-      organizationId,
-      projectId,
-      fileName,
-      contentLength: content.length,
+  /**
+   * Saves encyclopedia to blob storage.
+   *
+   * @param job - The processed job
+   * @param result - The encyclopedia result (storageUrl and htmlStorageUrl will be set)
+   */
+  protected async saveResult(
+    job: Job<EncyclopediaJobData>,
+    result: EncyclopediaJobResult,
+  ): Promise<void> {
+    const project = await this.projectService.findOne(job.data.projectId);
+    const baseFileName = `Enciclopedia del mundo - ${project.name}`;
+    const mdFileName = `${baseFileName}.md`;
+    const htmlFileName = `${baseFileName}.html`;
+
+    this.logger.log('Saving encyclopedia files to blob storage', {
+      organizationId: project.organizationId,
+      projectId: project.id,
+      mdFileName,
+      htmlFileName,
+      markdownLength: result.encyclopedia.length,
     });
 
     const scope = {
-      orgId: organizationId,
-      projectId: projectId,
+      orgId: project.organizationId,
+      projectId: project.id,
     };
 
-    const buffer = Buffer.from(content, 'utf-8');
-
+    const mdBuffer = Buffer.from(result.encyclopedia, 'utf-8');
     await this.blobStorageService.uploadBuffer(
-      buffer,
-      fileName,
+      mdBuffer,
+      mdFileName,
       scope,
+      'deliverables',
       'text/markdown',
     );
 
-    const publicUrl = this.blobStorageService.buildPublicUrl(
+    const mdPublicUrl = this.blobStorageService.buildPublicUrl(
       scope,
-      fileName,
-      'files',
+      mdFileName,
+      'deliverables',
     );
+    result.storageUrl = mdPublicUrl;
 
-    this.logger.log('Successfully saved encyclopedia', {
-      organizationId,
-      projectId,
-      fileName,
-      publicUrl,
-      contentLength: content.length,
-    });
+    if (result.html) {
+      const htmlBuffer = Buffer.from(result.html, 'utf-8');
+      await this.blobStorageService.uploadBuffer(
+        htmlBuffer,
+        htmlFileName,
+        scope,
+        'deliverables',
+        'text/html',
+      );
 
-    return publicUrl;
+      const htmlPublicUrl = this.blobStorageService.buildPublicUrl(
+        scope,
+        htmlFileName,
+        'deliverables',
+      );
+      result.htmlStorageUrl = htmlPublicUrl;
+
+      this.logger.log('Encyclopedia files saved successfully', {
+        projectId: project.id,
+        mdFileName,
+        htmlFileName,
+        mdUrl: mdPublicUrl,
+        htmlUrl: htmlPublicUrl,
+        htmlLength: result.html.length,
+      });
+    } else {
+      this.logger.warn('No HTML content available, only markdown saved');
+    }
   }
 
+  /**
+   * Generates a summary for a mandala with retry logic.
+   *
+   * Replicates BullMQ's retry strategy (3 attempts with exponential backoff: 2s, 4s, 8s).
+   * This is necessary because summary generation doesn't use Redis/BullMQ yet.
+   *
+   * TODO: Remove once summaries are generated via Redis/BullMQ with their own job queue.
+   *
+   * @param mandalaId - The mandala ID to generate summary for
+   * @returns Success status for the summary generation
+   */
+  private async generateSummaryWithRetry(
+    mandalaId: string,
+  ): Promise<{ mandalaId: string; success: boolean }> {
+    const MAX_ATTEMPTS = 3;
+    const INITIAL_DELAY_MS = 2000;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        this.logger.debug(
+          `Generating summary for mandala ${mandalaId} (attempt ${attempt}/${MAX_ATTEMPTS})`,
+        );
+        await this.mandalaService.generateSummaryReport(mandalaId);
+        this.logger.debug(
+          `Summary generated for mandala ${mandalaId} on attempt ${attempt}`,
+        );
+        return { mandalaId, success: true };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+
+        this.logger.warn(
+          `Attempt ${attempt}/${MAX_ATTEMPTS} failed for mandala ${mandalaId}: ${errorMessage}`,
+        );
+
+        if (attempt === MAX_ATTEMPTS) {
+          this.logger.error(
+            `Failed to generate summary for mandala ${mandalaId} after ${MAX_ATTEMPTS} attempts: ${errorMessage}`,
+            { error: error instanceof Error ? error.stack : undefined },
+          );
+          return { mandalaId, success: false };
+        }
+
+        const delayMs = INITIAL_DELAY_MS * Math.pow(2, attempt - 1);
+        this.logger.debug(`Retrying in ${delayMs}ms...`);
+        await this.delay(delayMs);
+      }
+    }
+
+    return { mandalaId, success: false };
+  }
+
+  /**
+   * Creates a delay promise.
+   *
+   * @param ms - Milliseconds to delay
+   * @returns Promise that resolves after the delay
+   */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  async onModuleDestroy() {
-    await this.worker.close();
-    this.logger.log('Encyclopedia processor closed');
   }
 }

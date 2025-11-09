@@ -25,6 +25,7 @@ model Project {
   id            String            @id @default(uuid())
   name          String
   icon          String    @default("folder")
+  iconColor     String    @default("#172187")
   description   String?
   configuration Json // Contains dimensions[] and scales[]
   createdAt     DateTime          @default(now())
@@ -144,7 +145,8 @@ model Tag {
 model Organization {
   id        String    @id @default(uuid())
   name      String
-  icon      String    @default("building-2")
+  imageUrl  String?
+  bannerUrl String?
   createdAt DateTime  @default(now())
   isActive  Boolean   @default(true)
   deletedAt DateTime?
@@ -197,7 +199,9 @@ enum AiService {
   GENERATE_PROVOCATIONS
   GENERATE_ENCYCLOPEDIA
   GENERATE_SOLUTIONS
+  GENERATE_ACTION_ITEMS
   GENERATE_MANDALA_IMAGES
+  GENERATE_SOLUTION_IMAGES
 }
 
 enum AiModel {
@@ -311,6 +315,7 @@ model Solution {
 
   impactLevel       ImpactLevel?
   impactDescription String?
+  actionItems       Json? // Array of action items
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

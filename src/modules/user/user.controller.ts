@@ -31,9 +31,11 @@ import {
   ApiUpdateUser,
   ApiDeleteUser,
   ApiGetCurrentUser,
+  ApiGetUserStats,
 } from './decorators/user-swagger.decorators';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserStatsDto } from './dto/user-stats.dto';
 import { UserDto } from './dto/user.dto';
 import { UserOwnershipGuard } from './guards/user-ownership.guard';
 import { UserService } from './user.service';
@@ -65,6 +67,19 @@ export class UserController {
     const user = await this.userService.findOne(req.user.id);
     return {
       data: user,
+    };
+  }
+
+  @Get('me/stats')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiBearerAuth()
+  @ApiGetUserStats()
+  async getUserStats(
+    @Req() req: RequestWithUser,
+  ): Promise<DataResponse<UserStatsDto>> {
+    const stats = await this.userService.getUserStats(req.user.id);
+    return {
+      data: stats,
     };
   }
 

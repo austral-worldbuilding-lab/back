@@ -5,8 +5,10 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { AiProvocationResponse } from '@modules/project/types/provocations.type';
+import { AiActionItemResponse } from '@modules/solution/types/action-items.type';
 import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 
+import { SolutionImageResponse } from '../strategies/solution-images.strategy';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
 
@@ -234,6 +236,30 @@ export interface AiProvider {
   ): Promise<AiResponseWithUsage<AiSolutionResponse[]>>;
 
   /**
+   * Generates action items for a solution
+   *
+   * This method takes a solution and generates concrete, actionable steps
+   * to implement it. Each action item includes an order, title, description,
+   * and optional duration.
+   *
+   * @param projectId - Unique identifier of the project
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param solutionTitle - Title of the solution
+   * @param solutionDescription - Description of the solution
+   * @param solutionProblem - Problem that the solution addresses
+   * @returns Promise resolving to an array of action item responses
+   */
+  generateActionItems(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionTitle: string,
+    solutionDescription: string,
+    solutionProblem: string,
+  ): Promise<AiResponseWithUsage<AiActionItemResponse[]>>;
+
+  /**
    * Generates images for a mandala based on its content and context
    *
    * This method takes the mandala information and generates visual representations
@@ -262,4 +288,28 @@ export interface AiProvider {
     centerCharacterDescription: string,
     mandalaDocument: string,
   ): Promise<AiResponseWithUsage<AiMandalaImageResponse[]>>;
+
+  /**
+   * Generates image prompts for a solution
+   *
+   * This method takes solution information and generates prompts that describe
+   * images that should be created for the solution. The prompts include dimension,
+   * scale, and detailed description.
+   *
+   * @param projectId - Unique identifier of the project
+   * @param projectName - Name of the project
+   * @param projectDescription - Description of the project
+   * @param solutionId - Unique identifier of the solution
+   * @param solutionTitle - Title of the solution
+   * @param solutionSummary - Summary/description of the solution
+   * @returns Promise resolving to an array of solution image prompt responses
+   */
+  generateSolutionImages(
+    projectId: string,
+    projectName: string,
+    projectDescription: string,
+    solutionId: string,
+    solutionTitle: string,
+    solutionSummary: string,
+  ): Promise<AiResponseWithUsage<SolutionImageResponse[]>>;
 }

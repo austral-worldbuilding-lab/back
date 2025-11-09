@@ -1,34 +1,47 @@
 import { UuidValidationPipe } from '@common/pipes/uuid-validation.pipe';
+import { AiService } from '@modules/ai/ai.service';
 import { FirebaseAuthGuard } from '@modules/auth/firebase/firebase.guard';
 import { RequestWithUser } from '@modules/auth/types/auth.types';
 import { ProjectService } from '@modules/project/project.service';
+import { ActionItemDto } from '@modules/solution/dto/action-item.dto';
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
   Body,
-  Param,
-  UseGuards,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { ApiGenerateSolutionImages } from '../project/decorators/project-swagger.decorators';
 
 import { CreateSolutionDecorator } from './decorators/create-solution.decorator';
 import { DeleteSolutionDecorator } from './decorators/delete-solution.decorator';
+import { GenerateActionItemsDecorator } from './decorators/generate-action-items.decorator';
 import { GenerateSolutionsDecorator } from './decorators/generate-solutions.decorator';
 import { GetCachedSolutionsDecorator } from './decorators/get-cached-solutions.decorator';
 import { GetSolutionByIdDecorator } from './decorators/get-solution-by-id.decorator';
 import { GetSolutionsByProjectDecorator } from './decorators/get-solutions-by-project.decorator';
 import { GetSolutionsStatusDecorator } from './decorators/get-solutions-status.decorator';
+import { UpdateSolutionDecorator } from './decorators/update-solution.decorator';
 import { CreateSolutionDto } from './dto/create-solution.dto';
+import { GenerateSolutionImagesResponseDto } from './dto/generate-solution-images.dto';
 import { SolutionDto } from './dto/solution.dto';
 import { SolutionsJobResponseDto } from './dto/solutions-job-response.dto';
 import { SolutionsJobStatusDto } from './dto/solutions-job-status.dto';
+import { UpdateSolutionDto } from './dto/update-solution.dto';
+import { SolutionImageService } from './solution-image.service';
 import { SolutionService } from './solution.service';
 import { AiSolutionResponse } from './types/solutions.type';
+
+import { DataResponse } from '@/common/types/responses';
 
 @ApiTags('Solution')
 @ApiBearerAuth()
@@ -38,6 +51,8 @@ export class SolutionController {
   constructor(
     private readonly solutionService: SolutionService,
     private readonly projectService: ProjectService,
+    private readonly aiService: AiService,
+    private readonly solutionImageService: SolutionImageService,
   ) {}
 
   @Post('project/:projectId/solution')
@@ -59,6 +74,15 @@ export class SolutionController {
   @GetSolutionByIdDecorator()
   async findOne(@Param('id') id: string): Promise<SolutionDto> {
     return this.solutionService.findOne(id);
+  }
+
+  @Patch('solutions/:id')
+  @UpdateSolutionDecorator()
+  async update(
+    @Param('id', new UuidValidationPipe()) id: string,
+    @Body() updateSolutionDto: UpdateSolutionDto,
+  ): Promise<SolutionDto> {
+    return this.solutionService.update(id, updateSolutionDto);
   }
 
   @Delete('solutions/:id')
@@ -119,5 +143,73 @@ export class SolutionController {
     await this.projectService.findOne(projectId);
 
     return this.solutionService.getCachedSolutions(projectId);
+  }
+
+  @Post('project/:projectId/solutions/:solutionId/action-items/generate')
+  @GenerateActionItemsDecorator()
+  async generateActionItems(
+    @Param('solutionId', new UuidValidationPipe()) solutionId: string,
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Req() req: RequestWithUser,
+  ): Promise<ActionItemDto[]> {
+    const userId = req.user.id;
+
+    // Validar que la solución exista y obtener sus datos
+    const solution = await this.solutionService.findOne(solutionId);
+    if (!solution)
+      throw new NotFoundException(`Solution with id ${solutionId} not found`);
+
+    const project = await this.projectService.findOne(projectId);
+    if (!project)
+      throw new NotFoundException(`Project with id ${projectId} not found`);
+
+    // Generar action items usando AI
+    const actionItems = await this.aiService.generateActionItems(
+      project.id,
+      project.name,
+      project.description || '',
+      solution.title,
+      solution.description,
+      solution.problem,
+      userId,
+      project.organizationId,
+    );
+
+    await this.solutionService.saveActionItems(solutionId, actionItems);
+
+    return actionItems;
+  }
+
+  @Post('project/:projectId/solutions/:solutionId/images/generate')
+  @ApiGenerateSolutionImages()
+  async generateSolutionImages(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('solutionId', new UuidValidationPipe()) solutionId: string,
+    @Req() req: RequestWithUser,
+  ): Promise<DataResponse<GenerateSolutionImagesResponseDto>> {
+    const project = await this.projectService.findOne(projectId);
+    const urls = await this.projectService.generateSolutionImages(
+      projectId,
+      solutionId,
+      req.user.id,
+      project.organizationId,
+    );
+    return {
+      data: { urls },
+    };
+  }
+
+  @Get('project/:projectId/solutions/:solutionId/images')
+  async listSolutionImages(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('solutionId', new UuidValidationPipe()) solutionId: string,
+  ): Promise<DataResponse<{ urls: string[] }>> {
+    await this.projectService.findOne(projectId);
+    const urls = await this.solutionImageService.listSolutionImageUrls(
+      projectId,
+      solutionId,
+    );
+
+    return { data: { urls } };
   }
 }

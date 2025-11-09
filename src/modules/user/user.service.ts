@@ -1,10 +1,12 @@
 import { ResourceNotFoundException } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
 import { PaginatedResponse } from '@common/types/responses';
+import { OrganizationService } from '@modules/organization/organization.service';
 import { Injectable } from '@nestjs/common';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserStatsDto } from './dto/user-stats.dto';
 import { UserDto } from './dto/user.dto';
 import { UserRepository } from './user.repository';
 
@@ -12,6 +14,7 @@ import { UserRepository } from './user.repository';
 export class UserService {
   constructor(
     private userRepository: UserRepository,
+    private organizationService: OrganizationService,
     private readonly logger: AppLogger,
   ) {
     this.logger.setContext(UserService.name);
@@ -19,7 +22,23 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<UserDto> {
     this.logger.log('Creating user', createUserDto);
-    return this.userRepository.create(createUserDto);
+    const user = await this.userRepository.create(createUserDto);
+
+    // Create default organization for new user
+    try {
+      await this.organizationService.createDefaultOrganization(user.id);
+      this.logger.log('Default organization created for user', {
+        userId: user.id,
+      });
+    } catch (error) {
+      this.logger.error(
+        'Failed to create default organization for user',
+        error,
+        { userId: user.id },
+      );
+    }
+
+    return user;
   }
 
   async findAllPaginated(
@@ -64,5 +83,9 @@ export class UserService {
     }
     this.logger.log('Deactivating user', { targetUserId });
     return this.userRepository.deactivateUser(targetUserId);
+  }
+
+  async getUserStats(userId: string): Promise<UserStatsDto> {
+    return this.userRepository.getUserStats(userId);
   }
 }

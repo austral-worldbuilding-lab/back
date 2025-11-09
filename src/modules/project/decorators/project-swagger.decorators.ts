@@ -14,6 +14,7 @@ import {
 } from '@nestjs/swagger';
 
 import { AiProvocationResponseDto } from '../dto/ai-provocation-response.dto';
+import { ProjectDeliverablesResponseDto } from '../dto/project-deliverables-response.dto';
 import { ProjectUserDto } from '../dto/project-user.dto';
 import { ProjectDto } from '../dto/project.dto';
 import { ProvocationDto } from '../dto/provocation.dto';
@@ -21,6 +22,11 @@ import { SolutionValidationResponseDto } from '../dto/solution-validation-respon
 import { TagDto } from '../dto/tag.dto';
 import { TimelineGraphDto } from '../dto/timeline.dto';
 import { ProjectConfiguration } from '../types/project-configuration.type';
+
+import {
+  GenerateSolutionImagesDto,
+  GenerateSolutionImagesResponseDto,
+} from '@/modules/solution/dto/generate-solution-images.dto';
 
 export const ApiCreateProject = () =>
   applyDecorators(
@@ -1286,6 +1292,127 @@ export const ApiCreateChildProject = () =>
           statusCode: { type: 'number', example: 403 },
         },
       },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiGetProjectDeliverables = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener entregables del proyecto',
+      description:
+        'Obtiene la lista de todos los entregables (deliverables) generados para el proyecto, ' +
+        'como enciclopedias u otros archivos generados automáticamente por IA. ' +
+        'Retorna una lista vacía si el proyecto no tiene entregables.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de entregables obtenida exitosamente',
+      type: ProjectDeliverablesResponseDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto no encontrado',
+      schema: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example:
+              'Project with id a1b2c3d4-e5f6-7890-1234-567890abcdef not found',
+          },
+          error: { type: 'string', example: 'Not Found' },
+          statusCode: { type: 'number', example: 404 },
+        },
+      },
+    }),
+    ApiForbiddenResponse({
+      description:
+        'Prohibido - No tiene permisos suficientes para acceder al proyecto',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Forbidden resource' },
+          error: { type: 'string', example: 'Forbidden' },
+          statusCode: { type: 'number', example: 403 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiDeleteProvocation = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Eliminar una provocación',
+      description:
+        'Elimina (soft delete) una provocación del proyecto. Las provocaciones hijas no se eliminan.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+    }),
+    ApiParam({
+      name: 'provocationId',
+      description: 'ID de la provocación',
+      type: String,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'La provocación ha sido eliminada exitosamente',
+      type: ProvocationDto,
+    }),
+    ApiNotFoundResponse({
+      description: 'Proyecto o provocación no encontrado',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'No autorizado - Token de acceso requerido',
+    }),
+  );
+
+export const ApiGenerateSolutionImages = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Generar imágenes para una solución',
+      description:
+        'Genera imágenes para una solución usando IA. Las imágenes se guardan en el folder deliverables del proyecto.',
+    }),
+    ApiParam({
+      name: 'projectId',
+      description: 'ID del proyecto',
+      type: String,
+      format: 'uuid',
+    }),
+    ApiBody({
+      type: GenerateSolutionImagesDto,
+      description: 'Datos de la solución para generar imágenes',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Imágenes generadas exitosamente',
+      type: GenerateSolutionImagesResponseDto,
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Proyecto o solución no encontrado',
+    }),
+    ApiResponse({
+      status: 403,
+      description:
+        'Prohibido - El usuario no tiene permiso para generar imágenes',
+    }),
+    ApiBadRequestResponse({
+      description: 'Solicitud incorrecta - Datos inválidos',
     }),
     ApiUnauthorizedResponse({
       description: 'No autorizado - Token de acceso requerido',

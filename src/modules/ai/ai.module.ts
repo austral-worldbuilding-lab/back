@@ -19,6 +19,7 @@ import { FileLoaderService } from './services/file-loader.service';
 import { FileValidationService } from './services/file-validation.service';
 import { GeminiFileCacheService } from './services/gemini-file-cache.service';
 import { GeminiGenerationEngineService } from './services/gemini-generation-engine.service';
+import { ActionItemsStrategy } from './strategies/action-items.strategy';
 import { ContextPostitsStrategy } from './strategies/context-postits.strategy';
 import { EncyclopediaStrategy } from './strategies/encyclopedia.strategy';
 import { MandalaImagesStrategy } from './strategies/mandala-images.strategy';
@@ -27,6 +28,7 @@ import { PostitsSummaryStrategy } from './strategies/postits-summary.strategy';
 import { PostitsStrategy } from './strategies/postits.strategy';
 import { ProvocationsStrategy } from './strategies/provocations.strategy';
 import { QuestionsStrategy } from './strategies/questions.strategy';
+import { SolutionImagesStrategy } from './strategies/solution-images.strategy';
 import { SolutionsStrategy } from './strategies/solutions.strategy';
 
 @Module({
@@ -47,7 +49,9 @@ import { SolutionsStrategy } from './strategies/solutions.strategy';
     EncyclopediaStrategy,
     MandalaSummaryStrategy,
     SolutionsStrategy,
+    ActionItemsStrategy,
     MandalaImagesStrategy,
+    SolutionImagesStrategy,
     // Registry and Engine
     AiStrategyRegistryService,
     GeminiGenerationEngineService,
