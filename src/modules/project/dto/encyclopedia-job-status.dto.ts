@@ -29,12 +29,22 @@ export class EncyclopediaJobStatusDto {
   encyclopedia?: string;
 
   @ApiProperty({
-    description: 'Storage URL for the encyclopedia file (only when completed)',
+    description:
+      'Storage URL for the encyclopedia markdown file (only when completed)',
     example:
       'https://storageaccount.blob.core.windows.net/container/org/org-id/project/project-id/encyclopedia.md',
     required: false,
   })
   storageUrl?: string;
+
+  @ApiProperty({
+    description:
+      'Storage URL for the encyclopedia HTML file (only when completed)',
+    example:
+      'https://storageaccount.blob.core.windows.net/container/org/org-id/project/project-id/encyclopedia.html',
+    required: false,
+  })
+  htmlStorageUrl?: string;
 
   @ApiProperty({
     description: 'Error message (only when failed)',
