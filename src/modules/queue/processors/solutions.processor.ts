@@ -78,9 +78,7 @@ export class SolutionsProcessor extends BaseOnDemandProcessor<
         await this.projectService.getEncyclopediaContent(projectId);
 
       if (encyclopediaContent) {
-        this.logger.log(
-          `Using existing encyclopedia for project ${projectId}`,
-        );
+        this.logger.log(`Using existing encyclopedia for project ${projectId}`);
         await job.updateProgress(50);
       } else {
         this.logger.log(
