@@ -702,6 +702,57 @@ export class ProjectService {
   }
 
   /**
+   * Gets encyclopedia content for a project if it exists.
+   * First checks if a completed encyclopedia job exists with content in the result.
+   * If not but storageUrl exists, fetches the content from blob storage.
+   *
+   * @param projectId - The project ID
+   * @returns The encyclopedia content, or null if not available
+   */
+  async getEncyclopediaContent(projectId: string): Promise<string | null> {
+    const project = await this.findOne(projectId);
+    const encyclopediaStatus = await this.getEncyclopediaJobStatus(projectId);
+
+    // If completed and content is in result, return it
+    if (
+      encyclopediaStatus.status === EncyclopediaJobStatus.COMPLETED &&
+      encyclopediaStatus.result?.encyclopedia
+    ) {
+      return encyclopediaStatus.result.encyclopedia;
+    }
+
+    // If completed but content not in result, try to fetch from blob storage
+    if (
+      encyclopediaStatus.status === EncyclopediaJobStatus.COMPLETED &&
+      encyclopediaStatus.result?.storageUrl
+    ) {
+      try {
+        const fileName = `Enciclopedia del mundo - ${project.name}.md`;
+        const scope = {
+          orgId: project.organizationId,
+          projectId: project.id,
+        };
+
+        const buffer = await this.blobStorageService.getFileBuffer(
+          fileName,
+          scope,
+          'deliverables',
+        );
+
+        return buffer.toString('utf-8');
+      } catch (error) {
+        this.logger.warn(
+          `Failed to fetch encyclopedia from blob storage for project ${projectId}`,
+          { error: error instanceof Error ? error.message : undefined },
+        );
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * DEPRECATED: Old synchronous encyclopedia generation
    * This method is kept for reference but should not be used directly.
    * Use queueEncyclopediaGeneration instead.
@@ -863,14 +914,11 @@ export class ProjectService {
         `Checking if encyclopedia exists for parent project ${parentProject.id}`,
       );
 
-      const encyclopediaStatus = await this.getEncyclopediaJobStatus(
+      const encyclopediaContent = await this.getEncyclopediaContent(
         parentProject.id,
       );
 
-      if (
-        encyclopediaStatus.status !== EncyclopediaJobStatus.COMPLETED ||
-        !encyclopediaStatus.result?.storageUrl
-      ) {
+      if (!encyclopediaContent) {
         this.logger.log(
           `No completed encyclopedia found for parent project ${parentProject.id}`,
         );
@@ -881,24 +929,13 @@ export class ProjectService {
         `Encyclopedia found for parent project ${parentProject.id}, copying to new project ${newProject.id}`,
       );
 
-      const encyclopediaFileName = `Enciclopedia del mundo - ${parentProject.name}.md`;
-
-      const parentScope = {
-        orgId: parentProject.organizationId,
-        projectId: parentProject.id,
-      };
-
-      const encyclopediaBuffer = await this.blobStorageService.getFileBuffer(
-        encyclopediaFileName,
-        parentScope,
-        'deliverables',
-      );
-
       const newFileName = `Enciclopedia Mundo Padre - ${parentProject.name}.md`;
       const newScope = {
         orgId: newProject.organizationId,
         projectId: newProject.id,
       };
+
+      const encyclopediaBuffer = Buffer.from(encyclopediaContent, 'utf-8');
 
       await this.blobStorageService.uploadBuffer(
         encyclopediaBuffer,
