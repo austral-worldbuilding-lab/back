@@ -13,6 +13,7 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -27,10 +28,12 @@ import { GetCachedSolutionsDecorator } from './decorators/get-cached-solutions.d
 import { GetSolutionByIdDecorator } from './decorators/get-solution-by-id.decorator';
 import { GetSolutionsByProjectDecorator } from './decorators/get-solutions-by-project.decorator';
 import { GetSolutionsStatusDecorator } from './decorators/get-solutions-status.decorator';
+import { UpdateSolutionDecorator } from './decorators/update-solution.decorator';
 import { CreateSolutionDto } from './dto/create-solution.dto';
 import { SolutionDto } from './dto/solution.dto';
 import { SolutionsJobResponseDto } from './dto/solutions-job-response.dto';
 import { SolutionsJobStatusDto } from './dto/solutions-job-status.dto';
+import { UpdateSolutionDto } from './dto/update-solution.dto';
 import { SolutionService } from './solution.service';
 import { AiSolutionResponse } from './types/solutions.type';
 
@@ -64,6 +67,15 @@ export class SolutionController {
   @GetSolutionByIdDecorator()
   async findOne(@Param('id') id: string): Promise<SolutionDto> {
     return this.solutionService.findOne(id);
+  }
+
+  @Patch('solutions/:id')
+  @UpdateSolutionDecorator()
+  async update(
+    @Param('id', new UuidValidationPipe()) id: string,
+    @Body() updateSolutionDto: UpdateSolutionDto,
+  ): Promise<SolutionDto> {
+    return this.solutionService.update(id, updateSolutionDto);
   }
 
   @Delete('solutions/:id')
@@ -145,7 +157,7 @@ export class SolutionController {
       throw new NotFoundException(`Project with id ${projectId} not found`);
 
     // Generar action items usando AI
-    return await this.aiService.generateActionItems(
+    const actionItems = await this.aiService.generateActionItems(
       project.id,
       project.name,
       project.description || '',
@@ -155,5 +167,9 @@ export class SolutionController {
       userId,
       project.organizationId,
     );
+
+    await this.solutionService.saveActionItems(solutionId, actionItems);
+
+    return actionItems;
   }
 }

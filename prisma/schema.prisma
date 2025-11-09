@@ -314,6 +314,7 @@ model Solution {
 
   impactLevel       ImpactLevel?
   impactDescription String?
+  actionItems       Json? // Array of action items
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ActionItemDto } from './action-item.dto';
 
 export class ImpactDto {
   @ApiProperty({
@@ -53,6 +54,12 @@ export class SolutionDto {
     type: [String],
   })
   provocations!: string[];
+
+  @ApiPropertyOptional({
+    description: 'Action items for the solution',
+    type: [ActionItemDto],
+  })
+  actionItems?: ActionItemDto[];
 
   @ApiProperty({
     description: 'Creation date',
