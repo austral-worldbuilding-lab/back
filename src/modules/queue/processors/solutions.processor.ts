@@ -51,7 +51,7 @@ export class SolutionsProcessor extends BaseOnDemandProcessor<
    * 3. If exists and completed, use it; otherwise queue encyclopedia generation
    * 4. Wait for encyclopedia job to complete if needed
    * 5. Generate solutions using encyclopedia
-   * 6. Save solutions to cache
+   * 6. Save solutions to database
    *
    * @param job - The solutions job to process
    * @returns The solutions result
@@ -190,7 +190,7 @@ export class SolutionsProcessor extends BaseOnDemandProcessor<
   }
 
   /**
-   * Saves generated solutions to cache.
+   * Saves generated solutions to database.
    *
    * Progress updates are handled by the caller (processJob).
    *
@@ -201,7 +201,7 @@ export class SolutionsProcessor extends BaseOnDemandProcessor<
     job: Job<SolutionsJobData>,
     result: SolutionsJobResult,
   ): Promise<void> {
-    await this.solutionService.saveSolutionsToCache(
+    await this.solutionService.saveSolutionsToDatabase(
       job.data.projectId,
       result.solutions,
     );
