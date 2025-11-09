@@ -28,6 +28,7 @@ import { PostitsSummaryStrategy } from './strategies/postits-summary.strategy';
 import { PostitsStrategy } from './strategies/postits.strategy';
 import { ProvocationsStrategy } from './strategies/provocations.strategy';
 import { QuestionsStrategy } from './strategies/questions.strategy';
+import { SolutionImagesStrategy } from './strategies/solution-images.strategy';
 import { SolutionsStrategy } from './strategies/solutions.strategy';
 
 @Module({
@@ -50,6 +51,7 @@ import { SolutionsStrategy } from './strategies/solutions.strategy';
     SolutionsStrategy,
     ActionItemsStrategy,
     MandalaImagesStrategy,
+    SolutionImagesStrategy,
     // Registry and Engine
     AiStrategyRegistryService,
     GeminiGenerationEngineService,
