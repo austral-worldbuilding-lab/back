@@ -1,7 +1,5 @@
-import { BusinessLogicException } from '@common/exceptions/custom-exceptions';
 import { AppLogger } from '@common/services/logger.service';
 import { GoogleGenAI } from '@google/genai';
-import { GenerateImagesConfig } from '@google/genai/dist/genai';
 import { AiService } from '@modules/ai/ai.service';
 import { SolutionImageResponse } from '@modules/ai/strategies/solution-images.strategy';
 import { FileScope } from '@modules/files/types/file-scope.type';
@@ -15,6 +13,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 
 import { AzureBlobStorageService } from '../storage/AzureBlobStorageService';
+import { buildPrefix, StorageFolder } from '../storage/path-builder';
 
 import { SolutionService } from './solution.service';
 
@@ -103,11 +102,8 @@ export class SolutionImageService {
     for (let i = 0; i < imagePrompts.length; i++) {
       const imagePrompt = imagePrompts[i];
       try {
-        const imageData = await this.generateImageFromPrompt(
-          imagePrompt.prompt,
-        );
-        const fileName = this.generateFileName(solutionId, i, imagePrompt);
-        await this.saveImageToStorage(imageData, fileName, fileScope);
+        const fileName = this.generateFileName(solutionId, imagePrompt);
+        await this.saveImageToStorage(imagePrompt, fileName, fileScope);
         const publicUrl = this.storageService.buildPublicUrl(
           fileScope,
           fileName,
@@ -137,44 +133,6 @@ export class SolutionImageService {
   }
 
   /**
-   * Generates an image from a text prompt using Gemini
-   */
-  private async generateImageFromPrompt(
-    prompt: string,
-  ): Promise<{ id: string; imageData: string }> {
-    const config = {
-      aspectRatio: '1:1',
-      numberOfImages: 1,
-    } as GenerateImagesConfig;
-
-    const contents = [
-      {
-        role: 'user' as const,
-        parts: [{ text: prompt }],
-      },
-    ];
-
-    const response = await this.ai.models.generateContent({
-      model: this.geminiImageModel,
-      contents,
-      config,
-    });
-
-    // Extract image from response
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        const imageData = part.inlineData.data;
-        return {
-          id: `solution-image-${Date.now()}`,
-          imageData: imageData || '',
-        };
-      }
-    }
-
-    throw new BusinessLogicException('No image data received from Gemini API');
-  }
-
-  /**
    * Saves an image buffer to Azure blob storage in the deliverables folder
    */
   private async saveImageToStorage(
@@ -183,6 +141,7 @@ export class SolutionImageService {
     fileScope: FileScope,
   ): Promise<void> {
     // Convert base64 to buffer
+    console.log(imageData);
     const base64Data = imageData.imageData.replace(
       /^data:image\/\w+;base64,/,
       '',
@@ -203,18 +162,69 @@ export class SolutionImageService {
    */
   private generateFileName(
     solutionId: string,
-    index: number,
     imagePrompt: SolutionImageResponse,
   ): string {
-    // Create a deterministic name: solution-{solutionId}-{index}-{dimension}-{scale}.png
-    const dimensionSlug = imagePrompt.dimension
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .substring(0, 20);
-    const scaleSlug = imagePrompt.scale
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .substring(0, 20);
-    return `solution-${solutionId}-${index}-${dimensionSlug}-${scaleSlug}.png`;
+    // Create a deterministic name: solution-{solutionId}-{imageId}.png
+    return `solution-${solutionId}-${imagePrompt.id}.png`;
+  }
+
+  async listSolutionImageUrls(
+    projectId: string,
+    solutionId: string,
+    options?: {
+      folder?: StorageFolder;
+      sasHours?: number;
+      usePublicUrl?: boolean;
+    },
+  ): Promise<string[]> {
+    const folder = options?.folder ?? 'deliverables';
+    const sasHours = options?.sasHours ?? 24;
+    const usePublicUrl = options?.usePublicUrl ?? false;
+
+    this.logger.log('Listing solution images', {
+      projectId,
+      solutionId,
+      folder,
+      sasHours,
+      usePublicUrl,
+    });
+
+    const project = await this.projectService.findOne(projectId);
+    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+
+    // Scope para path builder
+    const scope: FileScope = { orgId: project.organizationId, projectId };
+
+    // Prefijo base de la carpeta (ej: org/{orgId}/projects/{projectId}/deliverables/)
+    const basePrefix = buildPrefix(scope, folder);
+
+    // Filtramos solo las imágenes de esa solución: solution-{solutionId}-*.png
+    const solutionPrefix = `${basePrefix}solution-${solutionId}-image-`;
+
+    // Listado de blobs bajo ese prefijo
+    const blobs = await this.storageService.listBlobsByPrefix(solutionPrefix);
+
+    // Construimos URLs (públicas o SAS):
+    const urls: string[] = [];
+    for (const b of blobs) {
+      const fullPath = `${solutionPrefix}${b.file_name}`; // file_name ya viene sin el prefijo
+
+      if (usePublicUrl) {
+        urls.push(this.storageService.buildPublicUrlForPath(fullPath));
+      } else {
+        const sas = await this.storageService.generateDownloadUrl(
+          fullPath,
+          sasHours,
+        );
+        urls.push(sas);
+      }
+    }
+
+    this.logger.log('Listed solution images', {
+      count: urls.length,
+      projectId,
+      solutionId,
+    });
+    return urls;
   }
 }

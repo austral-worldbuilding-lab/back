@@ -485,15 +485,11 @@ export class GeminiAdapter implements AiProvider {
       solutionSummary,
     };
     const prompt = await strategy.buildPrompt(input);
-    const schema = strategy.getResponseSchema();
-    const { text, usage } = await this.engine.runTextGeneration(
-      this.geminiTextModel,
+    const { data, usage } = await this.engine.runImageGeneration(
+      this.geminiImageModel,
       prompt,
-      schema,
       { projectId },
-      this.temperatureConfig.solutions,
     );
-    const data = strategy.parseAndValidate(text);
     this.logger.log(
       `Solution images generation completed for solution: ${solutionId}`,
     );

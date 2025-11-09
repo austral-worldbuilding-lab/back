@@ -32,11 +32,6 @@ import {
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import {
-  GenerateSolutionImagesDto,
-  GenerateSolutionImagesResponseDto,
-} from '../solution/dto/generate-solution-images.dto';
-
-import {
   ApiCreateProject,
   ApiGetAllProjects,
   ApiGetProject,
@@ -60,7 +55,6 @@ import {
   ApiGetSolutionValidationStatus,
   ApiCreateChildProject,
   ApiGetProjectDeliverables,
-  ApiGenerateSolutionImages,
 } from './decorators/project-swagger.decorators';
 import { AiProvocationResponseDto } from './dto/ai-provocation-response.dto';
 import { CreateChildProjectDto } from './dto/create-child-project.dto';
@@ -468,27 +462,6 @@ export class ProjectController {
       await this.projectService.getSolutionValidationStatus(projectId);
     return {
       data: validationStatus,
-    };
-  }
-
-  @Post(':projectId/generate-images')
-  @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
-  @ApiGenerateSolutionImages()
-  async generateSolutionImages(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Body() generateImagesDto: GenerateSolutionImagesDto,
-    @Req() req: RequestWithUser,
-  ): Promise<DataResponse<GenerateSolutionImagesResponseDto>> {
-    const project = await this.projectService.findOne(projectId);
-    const urls = await this.projectService.generateSolutionImages(
-      projectId,
-      generateImagesDto.solutionId,
-      req.user.id,
-      project.organizationId,
-    );
-    return {
-      data: { urls },
     };
   }
 }

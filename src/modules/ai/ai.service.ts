@@ -18,6 +18,7 @@ import { AiMandalaImageResponse } from '../mandala/types/mandala-images.type';
 
 import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
+import { SolutionImageResponse } from './strategies/solution-images.strategy';
 import { AiEncyclopediaResponse } from './types/ai-encyclopedia-response.type';
 import {
   createCleanMandalaForQuestions,
@@ -542,9 +543,7 @@ export class AiService {
     solutionSummary: string,
     userId?: string,
     organizationId?: string,
-  ): Promise<
-    import('./strategies/solution-images.strategy').SolutionImageResponse[]
-  > {
+  ): Promise<SolutionImageResponse[]> {
     this.logger.log(
       `Starting solution images generation for project: ${projectId}, solution: ${solutionId}`,
     );
@@ -562,7 +561,7 @@ export class AiService {
     if (userId) {
       await this.consumptionService.trackAiUsage(
         userId,
-        AiServiceEnum.GENERATE_SOLUTIONS,
+        AiServiceEnum.GENERATE_SOLUTION_IMAGES,
         AiModel.GEMINI_25_FLASH,
         response.usage.totalTokens,
         projectId,
