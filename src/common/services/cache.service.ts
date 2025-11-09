@@ -14,15 +14,11 @@ export class CacheService {
   }
 
   buildCacheKey(
-    type: 'questions' | 'postits' | 'provocations' | 'solutions',
+    type: 'questions' | 'postits' | 'provocations',
     userId: string,
     scopeId: string,
   ): string {
     return CacheUtils.buildSimpleCacheKey(type, userId, scopeId);
-  }
-
-  buildProjectCacheKey(type: 'solutions', projectId: string): string {
-    return CacheUtils.buildProjectCacheKey(type, projectId);
   }
 
   async addToLimitedCache<T>(

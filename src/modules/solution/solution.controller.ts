@@ -26,7 +26,6 @@ import { CreateSolutionDecorator } from './decorators/create-solution.decorator'
 import { DeleteSolutionDecorator } from './decorators/delete-solution.decorator';
 import { GenerateActionItemsDecorator } from './decorators/generate-action-items.decorator';
 import { GenerateSolutionsDecorator } from './decorators/generate-solutions.decorator';
-import { GetCachedSolutionsDecorator } from './decorators/get-cached-solutions.decorator';
 import { GetSolutionByIdDecorator } from './decorators/get-solution-by-id.decorator';
 import { GetSolutionsByProjectDecorator } from './decorators/get-solutions-by-project.decorator';
 import { GetSolutionsStatusDecorator } from './decorators/get-solutions-status.decorator';
@@ -39,7 +38,6 @@ import { SolutionsJobStatusDto } from './dto/solutions-job-status.dto';
 import { UpdateSolutionDto } from './dto/update-solution.dto';
 import { SolutionImageService } from './solution-image.service';
 import { SolutionService } from './solution.service';
-import { AiSolutionResponse } from './types/solutions.type';
 
 import { DataResponse } from '@/common/types/responses';
 
@@ -133,16 +131,6 @@ export class SolutionController {
       processedAt: status.processedAt,
       finishedAt: status.finishedAt,
     };
-  }
-
-  @Get('project/:projectId/solutions/cached')
-  @GetCachedSolutionsDecorator()
-  async getCachedSolutions(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-  ): Promise<AiSolutionResponse[]> {
-    await this.projectService.findOne(projectId);
-
-    return this.solutionService.getCachedSolutions(projectId);
   }
 
   @Post('project/:projectId/solutions/:solutionId/action-items/generate')

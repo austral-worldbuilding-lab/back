@@ -1,4 +1,3 @@
-import { CacheService } from '@common/services/cache.service';
 import { AppLogger } from '@common/services/logger.service';
 import { ProjectService } from '@modules/project/project.service';
 import { SolutionsQueueService } from '@modules/queue/services/solutions-queue.service';
@@ -25,7 +24,6 @@ export class SolutionService {
     private projectService: ProjectService,
     @Inject(forwardRef(() => SolutionsQueueService))
     private solutionsQueueService: SolutionsQueueService,
-    private cacheService: CacheService,
     private readonly logger: AppLogger,
   ) {
     this.logger.setContext(SolutionService.name);
@@ -114,36 +112,41 @@ export class SolutionService {
   }
 
   /**
-   * Save solutions to cache
+   * Save solutions to database
    * @param projectId - The project ID
    * @param solutions - The solutions to save
    */
-  async saveSolutionsToCache(
+  async saveSolutionsToDatabase(
     projectId: string,
     solutions: AiSolutionResponse[],
-  ): Promise<void> {
-    const cacheKey = this.cacheService.buildProjectCacheKey(
-      'solutions',
-      projectId,
-    );
+  ): Promise<SolutionDto[]> {
+    const savedSolutions: SolutionDto[] = [];
 
-    for (const solution of solutions) {
-      await this.cacheService.addToLimitedCache(cacheKey, solution, 20);
+    for (const aiSolution of solutions) {
+      const createSolutionDto: CreateSolutionDto = {
+        title: aiSolution.title,
+        description: aiSolution.description,
+        problem: aiSolution.problem,
+        impact: {
+          level: aiSolution.impactLevel.toLowerCase() as
+            | 'low'
+            | 'medium'
+            | 'high',
+          description: aiSolution.impactDescription,
+        },
+      };
+
+      const savedSolution = await this.solutionRepository.create(
+        projectId,
+        createSolutionDto,
+      );
+      savedSolutions.push(savedSolution);
     }
-    this.logger.log(`Saved solutions to cache for project ${projectId}`);
-  }
 
-  /**
-   * Get cached solutions for a project
-   * @param projectId - The project ID
-   * @returns Array of cached solutions
-   */
-  async getCachedSolutions(projectId: string): Promise<AiSolutionResponse[]> {
-    const cacheKey = this.cacheService.buildProjectCacheKey(
-      'solutions',
-      projectId,
+    this.logger.log(
+      `Saved ${savedSolutions.length} solutions to database for project ${projectId}`,
     );
-    return this.cacheService.getFromCache<AiSolutionResponse>(cacheKey);
+    return savedSolutions;
   }
 
   /**
