@@ -8,7 +8,6 @@ import {
   NotFoundException,
   Inject,
   forwardRef,
-  BadRequestException,
 } from '@nestjs/common';
 
 import { ActionItemDto } from './dto/action-item.dto';
@@ -37,13 +36,6 @@ export class SolutionService {
     createSolutionDto: CreateSolutionDto,
   ): Promise<SolutionDto> {
     const project = await this.projectService.findOne(projectId);
-
-    const isRootProject = await this.projectService.isRoot(projectId);
-    if (!isRootProject) {
-      throw new BadRequestException(
-        'Solutions can only be created for root projects (projects without a parent)',
-      );
-    }
 
     await this.projectService.checkMinimalConditionsForSolutions(
       project,
