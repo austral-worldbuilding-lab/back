@@ -19,6 +19,7 @@ import {
 } from '@modules/mandala/types/postits';
 import { AiQuestionResponse } from '@modules/mandala/types/questions.type';
 import { ProjectService } from '@modules/project/project.service';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import {
@@ -76,6 +77,7 @@ export class MandalaService {
     private notificationService: NotificationService,
     private organizationService: OrganizationService,
     private textStorageService: TextStorageService,
+    private readonly blobStorageService: AzureBlobStorageService,
   ) {
     this.logger.setContext(MandalaService.name);
   }
@@ -1237,20 +1239,86 @@ export class MandalaService {
     }
 
     // Generar resumen con IA
-    const summaryReport = await this.aiService.generateMandalaSummary(
+    const summaryResponse = await this.aiService.generateMandalaSummary(
       mandala.projectId,
       mandala,
       mandalaDoc as FirestoreMandalaDocument,
     );
 
-    // Guardar resumen en Firestore
+    // Guardar resumen en Firestore (solo el texto)
     await this.firebaseDataService.updateDocument(
       mandala.projectId,
-      { summaryReport },
+      { summaryReport: summaryResponse.summary },
       mandalaId,
     );
 
-    return { summaryReport };
+    // Guardar HTML en blob storage
+    if (summaryResponse.html && summaryResponse.html.length > 0) {
+      await this.saveSummaryHtml(
+        summaryResponse.html,
+        mandala.projectId,
+        mandala.id,
+        mandala.configuration.center.name,
+      ).catch((error: unknown) => {
+        this.logger.error('Failed to save HTML but continuing', { error });
+      });
+    }
+
+    return { summaryReport: summaryResponse.summary };
+  }
+
+  private async saveSummaryHtml(
+    html: string,
+    projectId: string,
+    mandalaId: string,
+    centerName: string,
+  ): Promise<void> {
+    try {
+      const project = await this.projectService.findOne(projectId);
+      const fileName = `Resumen de mandala - ${centerName}.html`;
+
+      this.logger.log('Saving mandala summary HTML to blob storage', {
+        projectId,
+        mandalaId,
+        fileName,
+        htmlLength: html.length,
+      });
+
+      const scope = {
+        orgId: project.organizationId,
+        projectId: project.id,
+      };
+
+      const buffer = Buffer.from(html, 'utf-8');
+
+      await this.blobStorageService.uploadBuffer(
+        buffer,
+        fileName,
+        scope,
+        'deliverables',
+        'text/html',
+      );
+
+      const publicUrl = this.blobStorageService.buildPublicUrl(
+        scope,
+        fileName,
+        'deliverables',
+      );
+
+      this.logger.log('Mandala summary HTML saved successfully', {
+        projectId,
+        mandalaId,
+        fileName,
+        url: publicUrl,
+        htmlLength: html.length,
+      });
+    } catch (error) {
+      this.logger.error('Failed to save mandala summary HTML', {
+        projectId,
+        mandalaId,
+        error,
+      });
+    }
   }
 
   async hasSummary(mandalaId: string): Promise<boolean> {
