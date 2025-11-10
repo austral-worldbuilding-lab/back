@@ -465,7 +465,7 @@ export class MandalaController {
 
   @Get(':id/cached-images')
   @UseGuards(MandalaRoleGuard)
-  @RequireProjectRoles('owner', 'admin', 'member', 'viewer')
+  @RequireProjectRoles('dueño', 'facilitador', 'worldbuilder')
   async getCachedImages(
     @Param('id', new UuidValidationPipe()) mandalaId: string,
   ): Promise<DataResponse<Array<{ id: string; url: string }>>> {
