@@ -32,6 +32,7 @@ import {
 } from '../strategies/solution-images.strategy';
 import { SolutionsInput } from '../strategies/solutions.strategy';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
+import { AiMandalaSummaryResponse } from '../types/ai-mandala-summary-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
 
 import { AiMandalaImageResponse } from '@/modules/mandala/types/mandala-images.type';
@@ -286,7 +287,7 @@ export class GeminiAdapter implements AiProvider {
     centerCharacter: string,
     centerCharacterDescription: string,
     cleanMandalaDocument: string,
-  ): Promise<string> {
+  ): Promise<AiMandalaSummaryResponse> {
     this.logger.log(
       `Starting summary generation for mandala ${mandalaId} in project ${projectId}`,
       { temperature: this.temperatureConfig.mandalaSummary },

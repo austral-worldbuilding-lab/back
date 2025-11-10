@@ -69,6 +69,12 @@ FORMATO DE SALIDA:
        3. Dimensiones y Escalas
        4. Patrones y Tendencias
        5. Insights y Oportunidades
+     • COLORES Y ESTILOS DE LA MARCA WBL:
+       - Color primario: #B8D5FF (azul principal WBL)
+       - Color primario hover: #9CBFFF (tono más oscuro del primario)
+       - Fondo: #ffffff
+       - Fondo claro/detalles: #DDEBFF (azul muy claro para detalles)
+       - Fuentes: system-ui, Avenir, Helvetica, Arial, sans-serif
      • CSS inline completo para estilos profesionales, responsive y modernos
      • JavaScript inline para funcionalidad de pestañas (sin dependencias externas)
      • Contenido completamente auto-contenido (sin recursos externos)
@@ -76,6 +82,7 @@ FORMATO DE SALIDA:
      • El contenido debe ser el mismo que en el campo "encyclopedia" pero estructurado en las secciones HTML
      • Diseño limpio, profesional y fácil de leer
      • Responsive design que funcione en móviles y escritorio
+     • Usar los colores de WBL para reforzar la identidad de marca
 
 Ejemplo de estructura JSON de salida:
 {
