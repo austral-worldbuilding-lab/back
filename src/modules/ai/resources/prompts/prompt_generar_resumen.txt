@@ -18,4 +18,34 @@ Escribe un único resumen cohesivo que:
 4. Señale oportunidades o fortalezas detectadas.
 5. Produzca conclusiones e ideas claras.
 
-La respuesta debe ser un **único texto plano de resumen** (sin JSON, sin listas, sin metadatos).
+FORMATO DE SALIDA:
+Debes proporcionar un objeto JSON con dos campos:
+
+1. "summary": El texto del resumen en formato narrativo/markdown.
+
+2. "html": Un documento HTML completo y navegable que incluya:
+   • Estructura HTML5 válida con <!DOCTYPE html>, <head> y <body>
+   • Meta tags apropiados (charset UTF-8, viewport)
+   • Título descriptivo que incluya el nombre del personaje central
+   • Sistema de navegación por pestañas (tabs) organizado por DIMENSIONES
+   • Dentro de cada dimensión, sub-secciones para cada ESCALA
+   • COLORES Y ESTILOS DE LA MARCA WBL:
+     - Color primario: #B8D5FF (azul principal WBL)
+     - Color primario hover: #9CBFFF (tono más oscuro del primario)
+     - Fondo: #ffffff
+     - Fondo claro/detalles: #DDEBFF (azul muy claro para detalles)
+     - Fuentes: system-ui, Avenir, Helvetica, Arial, sans-serif
+   • CSS inline completo para estilos profesionales, responsive y modernos
+   • JavaScript inline para funcionalidad de pestañas (sin dependencias externas)
+   • Contenido completamente auto-contenido (sin recursos externos)
+   • Funcionamiento offline completo
+   • El contenido debe ser el mismo que en el campo "summary" pero estructurado en las secciones HTML
+   • Diseño limpio, profesional y fácil de leer
+   • Responsive design que funcione en móviles y escritorio
+   • Usar los colores de WBL para reforzar la identidad de marca
+
+Ejemplo de estructura JSON de salida:
+{
+  "summary": "# RESUMEN DE LA MANDALA\n\nEl mundo del personaje...",
+  "html": "<!DOCTYPE html>\n<html lang=\"es\">..."
+}

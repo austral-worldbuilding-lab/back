@@ -10,6 +10,7 @@ import { AiSolutionResponse } from '@modules/solution/types/solutions.type';
 
 import { SolutionImageResponse } from '../strategies/solution-images.strategy';
 import { AiEncyclopediaResponse } from '../types/ai-encyclopedia-response.type';
+import { AiMandalaSummaryResponse } from '../types/ai-mandala-summary-response.type';
 import { AiResponseWithUsage } from '../types/ai-response-with-usage.type';
 
 import { AiMandalaImageResponse } from '@/modules/mandala/types/mandala-images.type';
@@ -184,7 +185,7 @@ export interface AiProvider {
     centerCharacter: string,
     centerCharacterDescription: string,
     cleanMandalaDocument: string,
-  ): Promise<string>; //TODO return AiResponseWithUsage<string> to track usage
+  ): Promise<AiMandalaSummaryResponse>; //TODO return AiResponseWithUsage<AiMandalaSummaryResponse> to track usage
 
   /**
    * Generates a comprehensive encyclopedia of the project world using AI analysis

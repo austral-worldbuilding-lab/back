@@ -1,14 +1,10 @@
 export class CacheUtils {
   static buildSimpleCacheKey(
-    type: 'questions' | 'postits' | 'provocations' | 'solutions',
+    type: 'questions' | 'postits' | 'provocations',
     userId: string,
     scopeId: string,
   ): string {
     return `ai:${type}:${userId}:${scopeId}`;
-  }
-
-  static buildProjectCacheKey(type: 'solutions', projectId: string): string {
-    return `ai:${type}:project:${projectId}`;
   }
 
   static readonly CacheStatus = {

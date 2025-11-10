@@ -20,6 +20,7 @@ import { AI_PROVIDER } from './factories/ai-provider.factory';
 import { AiProvider } from './interfaces/ai-provider.interface';
 import { SolutionImageResponse } from './strategies/solution-images.strategy';
 import { AiEncyclopediaResponse } from './types/ai-encyclopedia-response.type';
+import { AiMandalaSummaryResponse } from './types/ai-mandala-summary-response.type';
 import {
   createCleanMandalaForQuestions,
   createCleanMandalaForSummary,
@@ -321,7 +322,7 @@ export class AiService {
     projectId: string,
     mandala: MandalaDto,
     mandalaDocument: FirestoreMandalaDocument,
-  ): Promise<string> {
+  ): Promise<AiMandalaSummaryResponse> {
     this.logger.log(
       `Starting mandala summary generation for project: ${projectId}`,
     );
@@ -334,7 +335,7 @@ export class AiService {
     const centerCharacterDescription =
       mandala.configuration.center.description || 'No description';
 
-    const summary = await this.aiProvider.generateMandalaSummary(
+    const summaryResponse = await this.aiProvider.generateMandalaSummary(
       projectId,
       mandala.id,
       dimensions,
@@ -346,7 +347,7 @@ export class AiService {
 
     this.logger.log(`Summary report generated for mandala ${mandala.id}`);
 
-    return summary;
+    return summaryResponse;
   }
 
   async generateEncyclopedia(
