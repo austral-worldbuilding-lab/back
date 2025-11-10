@@ -337,6 +337,24 @@ export class AzureBlobStorageService implements StorageService {
     return `https://${account}.blob.core.windows.net/${this.containerName}/${blobPath}`;
   }
 
+  async getBlobContentByPath(blobPath: string): Promise<Buffer> {
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.containerName,
+    );
+    const blobClient = containerClient.getBlobClient(blobPath);
+
+    this.logger.debug('Downloading blob by path', { blobPath });
+
+    const downloadResponse = await blobClient.download();
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of downloadResponse.readableStreamBody!) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    return Buffer.concat(chunks);
+  }
+
   private handleAzureDeletionError(error: unknown, blobName: string): never {
     const isNativeError = error instanceof Error;
     const stack = isNativeError ? error.stack : undefined;
