@@ -16,6 +16,7 @@ import { PostitComparison } from '@modules/mandala/types/postits';
 import { NotificationService } from '@modules/notification/notification.service';
 import { OrganizationService } from '@modules/organization/organization.service';
 import { ProjectService } from '@modules/project/project.service';
+import { AzureBlobStorageService } from '@modules/storage/AzureBlobStorageService';
 import { Test, TestingModule } from '@nestjs/testing';
 
 /**
@@ -30,7 +31,6 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
   let mandalaRepository: jest.Mocked<MandalaRepository>;
   let firebaseDataService: jest.Mocked<FirebaseDataService>;
   let postitService: jest.Mocked<PostitService>;
-  let _TextStorageModule: jest.Mocked<TextStorageService>;
 
   // Datos de prueba: Mandala de ejemplo tipo CHARACTER
   const mockMandalaDto: MandalaDto = {
@@ -160,6 +160,14 @@ describe('MandalaService - createOverlapSummary cleanup', () => {
         {
           provide: TextStorageService,
           useValue: {},
+        },
+
+        {
+          provide: AzureBlobStorageService,
+          useValue: {
+            uploadBuffer: jest.fn(),
+            buildPublicUrl: jest.fn(),
+          },
         },
       ],
     }).compile();
