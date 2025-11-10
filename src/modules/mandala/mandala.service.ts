@@ -1259,7 +1259,7 @@ export class MandalaService {
         mandala.projectId,
         mandala.id,
         mandala.configuration.center.name,
-      ).catch((error) => {
+      ).catch((error: unknown) => {
         this.logger.error('Failed to save HTML but continuing', { error });
       });
     }
