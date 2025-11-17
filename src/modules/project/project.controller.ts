@@ -377,7 +377,7 @@ export class ProjectController {
 
   @Get(':projectId/provocations')
   @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador', 'lector')
   @ApiFindAllProvocations()
   async findAllProvocations(
     @Param('projectId', new UuidValidationPipe()) projectId: string,
