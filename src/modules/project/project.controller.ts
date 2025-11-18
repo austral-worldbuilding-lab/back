@@ -229,6 +229,25 @@ export class ProjectController {
     };
   }
 
+  @Delete(':projectId/provocation/:provocationId')
+  @UseGuards(ProjectRoleGuard)
+  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
+  @ApiDeleteProvocation()
+  async deleteProvocation(
+    @Param('projectId', new UuidValidationPipe()) projectId: string,
+    @Param('provocationId', new UuidValidationPipe()) provocationId: string,
+  ): Promise<MessageResponse<ProvocationDto>> {
+    const deletedProvocation = await this.projectService.removeProvocation(
+      projectId,
+      provocationId,
+    );
+
+    return {
+      message: 'Provocation deleted successfully',
+      data: deletedProvocation,
+    };
+  }
+
   @Delete(':id')
   @UseGuards(ProjectRoleGuard)
   @RequireProjectRoles('dueño')
@@ -406,25 +425,6 @@ export class ProjectController {
     return {
       message: 'Provocation created successfully',
       data: createdProvocation,
-    };
-  }
-
-  @Delete(':projectId/provocation/:provocationId')
-  @UseGuards(ProjectRoleGuard)
-  @RequireProjectRoles('worldbuilder', 'dueño', 'facilitador')
-  @ApiDeleteProvocation()
-  async deleteProvocation(
-    @Param('projectId', new UuidValidationPipe()) projectId: string,
-    @Param('provocationId', new UuidValidationPipe()) provocationId: string,
-  ): Promise<MessageResponse<ProvocationDto>> {
-    const deletedProvocation = await this.projectService.removeProvocation(
-      projectId,
-      provocationId,
-    );
-
-    return {
-      message: 'Provocation deleted successfully',
-      data: deletedProvocation,
     };
   }
 
