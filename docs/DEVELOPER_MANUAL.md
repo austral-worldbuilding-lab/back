@@ -9,20 +9,21 @@
 5. [Comandos Útiles](#5-comandos-útiles)
 6. [Estructura del Proyecto](#6-estructura-del-proyecto)
 7. [Módulos Principales](#7-módulos-principales)
-8. [Base de Datos](#8-base-de-datos)
-9. [Sistema de Roles](#9-sistema-de-roles)
-10. [Manejo de Errores](#10-manejo-de-errores)
-11. [Troubleshooting](#11-troubleshooting)
+8. [Arquitectura de Soluciones y Workers](#8-arquitectura-de-soluciones-y-workers)
+9. [Base de Datos](#9-base-de-datos)
+10. [Sistema de Roles](#10-sistema-de-roles)
+11. [Manejo de Errores](#11-manejo-de-errores)
+12. [Troubleshooting](#12-troubleshooting)
 
 ---
 
 ## 1. Descripción General
 
-**Worldbuilding Lab** es una plataforma de worldbuilding colaborativo. El backend es una API REST construida con NestJS que gestiona:
+**Austral Worldbuilding Lab** es una plataforma de worldbuilding colaborativo en tiempo real. El backend es una API REST construida con NestJS que gestiona:
 
 - **Organizaciones** y **Proyectos** de worldbuilding
-- **Mandalas**: representaciones visuales de personajes/conceptos
-- **Generación de contenido con IA** (Google Gemini)
+- **Mandalas**: representaciones visuales de personajes/contextos 
+- **Generación de contenido con IA** (Gemini)
 - **Colaboración**: invitaciones y roles por proyecto/organización
 
 ### Stack Principal
@@ -128,7 +129,7 @@ CACHE_MAX_ITEMS=500
 ENABLE_WORKERS=true
 WORKER_IDLE_TIMEOUT_MS=60000
 
-# Email
+# Email (para envío de invitaciones)
 SMTP_HOST=
 SMTP_PORT=
 SMTP_USER=
@@ -266,7 +267,7 @@ back/
 │       ├── mandala/            # Mandalas
 │       ├── organization/       # Organizaciones
 │       ├── project/            # Proyectos
-│       ├── queue/              # Procesamiento async
+│       ├── queue/              # Procesamiento async para enciclopedia y soluciones
 │       ├── solution/           # Soluciones
 │       └── user/               # Usuarios
 ├── prisma/
@@ -289,7 +290,7 @@ Autenticación con Firebase. Verifica tokens JWT en cada request.
 Gestiona organizaciones. Una organización agrupa proyectos y usuarios.
 
 ### `project/`
-Gestiona proyectos de worldbuilding. Incluye configuración de dimensiones, escalas, tags, y jerarquía de proyectos (timeline).
+Gestiona proyectos de worldbuilding (También llamados mundos). Incluye configuración de dimensiones, escalas, tags, y jerarquía de proyectos (timeline).
 
 ### `mandala/`
 Gestiona mandalas. Tipos: CHARACTER, CONTEXT, OVERLAP, OVERLAP_SUMMARY.
@@ -304,14 +305,114 @@ Procesamiento asíncrono con BullMQ. Usa workers "on-demand" que se apagan cuand
 Upload y gestión de archivos en Azure Blob Storage.
 
 ### `solution/`
-Gestiona soluciones generadas por IA. Incluye action items.
+Gestiona soluciones generadas por IA. Incluye la posibilidad de generaraction items e imágenes concretas de la solución.
 
 ### `invitation/` y `organization-invitation/`
 Sistema de invitaciones para agregar usuarios a proyectos/organizaciones.
 
 ---
 
-## 8. Base de Datos
+## 8. Arquitectura de Soluciones y Workers
+
+La funcionalidad de generación de soluciones utiliza el contenido de la enciclopedia del proyecto para plantear soluciones, sobre las cuales luego se pueden generar action items e imagenes concretas de esa solución. Dado que este proceso implica mayor complejidad y tiempo de respuesta, se diseñó una arquitectura asíncrona robusta.
+
+### Flujo de Trabajo
+1. **Request & Queue**: Cuando el usuario solicita soluciones, el trabajo no se procesa al instante, sino que se encola en **BullMQ**.
+2. **Context Awareness**: El sistema verifica la existencia de una enciclopedia actualizada. Si no existe, se genera primero como paso previo.
+3. **AI Generation**: Se utiliza Gemini para "razonar" sobre los problemas del proyecto y plantear soluciones concretas.
+
+### Uso Estratégico de Redis
+Esta es la **única parte del sistema que utiliza Redis** intensivamente, y la decisión de arquitectura responde a necesidades específicas:
+- **Robustez y Pipeline**: Permite soportar una pipeline de trabajos (Soluciones -> Enciclopedia -> IA). Si un paso falla (ej. timeout de la API de IA), el sistema tiene un mecanismo de **fallback y retry automático** (backoff exponencial).
+- **Escalabilidad**: Prepara al sistema para soportar múltiples requests de generación simultáneos en el futuro sin bloquear el thread principal de Node.js.
+- **Gestión de Latencia**: Como generar soluciones tarda mucho tiempo, desacoplar el proceso en workers evita problemas de timeout en el frontend.
+
+### Diagramas de Flujo
+
+#### Generación de Enciclopedia
+Este es el flujo base. La enciclopedia resume todo el contenido del proyecto para darle contexto a la IA.
+
+```mermaid
+sequenceDiagram
+    participant User as Cliente
+    participant API as API Server
+    participant Q as BullMQ (Redis)
+    participant W as Worker (Encyclopedia)
+    participant AI as Google Gemini
+    participant DB as Base de Datos
+    participant AZ as Azure Blob Storage
+
+    User->>API: POST /encyclopedia/generate
+    API->>Q: Add Job (Encyclopedia)
+    API-->>User: 202 Accepted (Job ID)
+    
+    Note over Q,W: El Worker se despierta si estaba inactivo
+    Q->>W: Process Job
+    par Fetch Data
+        W->>DB: Fetch Project Data
+        W->>AZ: Fetch Multimedia Files
+    end
+    W->>AI: Generar Enciclopedia
+    AI-->>W: Content
+    
+    W->>AZ: Save Encyclopedia File
+    W->>Q: Job Completed
+    
+    User->>AZ: View Encyclopedia File
+```
+
+#### Generación de Soluciones (con Dependencia)
+La generación de soluciones es más compleja porque **depende** de que exista una enciclopedia. Si no existe, el worker de soluciones puede disparar un job de enciclopedia y esperar a que termine.
+
+```mermaid
+sequenceDiagram
+    participant User as Cliente
+    participant Q_SOL as Queue (Solutions)
+    participant W_SOL as Worker (Solutions)
+    participant Q_ENC as Queue (Encyclopedia)
+    participant W_ENC as Worker (Encyclopedia)
+    participant AI as Google Gemini
+    participant DB as Base de Datos
+
+    User->>Q_SOL: POST /solutions/generate
+    Note right of User: Job Enqueued
+    
+    Q_SOL->>W_SOL: Process Solution Job
+    W_SOL->>W_SOL: Check Encyclopedia?
+    
+    alt Enciclopedia no existe
+        W_SOL->>Q_ENC: Add Job (Encyclopedia)
+        Q_ENC->>W_ENC: Process Encyclopedia Job
+        W_ENC->>AI: Generate Content
+        AI-->>W_ENC: Return Content
+        W_ENC->>Q_ENC: Job Completed
+        Note over W_SOL: Espera pasiva (waitUntilFinished)
+        Q_ENC-->>W_SOL: Job Finalizado
+    end
+
+    W_SOL->>AI: Generate Solutions (usa Enciclopedia)
+    AI-->>W_SOL: Solutions List
+    W_SOL->>DB: Save Generated Solutions
+    W_SOL->>Q_SOL: Job Completed
+```
+
+### Componentes de Queue
+El sistema utiliza dos colas principales gestionadas por servicios específicos que extienden la lógica de "On-Demand":
+- `SolutionsQueueService` (`src/modules/queue/services/solutions-queue.service.ts`)
+- `EncyclopediaQueueService` (`src/modules/queue/services/encyclopedia-queue.service.ts`)
+
+Ambos servicios registran sus propios procesadores y gestionan el ciclo de vida de los workers para que solo consuman recursos cuando hay trabajos activos.
+
+
+
+### Workers On-Demand
+Para optimizar el uso de recursos y minimizar costos (especialmente requests a servicios gestionados de Redis como Upstash):
+- **On-Demand**: Los workers **no están encendidos 24/7**. Se inician automáticamente solo cuando se detectan trabajos en la cola y se apagan automáticamente cuando quedan inactivos.
+- **Configuración Flexible**: Aunque ahora funcionan bajo demanda, el sistema está preparado para cambiar a un modelo "always-on" con un **cambio de configuración menor**.
+
+---
+
+## 9. Base de Datos
 
 ### Entidades principales
 
@@ -332,7 +433,7 @@ Ver el schema completo en `prisma/schema.prisma`.
 
 ---
 
-## 9. Sistema de Roles
+## 10. Sistema de Roles
 
 Los roles se usan tanto a nivel de **organización** como de **proyecto**.
 
@@ -352,7 +453,7 @@ Los endpoints usan guards que verifican el rol:
 
 ---
 
-## 10. Manejo de Errores
+## 11. Manejo de Errores
 
 El proyecto usa excepciones personalizadas. Importar desde `@common/exceptions/custom-exceptions`:
 
@@ -374,7 +475,7 @@ if (!project) {
 
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### El servidor no conecta a la base de datos
 - Verificar que Docker esté corriendo: `docker ps`
