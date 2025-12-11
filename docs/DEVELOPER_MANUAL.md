@@ -330,35 +330,40 @@ Esta es la **única parte del sistema que utiliza Redis** intensivamente, y la d
 ### Diagramas de Flujo
 
 #### Generación de Enciclopedia
-Este es el flujo base. La enciclopedia resume todo el contenido del proyecto para darle contexto a la IA.
+Este es el flujo base. La enciclopedia actúa como una capa de síntesis que resume todo el contenido del proyecto para proveer contexto a la IA. Está pensada específicamente para resaltar el **Contexto del Mundo**, **Personajes y Perspectivas**, **Dimensiones y Escalas**, **Patrones y Tendencias**, e **Insights y Oportunidades**. Esto optimiza su posterior uso para la generación de soluciones al eliminar ruido innecesario y enfocar al modelo en lo que realmente importa.
 
 ```mermaid
 sequenceDiagram
     participant User as Cliente
-    participant API as API Server
-    participant Q as BullMQ (Redis)
-    participant W as Worker (Encyclopedia)
+    participant Q as Queue
+    participant W as Worker
     participant AI as Google Gemini
-    participant DB as Base de Datos
+    participant FS as Firestore
     participant AZ as Azure Blob Storage
 
-    User->>API: POST /encyclopedia/generate
-    API->>Q: Add Job (Encyclopedia)
-    API-->>User: 202 Accepted (Job ID)
-    
+    User->>Q: POST /project/:projectId/encyclopedia/generate
+    Note right of User: Job Enqueued (Worker Notified)
+
     Note over Q,W: El Worker se despierta si estaba inactivo
     Q->>W: Process Job
     par Fetch Data
-        W->>DB: Fetch Project Data
+        W->>FS: Fetch Mandala Summaries
         W->>AZ: Fetch Multimedia Files
     end
-    W->>AI: Generar Enciclopedia
+
+    loop For each Mandala without Summary
+        W->>AI: Generate Mandala Summary
+        AI-->>W: Summary Content
+        W->>FS: Save Summary
+    end
+
+    W->>AI: Generar Enciclopedia (usa Summaries)
     AI-->>W: Content
     
     W->>AZ: Save Encyclopedia File
     W->>Q: Job Completed
     
-    User->>AZ: View Encyclopedia File
+    User->>AZ: Get Encyclopedia File
 ```
 
 #### Generación de Soluciones (con Dependencia)
@@ -374,9 +379,10 @@ sequenceDiagram
     participant AI as Google Gemini
     participant DB as Base de Datos
 
-    User->>Q_SOL: POST /solutions/generate
-    Note right of User: Job Enqueued
+    User->>Q_SOL: POST /project/:projectId/solutions/generate
+    Note right of User: Job Enqueued (Worker Notified)
     
+    Note over Q_SOL,W_SOL: El Worker se despierta si estaba inactivo
     Q_SOL->>W_SOL: Process Solution Job
     W_SOL->>W_SOL: Check Encyclopedia?
     
