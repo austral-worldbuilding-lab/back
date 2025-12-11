@@ -239,6 +239,12 @@ npm run format             # Formatear con Prettier
 npm run build              # Compilar a dist/
 ```
 
+### Seguridad
+```bash
+npm run scan-secrets       # Escanear secretos en archivos stageados (requiere Docker)
+```
+> **Nota**: Este comando corre `gitleaks` automáticamente mediante un **pre-commit hook** en Husky. Si detecta algun secreto, rechaza el commit.
+
 ### Git (saltear hooks si es necesario)
 ```bash
 git push --no-verify       # Push sin pre-push hook
@@ -312,109 +318,11 @@ Sistema de invitaciones para agregar usuarios a proyectos/organizaciones.
 
 ---
 
-## 8. Arquitectura de Soluciones y Workers
+## 8. Arquitectura del Sistema
 
-La funcionalidad de generación de soluciones utiliza el contenido de la enciclopedia del proyecto para plantear soluciones, sobre las cuales luego se pueden generar action items e imagenes concretas de esa solución. Dado que este proceso implica mayor complejidad y tiempo de respuesta, se diseñó una arquitectura asíncrona robusta.
+La documentación detallada sobre la arquitectura interna, incluyendo el flujo de generación de soluciones con IA, el uso de Redis y el sistema de Workers On-Demand, se ha movido a su propio documento:
 
-### Flujo de Trabajo
-1. **Request & Queue**: Cuando el usuario solicita soluciones, el trabajo no se procesa al instante, sino que se encola en **BullMQ**.
-2. **Context Awareness**: El sistema verifica la existencia de una enciclopedia actualizada. Si no existe, se genera primero como paso previo.
-3. **AI Generation**: Se utiliza Gemini para "razonar" sobre los problemas del proyecto y plantear soluciones concretas.
-
-### Uso Estratégico de Redis
-Esta es la **única parte del sistema que utiliza Redis** intensivamente, y la decisión de arquitectura responde a necesidades específicas:
-- **Robustez y Pipeline**: Permite soportar una pipeline de trabajos (Soluciones -> Enciclopedia -> IA). Si un paso falla (ej. timeout de la API de IA), el sistema tiene un mecanismo de **fallback y retry automático** (backoff exponencial).
-- **Escalabilidad**: Prepara al sistema para soportar múltiples requests de generación simultáneos en el futuro sin bloquear el thread principal de Node.js.
-- **Gestión de Latencia**: Como generar soluciones tarda mucho tiempo, desacoplar el proceso en workers evita problemas de timeout en el frontend.
-
-### Diagramas de Flujo
-
-#### Generación de Enciclopedia
-Este es el flujo base. La enciclopedia actúa como una capa de síntesis que resume todo el contenido del proyecto para proveer contexto a la IA. Está pensada específicamente para resaltar el **Contexto del Mundo**, **Personajes y Perspectivas**, **Dimensiones y Escalas**, **Patrones y Tendencias**, e **Insights y Oportunidades**. Esto optimiza su posterior uso para la generación de soluciones al eliminar ruido innecesario y enfocar al modelo en lo que realmente importa.
-
-```mermaid
-sequenceDiagram
-    participant User as Cliente
-    participant Q as Queue
-    participant W as Worker
-    participant AI as Google Gemini
-    participant FS as Firestore
-    participant AZ as Azure Blob Storage
-
-    User->>Q: POST /project/:projectId/encyclopedia/generate
-    Note right of User: Job Enqueued (Worker Notified)
-
-    Note over Q,W: El Worker se despierta si estaba inactivo
-    Q->>W: Process Job
-    par Fetch Data
-        W->>FS: Fetch Mandala Summaries
-        W->>AZ: Fetch Multimedia Files
-    end
-
-    loop For each Mandala without Summary
-        W->>AI: Generate Mandala Summary
-        AI-->>W: Summary Content
-        W->>FS: Save Summary
-    end
-
-    W->>AI: Generar Enciclopedia (usa Summaries)
-    AI-->>W: Content
-    
-    W->>AZ: Save Encyclopedia File
-    W->>Q: Job Completed
-    
-    User->>AZ: Get Encyclopedia File
-```
-
-#### Generación de Soluciones (con Dependencia)
-La generación de soluciones es más compleja porque **depende** de que exista una enciclopedia. Si no existe, el worker de soluciones puede disparar un job de enciclopedia y esperar a que termine.
-
-```mermaid
-sequenceDiagram
-    participant User as Cliente
-    participant Q_SOL as Queue (Solutions)
-    participant W_SOL as Worker (Solutions)
-    participant Q_ENC as Queue (Encyclopedia)
-    participant W_ENC as Worker (Encyclopedia)
-    participant AI as Google Gemini
-    participant DB as Base de Datos
-
-    User->>Q_SOL: POST /project/:projectId/solutions/generate
-    Note right of User: Job Enqueued (Worker Notified)
-    
-    Note over Q_SOL,W_SOL: El Worker se despierta si estaba inactivo
-    Q_SOL->>W_SOL: Process Solution Job
-    W_SOL->>W_SOL: Check Encyclopedia?
-    
-    alt Enciclopedia no existe
-        W_SOL->>Q_ENC: Add Job (Encyclopedia)
-        Q_ENC->>W_ENC: Process Encyclopedia Job
-        W_ENC->>AI: Generate Content
-        AI-->>W_ENC: Return Content
-        W_ENC->>Q_ENC: Job Completed
-        Note over W_SOL: Espera pasiva (waitUntilFinished)
-        Q_ENC-->>W_SOL: Job Finalizado
-    end
-
-    W_SOL->>AI: Generate Solutions (usa Enciclopedia)
-    AI-->>W_SOL: Solutions List
-    W_SOL->>DB: Save Generated Solutions
-    W_SOL->>Q_SOL: Job Completed
-```
-
-### Componentes de Queue
-El sistema utiliza dos colas principales gestionadas por servicios específicos que extienden la lógica de "On-Demand":
-- `SolutionsQueueService` (`src/modules/queue/services/solutions-queue.service.ts`)
-- `EncyclopediaQueueService` (`src/modules/queue/services/encyclopedia-queue.service.ts`)
-
-Ambos servicios registran sus propios procesadores y gestionan el ciclo de vida de los workers para que solo consuman recursos cuando hay trabajos activos.
-
-
-
-### Workers On-Demand
-Para optimizar el uso de recursos y minimizar costos (especialmente requests a servicios gestionados de Redis como Upstash):
-- **On-Demand**: Los workers **no están encendidos 24/7**. Se inician automáticamente solo cuando se detectan trabajos en la cola y se apagan automáticamente cuando quedan inactivos.
-- **Configuración Flexible**: Aunque ahora funcionan bajo demanda, el sistema está preparado para cambiar a un modelo "always-on" con un **cambio de configuración menor**.
+👉 **[Ver Documentación de Arquitectura](ARCHITECTURE.md)**
 
 ---
 
