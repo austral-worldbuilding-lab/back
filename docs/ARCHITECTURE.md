@@ -1,23 +1,23 @@
 # Arquitectura del Sistema
 
-Este documento detalla las decisiones de diseño, flujos de datos y componentes internos del backend de Austral Worldbuilding Lab.
+Este documento detalla las decisiones de diseño, flujos de datos y componentes internos de la plataforma del Austral Worldbuilding Lab.
 
 ## 1. Iteración de Mundos
 
-El concepto de **Iteración de Mundos** permite crear versiones alternativas o evoluciones de un proyecto existente sin perder el estado original. Esto es fundamental para explorar "what-if scenarios" en el worldbuilding.
+El concepto de **Iteración de Mundos** permite crear versiones alternativas o evoluciones de un proyecto existente, manteniendo el original. Esto es fundamental para explorar "what-if scenarios" en el worldbuilding, y fomentar la iteracion colaborativa. Cada iteracion toma como input la enciclopedia generada por la iteracion anterior (n-1), asi puede mantener el contexto del mundo original y evolucionar en nuevas direcciones
 
 ### Estructura Jerárquica
 La base de datos modela esto mediante una relación recursiva en la entidad `Project`:
 
 - **`parentProjectId`**: Referencia al mundo del cual se derivó la iteración actual.
-- **`rootProjectId`**: Identifica el proyecto original (la raíz del árbol de iteraciones).
-- **`children`**: Permite navegar hacia las iteraciones derivadas.
+- **`rootProjectId`**: Identifica el proyecto original (la raíz del árbol de iteraciones, el punto de partida).
+- **`children`**: Permite navegar hacia las iteraciones derivadas de forma rapida, sin tener que recorrer provocaciones.
 
 ### Visualización
-El frontend utiliza esta estructura para mostrar un árbol de decisiones o línea de tiempo, permitiendo al usuario navegar entre distintas versiones del mundo.
+El frontend utiliza esta estructura para mostrar un árbol o línea de tiempo, permitiendo al usuario navegar entre distintas versiones del mundo.
 
 ![Diagrama de Iteración de Mundos](images/Iteracion%20de%20mundos.png)
-> El diagrama muestra cómo un proyecto "Raíz" puede ramificarse en múltiples iteraciones, creando un árbol de historias paralelas. Cada iteracion toma como input la enciclopedia generada por la iteracion anterior, asi puede mantener el contexto del mundo original y evolucionar en nuevas direcciones.
+> El diagrama muestra cómo un proyecto "Raíz" puede ramificarse en múltiples iteraciones.
 
 ---
 
@@ -36,12 +36,15 @@ El sistema maneja dos niveles de acceso mediante invitaciones, permitiendo una g
    - Útil para colaboradores externos o invitados temporales.
    - Gestionado por la entidad `Invitation`.
 
-### Flujo de Invitación
-1. **Creación**: Un usuario con roles de `dueño` o `facilitador` genera una invitación ingresando un email.
-2. **Token**: Se genera un token único y se envía por correo (si SMTP está configurado) o se genera un link para compartir.
-3. **Aceptación**:
-   - Si el usuario **ya existe**, la invitación se asocia a su cuenta y se le asigna el rol correspondiente (`UserProjectRole` o `UserOrganizationRole`).
-   - Si el usuario **no existe**, se le redirige al registro, y tras crear su cuenta, se procesan las invitaciones pendientes asociadas a su email.
+### Invitaciones Recursivas a Proyectos
+El sistema de invitaciones gestiona la coherencia narrativa garantizando el acceso a toda la **rama evolutiva** relevante.
+
+**Comportamiento de Propagación**:
+Al invitar a un usuario a un proyecto particular, el sistema extiende automáticamente la invitación en dos direcciones, restringiéndose siempre a la misma rama de la historia:
+- **Hacia atrás (Ancestros)**: Garantiza acceso a los proyectos padres (`N-1`, `N-2`... `Root`) para que el usuario tenga el contexto histórico completo.
+- **Hacia adelante (Descendientes)**: Otorga acceso a las iteraciones futuras derivadas *directamente* de esa línea, permitiendo ver la evolución de esa narrativa específica.
+
+> **Nota**: La propagación no cruza a ramas paralelas (hermanos), manteniendo separadas las líneas de tiempo alternativas.
 
 ---
 
@@ -151,7 +154,14 @@ Para optimizar el uso de recursos y minimizar costos (especialmente requests a s
 
 ## 4. Arquitectura de Inteligencia Artificial
 
-El módulo de IA es el núcleo funcional del laboratorio y está diseñado para ser agnóstico, extensible y eficiente en el manejo de contextos masivos.
+El módulo de IA está diseñado para ser agnóstico, extensible y eficiente en el manejo de contextos masivos.
+
+### Elección Tecnológica: Google Gemini
+La decisión de utilizar **Google Gemini** como motor de IA principal se basa en ventajas críticas para el worldbuilding:
+
+*   **Long Context Window**: El worldbuilding utiliza una diversa cantidad de contenido multimedia. Gemini permite inyectar todos estos archivos en una sola ventana de contexto (hasta 1M+ tokens), eliminando la necesidad de implementar sistemas complejos de RAG (Retrieval-Augmented Generation) manuales.
+*   **Files API & Multimedia Nativo**: A diferencia de otros modelos que requieren convertir el contenido multimedia a Base64 (aumentando el tamaño del payload y complejidad), Gemini posee una **Files API** nativa. Esto permite subir archivos multimedia directamente y referenciarlos en el prompt, agilizando drásticamente la iteración y el análisis multimodal.
+*   **Velocidad de Iteración**: La combinación de contexto largo y manejo nativo de archivos permite un ciclo de desarrollo mucho más rápido y menos propenso a errores de truncado de datos.
 
 ### Patrones de Diseño
 Para garantizar la mantenibilidad y escalabilidad del código de IA, se implementaron los siguientes patrones:
@@ -159,24 +169,31 @@ Para garantizar la mantenibilidad y escalabilidad del código de IA, se implemen
 1.  **Adapter Pattern**:
     *   **Propósito**: Desacoplar la lógica de negocio del proveedor de IA específico.
     *   **Implementación**: `AiAdapterUtilsService` y `GeminiAdapter`.
-    *   **Beneficio**: Permite cambiar el modelo subyacente (ej. de Gemini a GPT-4 o Claude) sin modificar el resto del sistema, simplemente creando un nuevo adaptador.
+    *   **Beneficio**: Permite cambiar el modelo (ej. de Gemini a GPT-4 o Claude) sin modificar el resto del sistema, creando un nuevo adapter.
 
 2.  **Strategy Pattern**:
-    *   **Propósito**: Encapsular algoritmos de generación específicos para cada tipo de contenido.
+    *   **Propósito**: Encapsular la lógica de generación específica para cada tipo de contenido.
     *   **Implementación**: Directorio `src/modules/ai/strategies/`. Cada tipo de generación (Soluciones, Enciclopedia, Preguntas, Imágenes) tiene su propia estrategia aislada.
     *   **Beneficio**: Facilita agregar nuevas capacidades de generación (ej. "Generar Guión de Video") sin tocar el código existente, solo registrando una nueva estrategia.
 
 3.  **Composite Pattern (Prompt Builder)**:
     *   **Propósito**: Construir prompts complejos de manera modular y reutilizable.
     *   **Implementación**: `AiPromptBuilderService`.
-    *   **Beneficio**: Los prompts no son strings monolíticos; se componen dinámicamente combinando:
-        *   **Instrucciones del Ciclo** (ej. "Ciclo 1: Divergencia", "Ciclo 3: Convergencia").
-        *   **Variables de Contexto** (Timeline de provocaciones, descripciones).
+    *   **Beneficio**: Mas facil de entender que input recibe cada generacion. Los prompts se componen dinámicamente combinando:
+        *   **Instrucciones del Ciclo** (ej. "Ciclo 1").
+        *   **Variables de Contexto** (Timeline de provocaciones, descripcion del proyecto, dimensiones, escalas, mandalas).
         *   **Tarea Específica** (Prompt base).
 
-### Elección Tecnológica: Google Gemini
-La decisión de utilizar **Google Gemini** como motor principal se basa en ventajas críticas para el worldbuilding:
+### Gestión de Archivos Multimedia
 
-*   **Long Context Window**: El worldbuilding genera volúmenes masivos de texto. Gemini permite inyectar **todo el contexto del proyecto y la enciclopedia** en una sola ventana de contexto (hasta 1M+ tokens), eliminando la necesidad de implementar sistemas complejos de RAG (Retrieval-Augmented Generation) manual que a menudo pierden matices narrativos.
-*   **Files API & Multimedia Nativo**: A diferencia de otros modelos que requieren convertir imágenes a Base64 (aumentando el tamaño del payload y complejidad), Gemini posee una **Files API** nativa. Esto permite subir archivos multimedia (mapas, referencias visuales) directamente y referenciarlos en el prompt, agilizando drásticamente la iteración y el análisis multimodal.
-*   **Velocidad de Iteración**: La combinación de contexto largo y manejo nativo de archivos permite un ciclo de desarrollo mucho más rápido y menos propenso a errores de truncado de datos.
+El sistema integra un módulo de **Caché de Archivos** (`GeminiFileCacheService`) diseñado para gestionar eficientemente el ciclo de vida de los recursos multimedia en la API de Google Gemini.
+
+Dado que la API de Gemini mantiene los archivos disponibles por un tiempo limitado (48 horas), este servicio actúa como una capa de persistencia intermedia que:
+
+1.  **Consulta el Estado**: Verifica si el archivo ya existe y es válido en la tabla `GeminiFileCache`.
+2.  **Gestiona la Carga**:
+    *   Si el archivo ya está en la nube de Google y vigente, reutiliza el `fileUri` sin volver a subirlo.
+    *   Si no existe o expiró, realiza el upload y registra los nuevos metadatos.
+3.  **Mantenimiento**: Purga automáticamente las referencias a archivos que han superado el TTL de 48 horas.
+
+Esta arquitectura optimiza el ancho de banda y reduce la latencia en flujos de trabajo iterativos donde se reutiliza el mismo contexto multimedia repetidamente.
