@@ -9,7 +9,7 @@
 5. [Comandos Útiles](#5-comandos-útiles)
 6. [Estructura del Proyecto](#6-estructura-del-proyecto)
 7. [Módulos Principales](#7-módulos-principales)
-8. [Arquitectura de Soluciones y Workers](#8-arquitectura-de-soluciones-y-workers)
+8. [Arquitectura del Sistema](#8-arquitectura-del-sistema)
 9. [Base de Datos](#9-base-de-datos)
 10. [Sistema de Roles](#10-sistema-de-roles)
 11. [Manejo de Errores](#11-manejo-de-errores)
