@@ -108,6 +108,16 @@ AZURE_CLIENT_SECRET=
 # Google AI
 GOOGLE_AI_API_KEY=
 
+# Email (para envío de invitaciones)
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASSWORD=
+MAIL_FROM=
+
+# Frontend URL (para links en emails)
+FRONTEND_URL=
+
 # Aplicación
 PORT=3000
 NODE_ENV=development
@@ -128,16 +138,6 @@ CACHE_MAX_ITEMS=500
 # Workers (BullMQ)
 ENABLE_WORKERS=true
 WORKER_IDLE_TIMEOUT_MS=60000
-
-# Email (para envío de invitaciones)
-SMTP_HOST=
-SMTP_PORT=
-SMTP_USER=
-SMTP_PASSWORD=
-MAIL_FROM=
-
-# Frontend URL (para links en emails)
-FRONTEND_URL=http://localhost:5173
 ```
 
 ---
@@ -322,7 +322,7 @@ Sistema de invitaciones para agregar usuarios a proyectos/organizaciones.
 
 La documentación detallada sobre la arquitectura interna, incluyendo el flujo de generación de soluciones con IA, el uso de Redis y el sistema de Workers On-Demand, se ha movido a su propio documento:
 
-👉 **[Ver Documentación de Arquitectura](ARCHITECTURE.md)**
+👉 **[Ver Documentación de Arquitectura](/docs/ARCHITECTURE.md)**
 
 ---
 
@@ -342,6 +342,8 @@ La documentación detallada sobre la arquitectura interna, incluyendo el flujo d
 - **Provocation**: preguntas provocadoras
 
 ### Diagrama
+
+![Diagrama de Base de Datos](/docs/images/WBL%20Local%20Docker%20DB.svg)
 
 Ver el schema completo en `prisma/schema.prisma`.
 
