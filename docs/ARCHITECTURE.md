@@ -198,6 +198,28 @@ Dado que la API de Gemini mantiene los archivos disponibles por un tiempo limita
 
 Esta arquitectura optimiza el ancho de banda y reduce la latencia en flujos de trabajo iterativos donde se reutiliza el mismo contexto multimedia repetidamente.
 
-## Diagramas
-### Arquitectura de Despliegue Multi-Cloud
+## Arquitectura de Despliegue Multi-Cloud
 ![Diagrama de Iteración de Mundos](images/Arquitectura%20de%20Despliegue%20Multi-Cloud.png)
+
+El diagrama de despliegue ilustra una arquitectura híbrida y distribuida que integra servicios de **Microsoft Azure**, **Google Cloud Platform** y proveedores **Serverless** especializados. Esta configuración responde a tres pilares de diseño: eficiencia de costos, escalabilidad bajo demanda y desacoplamiento de servicios.
+
+A continuación, se detallan las decisiones estratégicas representadas en el esquema:
+
+#### A. Estrategia Diferenciada de Entornos (Dev vs. Prod)
+Para equilibrar la estabilidad operativa con la optimización del presupuesto, implementamos una infraestructura asimétrica en la capa de datos relacional:
+
+* **Entorno de Producción (Prod):** El backend se conecta a una instancia dedicada de **Azure Database for PostgreSQL**. Esto posibilita las copias de seguridad automáticas y la retención de datos dentro del ecosistema de seguridad de Azure.
+* **Entorno de Desarrollo (Dev):** Se utiliza **NeonDB**, una base de datos PostgreSQL *Serverless* con costo cero. Esta decisión permite que la base de datos "escale a cero" cuando el equipo de desarrollo no está activo, reduciendo drásticamente los costos de infraestructura ociosa sin sacrificar la compatibilidad del código, ya que ambos entornos utilizan el mismo motor SQL.
+
+#### B. Gestión de Colas y Eficiencia de Costos (La Decisión de Upstash)
+Para el manejo de colas asíncronas con **BullMQ**, el sistema requiere una instancia de Redis. En esta fase del proyecto, se tomó la decisión arquitectónica de utilizar **Upstash (Serverless Redis)** de manera transversal para ambos entornos (Dev y Prod), en lugar de aprovisionar una instancia nativa de *Azure Redis Cache*.
+
+**Justificación Técnica y Económica:**
+* **Modelo de Costos:** Azure Redis Cache implica un costo fijo mensual por reserva de instancia, independientemente del uso. Dado el patrón de tráfico actual del sistema (cargas de trabajo por lotes o "bursts"), este costo no se justifica. Upstash ofrece un modelo de pago por petición (*pay-per-request*), resultando en una operación prácticamente gratuita durante los tiempos de inactividad.
+* **Compatibilidad:** Al utilizar el protocolo estándar de Redis, esta decisión no genera *vendor lock-in*. Si el volumen de tráfico escala en el futuro, la migración a una instancia dedicada de Azure Redis solo requeriría un cambio en las variables de entorno (`REDIS_HOST`).
+
+#### C. Orquestación Reactiva de Medios
+El diagrama destaca el flujo *Event-Driven* para el procesamiento de archivos:
+1.  El cliente sube archivos directamente a **Azure Blob Storage** mediante *Presigned URLs*, evitando la saturación del ancho de banda del Backend.
+2.  **Azure Event Grid** detecta la finalización de la carga y dispara un Webhook hacia el **App Service**.
+3.  Esto inicia el ciclo de procesamiento (extracción de audio con FFmpeg y análisis con Gemini) de forma asíncrona, liberando al usuario de esperar con el navegador abierto.
