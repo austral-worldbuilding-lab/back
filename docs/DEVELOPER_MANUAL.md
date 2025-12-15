@@ -13,6 +13,7 @@
 9. [Base de Datos](#9-base-de-datos)
 10. [Sistema de Roles](#10-sistema-de-roles)
 11. [Manejo de Errores](#11-manejo-de-errores)
+12. [CI/CD](#12-cicd)
 
 ---
 
@@ -82,63 +83,6 @@ Crear archivo `.env` en la root del proyecto. Esto lo podemos hacer copiando el 
 cp .env.example .env
 ```
 
-**Variables requeridas:**
-
-```bash
-# Base de datos
-DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# Firebase (pedir credenciales al equipo)
-FIREBASE_PROJECT_ID=
-FIREBASE_PRIVATE_KEY=
-FIREBASE_CLIENT_EMAIL=
-
-# Azure Storage (pedir credenciales al equipo)
-AZURE_STORAGE_ACCOUNT_NAME=
-AZURE_STORAGE_CONTAINER_NAME=
-AZURE_TENANT_ID=
-AZURE_CLIENT_ID=
-AZURE_CLIENT_SECRET=
-
-# Google AI
-GOOGLE_AI_API_KEY=
-
-# Email (para envío de invitaciones)
-SMTP_HOST=
-SMTP_PORT=
-SMTP_USER=
-SMTP_PASSWORD=
-MAIL_FROM=
-
-# Frontend URL (para links en emails)
-FRONTEND_URL=
-
-# Aplicación
-PORT=3000
-NODE_ENV=development
-```
-
-**Variables opcionales:**
-
-```bash
-# Rate Limiting
-RATE_LIMIT_TTL=60000
-RATE_LIMIT_LIMIT=250
-THROTTLER_ENABLED=true
-
-# Cache
-CACHE_TTL=7200000
-CACHE_MAX_ITEMS=500
-
-# Workers (BullMQ)
-ENABLE_WORKERS=true
-WORKER_IDLE_TIMEOUT_MS=60000
-```
-
 ---
 
 ## 4. Levantar el Proyecto
@@ -177,7 +121,7 @@ Esto crea los roles por defecto (dueño, facilitador, worldbuilder, lector).
 Si queremos iniciar el servidor corriendo directamente el node (sin usar docker), pero ya executamos el `docker compose up`, se puede hacer:
 
 ```bash
-docker stop awbl-app  # Solo si ya se hice el docker compose up
+docker stop awbl-app  # Solo si ya hice el docker compose up
 npm run start:dev
 ```
 
@@ -359,7 +303,7 @@ Los roles se usan tanto a nivel de **organización** como de **proyecto**.
 | `worldbuilder` | 3 | Crear contenido (tags, provocaciones), generar con IA, subir archivos |
 | `lector` | 4 | Solo ver contenido |
 
-> menor nivel = más privilegios.
+> El nivel menor = más privilegios.
 
 Los endpoints usan guards que verifican el rol:
 ```typescript
@@ -387,6 +331,20 @@ if (!project) {
   throw new ResourceNotFoundException('Project', projectId);
 }
 ```
+
+---
+
+## 12. CI/CD
+
+El proyecto usa **GitHub Actions** para automatizar la integración y el despliegue. Cada vez que se hace push a cualquier rama, se corre el pipeline de CI que instala dependencias, genera el cliente Prisma, corre el linter y ejecuta los tests. Si el push es a `dev` o `main`, además se construye la imagen Docker, se sube a GitHub Container Registry (ghcr.io), y se notifica a Azure Web App mediante un webhook para que haga pull de la nueva imagen y reinicie el servicio.
+
+| Rama | Ambiente | Qué pasa |
+|------|----------|----------|
+| `dev` | Desarrollo | Deploy automático a ambiente dev |
+| `main` | Producción | Deploy automático a ambiente prod |
+| Otras | - | Solo corre CI (build, lint, tests) |
+
+Los archivos de configuración están en `.github/workflows/`.
 
 ---
 

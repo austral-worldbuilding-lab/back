@@ -203,6 +203,8 @@ Esta arquitectura optimiza el ancho de banda y reduce la latencia en flujos de t
 
 El diagrama de despliegue ilustra una arquitectura híbrida y distribuida que integra servicios de **Microsoft Azure**, **Google Cloud Platform** y proveedores **Serverless** especializados. Esta configuración responde a tres pilares de diseño: eficiencia de costos, escalabilidad bajo demanda y desacoplamiento de servicios.
 
+Nos decidimos por usar servicios gestionados de Azure (App Service, Database for PostgreSQL, Blob Storage) en lugar de levantar todo en una máquina virtual tradicional. La razón principal es que con PaaS no tenemos que preocuparnos por mantener el sistema operativo, aplicar medidas de seguridad, ni configurar backups manualmente: Azure se encarga de todo eso. Además, escalar es mucho más simple (básicamente mover un slider) y solo pagamos por lo que usamos, lo cual es ideal para un proyecto donde el tráfico es variable y el presupuesto limitado.
+
 A continuación, se detallan las decisiones estratégicas representadas en el esquema:
 
 #### A. Estrategia Diferenciada de Entornos (Dev vs. Prod)
