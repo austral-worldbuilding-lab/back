@@ -13,7 +13,6 @@
 9. [Base de Datos](#9-base-de-datos)
 10. [Sistema de Roles](#10-sistema-de-roles)
 11. [Manejo de Errores](#11-manejo-de-errores)
-12. [Troubleshooting](#12-troubleshooting)
 
 ---
 
