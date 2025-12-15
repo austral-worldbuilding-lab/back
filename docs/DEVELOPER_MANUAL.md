@@ -9,11 +9,10 @@
 5. [Comandos Útiles](#5-comandos-útiles)
 6. [Estructura del Proyecto](#6-estructura-del-proyecto)
 7. [Módulos Principales](#7-módulos-principales)
-8. [Arquitectura del Sistema](#8-arquitectura-del-sistema)
-9. [Base de Datos](#9-base-de-datos)
-10. [Sistema de Roles](#10-sistema-de-roles)
-11. [Manejo de Errores](#11-manejo-de-errores)
-12. [Troubleshooting](#12-troubleshooting)
+8. [Base de Datos](#8-base-de-datos)
+9. [Sistema de Roles](#9-sistema-de-roles)
+10. [Manejo de Errores](#10-manejo-de-errores)
+11. [Troubleshooting](#11-troubleshooting)
 
 ---
 
@@ -316,17 +315,7 @@ Gestiona soluciones generadas por IA. Incluye la posibilidad de generaraction it
 ### `invitation/` y `organization-invitation/`
 Sistema de invitaciones para agregar usuarios a proyectos/organizaciones.
 
----
-
-## 8. Arquitectura del Sistema
-
-La documentación detallada sobre la arquitectura interna, incluyendo el flujo de generación de soluciones con IA, el uso de Redis y el sistema de Workers On-Demand, se ha movido a su propio documento:
-
-👉 **[Ver Documentación de Arquitectura](/docs/ARCHITECTURE.md)**
-
----
-
-## 9. Base de Datos
+## 8. Base de Datos
 
 ### Entidades principales
 
@@ -349,7 +338,7 @@ Ver el schema completo en `prisma/schema.prisma`.
 
 ---
 
-## 10. Sistema de Roles
+## 9. Sistema de Roles
 
 Los roles se usan tanto a nivel de **organización** como de **proyecto**.
 
@@ -360,7 +349,7 @@ Los roles se usan tanto a nivel de **organización** como de **proyecto**.
 | `worldbuilder` | 3 | Crear contenido (tags, provocaciones), generar con IA, subir archivos |
 | `lector` | 4 | Solo ver contenido |
 
-> El nivel menor = más privilegios.
+> menor nivel = más privilegios.
 
 Los endpoints usan guards que verifican el rol:
 ```typescript
@@ -369,7 +358,7 @@ Los endpoints usan guards que verifican el rol:
 
 ---
 
-## 11. Manejo de Errores
+## 10. Manejo de Errores
 
 El proyecto usa excepciones personalizadas. Importar desde `@common/exceptions/custom-exceptions`:
 
@@ -391,7 +380,7 @@ if (!project) {
 
 ---
 
-## 12. Troubleshooting
+## 11. Troubleshooting
 
 ### El servidor no conecta a la base de datos
 - Verificar que Docker esté corriendo: `docker ps`
