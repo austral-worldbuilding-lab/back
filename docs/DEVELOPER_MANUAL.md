@@ -391,39 +391,6 @@ if (!project) {
 
 ---
 
-## 12. Troubleshooting
-
-### El servidor no conecta a la base de datos
-- Verificar que Docker esté corriendo: `docker ps`
-- Verificar `DATABASE_URL` en `.env`
-- Reiniciar contenedor: `docker-compose down && docker-compose up -d`
-
-### Error "Cannot find module '@prisma/client'"
-```bash
-npx prisma generate
-```
-
-### Las migraciones fallan
-```bash
-# Resetear DB (SOLO en desarrollo)
-npx prisma migrate reset
-```
-Si hay problemas en producción, por migraciones que no sepan manejar casos cuando ya hay datos en la base de datos, hay que manejarlos manualmente.
-
-### Redis no conecta
-- Verificar que el contenedor está corriendo: `docker ps | grep redis`
-- Verificar `REDIS_HOST` y `REDIS_PORT` en `.env`
-
-### Error de Firebase (token inválido)
-- Verificar que las credenciales de Firebase estén correctas en `.env`
-- El `FIREBASE_PRIVATE_KEY` debe incluir los `\n` correctamente
-
-### Los workers no procesan jobs
-- Verificar `ENABLE_WORKERS=true` en `.env`
-- Ver logs del servidor para errores de conexión a Redis
-
----
-
 ## Referencias
 
 - [Documentación NestJS](https://docs.nestjs.com/)
