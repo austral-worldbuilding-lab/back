@@ -197,3 +197,7 @@ Dado que la API de Gemini mantiene los archivos disponibles por un tiempo limita
 3.  **Mantenimiento**: Purga automáticamente las referencias a archivos que han superado el TTL de 48 horas.
 
 Esta arquitectura optimiza el ancho de banda y reduce la latencia en flujos de trabajo iterativos donde se reutiliza el mismo contexto multimedia repetidamente.
+
+## Diagramas
+### Arquitectura de Despliegue Multi-Cloud
+![Diagrama de Iteración de Mundos](images/Arquitectura%20de%20Despliegue%20Multi-Cloud.png)
