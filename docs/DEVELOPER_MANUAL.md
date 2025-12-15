@@ -359,7 +359,7 @@ Los roles se usan tanto a nivel de **organización** como de **proyecto**.
 | `worldbuilder` | 3 | Crear contenido (tags, provocaciones), generar con IA, subir archivos |
 | `lector` | 4 | Solo ver contenido |
 
-> El nivel menor = más privilegios.
+> menor nivel = más privilegios.
 
 Los endpoints usan guards que verifican el rol:
 ```typescript
